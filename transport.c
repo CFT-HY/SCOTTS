@@ -23,6 +23,9 @@ void donor_r(double dt, double dx, int N, double *v,
       F[x] = v[x]*xe[x]*xe[x]*field[nb[x][0]];
   }
 
+  // BC's wrap
+  F[0] = 0.0;
+
   for(x=0; x<N; x++)
     field[x] = field[x] - s*(F[x] - F[nb[x][1]])/(xc[x]*xc[x]);
 
@@ -55,6 +58,9 @@ void donor_Z_r(double dt, double dx, int N, double *v,
 
   for(x=0; x<N; x++)
     field[x] = field[x] - s*(F[nb[x][0]] - F[x])/(xe[x]*xe[x]);
+
+  // BC's wrap
+  field[0] = 0.0;
 
   free(F);
 

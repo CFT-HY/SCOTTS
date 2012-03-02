@@ -15,10 +15,17 @@ void find_Ta(double *E, double *gb, double *phi, double a,
   double Tfix;
 
   for(x=0; x<N; x++) {
+    /*
+     * NaN's happen when Tfix goes negative,
+     * they then spread out from here.
+     */
     Tfix = 0.25*gamma*gamma*phi[x]*phi[x]*phi[x]*phi[x]
       - 12.0*a*(0.25*lambda*phi[x]*phi[x]*phi[x]*phi[x]
 		- 0.5*gamma*T0*T0*phi[x]*phi[x]
 		- E[x]/gb[x]);
+
+    //    if(Tfix < 0)
+    //      Tfix = 0.0;
 
     T[x] = sqrt(1.0/6.0/a * (0.5*gamma *phi[x]*phi[x] + sqrt(Tfix)));
   }

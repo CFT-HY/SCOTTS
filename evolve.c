@@ -115,6 +115,9 @@ void evolve_hydro(double dt, double dx, double *kappa, double C, double Cav,
     phiav[x] = 0.5*(phiold[x] + phi[x]);
   }
 
+  // Reflective BC's wrap
+  dxphi[0] = 0.0;
+
   // Precompute potential
   Vdpot(N, alpha, gamma, lambda, T, T0, phiav, Vdmid);
 
@@ -159,6 +162,7 @@ void evolve_hydro(double dt, double dx, double *kappa, double C, double Cav,
   }
 
   // Boundary conditions require this, if we don't do "wrap"
+  Z[0] = 0.0;
   v[0] = 0.0;
 
 
@@ -183,6 +187,9 @@ void evolve_hydro(double dt, double dx, double *kappa, double C, double Cav,
     gbv[x] = v[x]*xe[x]*xe[x]
       *(gbold[x] + gb[x] + gb[nb[x][0]] + gb[nb[x][0]])/4.0;
 
+
+  // Reflective BC's wrap
+  gbv[0] = 0.0;
 
   for(x=0; x<N; x++) {
     s = (kappa[x] - 1.0) * dt/ dx
