@@ -164,6 +164,7 @@ int main(int argc, char *argv[])
     fwrite(&t, sizeof(double), 1, phi_fh);
     fwrite(xc, sizeof(double), parameters.N, phi_fh);
     fwrite(v, sizeof(double), parameters.N, phi_fh);
+    fwrite(phi, sizeof(double), parameters.N, phi_fh);
 
     // Do field step
     evolve_field(parameters.dt, parameters.dx, parameters.C, parameters.N,

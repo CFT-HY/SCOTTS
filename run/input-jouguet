@@ -3,16 +3,16 @@
 # -- runs in 4 minutes on my machine (DJW)
 
 # How long the simulation takes
-N	12000
-steps	80000
+N	18000
+steps	50000
 
 # How big the simulation is
 dx	0.25
 dt	0.125
    
 # Viscosity terms
-Cav	0.0
-C	1.0
+Cav	0.5
+C	0.1207
 
 # Potential parameters
 Lheat	0.1
