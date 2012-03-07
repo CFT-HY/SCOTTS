@@ -45,13 +45,15 @@ def main():
 	# How big is a record?
 	tvalue = array.array('d')
 	xvalues = array.array('d')
-	yvalues = array.array('d')
+	y1values = array.array('d')
+	y2values = array.array('d')
 
 
 	try:
 		tvalue.read(fh, 1)
 		xvalues.read(fh, L)
-		yvalues.read(fh, L)
+		y1values.read(fh, L)
+		y2values.read(fh, L)
 	except EOFError:
 		sys.stderr.write('Can\'t even read a single record!\n')
 		sys.exit(100)
@@ -72,35 +74,43 @@ def main():
 
 			tvalue = array.array('d')
 			xvalues = array.array('d')
-			yvalues = array.array('d')
+			y1values = array.array('d')
+			y2values = array.array('d')
 
 
 			try:
 				tvalue.read(fh, 1)
 				xvalues.read(fh, L)
-				yvalues.read(fh, L)
+				y1values.read(fh, L)
+				y2values.read(fh, L)
 			except EOFError:
 				sys.stderr.write('Run out of file between ' +
 						 'records %d and %d\n'
-						 % (i-increment,i))
+							 % (i-increment,i))
 				break
 
 			t = tvalue.tolist()[0]
 
 			xv = xvalues.tolist()
-			yv = yvalues.tolist()
+
+
+			y1v = y1values.tolist()
+			y2v = y2values.tolist()
 			
-			
+					
 			if not(i % increment == 0):
 				continue
 
 			
-			ofile = open('/tmp/animate.%d.temp' % os.getpid(),'w')
+			ofile1 = open('/tmp/animate.%d.temp1' % os.getpid(),'w')
+			ofile2 = open('/tmp/animate.%d.temp2' % os.getpid(),'w')
 
 			for l in range(len(xv)):
-				ofile.write('%lf %lf\n' % (xv[l], yv[l]))
+				ofile1.write('%lf %lf\n' % (xv[l], y1v[l]))
+				ofile2.write('%lf %lf\n' % (xv[l], y2v[l]))
 
-			ofile.close()
+			ofile1.close()
+			ofile2.close()
 
 				
 			gnuplot_fh = os.popen('gnuplot -p','w')
@@ -108,21 +118,24 @@ def main():
 			gnuplot_fh.write('set output ' +
 					 '\'/tmp/animate.%d.png\'\n' 
 					 % os.getpid())
-			gnuplot_fh.write('unset key\n')
+#			gnuplot_fh.write('unset key\n')
 			gnuplot_fh.write('set title \'t=%lf\'\n' % t)
 
 			gnuplot_fh.write('set xlabel \'r/t\'\n')
-			gnuplot_fh.write('set ylabel \'v\'\n')
+#			gnuplot_fh.write('set ylabel \'v\'\n')
 				
 			# suitable for velocity profile
-			gnuplot_fh.write('set xrange [0:0.25]\n')
-			gnuplot_fh.write('set yrange [0:0.0015]\n')
+			gnuplot_fh.write('set xrange [0:1.0]\n')
+			gnuplot_fh.write('set yrange [0:0.1]\n')
 				
 			# also suitable for velocity profile
 			gnuplot_fh.write(('plot ' +
-					 '\'/tmp/animate.%d.temp\' ' +
+					 '\'/tmp/animate.%d.temp1\' ' +
 					 'u (($1-0.5)/(1+%lf)):2 ' +
-					 'w lines\n') % (os.getpid(),t))
+					 'w lines title \'v\', ' + 
+					  '\'/tmp/animate.%d.temp2\' ' +
+					 'u (($1-0.5)/(1+%lf)):($2/25) ' +
+					 'w lines title \'phi/25\'\n') % (os.getpid(),t,os.getpid(),t))
 
 			gnuplot_fh.close()
 
@@ -151,7 +164,8 @@ def main():
 
 	finally:
 		try:
-			os.remove('/tmp/animate.%d.temp' % os.getpid())
+			os.remove('/tmp/animate.%d.temp1' % os.getpid())
+			os.remove('/tmp/animate.%d.temp2' % os.getpid())
 			os.remove('/tmp/animate.%d.png' % os.getpid())
 			sys.stderr.write('Successfully removed temp files\n')
 		except OSError:
