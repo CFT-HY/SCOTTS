@@ -173,11 +173,9 @@ int main(int argc, char *argv[])
 		 T, parameters.T0, phiold, pifull, nb);
 
 
-    // Advection of E
+    // Advection of state variables
     donor_r(parameters.dt, parameters.dx, parameters.N, v, xe, xc, E, nb);
-
-    // Advection of Z; becomes nanular if xe exactly zero anywhere
-    donor_Z_r(parameters.dt, parameters.dx, parameters.N, v, xe, xc, Z, nb);
+    donor_z(parameters.dt, parameters.dx, parameters.N, v, xe, xc, Z, nb);
 
 
     // Calculate EOS

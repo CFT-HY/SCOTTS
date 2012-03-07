@@ -80,9 +80,14 @@ void eq_of_state(double a, int N, double *E, double *gb, double *phi,
 void donor_r(double dt, double dx, int N, double *v,
 	     double *xe, double *xc, double *field, int **nb);
 
-void donor_Z_r(double dt, double dx, int N, double *v,
+void donor_z(double dt, double dx, int N, double *v,
 	       double *xe, double *xc, double *field, int **nb);
 
+void transport_r(double dt, double dx, int N, double *v,
+		 double *xe, double *xc, double *field, int **nb);
+
+void transport_z(double dt, double dx, int N, double *v,
+                 double *xe, double *xc, double *field, int **nb);
 
 // initial.c
 
