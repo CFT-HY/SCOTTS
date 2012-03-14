@@ -6,6 +6,8 @@
 #include "hydro.h"
 
 // straight from fortran
+
+// advect zone quantities (ie state variable, eg E)
 void donor_r(double dt, double dx, int N, double *v,
 	     double *xe, double *xc, double *field, int **nb) {
 
@@ -13,9 +15,14 @@ void donor_r(double dt, double dx, int N, double *v,
 
   int x;
 
-  // Slow: see comments about this in eos.c
+  // Flux field
   double *F = (double *)malloc(N*sizeof(double));
+  // (Slow: see comments about this in eos.c)
 
+
+
+  // Calculate flux
+  // see advection chapter (4) PDF included
   for(x=0; x<N; x++) {
     if(v[x] >= 0.0)
       F[x] = v[x]*xe[x]*xe[x]*field[x];
@@ -25,6 +32,7 @@ void donor_r(double dt, double dx, int N, double *v,
 
   // BC's wrap
   F[0] = 0.0;
+
 
   for(x=0; x<N; x++)
     field[x] = field[x] - s*(F[x] - F[nb[x][1]])/(xc[x]*xc[x]);
