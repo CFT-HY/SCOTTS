@@ -8,40 +8,41 @@
  *
  * Straight from fortran. Not very useful since we're spherical.
  */
-void create_1D_bubble(int N, double xxwall, double *xe, double *xc,
+void create_1D_bubble(double *xe, double *xc,
 		      double *phi, double *pifull,
 		      double *T, double *E, double *Z,
-		      double *v, double *gb, double dx, double a,
-		      double alpha, double gamma, double lambda,
-		      double Tconst, double T0) {
+		      double *v, double *gb, hydro_params params) {
+
   int x;
 
   const double Tc = 1.0;
 
 
 
-  fprintf(stderr, "T0 = %lf\n", T0);
+  fprintf(stderr, "T0 = %lf\n", params.T0);
   double cstre = 1.0;
   double Rtensp = 1.0;
-  double rMboso = sqrt(gamma*(Tconst*Tconst - T0*T0));
-  double deofV = alpha*Tconst;
+  double rMboso = sqrt(params.gamma*(params.Tconst*params.Tconst
+			      - params.T0*params.T0));
+  double deofV = params.alpha*params.Tconst;
 
-  double lbar = 9.0/2.0 *lambda*rMboso*rMboso/(deofV*deofV);
+  double lbar = 9.0/2.0 *params.lambda*rMboso*rMboso/(deofV*deofV);
 
 
-  for(x=0; x<N; x++) {
-    xe[x] = -1.0*xxwall + ((double)x)*dx;
-    xc[x] = -1.0*xxwall + ((double)x-0.5)*dx;
+  for(x=0; x<params.N; x++) {
+    xe[x] = -1.0*params.xxwall + ((double)x)*params.dx;
+    xc[x] = -1.0*params.xxwall + ((double)x-0.5)*params.dx;
 
     phi[x] = cstre*3.0*(rMboso*rMboso/(2.0*deofV))
-      *psibar(rMboso*(xc[x]+xxwall+0.5*dx)/Rtensp,lbar);
+      *psibar(rMboso*(xc[x]+params.xxwall+0.5*params.dx)/Rtensp,lbar);
 
 
     pifull[x] = 0.0;
-    T[x] = Tconst;
+    T[x] = params.Tconst;
 
-    E[x] = 3*a*T[x]*T[x]*T[x]*T[x] + Vf(alpha,gamma,lambda,T[x],T0,phi[x])
-      - T[x]*VTf(alpha,gamma,lambda,T[x],T0,phi[x]);
+    E[x] = 3.0*params.a*T[x]*T[x]*T[x]*T[x]
+      + Vf(params,T[x],phi[x])
+      - T[x]*VTf(params,T[x],phi[x]);
 
     Z[x] = 0.0;
     v[x] = 0.0;
@@ -79,28 +80,32 @@ double psibar(double x, double lbar) {
  * Create critical spherical gaussian bubble.
  * Straight from fortran.
  */
-void create_gaussian_bubble(int N, double xxwall, double *xe, double *xc,
+void create_gaussian_bubble(double *xe, double *xc,
 			    double *phi, double *pifull,
 			    double *T, double *E, double *Z,
-			    double *v, double *gb, double dx, double a,
-			    double alpha, double gamma, double lambda,
-			    double Tconst, double T0) {
+			    double *v, double *gb, 
+			    hydro_params params) {
   
 
   double sigmlo = 2.0*sqrt(2.0)/81.0 
-    * alpha*alpha*alpha /(lambda*lambda*sqrt(lambda));
+    * params.alpha*params.alpha*params.alpha
+    /(params.lambda*params.lambda*sqrt(params.lambda));
 
   fprintf(stderr, \
 	  "** Initial conditions magic:\n" \
 	  "** sigmlo %g\n", sigmlo);
   
-  double phimin =  ( alpha*Tconst 
-		    + sqrt((alpha*Tconst)*(alpha*Tconst) - 
-			   4*lambda*gamma*(Tconst*Tconst-T0*T0)) )/ (2*lambda);
+  double phimin =  ( params.alpha*params.Tconst 
+		    + sqrt((params.alpha*params.Tconst)
+			   *(params.alpha*params.Tconst) - 
+			   4*params.lambda*params.gamma*(params.Tconst
+					   *params.Tconst -
+					   params.T0*params.T0)) )
+    / (2*params.lambda);
 
   double cstrab = 1.0*phimin;
 
-  double Rlapab = 2.0*sigmlo/(-1.0*Vf(alpha,gamma,lambda,Tconst,T0,phimin));
+  double Rlapab = 2.0*sigmlo/(-1.0*Vf(params,params.Tconst,phimin));
 
   double Rtenab = Rlapab;
 
@@ -110,20 +115,21 @@ void create_gaussian_bubble(int N, double xxwall, double *xe, double *xc,
 
   int x;
 
-  for(x=0; x<N; x++) {
-    xe[x] = -1.0*xxwall + (x-0.0)*dx;
-    xc[x] = -1.0*xxwall + (x-0.5)*dx;
+  for(x=0; x<params.N; x++) {
+    xe[x] = -1.0*params.xxwall + (x-0.0)*params.dx;
+    xc[x] = -1.0*params.xxwall + (x-0.5)*params.dx;
 
-    phi[x] = cstrab*exp(-1.0*(xc[x] + xxwall + 0.5*dx)
-			*(xc[x] + xxwall + 0.5*dx)
+    phi[x] = cstrab*exp(-1.0*(xc[x] + params.xxwall + 0.5*params.dx)
+			*(xc[x] + params.xxwall + 0.5*params.dx)
 			/2.0/(Rtenab*Rtenab) );
 
     pifull[x] = 0.0;
 
-    T[x] = Tconst;
+    T[x] = params.Tconst;
 
-    E[x] = 3.0*a*T[x]*T[x]*T[x]*T[x] + Vf(alpha,gamma,lambda,T[x],T0,phi[x])
-      - T[x]*VTf(alpha,gamma,lambda,T[x],T0,phi[x]);
+    E[x] = 3.0*params.a*T[x]*T[x]*T[x]*T[x]
+      + Vf(params,T[x],phi[x])
+      - T[x]*VTf(params,T[x],phi[x]);
 
 
     // For debugging purposes

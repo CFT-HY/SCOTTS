@@ -6,10 +6,9 @@
 
 
 // straight from fortran, slightly verbose way of doing it!
-double total_energy(double dx, int N, double *kappa, double *E, double *gb,
+double total_energy(double *kappa, double *E, double *gb,
 		    double *xe, double *xc, double *phi, double *pifull,
-		    double *Q, double alpha, double gamma, double lambda,
-		    double *T, int **nb) {
+		    double *T, int **nb, hydro_params params) {
 
   int x;
 
@@ -21,7 +20,7 @@ double total_energy(double dx, int N, double *kappa, double *E, double *gb,
   double kinphi = 0.0;
   double grdphi = 0.0;
 
-  for(x=0;x<N;x++) {
+  for(x=0;x<params.N;x++) {
     vol = xe[x]*xe[x]*xe[x] - xe[nb[x][1]]*xe[nb[x][1]]*xe[nb[x][1]];
 
     // rest energy
@@ -34,13 +33,13 @@ double total_energy(double dx, int N, double *kappa, double *E, double *gb,
     kinphi += 0.5*pifull[x]*pifull[x]*vol;
 
     // gradient term
-    grdphi += 0.125*((phi[nb[x][0]] - phi[nb[x][1]])/dx)
-      *((phi[nb[x][0]] - phi[nb[x][1]])/dx)*vol;
+    grdphi += 0.125*((phi[nb[x][0]] - phi[nb[x][1]])/params.dx)
+      *((phi[nb[x][0]] - phi[nb[x][1]])/params.dx)*vol;
 
   }
 
   // Cast here
-  vol = (double)(xe[N-1]*xe[N-1]*xe[N-1]);
+  vol = (double)(xe[params.N-1]*xe[params.N-1]*xe[params.N-1]);
 
   Etot = (restE+kinE+kinphi+grdphi);
 
