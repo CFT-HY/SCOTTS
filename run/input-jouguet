@@ -1,6 +1,6 @@
 # Example input file
-# -- reproduces hep-ph/9512202 results for eta=1.0
-# -- runs in 4 minutes on my machine (DJW)
+# -- reproduces hep-ph/9512202 results for eta=0.1207, Jouguet
+# -- runs in about 4 minutes on my machine (DJW)
 
 # How long the simulation takes
 N	18000
