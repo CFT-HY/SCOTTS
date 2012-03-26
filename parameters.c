@@ -141,7 +141,7 @@ hydro_params get_parameters()
   } else if(!set_N) {
     fprintf(stderr, "Did not set parameter \'N\'\n");
     exit(100);
-  } else if(!set_dx) {
+  } else if(!set_steps) {
     fprintf(stderr, "Did not set parameter \'steps\'\n");
     exit(100);
   } else if(!set_Cav) {
