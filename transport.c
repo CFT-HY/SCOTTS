@@ -8,35 +8,33 @@
 // straight from fortran
 
 // advect zone quantities (ie state variable, eg E)
-void donor_r(double *v,
-	     double *xe, double *xc, double *field, int **nb,
-	     hydro_params params) {
+void donor_E(hydro_fields f, int **nb, hydro_params p) {
 
-  double s = params.dt/params.dx;
+  double s = p.dt/p.dx;
 
   int x;
 
   // Flux field
-  double *F = (double *)malloc(params.N*sizeof(double));
+  double *F = (double *) malloc(p.N*sizeof(double));
   // (Slow: see comments about this in eos.c)
 
 
 
   // Calculate flux
   // see advection chapter (4) PDF included
-  for(x=0; x<params.N; x++) {
-    if(v[x] >= 0.0)
-      F[x] = v[x]*xe[x]*xe[x]*field[x];
+  for(x = 0; x < p.N; x++) {
+    if(f.v[x] >= 0.0)
+      F[x] = f.v[x]*f.xe[x]*f.xe[x]*f.E[x];
     else
-      F[x] = v[x]*xe[x]*xe[x]*field[nb[x][0]];
+      F[x] = f.v[x]*f.xe[x]*f.xe[x]*f.E[nb[x][0]];
   }
 
   // BC's wrap
   F[0] = 0.0;
 
 
-  for(x=0; x<params.N; x++)
-    field[x] = field[x] - s*(F[x] - F[nb[x][1]])/(xc[x]*xc[x]);
+  for(x = 0; x < p.N; x++)
+    f.E[x] = f.E[x] - s*(F[x] - F[nb[x][1]])/(f.xc[x]*f.xc[x]);
 
   free(F);
 
@@ -46,31 +44,29 @@ void donor_r(double *v,
 
 
 // straight from fortran
-void donor_z(double *v,
-	     double *xe, double *xc, double *field, int **nb,
-	     hydro_params params) {
+void donor_Z(hydro_fields f, int **nb, hydro_params p) {
 
-  double s = params.dt/params.dx;
+  double s = p.dt/p.dx;
 
   double vc;
   int x;
 
-  double *F = (double *)malloc(params.N*sizeof(double));
+  double *F = (double *)malloc(p.N*sizeof(double));
 
-  for(x=0; x<params.N; x++) {
-    vc = 0.5*(v[nb[x][1]] + v[x]);
+  for(x=0; x<p.N; x++) {
+    vc = 0.5*(f.v[nb[x][1]] + f.v[x]);
 
     if(vc >= 0.0)
-      F[x] = vc*xc[x]*xc[x]*field[nb[x][1]];
+      F[x] = vc*f.xc[x]*f.xc[x]*f.Z[nb[x][1]];
     else
-      F[x] = vc*xc[x]*xc[x]*field[x];
+      F[x] = vc*f.xc[x]*f.xc[x]*f.Z[x];
   }
 
-  for(x=0; x<params.N; x++)
-    field[x] = field[x] - s*(F[nb[x][0]] - F[x])/(xe[x]*xe[x]);
+  for(x=0; x<p.N; x++)
+    f.Z[x] = f.Z[x] - s*(F[nb[x][0]] - F[x])/(f.xe[x]*f.xe[x]);
 
   // BC's wrap
-  field[0] = 0.0;
+  f.Z[0] = 0.0;
 
   free(F);
 
@@ -83,24 +79,22 @@ void donor_z(double *v,
  * Fancier transport - van Leer.
  */
 
-void transport_r(double *v,
-		 double *xe, double *xc, double *field, int **nb,
-		 hydro_params params) {
+void transport_E(hydro_fields f, int **nb, hydro_params p) {
 
   int x;
 
-  double *F = (double *)malloc(params.N*sizeof(double));
-  double *delta = (double *)malloc(params.N*sizeof(double));
+  double *F = (double *)malloc(p.N*sizeof(double));
+  double *delta = (double *)malloc(p.N*sizeof(double));
 
-  double s = params.dt/params.dx;
+  double s = p.dt/p.dx;
   
   double r;
 
-  for(x=0; x<params.N; x++) {
-    r = (field[x] - field[nb[x][1]])*(field[nb[x][0]] - field[x]);
+  for(x = 0; x < p.N; x++) {
+    r = (f.E[x] - f.E[nb[x][1]])*(f.E[nb[x][0]] - f.E[x]);
 
-    if(r>0)
-      delta[x] = 2*r/(field[nb[x][0]] - field[nb[x][1]]);
+    if(r > 0)
+      delta[x] = 2*r/(f.E[nb[x][0]] - f.E[nb[x][1]]);
     else
       delta[x] = 0.0;
 
@@ -108,21 +102,20 @@ void transport_r(double *v,
 
   delta[0] = 0.0;
 
-  for(x=0; x<params.N; x++) {
-    if(v[x] > 0)
-      F[x] = v[x]*xe[x]*xe[x]*(field[x] + 0.5*(1.0-v[x]*s)*delta[x]);
+  for(x = 0; x < p.N; x++) {
+    if(f.v[x] > 0)
+      F[x] = f.v[x]*f.xe[x]*f.xe[x]*(f.E[x] 
+				     + 0.5*(1.0-f.v[x]*s)*delta[x]);
     else
-      F[x] = v[x]*xe[x]*xe[x]*(field[nb[x][0]] - 0.5*(1.0+v[x]*s)*delta[nb[x][0]]);
+      F[x] = f.v[x]*f.xe[x]*f.xe[x]*(f.E[nb[x][0]] 
+				     - 0.5*(1.0+f.v[x]*s)*delta[nb[x][0]]);
   }
 
   F[0] = 0.0;  
 
   // "Advect D"
-  for(x=0; x<params.N; x++)
-    field[x] = field[x] - s*(F[x] - F[nb[x][1]])/(xc[x]*xc[x]);
-
-
-
+  for(x = 0; x < p.N; x++)
+    f.E[x] = f.E[x] - s*(F[x] - F[nb[x][1]])/(f.xc[x]*f.xc[x]);
 
   free(delta);
   free(F);
@@ -135,25 +128,23 @@ void transport_r(double *v,
 
 
 
-void transport_z(double *v,
-		 double *xe, double *xc, double *field, int **nb,
-		 hydro_params params) {
+void transport_Z(hydro_fields f, int **nb, hydro_params p) {
 
   int x;
 
-  double *F = (double *)malloc(params.N*sizeof(double));
-  double *delta = (double *)malloc(params.N*sizeof(double));
+  double *F = (double *)malloc(p.N*sizeof(double));
+  double *delta = (double *)malloc(p.N*sizeof(double));
 
-  double s = params.dt/params.dx;
+  double s = p.dt/p.dx;
   
   double r;
   double vc;
 
-  for(x=0; x<params.N; x++) {
-    r = (field[x] - field[nb[x][1]])*(field[nb[x][0]] - field[x]);
+  for(x=0; x<p.N; x++) {
+    r = (f.Z[x] - f.Z[nb[x][1]])*(f.Z[nb[x][0]] - f.Z[x]);
 
     if(r>0)
-      delta[x] = 2*r/(field[nb[x][0]] - field[nb[x][1]]);
+      delta[x] = 2*r/(f.Z[nb[x][0]] - f.Z[nb[x][1]]);
     else
       delta[x] = 0.0;
 
@@ -162,20 +153,22 @@ void transport_z(double *v,
   // Probably not
   //  delta[0] = 0.0;
 
-  for(x=0; x<params.N; x++) {
-    vc = 0.5*(v[nb[x][1]] + v[x]);
+  for(x = 0; x < p.N; x++) {
+    vc = 0.5*(f.v[nb[x][1]] + f.v[x]);
 
     if(vc > 0)
-      F[x] = vc*xc[x]*xc[x]*(field[nb[x][1]] + 0.5*(1.0-vc*s)*delta[nb[x][1]]);
+      F[x] = vc*f.xc[x]*f.xc[x]*(f.Z[nb[x][1]] 
+				 + 0.5*(1.0-vc*s)*delta[nb[x][1]]);
     else
-      F[x] = vc*xc[x]*xc[x]*(field[nb[x][0]] - 0.5*(1.0+vc*s)*delta[x]);
+      F[x] = vc*f.xc[x]*f.xc[x]*(f.Z[nb[x][0]]
+				 - 0.5*(1.0+vc*s)*delta[x]);
   }
 
   F[0] = 0.0;  
 
   // "Advect Z"
-  for(x=0; x<params.N; x++)
-    field[x] = field[x] - s*(F[nb[x][0]] - F[x])/(xe[x]*xe[x]);
+  for(x = 0; x < p.N; x++)
+    f.Z[x] = f.Z[x] - s*(F[nb[x][0]] - F[x])/(f.xe[x]*f.xe[x]);
 
 
 

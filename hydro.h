@@ -33,103 +33,74 @@ typedef struct {
   double T0;
 } hydro_params;
 
+typedef struct {
+  double *phi;
+  double *pi;
+  double *pifull;
+  double *xe;
+  double *xc;
+  double *T;
+  double *kappa;
+  double *phiold;
+  double *p;
+  double *E;
+  double *Z;
+  double *v;
+  double *gb;
+} hydro_fields;
+
 // evolve.c
 
-void evolve_backstep(double *phi,
-		     double *pifull, double *xe, double *xc, 
-		      double *T, double *pi,
-		      int **nb, hydro_params params);
+void evolve_backstep(hydro_fields f, int **nb, hydro_params p);
 
-void evolve_field(double *gb, double *v, double *xe, double *xc,
-		  double *pi, double *phi,
-		  double *T, double *phiold, double *pifull,
-		  int **nb, hydro_params params);
+void evolve_field(hydro_fields f, int **nb, hydro_params p);
 
-void evolve_hydro(double *kappa,
-		  double *phiold, double *phi, double *pi, double *p,
-		  double *xe, double *xc,
-		  double *E, double *Z, double *v, double *gb,
-		  double *T,
-                  int **nb, hydro_params params);
+void evolve_hydro(hydro_fields f, int **nb, hydro_params p);
 
 
 // potential.c
 
-double Vf(hydro_params params, double T, double this_phi);
-
-double Vdf(hydro_params params,
-	   double T, double this_phi);
-
-double VTf(hydro_params params,
-	   double T, double this_phi);
-
-double VTTf(hydro_params params,
-	    double T, double this_phi);
-
-void Vpot(hydro_params params,
-          double *T,
-          double *phi, double *Vprecalc);
-
-void Vdpot(hydro_params params,
-	   double *T,
-	   double *phi, double *Vprecalc);
+double Vf(hydro_params p, double T, double this_phi);
+double Vdf(hydro_params p, double T, double this_phi);
+double VTf(hydro_params p, double T, double this_phi);
+double VTTf(hydro_params p, double T, double this_phi);
+void Vpot(hydro_params p, double *T, double *phi, double *Vprecalc);
+void Vdpot(hydro_params p, double *T, double *phi, double *Vprecalc);
 
 
-// energy,c
+// energy.c
 
-double total_energy(double *kappa, double *E,
-		    double *gb, double *xe, double *xc,
-                    double *phi, double *pifull,
-		    double *T, int **nb, hydro_params params);
+double total_energy(hydro_fields f, int **nb, hydro_params p);
 
 
 // eos.c
 
-void find_Ta(double *E, double *gb, double *phi,
-	     double *T, hydro_params params);
+void find_Ta(hydro_fields f, hydro_params p);
 
-void eq_of_state(double *E, double *gb, double *phi,
-		 double *T, double *p, double *kappa, hydro_params params);
+void eq_of_state(hydro_fields f, hydro_params p);
 
 // transport.c
 
-void donor_r(double *v,
-	     double *xe, double *xc, double *field, int **nb,
-	     hydro_params params);
+void donor_E(hydro_fields f, int **nb, hydro_params p);
 
-void donor_z(double *v,
-	     double *xe, double *xc, double *field, int **nb,
-	     hydro_params params);
+void donor_Z(hydro_fields f, int **nb, hydro_params p);
 
-void transport_r(double *v,
-		 double *xe, double *xc, double *field, int **nb,
-		 hydro_params params);
+void transport_E(hydro_fields f, int **nb, hydro_params p);
 
-void transport_z(double *v,
-                 double *xe, double *xc, double *field, int **nb,
-		 hydro_params params);
+void transport_Z(hydro_fields f, int **nb, hydro_params p);
 
 // initial.c
 
-void create_1D_bubble(double *xe, double *xc,
-                      double *phi, double *pifull,
-                      double *T, double *E, double *Z,
-                      double *v, double *gb, 
-		      hydro_params params);
+void create_1D_bubble(hydro_fields f, hydro_params p);
 
 
 double psibar(double x, double lbar);
 
-void create_gaussian_bubble(double *xe, double *xc,
-                            double *phi, double *pifull,
-                            double *T, double *E, double *Z,
-                            double *v, double *gb,
-			    hydro_params params);
+void create_gaussian_bubble(hydro_fields f, hydro_params p);
 
 // output.c
 
-double wallpos(double *xc, double *phi, double *T,
-	       hydro_params params);
+double wallpos(hydro_fields f, hydro_params p);
 
 
 // parameters.c
