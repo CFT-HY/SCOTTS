@@ -22,11 +22,12 @@ void donor_E(hydro_fields f, int **nb, hydro_params p) {
 
   // Calculate flux
   // see advection chapter (4) PDF included
+  // 1.0 in what follows will be upgraded to area of a cube later
   for(x = 0; x < p.N; x++) {
     if(f.v[x] >= 0.0)
-      F[x] = f.v[x]*f.xe[x]*f.xe[x]*f.E[x];
+      F[x] = f.v[x]*1.0*f.E[x];
     else
-      F[x] = f.v[x]*f.xe[x]*f.xe[x]*f.E[nb[x][0]];
+      F[x] = f.v[x]*1.0*f.E[nb[x][0]];
   }
 
   // BC's wrap
@@ -34,7 +35,7 @@ void donor_E(hydro_fields f, int **nb, hydro_params p) {
 
 
   for(x = 0; x < p.N; x++)
-    f.E[x] = f.E[x] - s*(F[x] - F[nb[x][1]])/(f.xc[x]*f.xc[x]);
+    f.E[x] = f.E[x] - s*(F[x] - F[nb[x][1]])/(1.0);
 
   free(F);
 
@@ -57,13 +58,13 @@ void donor_Z(hydro_fields f, int **nb, hydro_params p) {
     vc = 0.5*(f.v[nb[x][1]] + f.v[x]);
 
     if(vc >= 0.0)
-      F[x] = vc*f.xc[x]*f.xc[x]*f.Z[nb[x][1]];
+      F[x] = vc*1.0*f.Z[nb[x][1]];
     else
-      F[x] = vc*f.xc[x]*f.xc[x]*f.Z[x];
+      F[x] = vc*1.0*f.Z[x];
   }
 
   for(x=0; x<p.N; x++)
-    f.Z[x] = f.Z[x] - s*(F[nb[x][0]] - F[x])/(f.xe[x]*f.xe[x]);
+    f.Z[x] = f.Z[x] - s*(F[nb[x][0]] - F[x])/(1.0);
 
   // BC's wrap
   f.Z[0] = 0.0;
@@ -104,10 +105,10 @@ void transport_E(hydro_fields f, int **nb, hydro_params p) {
 
   for(x = 0; x < p.N; x++) {
     if(f.v[x] > 0)
-      F[x] = f.v[x]*f.xe[x]*f.xe[x]*(f.E[x] 
+      F[x] = f.v[x]*1.0*(f.E[x] 
 				     + 0.5*(1.0-f.v[x]*s)*delta[x]);
     else
-      F[x] = f.v[x]*f.xe[x]*f.xe[x]*(f.E[nb[x][0]] 
+      F[x] = f.v[x]*1.0*(f.E[nb[x][0]] 
 				     - 0.5*(1.0+f.v[x]*s)*delta[nb[x][0]]);
   }
 
@@ -115,7 +116,7 @@ void transport_E(hydro_fields f, int **nb, hydro_params p) {
 
   // "Advect D"
   for(x = 0; x < p.N; x++)
-    f.E[x] = f.E[x] - s*(F[x] - F[nb[x][1]])/(f.xc[x]*f.xc[x]);
+    f.E[x] = f.E[x] - s*(F[x] - F[nb[x][1]])/(1.0);
 
   free(delta);
   free(F);
@@ -157,10 +158,10 @@ void transport_Z(hydro_fields f, int **nb, hydro_params p) {
     vc = 0.5*(f.v[nb[x][1]] + f.v[x]);
 
     if(vc > 0)
-      F[x] = vc*f.xc[x]*f.xc[x]*(f.Z[nb[x][1]] 
+      F[x] = vc*1.0*(f.Z[nb[x][1]] 
 				 + 0.5*(1.0-vc*s)*delta[nb[x][1]]);
     else
-      F[x] = vc*f.xc[x]*f.xc[x]*(f.Z[nb[x][0]]
+      F[x] = vc*1.0*(f.Z[nb[x][0]]
 				 - 0.5*(1.0+vc*s)*delta[x]);
   }
 
@@ -168,7 +169,7 @@ void transport_Z(hydro_fields f, int **nb, hydro_params p) {
 
   // "Advect Z"
   for(x = 0; x < p.N; x++)
-    f.Z[x] = f.Z[x] - s*(F[nb[x][0]] - F[x])/(f.xe[x]*f.xe[x]);
+    f.Z[x] = f.Z[x] - s*(F[nb[x][0]] - F[x])/(1.0);
 
 
 

@@ -12,12 +12,12 @@ void evolve_backstep(hydro_fields f, int **nb, hydro_params p) {
   int x;
 
   for(x = 0; x < p.N; x++)
-    f.pi[x] = f.pifull[x] - 0.5*p.dt/(f.xc[x]*f.xc[x]*p.dx*p.dx)
-      * (f.xe[x]*f.xe[x]*(f.phi[nb[x][0]] - f.phi[x]) 
-	 - f.xe[nb[x][1]]*f.xe[nb[x][1]]*(f.phi[x] - f.phi[nb[x][1]]))
-      + 0.125*(p.dt/p.dx/f.xc[x])*(p.dt/p.dx/f.xc[x])
-      * (f.xe[x]*f.xe[x]*(f.pifull[nb[x][0]] - f.pifull[x]) 
-	 - f.xe[nb[x][1]]*f.xe[nb[x][1]]*(f.pifull[x] - f.pifull[nb[x][1]]))
+    f.pi[x] = f.pifull[x] - 0.5*(p.dt/(p.dx*p.dx))
+      * ((f.phi[nb[x][0]] - f.phi[x])
+	 - (f.phi[x] - f.phi[nb[x][1]]))
+      + 0.125*(p.dt/(p.dx))*(p.dt/(p.dx))
+      * ((f.pifull[nb[x][0]] - f.pifull[x]) 
+	 - (f.pifull[x] - f.pifull[nb[x][1]]))
       + 0.5*p.dt*Vdf(p, f.T[x], f.phi[x] - 0.25*p.dt*f.pifull[x]);
 
 }
@@ -60,18 +60,20 @@ void evolve_field(hydro_fields f, int **nb, hydro_params p) {
     f.pi[x] = (1+s)*f.pi[x]/(1-s);
 
     // gradient term
-    f.pi[x] = f.pi[x] - 0.5*p.C*f.gb[x]*(f.v[nb[x][1]]*(f.phi[x]-f.phi[nb[x][1]]) + f.v[x]*(f.phi[nb[x][0]] - f.phi[x]))/p.dx;
+    f.pi[x] = f.pi[x] 
+      - 0.5*p.C*f.gb[x]*(f.v[nb[x][1]]*(f.phi[x]-f.phi[nb[x][1]])
+			 + f.v[x]*(f.phi[nb[x][0]] - f.phi[x]))/p.dx;
 
-    // splitting like this *seems* to conserve energy better than the original scheme above
+    // splitting like this *seems* to conserve energy better than 
+    // the original scheme above
 
-    // vanilla scalar field gradient and potential terms but notice funky centred derivative
-    f.pi[x] = f.pi[x] + p.dt*((f.xe[x]*f.xe[x]*(f.phi[nb[x][0]] 
-						- f.phi[x]) 
-			  - f.xe[nb[x][1]]*f.xe[nb[x][1]]*(f.phi[x] 
-							   - f.phi[nb[x][1]]))
-			 /(f.xc[x]*f.xc[x]*p.dx*p.dx)
-			- Vdold[x]);
-	    
+    // vanilla scalar field gradient and potential terms
+    // but notice funky centred derivative
+    f.pi[x] = f.pi[x] 
+      + p.dt*(((f.phi[nb[x][0]] - f.phi[x]) 
+	       - (f.phi[x] - f.phi[nb[x][1]]))/(p.dx*p.dx)
+	      - Vdold[x]);
+    
 
     // pifull is (1.5*pi - 0.5*piold), not sure why
     f.pifull[x] = piold + 1.5*(f.pi[x] - piold);
@@ -181,8 +183,7 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
   for(x = 0; x < p.N; x++) {
 
     // Q term related to artificial viscosity; otherwise W&M eq (2.103)
-    f.Z[x] = f.Z[x] - p.dt*(f.p[nb[x][0]]- f.p[x] 
-			    + Q[nb[x][0]] - Q[x])/p.dx;
+    f.Z[x] = f.Z[x] - p.dt*(f.p[nb[x][0]] - f.p[x] + Q[nb[x][0]] - Q[x])/p.dx;
 
     // update velocity v; denominator is W&M eq (2.85)
     // but note grid is Eulerian and D=0
@@ -227,7 +228,7 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
 
     // Velocity times area (boundary coord squared)
     //times poor man's volume gamma
-    gbv[x] = f.v[x]*f.xe[x]*f.xe[x]
+    gbv[x] = f.v[x]
       *(f.gb[x] + f.gb[nb[x][0]])/2.0;
     // this is W*V, we calculate
   
@@ -246,7 +247,7 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
     // W&M (2.92) and (2.93) combined: divergence
     s = (gbv[x] - gbv[nb[x][1]])/p.dx;
     // divide by zone volume times zone centred boost (previously gb[x] + gbold[x], not sure why)
-    s = s/(f.xc[x]*f.xc[x]);
+    s = s/1.0;
 
     // by this stage s should have contributions from inside (2.91) and (2.93)
     // here we do the kappa multiplication and divide by 2 in preparation for the poor man's exponential

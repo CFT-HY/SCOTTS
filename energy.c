@@ -19,14 +19,13 @@ double total_energy(hydro_fields f, int **nb, hydro_params p) {
   double grdphi = 0.0;
 
   for(x = 0; x < p.N; x++) {
-    vol = f.xe[x]*f.xe[x]*f.xe[x] 
-      - f.xe[nb[x][1]]*f.xe[nb[x][1]]*f.xe[nb[x][1]];
+    vol = p.dx;
 
     // rest energy
-    restE += f.E[x]/f.gb[x]*vol;
+    restE += (f.E[x]/f.gb[x])*vol;
 
     // kinetic energy
-    kinE += f.kappa[x]*f.E[x]/f.gb[x]*(f.gb[x]*f.gb[x]-1.0)*vol;
+    kinE += f.kappa[x]*(f.E[x]/f.gb[x])*(f.gb[x]*f.gb[x]-1.0)*vol;
 
     // momentum squared (scalar field kinetic energy)
     kinphi += 0.5*f.pifull[x]*f.pifull[x]*vol;
@@ -38,7 +37,7 @@ double total_energy(hydro_fields f, int **nb, hydro_params p) {
   }
 
   // Cast here
-  vol = (double)(f.xe[p.N-1]*f.xe[p.N-1]*f.xe[p.N-1]);
+  vol = (double)(f.xe[p.N-1]);
 
   Etot = (restE+kinE+kinphi+grdphi);
 
