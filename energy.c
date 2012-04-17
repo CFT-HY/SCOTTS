@@ -6,9 +6,7 @@
 
 
 // straight from fortran, slightly verbose way of doing it!
-double total_energy(double *kappa, double *E, double *gb,
-		    double *xe, double *xc, double *phi, double *pifull,
-		    double *T, int **nb, hydro_params params) {
+double total_energy(hydro_fields f, int **nb, hydro_params p) {
 
   int x;
 
@@ -20,26 +18,27 @@ double total_energy(double *kappa, double *E, double *gb,
   double kinphi = 0.0;
   double grdphi = 0.0;
 
-  for(x=0;x<params.N;x++) {
-    vol = xe[x]*xe[x]*xe[x] - xe[nb[x][1]]*xe[nb[x][1]]*xe[nb[x][1]];
+  for(x = 0; x < p.N; x++) {
+    vol = f.xe[x]*f.xe[x]*f.xe[x] 
+      - f.xe[nb[x][1]]*f.xe[nb[x][1]]*f.xe[nb[x][1]];
 
     // rest energy
-    restE += E[x]/gb[x]*vol;
+    restE += f.E[x]/f.gb[x]*vol;
 
     // kinetic energy
-    kinE += kappa[x]*E[x]/gb[x]*(gb[x]*gb[x]-1.0)*vol;
+    kinE += f.kappa[x]*f.E[x]/f.gb[x]*(f.gb[x]*f.gb[x]-1.0)*vol;
 
     // momentum squared (scalar field kinetic energy)
-    kinphi += 0.5*pifull[x]*pifull[x]*vol;
+    kinphi += 0.5*f.pifull[x]*f.pifull[x]*vol;
 
     // gradient term
-    grdphi += 0.125*((phi[nb[x][0]] - phi[nb[x][1]])/params.dx)
-      *((phi[nb[x][0]] - phi[nb[x][1]])/params.dx)*vol;
+    grdphi += 0.125*((f.phi[nb[x][0]] - f.phi[nb[x][1]])/p.dx)
+      *((f.phi[nb[x][0]] - f.phi[nb[x][1]])/p.dx)*vol;
 
   }
 
   // Cast here
-  vol = (double)(xe[params.N-1]*xe[params.N-1]*xe[params.N-1]);
+  vol = (double)(f.xe[p.N-1]*f.xe[p.N-1]*f.xe[p.N-1]);
 
   Etot = (restE+kinE+kinphi+grdphi);
 
