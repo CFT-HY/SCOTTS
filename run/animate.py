@@ -126,7 +126,7 @@ def main():
 				
 			# suitable for velocity profile
 			gnuplot_fh.write('set xrange [0:1.0]\n')
-			gnuplot_fh.write('set yrange [0:0.1]\n')
+			gnuplot_fh.write('set yrange [0:0.025]\n')
 				
 			# also suitable for velocity profile
 			gnuplot_fh.write(('plot ' +
@@ -134,7 +134,7 @@ def main():
 					 'u (($1-0.5)/(1+%lf)):2 ' +
 					 'w lines title \'v\', ' + 
 					  '\'/tmp/animate.%d.temp2\' ' +
-					 'u (($1-0.5)/(1+%lf)):($2/25) ' +
+					 'u (($1-0.5)/(1+%lf)):($2/100) ' +
 					 'w lines title \'phi/25\'\n') % (os.getpid(),t,os.getpid(),t))
 
 			gnuplot_fh.close()

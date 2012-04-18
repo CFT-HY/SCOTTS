@@ -31,6 +31,8 @@ typedef struct {
   double a;
 
   double T0;
+
+  int interval;
 } hydro_params;
 
 typedef struct {

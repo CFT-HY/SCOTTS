@@ -12,12 +12,10 @@ void evolve_backstep(hydro_fields f, int **nb, hydro_params p) {
   int x;
 
   for(x = 0; x < p.N; x++)
-    f.pi[x] = f.pifull[x] - 0.5*(p.dt/(p.dx*p.dx))
-      * ((f.phi[nb[x][0]] - f.phi[x])
-	 - (f.phi[x] - f.phi[nb[x][1]]))
-      + 0.125*(p.dt/(p.dx))*(p.dt/(p.dx))
-      * ((f.pifull[nb[x][0]] - f.pifull[x]) 
-	 - (f.pifull[x] - f.pifull[nb[x][1]]))
+    f.pi[x] = f.pifull[x] - 0.5*p.dt
+      *(f.phi[nb[x][0]] - 2.0*f.phi[x] + f.phi[nb[x][1]])/(p.dx*p.dx)
+      + 0.125*p.dt*p.dt
+      *(f.pifull[nb[x][0]] - 2.0*f.pifull[x] + f.pifull[nb[x][1]])/(p.dx*p.dx)
       + 0.5*p.dt*Vdf(p, f.T[x], f.phi[x] - 0.25*p.dt*f.pifull[x]);
 
 }
@@ -26,15 +24,9 @@ void evolve_backstep(hydro_fields f, int **nb, hydro_params p) {
 // straight from fortran, except set v = 0 explicitly rather than in wrap
 void evolve_field(hydro_fields f, int **nb, hydro_params p) {
   
-  // Slow and not strictly necessary, see comments in eos.c
-  double *Vdold = (double *)malloc(p.N*sizeof(double));
-
   int x;
 
   double piold, s;
-
-
-  Vdpot(p, f.T, f.phi, Vdold);
 
   // Move conjugate momentum (leapfrog)
   for(x = 0; x < p.N; x++) {
@@ -42,21 +34,6 @@ void evolve_field(hydro_fields f, int **nb, hydro_params p) {
 
     // first-order viscosity term
     s = -0.5*p.dt*p.C*f.gb[x];
-
-    // Evolve momentum, badly
-    /* pi[x] = ( (1+s)*pi[x]
-	      + dt*( (xe[x]*xe[x]*(phi[nb[x][0]] - phi[x])
-		      - xe[nb[x][1]]*xe[nb[x][1]]
-		      *(phi[x] - phi[nb[x][1]]))
-		     /(xc[x]*xc[x]*dx*dx) 
-		     - Vdold[x] - 0.5*C*gb[x]
-		     *(v[nb[x][1]]*(phi[x]-phi[nb[x][1]])
-		       + v[x]*(phi[nb[x][0]] - phi[x]))/dx
-		     ))/(1-s);
-    */    
-
-
-    // first order term 
     f.pi[x] = (1+s)*f.pi[x]/(1-s);
 
     // gradient term
@@ -64,15 +41,11 @@ void evolve_field(hydro_fields f, int **nb, hydro_params p) {
       - 0.5*p.C*f.gb[x]*(f.v[nb[x][1]]*(f.phi[x]-f.phi[nb[x][1]])
 			 + f.v[x]*(f.phi[nb[x][0]] - f.phi[x]))/p.dx;
 
-    // splitting like this *seems* to conserve energy better than 
-    // the original scheme above
-
-    // vanilla scalar field gradient and potential terms
-    // but notice funky centred derivative
+    // scalar field gradient and potential terms
     f.pi[x] = f.pi[x] 
-      + p.dt*(((f.phi[nb[x][0]] - f.phi[x]) 
-	       - (f.phi[x] - f.phi[nb[x][1]]))/(p.dx*p.dx)
-	      - Vdold[x]);
+      + p.dt
+      *((f.phi[nb[x][0]] - 2.0*f.phi[x] + f.phi[nb[x][1]])/(p.dx*p.dx)
+	- Vdf(p, f.T[x], f.phi[x]));
     
 
     // pifull is (1.5*pi - 0.5*piold), not sure why
@@ -86,8 +59,6 @@ void evolve_field(hydro_fields f, int **nb, hydro_params p) {
     f.phi[x] = f.phi[x] + p.dt*f.pi[x];
   }
 
-
-  free(Vdold);
 }
 
 
@@ -142,12 +113,12 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
 
    
     // evolve Z (eq 10 of 9512202)
-    f.Z[x] = f.Z[x] - p.dt*0.5*(p.C*(f.gb[x] + f.gb[nb[x][0]]) \
+    f.Z[x] = f.Z[x] - p.dt*0.5*(p.C*(f.gb[x] + f.gb[nb[x][0]])		\
 				// eta times boundary centred gamma
 				*(0.5*(f.pi[x] + f.pi[nb[x][0]]) 
-				   + f.v[x]*dxphi[x] )			\
+				  + f.v[x]*dxphi[x] ) 			\
 				// boundary centred pi, v*grad(phi)
-				+(Vdmid[x] + Vdmid[nb[x][0]])) * dxphi[x];
+				+(Vdmid[x] + Vdmid[nb[x][0]]))*dxphi[x];
                                 //  SPAT'Y recentred potential times grad(phi)
 
 
@@ -207,7 +178,7 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
 
     // Calculate new zone-centred boost factor
     // this is just a repeat of what we did above...
-    inner = (0.5*(f.Z[nb[x][1]] + f.Z[x])) / (f.kappa[x]*f.E[x]);
+    inner = 0.5*(f.Z[nb[x][1]] + f.Z[x])/(f.kappa[x]*f.E[x]);
 
     // inner*inner should equal U^2 + U[nb[x][1]]^2
     // to give the zone centred gamma factor

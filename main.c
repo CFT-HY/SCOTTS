@@ -204,12 +204,13 @@ int main(int argc, char *argv[])
 
   for(step = 0; step < p.steps; step++) {
 
-    // Write time step, x coords and velocity field
-    // in principle don't need to do it every time step
-    fwrite(&t, sizeof(double), 1, phi_fh);
-    fwrite(f.xc, sizeof(double), p.N, phi_fh);
-    fwrite(f.v, sizeof(double), p.N, phi_fh);
-    fwrite(f.phi, sizeof(double), p.N, phi_fh);
+    if(step % p.interval == 0) {
+      // Write time step, x coords and velocity field
+      fwrite(&t, sizeof(double), 1, phi_fh);
+      fwrite(f.xc, sizeof(double), p.N, phi_fh);
+      fwrite(f.v, sizeof(double), p.N, phi_fh);
+      fwrite(f.phi, sizeof(double), p.N, phi_fh);
+    }
 
     // Do field step
     evolve_field(f, nb, p);
