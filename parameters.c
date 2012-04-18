@@ -43,6 +43,7 @@ hydro_params get_parameters()
   int set_sigma = 0;
   int set_lcorr = 0;
 
+  int set_interval = 0;
 
   char key[100];
   char value[100];
@@ -128,6 +129,10 @@ hydro_params get_parameters()
       parameters.lcorr = strtod(value,NULL);
       set_lcorr = 1;
     }
+    else if(!strcasecmp(key,"interval")) {
+      parameters.interval = strtod(value,NULL);
+      set_interval = 1;
+    }
 
   }
   
@@ -159,16 +164,21 @@ hydro_params get_parameters()
   } else if(!set_lcorr) {
     fprintf(stderr, "Did not set parameter \'lcorr\'\n");
     exit(100);
+  } else if(!set_interval) {
+    fprintf(stderr, "Did not set parameter \'interval\'\n");
+    exit(100);
   }
 
   // Report what we found
   fprintf(stderr,"-- Read parameters from stdin:\n" \
 	  "-- dx %g, dt %g, N %d, steps %d\n" \
 	  "-- Cav %g, C %g,\n" \
-	  "-- Lheat %g, sigma %g, lcorr %g\n",
+	  "-- Lheat %g, sigma %g, lcorr %g\n" \
+	  "-- interval %d\n",
 	  parameters.dx, parameters.dt, parameters.N, parameters.steps, \
 	  parameters.Cav, parameters.C, \
-	  parameters.Lheat, parameters.sigma, parameters.lcorr);
+	  parameters.Lheat, parameters.sigma, parameters.lcorr, \
+	  parameters.interval);
 
 
   return parameters;
