@@ -163,6 +163,7 @@ int main(int argc, char *argv[])
   // space iterate
   int x;
 
+  double wmax;
 
   hydro_fields f;
 
@@ -177,7 +178,14 @@ int main(int argc, char *argv[])
   fprintf(stderr, "- Zeroed fields.\n");
 
   // initial conditions
-  create_gaussian_bubble(f, p);
+  if(p.initial == INIT_BUBBLE) {
+    create_gaussian_bubble(f, p);
+  } else if(p.initial == INIT_SHOCK_TUBE) {
+    create_shock_tube(f, p);
+  } else {
+    fprintf(stderr, "Unknown initial condition parameter!\n");
+    exit(100);
+  }
 
   int **nb;
 
@@ -208,8 +216,11 @@ int main(int argc, char *argv[])
       // Write time step, x coords and velocity field
       fwrite(&t, sizeof(double), 1, phi_fh);
       fwrite(f.xc, sizeof(double), p.N, phi_fh);
+      fwrite(f.E, sizeof(double), p.N, phi_fh);
+      fwrite(f.p, sizeof(double), p.N, phi_fh);
       fwrite(f.v, sizeof(double), p.N, phi_fh);
       fwrite(f.phi, sizeof(double), p.N, phi_fh);
+
     }
 
     // Do field step
@@ -230,12 +241,14 @@ int main(int argc, char *argv[])
 
     t += p.dt;
 
+    wmax = get_gamma_max(f, p);
+
     // Don't write to stdout too often, and don't calculate too much
     if(step % 100 == 0)
-      printf("%04d\t%6lf\t%6lf\t%6lf\n",
+      printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\n",
 	     step, t,
 	     total_energy(f, nb, p), 
-	     wallpos(f, p));
+	     wallpos(f, p), wmax);
     
   } // main loop ends here
 

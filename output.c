@@ -31,3 +31,28 @@ double wallpos(hydro_fields f, hydro_params p) {
   return f.xc[xmax];
 
 }
+
+
+
+
+double get_gamma_max(hydro_fields f, hydro_params p) {
+
+  int x, xmax;
+
+  double gmax = f.gb[0];
+  
+  double gtest;
+
+  // Just search for maxmimum
+  for(x = 1; x < p.N; x++) {
+    gtest = f.gb[x];
+    if(gtest > gmax) {
+      xmax = x;
+      gmax = gtest;
+
+    }
+  }
+
+  return gmax;
+
+}

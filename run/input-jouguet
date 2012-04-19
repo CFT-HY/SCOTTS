@@ -1,10 +1,8 @@
-# Example input file
-# -- reproduces hep-ph/9512202 results for eta=0.1207, Jouguet
-# -- runs in about 4 minutes on my machine (DJW)
+# Example input file for 1D nearly-Jouguet shock
 
 # How long the simulation takes
-N	18000
-steps	100000
+N	15000
+steps	50000
 
 # How big the simulation is
 dx	0.25
@@ -22,4 +20,7 @@ lcorr	6.0
 # How often to write data
 interval 100
 
-# ... then try "./animate.py field.dat 20"
+# Initial conditions
+initial bubble
+
+# ... then try "./animate.py field.dat 1"

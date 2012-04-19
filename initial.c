@@ -133,3 +133,41 @@ void create_gaussian_bubble(hydro_fields f, hydro_params p) {
 
   }
 }
+
+
+
+
+
+
+
+void create_shock_tube(hydro_fields f, hydro_params p) {
+  
+  double Er, El;
+
+  fprintf(stderr, "** shock tube\n");
+
+  int x;
+
+  double rE = 50.0;
+
+  Er = 1.0/(1.0+rE);
+  El = rE*Er;
+
+  for(x = 0; x < p.N; x++) {
+    f.xe[x] = (x-0.0)*p.dx;
+    f.xc[x] = (x-0.5)*p.dx;
+
+    if(x<p.N/2)
+      f.E[x] = El;
+    else
+      f.E[x] = Er;
+
+    f.phi[x] = 0.0;
+    f.pi[x] = 0.0;
+    f.pifull[x] = 0.0;
+    f.Z[x] = 0.0;
+    f.v[x] = 0.0;
+    f.gb[x] = 1.0;
+
+  }
+}
