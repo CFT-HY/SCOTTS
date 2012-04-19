@@ -16,22 +16,42 @@ import Image, ImageTk
 def main():
 
 	similarity = False
+	animation = False
 
-	if not len(sys.argv) in [3,4]:
-		sys.stderr.write('Usage: %s <output> <step> [similarity]\n\n' % sys.argv[0])
+	if not len(sys.argv) in [3,4,5]:
+		sys.stderr.write('Usage: %s <output> <step> [similarity] [animation]\n\n' % 
+				 sys.argv[0])
 		sys.stderr.write('Try step of 10 to start.\n\n')
 		sys.stderr.write('The x-axis is in the frame of the grid, unless\n' +
 				 '\'similarity\' is selected. This also changes\n' +
 				 'the y-axis to be appropriate to shocks.\n\n')
+		sys.stderr.write('Using \'animation\' will generate all the images\n' +
+				 'then attempt to stitch into a movie with ffmpeg.\n' +
+				 'The resulting movie will be movie-$PID.avi.\n\n')
+		sys.stderr.write('Use the EXPERIMENTAL animation flag at your own risk!!!\n\n')
 		sys.exit(100)
 
-	if len(sys.argv) == 4:
-		if not string.strip(string.lower(sys.argv[3])) == 'similarity':
-			sys.stderr.write('Third argument can only be \'similarity\'\n')
+	if len(sys.argv) > 3:
+		if not string.strip(string.lower(sys.argv[3])) in ['similarity','animation']:
+			sys.stderr.write('Optional arguments are \'similarity\', \'animation\'\n')
 			sys.exit(100)
-		else:
+		elif string.strip(string.lower(sys.argv[3])) == 'similarity':
 			sys.stderr.write('-- similarity solution options enabled\n')
 			similarity = True
+		else:
+			sys.stderr.write('-- generating animation\n')
+			animation = True
+
+	if len(sys.argv) > 4:
+		if not string.strip(string.lower(sys.argv[4])) in ['similarity','animation']:
+			sys.stderr.write('Optional arguments are \'similarity\', \'animation\'\n')
+			sys.exit(100)
+		elif string.strip(string.lower(sys.argv[4])) == 'similarity':
+			sys.stderr.write('-- similarity solution options enabled\n')
+			similarity = True
+		else:
+			sys.stderr.write('-- generating animation\n')
+			animation = True
 
 	scaling = False
 
@@ -61,6 +81,8 @@ def main():
 	xvalues = array.array('d')
 	y1values = array.array('d')
 	y2values = array.array('d')
+	y3values = array.array('d')
+	y4values = array.array('d')
 
 
 	try:
@@ -68,6 +90,8 @@ def main():
 		xvalues.read(fh, L)
 		y1values.read(fh, L)
 		y2values.read(fh, L)
+		y3values.read(fh, L)
+		y4values.read(fh, L)
 	except EOFError:
 		sys.stderr.write('Can\'t even read a single record!\n')
 		sys.exit(100)
@@ -76,6 +100,10 @@ def main():
 	fh.seek(integer_offset)
 
 	sys.stderr.write('Record is %d bytes\n' % record_offset)
+
+	if animation:
+		os.mkdir('/tmp/movietmp-%d/' % os.getpid())
+		sys.stderr.write('Made /tmp/movietmp-%d/ for animation stills\n' % os.getpid())
 
 	try:
 
@@ -214,10 +242,33 @@ def main():
 			thelabel.config(image=tkimage)
 			
 			root.update_idletasks()
-			
+
 			root.update()
 
+			if animation:
+				os.system(('cp /tmp/animate.%d.png ' +
+					  '/tmp/movietmp-%d/animate.%05d.png') %
+					  (os.getpid(), os.getpid(), i))
+				sys.stderr.write('Written to ' +
+						 '/tmp/movietmp-%d/animate.%05d.png\n' %
+						 (os.getpid(), i))
+
+
 			i = i + 1
+
+		if animation:
+			sys.stderr.write('Making a movie...\n')
+#			os.system(('ffmpeg -r 10 -b 1000 -i /tmp/movietmp-%d/animate.%%05d.png '
+#				   + 'movie-%d.mp4\n') %
+#				  (os.getpid(), os.getpid()))
+
+			os.system(('mencoder \"mf:///tmp/movietmp-%d/animate*png\" -mf ' +
+				   'fps=10 -o movie-%d.avi -ovc lavc -lavcopts ' +
+				   'vcodec=msmpeg4v2:vbitrate=800\n') %
+				  (os.getpid(), os.getpid()))
+
+			sys.stderr.write('Your movie should be in movie-%d.avi\n' %
+					 os.getpid())
 			
 	except KeyboardInterrupt:
 		sys.stderr.write('Giving up gracefully...\n')
@@ -229,9 +280,14 @@ def main():
 			os.remove('/tmp/animate.%d.temp3' % os.getpid())
 			os.remove('/tmp/animate.%d.temp4' % os.getpid())
 			os.remove('/tmp/animate.%d.png' % os.getpid())
+
 			sys.stderr.write('Successfully removed temp files\n')
-		except OSError:
-			pass
+
+			if animation:
+				os.system('rm -rvf /tmp/movietmp-%d/' % os.getpid())
+
+		except OSError, e:
+			sys.stderr.write('OS error: %s\n' % `e`)
 
 if __name__ == '__main__':
     main()
