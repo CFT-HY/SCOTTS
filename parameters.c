@@ -45,6 +45,8 @@ hydro_params get_parameters()
 
   int set_interval = 0;
 
+  int set_initial = 0;
+
   char key[100];
   char value[100];
   char total[200];
@@ -133,6 +135,19 @@ hydro_params get_parameters()
       parameters.interval = strtod(value,NULL);
       set_interval = 1;
     }
+    else if(!strcasecmp(key,"initial")) {
+      if(!strcasecmp(value, "shocktube")) {
+	parameters.initial = INIT_SHOCK_TUBE;
+      } else if(!strcasecmp(value, "bubble")) {
+	parameters.initial = INIT_BUBBLE;
+      } else {
+	fprintf(stderr, "warning, unrecognised value for initial" \
+		" (%s); defaulting to bubble.\n", value);
+	parameters.initial = INIT_BUBBLE;
+      }
+      set_initial = 1;
+    }
+
 
   }
   
@@ -167,7 +182,11 @@ hydro_params get_parameters()
   } else if(!set_interval) {
     fprintf(stderr, "Did not set parameter \'interval\'\n");
     exit(100);
+  } else if(!set_initial) {
+    fprintf(stderr, "Did not set parameter \'initial\'\n");
+    exit(100);
   }
+
 
   // Report what we found
   fprintf(stderr,"-- Read parameters from stdin:\n" \
@@ -180,6 +199,13 @@ hydro_params get_parameters()
 	  parameters.Lheat, parameters.sigma, parameters.lcorr, \
 	  parameters.interval);
 
+  if(parameters.initial == INIT_SHOCK_TUBE) {
+    fprintf(stderr, "-- shock tube\n");
+  } else if(parameters.initial == INIT_BUBBLE) {
+    fprintf(stderr, "-- bubble\n");
+  } else {
+    fprintf(stderr, "-- warning, somehow have unknown initial conds.\n");
+  }
 
   return parameters;
 

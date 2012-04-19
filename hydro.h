@@ -7,6 +7,9 @@
 #include <stdio.h>
 #include <strings.h>
 
+#define INIT_SHOCK_TUBE 1
+#define INIT_BUBBLE 2
+
 typedef struct {
   double dx;
   double dt;
@@ -33,6 +36,8 @@ typedef struct {
   double T0;
 
   int interval;
+
+  int initial;
 } hydro_params;
 
 typedef struct {
@@ -78,32 +83,26 @@ double total_energy(hydro_fields f, int **nb, hydro_params p);
 // eos.c
 
 void find_Ta(hydro_fields f, hydro_params p);
-
 void eq_of_state(hydro_fields f, hydro_params p);
 
 // transport.c
 
 void donor_E(hydro_fields f, int **nb, hydro_params p);
-
 void donor_Z(hydro_fields f, int **nb, hydro_params p);
-
 void transport_E(hydro_fields f, int **nb, hydro_params p);
-
 void transport_Z(hydro_fields f, int **nb, hydro_params p);
 
 // initial.c
 
 void create_1D_bubble(hydro_fields f, hydro_params p);
-
-
 double psibar(double x, double lbar);
-
 void create_gaussian_bubble(hydro_fields f, hydro_params p);
+void create_shock_tube(hydro_fields f, hydro_params p);
 
 // output.c
 
 double wallpos(hydro_fields f, hydro_params p);
-
+double get_gamma_max(hydro_fields f, hydro_params p);
 
 // parameters.c
 

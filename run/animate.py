@@ -14,10 +14,24 @@ import Image, ImageTk
 
 
 def main():
-	if not len(sys.argv) == 3:
-		sys.stderr.write('Usage: %s <output> <step>\n' % sys.argv[0])
-		sys.stderr.write('Try step of 10 to start.\n')
+
+	similarity = False
+
+	if not len(sys.argv) in [3,4]:
+		sys.stderr.write('Usage: %s <output> <step> [similarity]\n\n' % sys.argv[0])
+		sys.stderr.write('Try step of 10 to start.\n\n')
+		sys.stderr.write('The x-axis is in the frame of the grid, unless\n' +
+				 '\'similarity\' is selected. This also changes\n' +
+				 'the y-axis to be appropriate to shocks.\n\n')
 		sys.exit(100)
+
+	if len(sys.argv) == 4:
+		if not string.strip(string.lower(sys.argv[3])) == 'similarity':
+			sys.stderr.write('Third argument can only be \'similarity\'\n')
+			sys.exit(100)
+		else:
+			sys.stderr.write('-- similarity solution options enabled\n')
+			similarity = True
 
 	scaling = False
 
@@ -76,6 +90,8 @@ def main():
 			xvalues = array.array('d')
 			y1values = array.array('d')
 			y2values = array.array('d')
+			y3values = array.array('d')
+			y4values = array.array('d')
 
 
 			try:
@@ -83,6 +99,8 @@ def main():
 				xvalues.read(fh, L)
 				y1values.read(fh, L)
 				y2values.read(fh, L)
+				y3values.read(fh, L)
+				y4values.read(fh, L)
 			except EOFError:
 				sys.stderr.write('Run out of file between ' +
 						 'records %d and %d\n'
@@ -96,6 +114,8 @@ def main():
 
 			y1v = y1values.tolist()
 			y2v = y2values.tolist()
+			y3v = y3values.tolist()
+			y4v = y4values.tolist()
 			
 					
 			if not(i % increment == 0):
@@ -104,13 +124,21 @@ def main():
 			
 			ofile1 = open('/tmp/animate.%d.temp1' % os.getpid(),'w')
 			ofile2 = open('/tmp/animate.%d.temp2' % os.getpid(),'w')
+			ofile3 = open('/tmp/animate.%d.temp3' % os.getpid(),'w')
+			ofile4 = open('/tmp/animate.%d.temp4' % os.getpid(),'w')
 
 			for l in range(len(xv)):
 				ofile1.write('%lf %lf\n' % (xv[l], y1v[l]))
 				ofile2.write('%lf %lf\n' % (xv[l], y2v[l]))
+				ofile3.write('%lf %lf\n' % (xv[l], y3v[l]))
+				ofile4.write('%lf %lf\n' % (xv[l], y4v[l]))
+
+			xmax = max(xv)
 
 			ofile1.close()
 			ofile2.close()
+			ofile3.close()
+			ofile4.close()
 
 				
 			gnuplot_fh = os.popen('gnuplot -p','w')
@@ -118,29 +146,61 @@ def main():
 			gnuplot_fh.write('set output ' +
 					 '\'/tmp/animate.%d.png\'\n' 
 					 % os.getpid())
-#			gnuplot_fh.write('unset key\n')
+
 			gnuplot_fh.write('set title \'t=%lf\'\n' % t)
 
-			gnuplot_fh.write('set xlabel \'r/t\'\n')
-#			gnuplot_fh.write('set ylabel \'v\'\n')
+
 				
 			# suitable for velocity profile
-			gnuplot_fh.write('set xrange [0:1.0]\n')
-			gnuplot_fh.write('set yrange [0:0.025]\n')
+
+			if similarity:
+				gnuplot_fh.write('set xlabel \'x/t\'\n')
+				gnuplot_fh.write('set xrange [0:1]\n')
+				gnuplot_fh.write('set yrange [0:0.25]\n')
+			else:
+				gnuplot_fh.write('set xlabel \'x\'\n')
+				gnuplot_fh.write('set xrange [0:%f]\n' % xmax)
+				gnuplot_fh.write('set yrange [0:1]\n')
 				
 			# also suitable for velocity profile
-			gnuplot_fh.write(('plot ' +
-					 '\'/tmp/animate.%d.temp1\' ' +
-					 'u (($1-0.5)/(1+%lf)):2 ' +
-					 'w lines title \'v\', ' + 
-					  '\'/tmp/animate.%d.temp2\' ' +
-					 'u (($1-0.5)/(1+%lf)):($2/100) ' +
-					 'w lines title \'phi/25\'\n') % (os.getpid(),t,os.getpid(),t))
+			if similarity:
+				gnuplot_fh.write(('plot ' +
+						  '\'/tmp/animate.%d.temp1\' ' +
+						  'u (($1-0.5)/(1+%lf)):($2/100) ' +
+						  'w lines title \'E/100\', ' + 
+						  '\'/tmp/animate.%d.temp2\' ' +
+						  'u (($1-0.5)/(1+%lf)):($2/10) ' +
+						  'w lines title \'P/10\', ' +
+						  '\'/tmp/animate.%d.temp3\' ' +
+						  'u (($1-0.5)/(1+%lf)):2 ' +
+						  'w lines title \'v\', ' + 
+						  '\'/tmp/animate.%d.temp4\' ' +
+						  'u (($1-0.5)/(1+%lf)):($2/25) ' +
+						  'w lines title \'phi/25\'\n') %
+						 (os.getpid(),t,os.getpid(),t,
+						  os.getpid(),t,os.getpid(),t))
+
+			else:
+				
+				gnuplot_fh.write(('plot ' +
+						  '\'/tmp/animate.%d.temp1\' ' +
+						  'u 1:2 ' +
+						  'w lines title \'E\', ' + 
+						  '\'/tmp/animate.%d.temp2\' ' +
+						  'u 1:2 ' +
+						  'w lines title \'P\', ' +
+						  '\'/tmp/animate.%d.temp3\' ' +
+						  'u 1:2 ' +
+						  'w lines title \'v\', ' +
+						  '\'/tmp/animate.%d.temp4\' ' +
+						  'u 1:($2/25.0) ' +
+						  'w lines title \'phi/25\'\n') % 
+						 (os.getpid(),os.getpid(),os.getpid(),os.getpid()))
 
 			gnuplot_fh.close()
 
 			time.sleep(dt)
-			
+
 #			im = Image.open('/tmp/animate.%d.png' 
 #					% os.getpid())
 #			new_im = im.convert('L')
@@ -166,6 +226,8 @@ def main():
 		try:
 			os.remove('/tmp/animate.%d.temp1' % os.getpid())
 			os.remove('/tmp/animate.%d.temp2' % os.getpid())
+			os.remove('/tmp/animate.%d.temp3' % os.getpid())
+			os.remove('/tmp/animate.%d.temp4' % os.getpid())
 			os.remove('/tmp/animate.%d.png' % os.getpid())
 			sys.stderr.write('Successfully removed temp files\n')
 		except OSError:
