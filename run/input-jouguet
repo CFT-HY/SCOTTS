@@ -1,7 +1,7 @@
 # Example input file for 1D nearly-Jouguet shock
 
 # How long the simulation takes
-N	15000
+N	20000
 steps	50000
 
 # How big the simulation is
