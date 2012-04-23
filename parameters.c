@@ -190,11 +190,11 @@ hydro_params get_parameters()
 
   // Report what we found
   fprintf(stderr,"-- Read parameters from stdin:\n" \
-	  "-- dx %g, dt %g, N %d, steps %d\n" \
+	  "-- dx %g, dt %g, L %d, steps %d\n" \
 	  "-- Cav %g, C %g,\n" \
 	  "-- Lheat %g, sigma %g, lcorr %g\n" \
 	  "-- interval %d\n",
-	  parameters.dx, parameters.dt, parameters.N, parameters.steps, \
+	  parameters.dx, parameters.dt, parameters.L, parameters.steps, \
 	  parameters.Cav, parameters.C, \
 	  parameters.Lheat, parameters.sigma, parameters.lcorr, \
 	  parameters.interval);

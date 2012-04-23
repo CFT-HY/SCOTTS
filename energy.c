@@ -19,7 +19,7 @@ double total_energy(hydro_fields f, int **nb, hydro_params p) {
   double grdphi = 0.0;
 
   for(x = 0; x < p.N; x++) {
-    vol = p.dx;
+    vol = p.dx*p.dx*p.dx;
 
     // rest energy
     restE += (f.E[x]/f.gb[x])*vol;
@@ -34,10 +34,17 @@ double total_energy(hydro_fields f, int **nb, hydro_params p) {
     grdphi += 0.125*((f.phi[nb[x][0]] - f.phi[nb[x][1]])/p.dx)
       *((f.phi[nb[x][0]] - f.phi[nb[x][1]])/p.dx)*vol;
 
+    grdphi += 0.125*((f.phi[nb[x][2]] - f.phi[nb[x][3]])/p.dx)
+      *((f.phi[nb[x][2]] - f.phi[nb[x][3]])/p.dx)*vol;
+
+    grdphi += 0.125*((f.phi[nb[x][4]] - f.phi[nb[x][5]])/p.dx)
+      *((f.phi[nb[x][4]] - f.phi[nb[x][5]])/p.dx)*vol;
+
   }
 
   // Cast here
-  vol = (double)(f.xe[p.N-1]);
+  //  vol = (double)(f.xe[p.N-1]);
+  vol = ((double)(p.L*p.L*p.L))*p.dx*p.dx*p.dx;
 
   Etot = (restE+kinE+kinphi+grdphi);
 
