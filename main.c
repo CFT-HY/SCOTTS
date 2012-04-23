@@ -79,6 +79,10 @@ void free_fields(hydro_fields *f) {
   free(f->pi);
 }
 
+int iix(int x, int y, int z, params p) {
+  return ((x+p.L)%p.L)*p.L*p.L + ((y+p.L)%p.L)*p.L + ((z+p.L)%p.L);
+}
+
 int **init_nb(hydro_params p) {
   int x;
 
@@ -87,24 +91,20 @@ int **init_nb(hydro_params p) {
   // set up nb lookup table
   nb = (int **) malloc(p.N*sizeof(int *));
   
-  for(x=0; x<p.N; x++) {
+  for(x=0; x<p.L; x++) {
+    for(y=0; y<p.L; y++) {
+      for(z=0; z<p.L; z++) {
     
-    nb[x] = (int *)malloc(2*sizeof(int));
+	nb[x] = (int *)malloc(6*sizeof(int));
 
-    nb[x][0] = x+1;
-    nb[x][1] = x-1;
-    
-    // Reflective
-    if(nb[x][1] == -1)
-      nb[x][1] = 0;
-    
-    if(nb[x][0] == p.N)
-      nb[x][0] = p.N-1;
-    
-    // These would be the periodic bc's...
-    // nb[x][0] = (x+1)%N;
-    // nb[x][1] = (x+N-1)%N;
-    // ... which make no sense on a sphere
+	nb[x*p.L*p.L + y*p.L + z][0] = iix(x+1, y, z, p);
+	nb[x*p.L*p.L + y*p.L + z][1] = iix(x-1, y, z, p);
+        nb[x*p.L*p.L + y*p.L + z][2] = iix(x, y+1, z, p);
+	nb[x*p.L*p.L + y*p.L + z][3] = iix(x, y-1, z, p);
+	nb[x*p.L*p.L + y*p.L + z][4] = iix(x, y, z+1, p);
+	nb[x*p.L*p.L + y*p.L + z][5] = iix(x, y, z-1, p);
+      }
+    }
   }
 
   return nb;
@@ -123,10 +123,12 @@ void free_nb(int **nb, hydro_params p) {
 
 int main(int argc, char *argv[])
 {
-  fprintf(stderr,"1D hydro port\n");
+  fprintf(stderr,"3D hydro port\n");
 
   // Parse params from stdin
   hydro_params p = get_parameters();
+
+  p.N = p.L*p.L*p.L;
 
   // Calculate terms in potential
   p.alpha = 1.0/sqrt(2.0*p.sigma*
