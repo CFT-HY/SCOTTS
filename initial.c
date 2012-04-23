@@ -173,18 +173,19 @@ void initial_3D(hydro_fields f, hydro_params p) {
     //    f.xe[x] = -1.0*p.xxwall + (x-0.0)*p.dx;
     //    f.xc[x] = -1.0*p.xxwall + (x-0.5)*p.dx;
 
-    f.phi[x] = cstrab*drand48();
+    f.phi[x] = cstrab*(1.0 + 0.1*drand48());
 
 
 
     f.pifull[x] = 0.0;
 
-    f.T[x] = p.Tconst;
+    f.T[x] = 0.0; // p.Tconst;
     
-    f.E[x] = 3.0*p.a*f.T[x]*f.T[x]*f.T[x]*f.T[x]
+    f.E[x] = 0.0; /* 3.0*p.a*f.T[x]*f.T[x]*f.T[x]*f.T[x]
       + Vf(p, f.T[x], f.phi[x])
       - f.T[x]*VTf(p, f.T[x], f.phi[x]);
-    
+		  */
+
     // For debugging purposes
     // fprintf(stderr,"xc = %lf fi = %lf E = %lf\n", xc[x], phi[x],E[x]);
 
