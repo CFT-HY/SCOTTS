@@ -139,6 +139,68 @@ void create_gaussian_bubble(hydro_fields f, hydro_params p) {
 
 
 
+void initial_3D(hydro_fields f, hydro_params p) {
+  
+
+  double sigmlo = 2.0*sqrt(2.0)/81.0*p.alpha*p.alpha*p.alpha
+    /(p.lambda*p.lambda*sqrt(p.lambda));
+
+  fprintf(stderr, \
+	  "** Initial conditions magic:\n" \
+	  "** sigmlo %g\n", sigmlo);
+  
+  double phimin =  ( p.alpha*p.Tconst 
+		    + sqrt((p.alpha*p.Tconst)
+			   *(p.alpha*p.Tconst) - 
+			   4*p.lambda*p.gamma*(p.Tconst
+					   *p.Tconst -
+					   p.T0*p.T0)) )
+    / (2*p.lambda);
+
+  double cstrab = 1.0*phimin;
+
+  double Rlapab = 2.0*sigmlo/(-1.0*Vf(p, p.Tconst, phimin));
+
+  double Rtenab = Rlapab;
+
+  fprintf(stderr, \
+	  "** phimin %g, cstrab %g, Rtenab %g\n", \
+	  phimin, cstrab, Rtenab);
+
+  int x;
+
+  for(x = 0; x < p.N; x++) {
+    //    f.xe[x] = -1.0*p.xxwall + (x-0.0)*p.dx;
+    //    f.xc[x] = -1.0*p.xxwall + (x-0.5)*p.dx;
+
+    f.phi[x] = cstrab*drand48();
+
+
+
+    f.pifull[x] = 0.0;
+
+    f.T[x] = p.Tconst;
+    
+    f.E[x] = 3.0*p.a*f.T[x]*f.T[x]*f.T[x]*f.T[x]
+      + Vf(p, f.T[x], f.phi[x])
+      - f.T[x]*VTf(p, f.T[x], f.phi[x]);
+    
+    // For debugging purposes
+    // fprintf(stderr,"xc = %lf fi = %lf E = %lf\n", xc[x], phi[x],E[x]);
+
+    f.Z[x] = 0.0;
+    f.v[x] = 0.0;
+
+    f.gb[x] = 1.0;
+
+  }
+}
+
+
+
+
+
+
 
 void create_shock_tube(hydro_fields f, hydro_params p) {
   

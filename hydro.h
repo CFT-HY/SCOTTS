@@ -99,6 +99,7 @@ void create_1D_bubble(hydro_fields f, hydro_params p);
 double psibar(double x, double lbar);
 void create_gaussian_bubble(hydro_fields f, hydro_params p);
 void create_shock_tube(hydro_fields f, hydro_params p);
+void initial_3D(hydro_fields f, hydro_params p);
 
 // output.c
 
