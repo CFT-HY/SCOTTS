@@ -79,12 +79,12 @@ void free_fields(hydro_fields *f) {
   free(f->pi);
 }
 
-int iix(int x, int y, int z, params p) {
+int iix(int x, int y, int z, hydro_params p) {
   return ((x+p.L)%p.L)*p.L*p.L + ((y+p.L)%p.L)*p.L + ((z+p.L)%p.L);
 }
 
 int **init_nb(hydro_params p) {
-  int x;
+  int x, y, z;
 
   int **nb;
 
