@@ -95,7 +95,7 @@ int **init_nb(hydro_params p) {
     for(y=0; y<p.L; y++) {
       for(z=0; z<p.L; z++) {
     
-	nb[x] = (int *)malloc(6*sizeof(int));
+	nb[x*p.L*p.L + y*p.L + z] = (int *)malloc(6*sizeof(int));
 
 	nb[x*p.L*p.L + y*p.L + z][0] = iix(x+1, y, z, p);
 	nb[x*p.L*p.L + y*p.L + z][1] = iix(x-1, y, z, p);
@@ -180,7 +180,7 @@ int main(int argc, char *argv[])
   fprintf(stderr, "- Zeroed fields.\n");
 
   // initial conditions
-  if(p.initial == INIT_BUBBLE) {
+  /*  if(p.initial == INIT_BUBBLE) {
     create_gaussian_bubble(f, p);
   } else if(p.initial == INIT_SHOCK_TUBE) {
     create_shock_tube(f, p);
@@ -188,6 +188,11 @@ int main(int argc, char *argv[])
     fprintf(stderr, "Unknown initial condition parameter!\n");
     exit(100);
   }
+  */
+
+  initial_3D(f,p);
+
+  fprintf(stderr, "Initial conditions done\n");
 
   int **nb;
 
@@ -228,18 +233,21 @@ int main(int argc, char *argv[])
     // Do field step
     evolve_field(f, nb, p);
 
+    
     // Advection of state variables
-    donor_E(f, nb, p);
-    donor_Z(f, nb, p);
+    // donor_E(f, nb, p);
+    // donor_Z(f, nb, p);
 
     // Calculate EOS
     eq_of_state(f, p);
 
     // Do the hydro bits
-    evolve_hydro(f, nb, p);
+    // evolve_hydro(f, nb, p);
+    
 
     // Solve for T
     find_Ta(f, p);
+    
 
     t += p.dt;
 

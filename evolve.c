@@ -13,7 +13,9 @@ void evolve_backstep(hydro_fields f, int **nb, hydro_params p) {
 
   for(x = 0; x < p.N; x++)
     f.pi[x] = f.pifull[x] - 0.5*p.dt
-      *(f.phi[nb[x][0]] - 2.0*f.phi[x] + f.phi[nb[x][1]])/(p.dx*p.dx)
+      *(f.phi[nb[x][0]] + f.phi[nb[x][2]] + f.phi[nb[x][4]] 
+	- 6.0*f.phi[x] 
+	+ f.phi[nb[x][1]] + f.phi[nb[x][3]] + f.phi[nb[x][5]])/(p.dx*p.dx)
       + 0.125*p.dt*p.dt
       *(f.pifull[nb[x][0]] - 2.0*f.pifull[x] + f.pifull[nb[x][1]])/(p.dx*p.dx)
       + 0.5*p.dt*Vdf(p, f.T[x], f.phi[x] - 0.25*p.dt*f.pifull[x]);
@@ -37,6 +39,7 @@ void evolve_field(hydro_fields f, int **nb, hydro_params p) {
     f.pi[x] = (1+s)*f.pi[x]/(1-s);
 
     // gradient term
+#warning evolve_field p.C term not done!
     f.pi[x] = f.pi[x] 
       - 0.5*p.C*f.gb[x]*(f.v[nb[x][1]]*(f.phi[x]-f.phi[nb[x][1]])
 			 + f.v[x]*(f.phi[nb[x][0]] - f.phi[x]))/p.dx;
@@ -44,7 +47,9 @@ void evolve_field(hydro_fields f, int **nb, hydro_params p) {
     // scalar field gradient and potential terms
     f.pi[x] = f.pi[x] 
       + p.dt
-      *((f.phi[nb[x][0]] - 2.0*f.phi[x] + f.phi[nb[x][1]])/(p.dx*p.dx)
+      *((f.phi[nb[x][0]] + f.phi[nb[x][2]] + f.phi[nb[x][4]]
+	 - 6.0*f.phi[x] 
+	 + f.phi[nb[x][1]] + f.phi[nb[x][3]] + f.phi[nb[x][5]])/(p.dx*p.dx)
 	- Vdf(p, f.T[x], f.phi[x]));
     
 
