@@ -13,7 +13,7 @@
 typedef struct {
   double dx;
   double dt;
-  int N;
+  int L;
   int steps;
 
   double Cav;
@@ -22,6 +22,9 @@ typedef struct {
   double Lheat;
   double sigma;
   double lcorr;
+
+  int interval;
+  int initial;
 
   // The following parameters are calculated
   double xxwall;
@@ -32,12 +35,10 @@ typedef struct {
   double gamma;
 
   double a;
-
+  int N;
   double T0;
 
-  int interval;
 
-  int initial;
 } hydro_params;
 
 typedef struct {

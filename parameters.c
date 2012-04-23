@@ -33,7 +33,7 @@ hydro_params get_parameters()
   int set_dx = 0;
   int set_dt = 0;
  
-  int set_N = 0;
+  int set_L = 0;
   int set_steps = 0;
 
   int set_Cav = 0;
@@ -103,9 +103,9 @@ hydro_params get_parameters()
       parameters.dt = strtod(value,NULL);
       set_dt = 1;
     }    
-    else if(!strcasecmp(key,"N")) {
-      parameters.N = strtol(value,NULL,10);
-      set_N = 1;
+    else if(!strcasecmp(key,"L")) {
+      parameters.L = strtol(value,NULL,10);
+      set_L = 1;
     } 
     else if(!strcasecmp(key,"steps")) {
       parameters.steps = strtol(value,NULL,10);
@@ -158,8 +158,8 @@ hydro_params get_parameters()
   } else if(!set_dt) {
     fprintf(stderr, "Did not set parameter \'dt\'\n");
     exit(100);
-  } else if(!set_N) {
-    fprintf(stderr, "Did not set parameter \'N\'\n");
+  } else if(!set_L) {
+    fprintf(stderr, "Did not set parameter \'L\'\n");
     exit(100);
   } else if(!set_steps) {
     fprintf(stderr, "Did not set parameter \'steps\'\n");
