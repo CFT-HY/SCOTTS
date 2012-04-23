@@ -78,6 +78,7 @@ void Vdpot(hydro_params p, double *T, double *phi, double *Vprecalc);
 
 // energy.c
 
+double field_energy(hydro_fields f, int **nb, hydro_params p);
 double total_energy(hydro_fields f, int **nb, hydro_params p);
 
 

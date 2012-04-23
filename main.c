@@ -239,14 +239,14 @@ int main(int argc, char *argv[])
     // donor_Z(f, nb, p);
 
     // Calculate EOS
-    eq_of_state(f, p);
+    //    eq_of_state(f, p);
 
     // Do the hydro bits
     // evolve_hydro(f, nb, p);
     
 
     // Solve for T
-    find_Ta(f, p);
+    //    find_Ta(f, p);
     
 
     t += p.dt;
@@ -258,7 +258,7 @@ int main(int argc, char *argv[])
       printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\n",
 	     step, t,
 	     total_energy(f, nb, p), 
-	     wallpos(f, p), wmax);
+	     field_energy(f, nb, p), wmax);
     
   } // main loop ends here
 
