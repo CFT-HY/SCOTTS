@@ -56,6 +56,7 @@ void eq_of_state(hydro_fields f, hydro_params p) {
 
     f.p[x] = p.a*f.T[x]*f.T[x]*f.T[x]*f.T[x] - Vnew[x];
     f.kappa[x] = 1.0 + f.W[x]*f.p[x]/f.E[x];
+
   }
   
   free(Vnew);

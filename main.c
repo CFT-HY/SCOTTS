@@ -44,6 +44,16 @@ void alloc_fields(hydro_fields *f, hydro_params p) {
 }
 
 
+void dump(double *field, hydro_params p) {
+  int x;
+
+  fprintf(stderr,"%g", field[0]);
+  for(x=1;x<p.N;x++) {
+    fprintf(stderr,", %g", field[x]);
+  }
+  fprintf(stderr,"\n");
+}
+
 void zero_fields(hydro_fields f, hydro_params p) {
 
   int x;
@@ -148,8 +158,9 @@ int main(int argc, char *argv[])
 
 
   // Parse params from stdin
-  hydro_params p = get_parameters();
+  hydro_params p = get_parameters(argv[1]);
 
+  
 
   p.N = p.L*p.L*p.L;
 
@@ -231,7 +242,9 @@ int main(int argc, char *argv[])
 
   // Output of some field at every time step
   FILE *phi_fh = fopen("field.dat","w");
+#ifdef SILO
   silo_init(p);
+#endif // SILO
 
   // Step back for leapfrog initial conds
   evolve_backstep(f, nb, p);
@@ -245,7 +258,9 @@ int main(int argc, char *argv[])
 
     if(step % p.interval == 0) {
 
+#ifdef SILO
       write_silo_step(f, p, step);
+#endif // SILO
       // Write time step, x coords and velocity field
       fwrite(&t, sizeof(double), 1, phi_fh);
       fwrite(f.E, sizeof(double), p.N, phi_fh);
@@ -259,18 +274,25 @@ int main(int argc, char *argv[])
     }
 
     // Do field step
-    //    evolve_field(f, nb, p);
+        evolve_field(f, nb, p);
 
 
+    //    fprintf(stderr,"E[0] = %lf\n", f.E[0]);
+    //    fprintf(stderr,"E[L,L,L] = %lf\n", f.E[iix(p.L-1,p.L-1,p.L-1,p)]);
     // Advection of state variables
-    //    donor_E(f, nb, p);
-    //    donor_Z(f, nb, p);
+
+    //    fprintf(stderr,"don-be E[0] = %lf\n", f.E[0]);
+        donor_E(f, nb, p);
+    //    fprintf(stderr,"don-af E[0] = %lf\n", f.E[0]);
+        donor_Z(f, nb, p);
 
     // Calculate EOS
     eq_of_state(f, p);
 
     // Do the hydro bits
     evolve_hydro(f, nb, p);
+
+    //   dump(f.Zx,p);
     
     // Solve for T
     find_Ta(f, p);

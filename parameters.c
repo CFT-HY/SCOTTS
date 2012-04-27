@@ -25,7 +25,7 @@
  * naive use of fgets, but this is unlikely to cause trouble
  * with the sort of parameters we are using.
  */
-hydro_params get_parameters()
+hydro_params get_parameters(char *infile)
 {
 
   hydro_params parameters;
@@ -54,10 +54,14 @@ hydro_params get_parameters()
   int ret;
   char *retptr;
 
-  while(!feof(stdin)) {
+  FILE *fp;
+
+  fp = fopen(infile,"r");
+
+  while(!feof(fp)) {
 
     // gets is dodgy, fgets less so
-    retptr = fgets(total,198,stdin);
+    retptr = fgets(total,198,fp);
 
     // probably EOF
     if(retptr == NULL)
@@ -189,11 +193,12 @@ hydro_params get_parameters()
 
 
   // Report what we found
-  fprintf(stderr,"-- Read parameters from stdin:\n" \
+  fprintf(stderr,"-- Read parameters from %s:\n" \
 	  "-- dx %g, dt %g, L %d, steps %d\n" \
 	  "-- Cav %g, C %g,\n" \
 	  "-- Lheat %g, sigma %g, lcorr %g\n" \
 	  "-- interval %d\n",
+	  infile,
 	  parameters.dx, parameters.dt, parameters.L, parameters.steps, \
 	  parameters.Cav, parameters.C, \
 	  parameters.Lheat, parameters.sigma, parameters.lcorr, \

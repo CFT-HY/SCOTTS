@@ -127,7 +127,7 @@ double get_gamma_max(hydro_fields f, hydro_params p);
 
 // parameters.c
 
-hydro_params get_parameters();
+hydro_params get_parameters(char *filename);
 
 // silage.c
 
