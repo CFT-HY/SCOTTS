@@ -39,13 +39,13 @@ double get_gamma_max(hydro_fields f, hydro_params p) {
 
   int x, xmax;
 
-  double gmax = f.gb[0];
+  double gmax = f.W[0];
   
   double gtest;
 
   // Just search for maxmimum
   for(x = 1; x < p.N; x++) {
-    gtest = f.gb[x];
+    gtest = f.W[x];
     if(gtest > gmax) {
       xmax = x;
       gmax = gtest;

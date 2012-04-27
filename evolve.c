@@ -35,14 +35,16 @@ void evolve_field(hydro_fields f, int **nb, hydro_params p) {
     piold = f.pi[x];
 
     // first-order viscosity term
-    s = -0.5*p.dt*p.C*f.gb[x];
+    s = -0.5*p.dt*p.C*f.W[x];
     f.pi[x] = (1+s)*f.pi[x]/(1-s);
 
     // gradient term
 #warning evolve_field p.C term not done!
+    /*
     f.pi[x] = f.pi[x] 
-      - 0.5*p.C*f.gb[x]*(f.v[nb[x][1]]*(f.phi[x]-f.phi[nb[x][1]])
+      - 0.5*p.C*f.W[x]*(f.v[nb[x][1]]*(f.phi[x]-f.phi[nb[x][1]])
 			 + f.v[x]*(f.phi[nb[x][0]] - f.phi[x]))/p.dx;
+    */
 
     // scalar field gradient and potential terms
     f.pi[x] = f.pi[x] 
@@ -68,11 +70,12 @@ void evolve_field(hydro_fields f, int **nb, hydro_params p) {
 
 
 
+
 /* evolve_hydro(...)
  *
  * Straight from fortran. Original comment:
  *
- *   --  Does hydro except transport.  E  and  Z evolved.  v  and gb
+ *   --  Does hydro except transport.  E  and  Z evolved.  v  and W
  *       obtained.  Uses artificial viscosity  Q,  adjusted with  Cav.
  *   --  The order chosen is not unique, but is what I used in
  *       dissertation.  Should experiment with different orders,
@@ -82,21 +85,26 @@ void evolve_field(hydro_fields f, int **nb, hydro_params p) {
  */
 void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
 
-  int x;
+  int x, y, z;
   
   double *Vdmid = (double *)malloc(p.N*sizeof(double));
-  double *gbold = (double *)malloc(p.N*sizeof(double));
+  double *Wold = (double *)malloc(p.N*sizeof(double));
   
   double *phiav = (double *)malloc(p.N*sizeof(double));
   double *dxphi = (double *)malloc(p.N*sizeof(double));
   
-  double *gbv = (double *)malloc(p.N*sizeof(double));
+  double *Wv = (double *)malloc(p.N*sizeof(double));
+
+
+  double *Wfacex = (double *)malloc(p.N*sizeof(double));
+  double *Wfacey = (double *)malloc(p.N*sizeof(double));
+  double *Wfacez = (double *)malloc(p.N*sizeof(double));
 
   double *Q = (double *)malloc(p.N*sizeof(double));
   
   double gpi, dv, gv, inner, s;
 
-
+  /*
   // phi lives inside zones, Z lives on zone boundaries
   // phi is half a timestep ahead of Z (being zonal)
   // therefore the phi that Z sees is phiav, and the gradient of phi is dxphi
@@ -118,7 +126,8 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
 
    
     // evolve Z (eq 10 of 9512202)
-    f.Z[x] = f.Z[x] - p.dt*0.5*(p.C*(f.gb[x] + f.gb[nb[x][0]])		\
+    
+    f.Z[x] = f.Z[x] - p.dt*0.5*(p.C*(f.W[x] + f.W[nb[x][0]])		\
 				// eta times boundary centred gamma
 				*(0.5*(f.pi[x] + f.pi[nb[x][0]]) 
 				  + f.v[x]*dxphi[x] ) 			\
@@ -126,11 +135,11 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
 				+(Vdmid[x] + Vdmid[nb[x][0]]))*dxphi[x];
                                 //  SPAT'Y recentred potential times grad(phi)
 
-
+				
 
     // zone centred gamma times (already zone centred) pi
     // plus v*grad(phi) which is all zone centred
-    gpi = f.gb[x]*(f.pi[x] + 0.5*(f.v[nb[x][1]]*dxphi[nb[x][1]] 
+    gpi = f.W[x]*(f.pi[x] + 0.5*(f.v[nb[x][1]]*dxphi[nb[x][1]] 
 				  + f.v[x]*dxphi[x]));
     // in above, could change nb[x][1] to nb[x][0] from fortran
     // for both v and dxphi
@@ -148,38 +157,193 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
       Q[x] = 0.0;
 
     // Artificial viscosity term
-    f.E[x] = f.E[x] - p.dt*Q[x]*f.gb[x]*dv/p.dx;
+    f.E[x] = f.E[x] - p.dt*Q[x]*f.W[x]*dv/p.dx;
 
   }
+  */
 
 
+  double p_bar_x_plus, p_bar_x_minus, p_bar_y_plus, p_bar_y_minus, p_bar_z_plus, p_bar_z_minus;
 
   // Pressure acceleration (and artificial viscosity for 'Z')
-  // W&M sec 2.4.12
-  for(x = 0; x < p.N; x++) {
+  // W&M sec 2.4.12, 3.5.1, DONE
+  for(x = 0; x < p.L; x++) {
+    for(y = 0; y < p.L; y++) {
+      for(z = 0; z < p.L; z++) {
 
-    // Q term related to artificial viscosity; otherwise W&M eq (2.103)
-    f.Z[x] = f.Z[x] - p.dt*(f.p[nb[x][0]] - f.p[x] + Q[nb[x][0]] - Q[x])/p.dx;
+	// equation (3.68)
+	// repeated calculation of these unnecessary, so split it out later
+	p_bar_x_plus = (f.p[iix(x,y,z,p)] + f.p[iix(x,y-1,z,p)] 
+			+ f.p[iix(x,y,z-1,p)] + f.p[iix(x,y-1,z-1,p)])/4.0;
 
-    // update velocity v; denominator is W&M eq (2.85)
-    // but note grid is Eulerian and D=0
-    // then gv is the four-velocity (2.84)
-    // (what we call kappa they call sigma, ish?)
-    gv = 2.0*f.Z[x] / (f.kappa[x]*(f.E[x] + f.E[nb[x][0]]) );
+	p_bar_x_minus = (f.p[iix(x-1,y,z,p)] + f.p[iix(x-1,y-1,z,p)] 
+			 + f.p[iix(x-1,y,z-1,p)] + f.p[iix(x-1,y-1,z-1,p)])/4.0;
 
-    // three velocity
-    f.v[x] = gv/sqrt(1.0 + gv*gv);
+
+	p_bar_y_plus = (f.p[iix(x,y,z,p)] + f.p[iix(x-1,y,z,p)] 
+			+ f.p[iix(x,y,z-1,p)] + f.p[iix(x-1,y,z-1,p)])/4.0;
+
+
+	p_bar_y_minus = (f.p[iix(x,y-1,z,p)] + f.p[iix(x-1,y-1,z,p)] 
+			 + f.p[iix(x,y-1,z-1,p)] + f.p[iix(x-1,y-1,z-1,p)])/4.0;
+
+
+	p_bar_z_plus = (f.p[iix(x,y,z,p)] + f.p[iix(x-1,y,z,p)] 
+			+ f.p[iix(x,y-1,z,p)] + f.p[iix(x-1,y-1,z,p)])/4.0;
+
+
+	p_bar_z_minus = (f.p[iix(x,y,z-1,p)] + f.p[iix(x-1,y,z-1,p)] 
+			 + f.p[iix(x,y-1,z-1,p)] + f.p[iix(x-1,y-1,z-1,p)])/4.0;
+
+
+	f.Zx[iix(x,y,z,p)] = (p_bar_x_plus - p_bar_x_minus)*p.dt/p.dx;
+
+	f.Zy[iix(x,y,z,p)] = (p_bar_y_plus - p_bar_y_minus)*p.dt/p.dx;
+
+	f.Zz[iix(x,y,z,p)] = (p_bar_z_plus - p_bar_z_minus)*p.dt/p.dx;
+      }
+    }
+  }
+  // 1D: Q term related to artificial viscosity; otherwise W&M eq (2.103)
+  //    f.Z[x] = f.Z[x] - p.dt*(f.p[nb[x][0]] - f.p[x] + Q[nb[x][0]] - Q[x])/p.dx;
+
+  
+
+  // update velocity v; denominator is W&M eq (2.85)
+  // but note grid is Eulerian and D=0
+  // then gv is the four-velocity (2.84)
+  // (what we call kappa they call sigma, ish?)
+
+  double sigmabar;
+
+  // Section 3.4.5, equations 3.5.7, 3.5.8
+  for(x = 0; x < p.L; x++) {
+    for(y = 0; y < p.L; y++) {
+      for(z = 0; z < p.L; z++) {  
+
+	sigmabar = (f.kappa[iix(x,y,z,p)]*f.E[iix(x,y,z,p)] 
+		    + f.kappa[iix(x-1,y,z,p)]*f.E[iix(x-1,y,z,p)]
+		    + f.kappa[iix(x-1,y-1,z,p)]*f.E[iix(x-1,y-1,z,p)]
+		    + f.kappa[iix(x-1,y-1,z-1,p)]*f.E[iix(x-1,y-1,z-1,p)]
+		    + f.kappa[iix(x,y-1,z-1,p)]*f.E[iix(x,y-1,z-1,p)]
+		    + f.kappa[iix(x-1,y,z-1,p)]*f.E[iix(x-1,y,z-1,p)]
+		    + f.kappa[iix(x,y-1,z,p)]*f.E[iix(x,y-1,z,p)]
+		    + f.kappa[iix(x,y,z-1,p)]*f.E[iix(x,y,z-1,p)])/8.0;
+
+	f.Ux[iix(x,y,z,p)] = f.Zx[iix(x,y,z,p)]/sigmabar;
+	f.Uy[iix(x,y,z,p)] = f.Zy[iix(x,y,z,p)]/sigmabar;
+	f.Uz[iix(x,y,z,p)] = f.Zz[iix(x,y,z,p)]/sigmabar;
+      }
+    }
   }
 
 
-  // Boundary conditions require this, if we don't do "wrap"
-  f.Z[0] = 0.0;
-  f.v[0] = 0.0;
 
 
-  // Original comment: "Obtain boost factor gb and pressure work on boost"
+  double ubarx, ubary, ubarz, W;
+
+  // face-centred x-cpt of 3-velocity
+  for(x = 0; x < p.L; x++) {
+    for(y = 0; y < p.L; y++) {
+      for(z = 0; z < p.L; z++) {  
+
+	ubarx = (f.Ux[iix(x,y,z,p)] + f.Ux[iix(x,y+1,z,p)] 
+		 + f.Ux[iix(x,y,z+1,p)] + f.Ux[iix(x,y+1,z+1,p)])/4.0;
+
+	ubary = (f.Uy[iix(x,y,z,p)] + f.Uy[iix(x,y+1,z,p)] 
+		 + f.Uy[iix(x,y,z+1,p)] + f.Uy[iix(x,y+1,z+1,p)])/4.0;
+
+	ubarz = (f.Uz[iix(x,y,z,p)] + f.Uz[iix(x,y+1,z,p)] 
+		 + f.Uz[iix(x,y,z+1,p)] + f.Uz[iix(x,y+1,z+1,p)])/4.0;
+
+	Wfacex[iix(x,y,z,p)] = sqrt(1.0 + ubarx*ubarx + ubary*ubary + ubarz*ubarz);
+
+	f.Vx[iix(x,y,z,p)] = ubarx/Wfacex[iix(x,y,z,p)];
+      }
+    }
+  }
+  // y-cpt
+  for(x = 0; x < p.L; x++) {
+    for(y = 0; y < p.L; y++) {
+      for(z = 0; z < p.L; z++) {  
+
+	ubarx = (f.Ux[iix(x,y,z,p)] + f.Ux[iix(x+1,y,z,p)] 
+		 + f.Ux[iix(x,y,z+1,p)] + f.Ux[iix(x+1,y,z+1,p)])/4.0;
+
+	ubary = (f.Uy[iix(x,y,z,p)] + f.Uy[iix(x+1,y,z,p)] 
+		 + f.Uy[iix(x,y,z+1,p)] + f.Uy[iix(x+1,y,z+1,p)])/4.0;
+
+	ubarz = (f.Uz[iix(x,y,z,p)] + f.Uz[iix(x+1,y,z,p)] 
+		 + f.Uz[iix(x,y,z+1,p)] + f.Uz[iix(x+1,y,z+1,p)])/4.0;
+
+	Wfacey[iix(x,y,z,p)] = sqrt(1.0 + ubarx*ubarx + ubary*ubary + ubarz*ubarz);
+
+	f.Vy[iix(x,y,z,p)] = ubary/Wfacey[iix(x,y,z,p)];
+      }
+    }
+  }
+  // z-cpt
+  for(x = 0; x < p.L; x++) {
+    for(y = 0; y < p.L; y++) {
+      for(z = 0; z < p.L; z++) {  
+
+	ubarx = (f.Ux[iix(x,y,z,p)] + f.Ux[iix(x,y+1,z,p)] 
+		 + f.Ux[iix(x+1,y,z,p)] + f.Ux[iix(x+1,y+1,z,p)])/4.0;
+
+	ubary = (f.Uy[iix(x,y,z,p)] + f.Uy[iix(x,y+1,z,p)] 
+		 + f.Uy[iix(x+1,y,z,p)] + f.Uy[iix(x+1,y+1,z,p)])/4.0;
+
+	ubarz = (f.Uz[iix(x,y,z,p)] + f.Uz[iix(x,y+1,z,p)] 
+		 + f.Uz[iix(x+1,y,z,p)] + f.Uz[iix(x+1,y+1,z,p)])/4.0;
+
+	Wfacez[iix(x,y,z,p)] = sqrt(1.0 + ubarx*ubarx + ubary*ubary + ubarz*ubarz);
+
+	f.Vz[iix(x,y,z,p)] = ubarz/Wfacez[iix(x,y,z,p)];
+      }
+    }
+  }
+
+  // End section 3.4.5
+
+  double utildex, utildey, utildez;
+
+  // Section 3.4.6
+  for(x = 0; x < p.L; x++) {
+    for(y = 0; y < p.L; y++) {
+      for(z = 0; z < p.L; z++) {
+
+	utildex = (f.Ux[iix(x,y,z,p)] 
+		   + f.Ux[iix(x+1,y,z,p)] + f.Ux[iix(x,y+1,z,p)] + f.Ux[iix(x,y,z+1,p)]
+		   + f.Ux[iix(x+1,y,z+1,p)] + f.Ux[iix(x,y+1,z+1,p)] + f.Ux[iix(x+1,y+1,z,p)]
+		   + f.Ux[iix(x+1,y+1,z+1,p)])/8.0;
+
+	utildey = (f.Uy[iix(x,y,z,p)] 
+		   + f.Uy[iix(x+1,y,z,p)] + f.Uy[iix(x,y+1,z,p)] + f.Uy[iix(x,y,z+1,p)]
+		   + f.Uy[iix(x+1,y,z+1,p)] + f.Uy[iix(x,y+1,z+1,p)] + f.Uy[iix(x+1,y+1,z,p)]
+		   + f.Uy[iix(x+1,y+1,z+1,p)])/8.0;
+
+	utildez = (f.Uz[iix(x,y,z,p)] 
+		   + f.Uz[iix(x+1,y,z,p)] + f.Uz[iix(x,y+1,z,p)] + f.Uz[iix(x,y,z+1,p)]
+		   + f.Uz[iix(x+1,y,z+1,p)] + f.Uz[iix(x,y+1,z+1,p)] + f.Uz[iix(x+1,y+1,z,p)]
+		   + f.Uz[iix(x+1,y+1,z+1,p)])/8.0;
+
+	Wold[iix(x,y,z,p)] = f.W[iix(x,y,z,p)];
+	f.W[iix(x,y,z,p)] = sqrt(1.0 + utildex*utildex + utildey*utildey + utildez*utildez);
+
+	s = (f.kappa[iix(x,y,z,p)] - 1)*(f.W[iix(x,y,z,p)] - Wold[iix(x,y,z,p)])
+	  /(f.W[iix(x,y,z,p)] + Wold[iix(x,y,z,p)]);
+	// sort of E*exp(-2.0*s)
+	f.E[iix(x,y,z,p)] = f.E[iix(x,y,z,p)]*(1-s)/(1+s);
+      }
+    }
+  }
+
+
+
+  /*
+  // Original comment: "Obtain boost factor W and pressure work on boost"
   for(x = 0; x < p.N; x++) {
-    gbold[x] = f.gb[x];
+    Wold[x] = f.W[x];
 
     // Calculate new zone-centred boost factor
     // this is just a repeat of what we did above...
@@ -188,59 +352,117 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
     // inner*inner should equal U^2 + U[nb[x][1]]^2
     // to give the zone centred gamma factor
     // instead this uses the arithmetic mean (cf W&M eq 2.88)
-    f.gb[x] = sqrt(1.0 + inner*inner);
+    f.W[x] = sqrt(1.0 + inner*inner);
 
     // This is W&M eq (2.89), poor man's way of doing the power
-    s = (f.kappa[x] - 1)*(f.gb[x] - gbold[x])/(f.gb[x] + gbold[x]);
+    s = (f.kappa[x] - 1)*(f.W[x] - Wold[x])/(f.W[x] + Wold[x]);
     // sort of E*exp(-2.0*s)
     f.E[x] = f.E[x]*(1-s)/(1+s);
 
   }
+  */
 
+  /*
 
   // Pressure work on divergence
-  // Original comment: "Like CW, use time-averaged  gb,  but new  v."
+  // Original comment: "Like CW, use time-averaged  W,  but new  v."
   for(x = 0; x < p.N; x++) {
 
     // Velocity times area (boundary coord squared)
     //times poor man's volume gamma
-    gbv[x] = f.v[x]
-      *(f.gb[x] + f.gb[nb[x][0]])/2.0;
+    Wv[x] = f.v[x]
+      *(f.W[x] + f.W[nb[x][0]])/2.0;
     // this is W*V, we calculate
   
-      // previously (why gbold is here, no idea):
-      //      *(gbold[x] + gb[x] + gb[nb[x][0]] + gb[nb[x][0]])/4.0;
+      // previously (why Wold is here, no idea):
+      //      *(Wold[x] + W[x] + W[nb[x][0]] + W[nb[x][0]])/4.0;
 
+  }
+  */
+
+
+
+  double qx, qy, qz, gradv;
+
+  for(x = 0; x < p.L; x++) {
+    for(y = 0; y < p.L; y++) {
+      for(z = 0; z < p.L; z++) {
+	qx = (f.Vx[iix(x,y,z,p)] + f.Vx[iix(x+1,y,z,p)])
+	  *(Wfacex[iix(x+1,y,z,p)] - Wfacex[iix(x,y,z,p)])*p.dt/(2.0*p.dx);
+
+	qy = (f.Vy[iix(x,y,z,p)] + f.Vy[iix(x,y+1,z,p)])
+	  *(Wfacey[iix(x,y+1,z,p)] - Wfacey[iix(x,y,z,p)])*p.dt/(2.0*p.dx);
+
+	qz = (f.Vz[iix(x,y,z,p)] + f.Vz[iix(x,y,z+1,p)])
+	  *(Wfacez[iix(x,y,z+1,p)] - Wfacez[iix(x,y,z,p)])*p.dt/(2.0*p.dx);
+
+	gradv = (qx+qy+qz)/f.W[iix(x,y,z,p)];
+
+	s = (f.kappa[x] - 1.0)*gradv/2.0;
+
+	f.E[x] = f.E[x]*(1-s)/(1+s);
+
+      }
+    }
   }
 
 
-  // Reflective BC's wrap
-  gbv[0] = 0.0;
-
+  /*
   // (grad w)/dx
   for(x = 0; x < p.N; x++) {
 
     // W&M (2.92) and (2.93) combined: divergence
-    s = (gbv[x] - gbv[nb[x][1]])/p.dx;
-    // divide by zone volume times zone centred boost (previously gb[x] + gbold[x], not sure why)
+    s = (Wv[x] - Wv[nb[x][1]])/p.dx;
+    // divide by zone volume times zone centred boost (previously W[x] + Wold[x], not sure why)
     s = s/1.0;
 
     // by this stage s should have contributions from inside (2.91) and (2.93)
     // here we do the kappa multiplication and divide by 2 in preparation for the poor man's exponential
     // we also divide by the common zone centred gamma factor
-    s =  s*(f.kappa[x] - 1.0) * p.dt/(2.0*f.gb[x]);
+    s =  s*(f.kappa[x] - 1.0) * p.dt/(2.0*f.W[x]);
 
     // smells like W&M eq (2.93)
     // similar to E*exp(-2.0*s);
     f.E[x] = f.E[x]*(1-s)/(1+s);
   }
+  */
+
+
+  // Section 3.4.4
+  double divv;
+  for(x = 0; x < p.L; x++) {
+    for(y = 0; y < p.L; y++) {
+      for(z = 0; z < p.L; z++) {
+	qx = (f.Vx[iix(x+1,y,z,p)] - f.Vx[iix(x,y,z,p)])/p.dx;
+	qy = (f.Vy[iix(x,y+1,z,p)] - f.Vy[iix(x,y,z,p)])/p.dx;
+	qz = (f.Vz[iix(x,y,z+1,p)] - f.Vz[iix(x,y,z,p)])/p.dx;
+
+	divv = 0.5*(qx+qy+qz);
+	
+
+	s = (f.kappa[x] - 1.0)*divv*p.dt/2.0;
+
+	f.E[x] = f.E[x]*(1-s)/(1+s);
+
+      }
+    }
+  }
+
+
+
+
 
 
   // Clean up memory. Surely we don't need all these temporary arrays?
+
+
   free(Vdmid);
-  free(gbold);
+  free(Wold);
+  free(Wfacex);
+  free(Wfacey); 
+  free(Wfacez);
+  free(Wv);
   free(phiav);
   free(dxphi);
-  free(gbv);
   free(Q);
 }

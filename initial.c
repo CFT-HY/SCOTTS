@@ -8,6 +8,7 @@
  *
  * Straight from fortran. Not very useful since we're spherical.
  */
+/*
 void create_1D_bubble(hydro_fields f, hydro_params p) {
 
   int x;
@@ -43,18 +44,19 @@ void create_1D_bubble(hydro_fields f, hydro_params p) {
 
     f.Z[x] = 0.0;
     f.v[x] = 0.0;
-    f.gb[x] = 1.0;
+    f.W[x] = 1.0;
 
   }
 
 }
-
+*/
 
 /* double psibar(double x, double lbar)
  *
  * Scale-invariant 1D bubble.
  * Straight from fortran.
  */
+/*
 double psibar(double x, double lbar) {
 
   double thx2 = tanh(x)*tanh(x);
@@ -70,6 +72,7 @@ double psibar(double x, double lbar) {
 
   return (2.0/fx)*(1-sqrt(1.0-fx));
 }
+*/
 
 
 /* void create_gaussian_bubble(...)
@@ -77,6 +80,7 @@ double psibar(double x, double lbar) {
  * Create critical spherical gaussian bubble.
  * Straight from fortran.
  */
+/*
 void create_gaussian_bubble(hydro_fields f, hydro_params p) {
   
 
@@ -129,11 +133,11 @@ void create_gaussian_bubble(hydro_fields f, hydro_params p) {
     f.Z[x] = 0.0;
     f.v[x] = 0.0;
 
-    f.gb[x] = 1.0;
+    f.W[x] = 1.0;
 
   }
 }
-
+*/
 
 
 
@@ -167,42 +171,49 @@ void initial_3D(hydro_fields f, hydro_params p) {
 	  "** phimin %g, cstrab %g, Rtenab %g\n", \
 	  phimin, cstrab, Rtenab);
 
-  int x;
+  int x, y, z;
 
-  for(x = 0; x < p.N; x++) {
-    //    f.xe[x] = -1.0*p.xxwall + (x-0.0)*p.dx;
-    //    f.xc[x] = -1.0*p.xxwall + (x-0.5)*p.dx;
+  for(x = 0; x < p.L; x++) {
+    for(y = 0; y < p.L; y++) {
+      for(z = 0; z < p.L; z++) {
 
-    f.phi[x] = cstrab*(1.0 + 0.1*drand48());
+	f.phi[iix(x,y,z,p)] = 0.0; // cstrab*(1.0 + 0.1*drand48());
 
-
-
-    f.pifull[x] = 0.0;
-
-    f.T[x] = 0.0; // p.Tconst;
-    
-    f.E[x] = 0.0; /* 3.0*p.a*f.T[x]*f.T[x]*f.T[x]*f.T[x]
-      + Vf(p, f.T[x], f.phi[x])
-      - f.T[x]*VTf(p, f.T[x], f.phi[x]);
-		  */
-
+	f.pifull[iix(x,y,z,p)] = 0.0;
+	
+	f.T[iix(x,y,z,p)] = p.Tconst;
+	
+	if(x < p.L/4 || x > 3*p.L/4)
+	  f.E[iix(x,y,z,p)] = 1.0;
+	else
+	  f.E[iix(x,y,z,p)] = 0.1;
+	  /* 3.0*p.a*f.T[x]*f.T[x]*f.T[x]*f.T[x]
+	  + Vf(p, f.T[x], f.phi[x])
+	  - f.T[x]*VTf(p, f.T[x], f.phi[x]); */
+	
+	
     // For debugging purposes
     // fprintf(stderr,"xc = %lf fi = %lf E = %lf\n", xc[x], phi[x],E[x]);
 
-    f.Z[x] = 0.0;
-    f.v[x] = 0.0;
-
-    f.gb[x] = 1.0;
-
+	f.Zx[iix(x,y,z,p)] = 0.0;	
+	f.Zy[iix(x,y,z,p)] = 0.0;
+	f.Zz[iix(x,y,z,p)] = 0.0;
+	
+	
+	f.W[iix(x,y,z,p)] = 1.0;
+	
+      }
+    }
   }
 }
 
+    
 
 
 
 
 
-
+/*
 void create_shock_tube(hydro_fields f, hydro_params p) {
   
   double Er, El;
@@ -230,7 +241,9 @@ void create_shock_tube(hydro_fields f, hydro_params p) {
     f.pifull[x] = 0.0;
     f.Z[x] = 0.0;
     f.v[x] = 0.0;
-    f.gb[x] = 1.0;
+    f.W[x] = 1.0;
 
   }
 }
+*/
+

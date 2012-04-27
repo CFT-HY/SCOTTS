@@ -8,6 +8,7 @@
 // straight from fortran
 
 // advect zone quantities (ie state variable, eg E)
+/*
 void donor_E(hydro_fields f, int **nb, hydro_params p) {
 
   double s = p.dt/p.dx;
@@ -40,10 +41,60 @@ void donor_E(hydro_fields f, int **nb, hydro_params p) {
   free(F);
 
 }
+*/
+
+
+void donor_E(hydro_fields f, int **nb, hydro_params p) {
+
+  double s = p.dt/p.dx;
+
+  int x;
+
+  // Flux field
+  double *F = (double *) malloc(p.N*sizeof(double));
+  // (Slow: see comments about this in eos.c)
+
+  
+
+  // Calculate flux
+  // see advection chapter (4) PDF included
+  // 1.0 in what follows will be upgraded to area of a cube later
+  for(x = 0; x < p.N; x++) {
+      if(f.Vx[x] >= 0.0)
+	F[x] = f.Vx[x]*1.0*f.E[x];
+      else
+	F[x] = f.Vx[x]*1.0*f.E[nb[x][0]];
+  }
+
+  for(x = 0; x < p.N; x++)
+    f.E[x] = f.E[x] - s*(F[x] - F[nb[x][1]])/(1.0);
+
+  for(x=0; x<p.N; x++) {
+    if(f.Vy[x] >= 0.0)
+      F[x] = f.Vy[x]*1.0*f.E[x];
+    else
+      F[x] = f.Vy[x]*1.0*f.E[nb[x][2]];
+  }
+
+  for(x = 0; x < p.N; x++)
+    f.E[x] = f.E[x] - s*(F[x] - F[nb[x][3]])/(1.0);
+
+  for(x=0; x<p.N; x++) {
+    if(f.Vz[x] >= 0.0)
+	F[x] = f.Vz[x]*1.0*f.E[x];
+    else
+      F[x] = f.Vz[x]*1.0*f.E[nb[x][4]];
+  }
+
+  for(x = 0; x < p.N; x++)
+    f.E[x] = f.E[x] - s*(F[x] - F[nb[x][5]])/(1.0);
+
+  free(F);
+}
 
 
 
-
+/*
 // straight from fortran
 void donor_Z(hydro_fields f, int **nb, hydro_params p) {
 
@@ -72,14 +123,49 @@ void donor_Z(hydro_fields f, int **nb, hydro_params p) {
   free(F);
 
 }
+*/
 
+void donor_Z(hydro_fields f, int **nb, hydro_params p) {
+
+  double s = p.dt/p.dx;
+
+
+  int x, y, z;
+
+  double *F = (double *)malloc(p.N*sizeof(double));
+
+  double Vb;
+
+  for(x=0; x<p.L; x++) {
+    for(y=0; y<p.L; y++) {
+      for(z=0; z<p.L; z++) {
+
+	/*
+	Vb = 0.5*(f.Vx[iix(x,y,z)] + f.Vx[iix(x+1,y,z)]);
+
+
+
+	if(Vb >= 0.0)
+	  F[x] = Vb*1.0*f.Zx[iix(x-1,y,z)];
+	else
+	  F[x] = Vb*1.0*f.Zx[iix(x,y,z)];
+	*/
+
+      }
+    }
+  }
+
+
+  free(F);
+
+}
 
 
 
 /*
  * Fancier transport - van Leer.
  */
-
+/*
 void transport_E(hydro_fields f, int **nb, hydro_params p) {
 
   int x;
@@ -177,3 +263,4 @@ void transport_Z(hydro_fields f, int **nb, hydro_params p) {
   free(delta);
   free(F);
 }
+*/

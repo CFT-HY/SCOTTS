@@ -15,9 +15,16 @@ void alloc_fields(hydro_fields *f, hydro_params p) {
   f->pifull = (double *) malloc(p.N*sizeof(double));
   f->T = (double *) malloc(p.N*sizeof(double));
   f->E = (double *) malloc(p.N*sizeof(double));
-  f->Z = (double *) malloc(p.N*sizeof(double));
-  f->v = (double *) malloc(p.N*sizeof(double));
-  f->gb = (double *) malloc(p.N*sizeof(double));
+  f->Zx = (double *) malloc(p.N*sizeof(double));
+  f->Zy = (double *) malloc(p.N*sizeof(double));
+  f->Zz = (double *) malloc(p.N*sizeof(double));
+  f->Ux = (double *) malloc(p.N*sizeof(double));
+  f->Uy = (double *) malloc(p.N*sizeof(double));
+  f->Uz = (double *) malloc(p.N*sizeof(double));
+  f->Vx = (double *) malloc(p.N*sizeof(double));
+  f->Vy = (double *) malloc(p.N*sizeof(double));
+  f->Vz = (double *) malloc(p.N*sizeof(double));
+  f->W = (double *) malloc(p.N*sizeof(double));
   
   // pi gets initialised in backstep
   f->pi = (double *) malloc(p.N*sizeof(double));
@@ -51,9 +58,16 @@ void zero_fields(hydro_fields f, hydro_params p) {
     f.pifull[x] = 0.0000;
     f.T[x] = 0.0000;
     f.E[x] = 0.0000;
-    f.Z[x] = 0.0000;
-    f.v[x] = 0.0000;
-    f.gb[x] = 0.0000;
+    f.Zx[x] = 0.0000;
+    f.Zy[x] = 0.0000;
+    f.Zz[x] = 0.0000;
+    f.Ux[x] = 0.0000;
+    f.Uy[x] = 0.0000;
+    f.Uz[x] = 0.0000;
+    f.Vx[x] = 0.0000;
+    f.Vy[x] = 0.0000;
+    f.Vz[x] = 0.0000;
+    f.W[x] = 0.0000;
 
     f.pi[x] = 0.0000;
     f.phiold[x] = 0.0000;
@@ -71,9 +85,16 @@ void free_fields(hydro_fields *f) {
   free(f->phiold);
   free(f->T);
   free(f->E);
-  free(f->Z);
-  free(f->v);
-  free(f->gb);
+  free(f->Zx);
+  free(f->Zy);
+  free(f->Zz);
+  free(f->Ux);
+  free(f->Uy);
+  free(f->Uz);
+  free(f->Vx);
+  free(f->Vy);
+  free(f->Vz);
+  free(f->W);
   free(f->kappa);
   free(f->p);
   free(f->pi);
@@ -125,8 +146,10 @@ int main(int argc, char *argv[])
 {
   fprintf(stderr,"3D hydro port\n");
 
+
   // Parse params from stdin
   hydro_params p = get_parameters();
+
 
   p.N = p.L*p.L*p.L;
 
@@ -208,6 +231,7 @@ int main(int argc, char *argv[])
 
   // Output of some field at every time step
   FILE *phi_fh = fopen("field.dat","w");
+  silo_init(p);
 
   // Step back for leapfrog initial conds
   evolve_backstep(f, nb, p);
@@ -220,45 +244,42 @@ int main(int argc, char *argv[])
   for(step = 0; step < p.steps; step++) {
 
     if(step % p.interval == 0) {
+
+      write_silo_step(f, p, step);
       // Write time step, x coords and velocity field
       fwrite(&t, sizeof(double), 1, phi_fh);
-      fwrite(f.xc, sizeof(double), p.N, phi_fh);
       fwrite(f.E, sizeof(double), p.N, phi_fh);
       fwrite(f.p, sizeof(double), p.N, phi_fh);
-      fwrite(f.v, sizeof(double), p.N, phi_fh);
-      fwrite(f.phi, sizeof(double), p.N, phi_fh);
+
+      printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\n",
+	     step, t,
+	     total_energy(f, nb, p), 
+	     field_energy(f, nb, p), wmax);
 
     }
 
     // Do field step
-    evolve_field(f, nb, p);
+    //    evolve_field(f, nb, p);
 
-    
+
     // Advection of state variables
-    // donor_E(f, nb, p);
-    // donor_Z(f, nb, p);
+    //    donor_E(f, nb, p);
+    //    donor_Z(f, nb, p);
 
     // Calculate EOS
-    //    eq_of_state(f, p);
+    eq_of_state(f, p);
 
     // Do the hydro bits
-    // evolve_hydro(f, nb, p);
+    evolve_hydro(f, nb, p);
     
-
     // Solve for T
-    //    find_Ta(f, p);
+    find_Ta(f, p);
     
 
     t += p.dt;
 
     wmax = get_gamma_max(f, p);
 
-    // Don't write to stdout too often, and don't calculate too much
-    if(step % 100 == 0)
-      printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\n",
-	     step, t,
-	     total_energy(f, nb, p), 
-	     field_energy(f, nb, p), wmax);
     
   } // main loop ends here
 
