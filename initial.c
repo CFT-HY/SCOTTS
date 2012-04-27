@@ -149,6 +149,8 @@ void initial_3D(hydro_fields f, hydro_params p) {
   double sigmlo = 2.0*sqrt(2.0)/81.0*p.alpha*p.alpha*p.alpha
     /(p.lambda*p.lambda*sqrt(p.lambda));
 
+  srand48(time());
+
   fprintf(stderr, \
 	  "** Initial conditions magic:\n" \
 	  "** sigmlo %g\n", sigmlo);
@@ -183,10 +185,14 @@ void initial_3D(hydro_fields f, hydro_params p) {
 	
 	f.T[iix(x,y,z,p)] = p.Tconst;
 	
-	if(x < p.L/4 || x > 3*p.L/4)
+	if( x > p.L/4 && x < 3*p.L/4)
 	  f.E[iix(x,y,z,p)] = 1.0;
 	else
-	  f.E[iix(x,y,z,p)] = 0.1;
+	  f.E[iix(x,y,z,p)] = 0.5;
+
+		  // f.E[iix(x,y,z,p)] = drand48(); // 1.0;
+	  //	else
+	  //	  f.E[iix(x,y,z,p)] = 0.1;
 	  /* 3.0*p.a*f.T[x]*f.T[x]*f.T[x]*f.T[x]
 	  + Vf(p, f.T[x], f.phi[x])
 	  - f.T[x]*VTf(p, f.T[x], f.phi[x]); */
