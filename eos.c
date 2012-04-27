@@ -20,7 +20,7 @@ void find_Ta(hydro_fields f, hydro_params p) {
     Tfix = 0.25*p.gamma*p.gamma*f.phi[x]*f.phi[x]*f.phi[x]*f.phi[x]
       - 12.0*p.a*(0.25*p.lambda*f.phi[x]*f.phi[x]*f.phi[x]*f.phi[x]
 		- 0.5*p.gamma*p.T0*p.T0*f.phi[x]*f.phi[x]
-		- f.E[x]/f.gb[x]);
+		- f.E[x]/f.W[x]);
 
     //    if(Tfix < 0)
     //      Tfix = 0.0;
@@ -49,13 +49,13 @@ void eq_of_state(hydro_fields f, hydro_params p) {
   Vpot(p, f.T, f.phi, Vnew);
 
   for(x = 0; x < p.N; x++) {
-    if(f.E[x] < tolE*f.gb[x]*3.0*p.a*f.T[x]*f.T[x]*f.T[x]*f.T[x]) {
+    if(f.E[x] < tolE*f.W[x]*3.0*p.a*f.T[x]*f.T[x]*f.T[x]*f.T[x]) {
       fprintf(stderr,"E getting dangerously small due to -ve V cont.\n");
       exit(100);
     }
 
     f.p[x] = p.a*f.T[x]*f.T[x]*f.T[x]*f.T[x] - Vnew[x];
-    f.kappa[x] = 1.0 + f.gb[x]*f.p[x]/f.E[x];
+    f.kappa[x] = 1.0 + f.W[x]*f.p[x]/f.E[x];
   }
   
   free(Vnew);

@@ -57,10 +57,10 @@ double total_energy(hydro_fields f, int **nb, hydro_params p) {
     vol = p.dx*p.dx*p.dx;
 
     // rest energy
-    restE += (f.E[x]/f.gb[x])*vol;
+    restE += (f.E[x]/f.W[x])*vol;
 
     // kinetic energy
-    kinE += f.kappa[x]*(f.E[x]/f.gb[x])*(f.gb[x]*f.gb[x]-1.0)*vol;
+    kinE += f.kappa[x]*(f.E[x]/f.W[x])*(f.W[x]*f.W[x]-1.0)*vol;
 
     // momentum squared (scalar field kinetic energy)
     kinphi += 0.5*f.pifull[x]*f.pifull[x]*vol;

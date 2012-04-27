@@ -7,6 +7,10 @@
 #include <stdio.h>
 #include <strings.h>
 
+#ifdef SILO
+#include <silo.h>
+#endif // SILO
+
 #define INIT_SHOCK_TUBE 1
 #define INIT_BUBBLE 2
 
@@ -52,10 +56,21 @@ typedef struct {
   double *phiold;
   double *p;
   double *E;
-  double *Z;
-  double *v;
-  double *gb;
+  double *Zx;
+  double *Zy;
+  double *Zz;
+  double *Ux;
+  double *Uy;
+  double *Uz;
+  double *Vx;
+  double *Vy;
+  double *Vz;
+  double *W;
 } hydro_fields;
+
+// main.c
+
+int iix(int x, int y, int z, hydro_params p);
 
 // evolve.c
 
@@ -91,15 +106,18 @@ void eq_of_state(hydro_fields f, hydro_params p);
 
 void donor_E(hydro_fields f, int **nb, hydro_params p);
 void donor_Z(hydro_fields f, int **nb, hydro_params p);
+/*
 void transport_E(hydro_fields f, int **nb, hydro_params p);
 void transport_Z(hydro_fields f, int **nb, hydro_params p);
+*/
 
 // initial.c
-
+/*
 void create_1D_bubble(hydro_fields f, hydro_params p);
 double psibar(double x, double lbar);
 void create_gaussian_bubble(hydro_fields f, hydro_params p);
 void create_shock_tube(hydro_fields f, hydro_params p);
+*/
 void initial_3D(hydro_fields f, hydro_params p);
 
 // output.c
@@ -110,3 +128,10 @@ double get_gamma_max(hydro_fields f, hydro_params p);
 // parameters.c
 
 hydro_params get_parameters();
+
+// silage.c
+
+#ifdef SILO
+void silo_init(hydro_params p);
+void write_silo_step(hydro_fields f, hydro_params p, int step);
+#endif // SILO

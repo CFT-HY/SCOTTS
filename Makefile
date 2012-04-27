@@ -1,11 +1,11 @@
-CC := gcc
+CC := gcc -DSILO
 
 CFLAGS := -O3
 
-LIBS := -lm
+LIBS := -lm -lsiloh5
 
 OBJECTS := main.o evolve.o potential.o energy.o eos.o \
-	transport.o initial.o output.o parameters.o
+	transport.o initial.o output.o parameters.o silage.o
 
 BINARY := run/hydro
 
