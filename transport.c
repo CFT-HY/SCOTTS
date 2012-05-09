@@ -44,7 +44,8 @@ void donor_E(hydro_fields f, int **nb, hydro_params p) {
 */
 
 
-void donor_E(hydro_fields f, int **nb, hydro_params p) {
+void donor_E_dir(hydro_fields f, int **nb, hydro_params p, int dir) {
+
 
   double s = p.dt/p.dx;
 
@@ -52,45 +53,43 @@ void donor_E(hydro_fields f, int **nb, hydro_params p) {
 
   // Flux field
   double *F = (double *) malloc(p.N*sizeof(double));
-  // (Slow: see comments about this in eos.c)
 
-  
+  double *V;
 
-  // Calculate flux
-  // see advection chapter (4) PDF included
-  // 1.0 in what follows will be upgraded to area of a cube later
+  if(dir == 0) {
+    V = f.Vx;
+  } else if(dir == 1) {
+    V = f.Vy;
+  } else {
+    V = f.Vz;
+  }
+
+
 
   for(x = 0; x < p.N; x++) {
-      if(f.Vx[x] >= 0.0)
-	F[x] = f.Vx[x]*1.0*f.E[x];
+      if(V[x] >= 0.0)
+	F[x] = V[x]*1.0*f.E[x];
       else
-	F[x] = f.Vx[x]*1.0*f.E[nb[x][0]];
+	F[x] = V[x]*1.0*f.E[nb[x][2*dir]];
   }
 
   for(x = 0; x < p.N; x++)
-    f.E[x] = f.E[x] - s*(F[x] - F[nb[x][1]])/(p.dx);
+    f.E[x] = f.E[x] - s*(F[x] - F[nb[x][2*dir + 1]])/(p.dx);
 
-  for(x=0; x<p.N; x++) {
-    if(f.Vy[x] >= 0.0)
-      F[x] = f.Vy[x]*1.0*f.E[x];
-    else
-      F[x] = f.Vy[x]*1.0*f.E[nb[x][2]];
-  }
-
-  for(x = 0; x < p.N; x++)
-    f.E[x] = f.E[x] - s*(F[x] - F[nb[x][3]])/(p.dx);
-
-  for(x=0; x<p.N; x++) {
-    if(f.Vz[x] >= 0.0)
-	F[x] = f.Vz[x]*1.0*f.E[x];
-    else
-      F[x] = f.Vz[x]*1.0*f.E[nb[x][4]];
-  }
-
-  for(x = 0; x < p.N; x++)
-    f.E[x] = f.E[x] - s*(F[x] - F[nb[x][5]])/(p.dx);
 
   free(F);
+}
+
+
+void donor_E(hydro_fields f, int **nb, hydro_params p) {
+
+  int order = lrand48();
+  order = order % 3;
+
+  donor_E_dir(f, nb, p, order);
+  donor_E_dir(f, nb, p, (order + 1) % 3);
+  donor_E_dir(f, nb, p, (order + 2) % 3);
+
 }
 
 
@@ -126,7 +125,9 @@ void donor_Z(hydro_fields f, int **nb, hydro_params p) {
 }
 */
 
+
 void donor_Z(hydro_fields f, int **nb, hydro_params p) {
+
 
   double s = p.dt/p.dx;
 

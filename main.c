@@ -203,6 +203,8 @@ int main(int argc, char *argv[])
 
   hydro_fields f;
 
+  double initial_energy, current_energy;
+
   // Just runs malloc on all the fields therein
   alloc_fields(&f, p);
 
@@ -234,8 +236,10 @@ int main(int argc, char *argv[])
 
   fprintf(stderr, "- Initialised neighbour lookup table.\n");
 
+  initial_energy = total_energy(f, nb, p);
+
   fprintf(stderr, "Initial avg energy per site: %g\n", 
-	  total_energy(f, nb, p));
+	  initial_energy);
 
   // Output headers
   // printf("Step\ttime\tenergy\twallps\n");
@@ -248,7 +252,6 @@ int main(int argc, char *argv[])
 
   // Step back for leapfrog initial conds
   evolve_backstep(f, nb, p);
-
 
   // Record how many lattice sites in output file, to keep self contained
   fwrite(&p.N, sizeof(int), 1, phi_fh);
@@ -266,26 +269,31 @@ int main(int argc, char *argv[])
       fwrite(f.E, sizeof(double), p.N, phi_fh);
       fwrite(f.p, sizeof(double), p.N, phi_fh);
 
+      current_energy = total_energy(f, nb, p);
+
       printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\n",
 	     step, t,
-	     total_energy(f, nb, p), 
+	     current_energy, 
 	     field_energy(f, nb, p), wmax);
 
+
+      fprintf(stderr, "Energy violation: %lf%%\n",
+	      100.0*fabs((current_energy-initial_energy)/initial_energy));
     }
 
     // Do field step
-        evolve_field(f, nb, p);
-
-
+    evolve_field(f, nb, p);
+    
+    
     //    fprintf(stderr,"E[0] = %lf\n", f.E[0]);
     //    fprintf(stderr,"E[L,L,L] = %lf\n", f.E[iix(p.L-1,p.L-1,p.L-1,p)]);
     // Advection of state variables
-
+    
     //    fprintf(stderr,"don-be E[0] = %lf\n", f.E[0]);
-        donor_E(f, nb, p);
+    donor_E(f, nb, p);
     //    fprintf(stderr,"don-af E[0] = %lf\n", f.E[0]);
-        donor_Z(f, nb, p);
-
+    donor_Z(f, nb, p);
+    
     // Calculate EOS
     eq_of_state(f, p);
 
@@ -297,7 +305,6 @@ int main(int argc, char *argv[])
     // Solve for T
     find_Ta(f, p);
     
-
     t += p.dt;
 
     wmax = get_gamma_max(f, p);
