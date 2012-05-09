@@ -22,26 +22,52 @@ void donor_E_dir(hydro_fields f, int **nb, hydro_params p, int dir) {
 
   
   for(x = 0; x < p.N; x++)
-    f.E[x] = f.E[x] - p.dt*(F[x] - F[nb[x][2*dir + 1]]);
+    f.E[x] = f.E[x] - p.dt*(F[x] - F[nb[x][2*dir + 1]])/(p.dx);
 
 
   free(F);
 }
 
 
-void donor_E(hydro_fields f, int **nb, hydro_params p) {
+void transport_E_dir(hydro_fields f, int **nb, hydro_params p, int dir) {
 
-  int order = lrand48();
-  order = order % 3;
+  int x;
 
-  donor_E_dir(f, nb, p, order);
-  donor_E_dir(f, nb, p, (order + 1) % 3);
-  donor_E_dir(f, nb, p, (order + 2) % 3);
+  double *F = (double *)malloc(p.N*sizeof(double));
+  double *delta = (double *)malloc(p.N*sizeof(double));
 
+  double r;
+
+  for(x = 0; x < p.N; x++) {
+    r = (f.E[x] - f.E[nb[x][2*dir + 1]])*(f.E[nb[x][2*dir]] - f.E[x]);
+
+    if(r > 0)
+      delta[x] = 2*r/(f.E[nb[x][2*dir]] - f.E[nb[x][2*dir + 1]]);
+    else
+      delta[x] = 0.0;
+
+  }
+
+  delta[0] = 0.0;
+
+  for(x = 0; x < p.N; x++) {
+    if(f.V[dir][x] > 0)
+      F[x] = f.V[dir][x]*1.0*(f.E[x] 
+				     + 0.5*(1.0-f.V[dir][x]*p.dt/p.dx)*delta[x]);
+    else
+      F[x] = f.V[dir][x]*1.0*(f.E[nb[x][2*dir]] 
+				     - 0.5*(1.0+f.V[dir][x]*p.dt/p.dx)*delta[nb[x][2*dir]]);
+  }
+
+  F[0] = 0.0;  
+
+  // "Advect D"
+  for(x = 0; x < p.N; x++)
+    f.E[x] = f.E[x] - p.dt*(F[x] - F[nb[x][2*dir+1]])/(p.dx);
+
+  free(delta);
+  free(F);
 }
-
-
-
 
 void donor_Z_dir(hydro_fields f, int **nb, hydro_params p, int dir) {
 
@@ -109,8 +135,26 @@ void donor_Z_dir(hydro_fields f, int **nb, hydro_params p, int dir) {
 
 
 
+void advect_E(hydro_fields f, int **nb, hydro_params p) {
 
-void donor_Z(hydro_fields f, int **nb, hydro_params p) {
+  int order; 
+  //  order = ldrand48() % 3;
+  order = 0;
+
+  transport_E_dir(f, nb, p, order);
+  transport_E_dir(f, nb, p, (order + 1) % 3);
+  transport_E_dir(f, nb, p, (order + 2) % 3);
+
+  //  donor_E_dir(f, nb, p, order);
+  //  donor_E_dir(f, nb, p, (order + 1) % 3);
+  //  donor_E_dir(f, nb, p, (order + 2) % 3);
+
+}
+
+
+
+
+void advect_Z(hydro_fields f, int **nb, hydro_params p) {
   donor_Z_dir(f, nb, p, 0);
   donor_Z_dir(f, nb, p, 1);
   donor_Z_dir(f, nb, p, 2);
@@ -122,48 +166,6 @@ void donor_Z(hydro_fields f, int **nb, hydro_params p) {
  * Fancier transport - van Leer.
  */
 /*
-void transport_E(hydro_fields f, int **nb, hydro_params p) {
-
-  int x;
-
-  double *F = (double *)malloc(p.N*sizeof(double));
-  double *delta = (double *)malloc(p.N*sizeof(double));
-
-  double s = p.dt/p.dx;
-  
-  double r;
-
-  for(x = 0; x < p.N; x++) {
-    r = (f.E[x] - f.E[nb[x][1]])*(f.E[nb[x][0]] - f.E[x]);
-
-    if(r > 0)
-      delta[x] = 2*r/(f.E[nb[x][0]] - f.E[nb[x][1]]);
-    else
-      delta[x] = 0.0;
-
-  }
-
-  delta[0] = 0.0;
-
-  for(x = 0; x < p.N; x++) {
-    if(f.v[x] > 0)
-      F[x] = f.v[x]*1.0*(f.E[x] 
-				     + 0.5*(1.0-f.v[x]*s)*delta[x]);
-    else
-      F[x] = f.v[x]*1.0*(f.E[nb[x][0]] 
-				     - 0.5*(1.0+f.v[x]*s)*delta[nb[x][0]]);
-  }
-
-  F[0] = 0.0;  
-
-  // "Advect D"
-  for(x = 0; x < p.N; x++)
-    f.E[x] = f.E[x] - s*(F[x] - F[nb[x][1]])/(1.0);
-
-  free(delta);
-  free(F);
-}
-
 
 
 

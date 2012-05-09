@@ -139,54 +139,6 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
   }
 
 
-
-  // Pressure acceleration (and artificial viscosity for 'Z')
-  // W&M sec 2.4.12, 3.5.1, DONE
-  for(x = 0; x < p.L; x++) {
-    for(y = 0; y < p.L; y++) {
-      for(z = 0; z < p.L; z++) {
-
-	// equation (3.68)
-	// repeated calculation of these unnecessary, so split it out later
-	p_bar_x_plus = (f.p[iix(x,y,z,p)] + f.p[iix(x,y-1,z,p)] 
-			+ f.p[iix(x,y,z-1,p)] + f.p[iix(x,y-1,z-1,p)])/4.0;
-
-	p_bar_x_minus = (f.p[iix(x-1,y,z,p)] + f.p[iix(x-1,y-1,z,p)] 
-			 + f.p[iix(x-1,y,z-1,p)] + f.p[iix(x-1,y-1,z-1,p)])/4.0;
-
-	p_bar_y_plus = (f.p[iix(x,y,z,p)] + f.p[iix(x-1,y,z,p)] 
-			+ f.p[iix(x,y,z-1,p)] + f.p[iix(x-1,y,z-1,p)])/4.0;
-
-
-	p_bar_y_minus = (f.p[iix(x,y-1,z,p)] + f.p[iix(x-1,y-1,z,p)] 
-			 + f.p[iix(x,y-1,z-1,p)] + f.p[iix(x-1,y-1,z-1,p)])/4.0;
-
-
-	p_bar_z_plus = (f.p[iix(x,y,z,p)] + f.p[iix(x-1,y,z,p)] 
-			+ f.p[iix(x,y-1,z,p)] + f.p[iix(x-1,y-1,z,p)])/4.0;
-
-
-	p_bar_z_minus = (f.p[iix(x,y,z-1,p)] + f.p[iix(x-1,y,z-1,p)] 
-			 + f.p[iix(x,y-1,z-1,p)] + f.p[iix(x-1,y-1,z-1,p)])/4.0;
-
-
-	
-	//	if(f.E[iix(x,y,z,p)] > 10)
-
-
-	f.Zx[iix(x,y,z,p)] = (p_bar_x_plus - p_bar_x_minus)*p.dt/p.dx;
-
-	f.Zy[iix(x,y,z,p)] = (p_bar_y_plus - p_bar_y_minus)*p.dt/p.dx;
-
-	f.Zz[iix(x,y,z,p)] = (p_bar_z_plus - p_bar_z_minus)*p.dt/p.dx;
-      }
-    }
-  }
-
-
-
-
-
   // update velocity v; denominator is W&M eq (2.85)
   // but note grid is Eulerian and D=0
   // then gv is the four-velocity (2.84)
@@ -212,10 +164,6 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
       }
     }
   }
-
-
-
-
   // face-centred x-cpt of 3-velocity
   for(x = 0; x < p.L; x++) {
     for(y = 0; y < p.L; y++) {
@@ -346,6 +294,57 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
       }
     }
   }
+
+
+  // Pressure acceleration (and artificial viscosity for 'Z')
+  // W&M sec 2.4.12, 3.5.1, DONE
+  for(x = 0; x < p.L; x++) {
+    for(y = 0; y < p.L; y++) {
+      for(z = 0; z < p.L; z++) {
+
+	// equation (3.68)
+	// repeated calculation of these unnecessary, so split it out later
+	p_bar_x_plus = (f.p[iix(x,y,z,p)] + f.p[iix(x,y-1,z,p)] 
+			+ f.p[iix(x,y,z-1,p)] + f.p[iix(x,y-1,z-1,p)])/4.0;
+
+	p_bar_x_minus = (f.p[iix(x-1,y,z,p)] + f.p[iix(x-1,y-1,z,p)] 
+			 + f.p[iix(x-1,y,z-1,p)] + f.p[iix(x-1,y-1,z-1,p)])/4.0;
+
+	p_bar_y_plus = (f.p[iix(x,y,z,p)] + f.p[iix(x-1,y,z,p)] 
+			+ f.p[iix(x,y,z-1,p)] + f.p[iix(x-1,y,z-1,p)])/4.0;
+
+
+	p_bar_y_minus = (f.p[iix(x,y-1,z,p)] + f.p[iix(x-1,y-1,z,p)] 
+			 + f.p[iix(x,y-1,z-1,p)] + f.p[iix(x-1,y-1,z-1,p)])/4.0;
+
+
+	p_bar_z_plus = (f.p[iix(x,y,z,p)] + f.p[iix(x-1,y,z,p)] 
+			+ f.p[iix(x,y-1,z,p)] + f.p[iix(x-1,y-1,z,p)])/4.0;
+
+
+	p_bar_z_minus = (f.p[iix(x,y,z-1,p)] + f.p[iix(x-1,y,z-1,p)] 
+			 + f.p[iix(x,y-1,z-1,p)] + f.p[iix(x-1,y-1,z-1,p)])/4.0;
+
+
+	
+	//	if(f.E[iix(x,y,z,p)] > 10)
+
+
+	f.Zx[iix(x,y,z,p)] = (p_bar_x_plus - p_bar_x_minus)*p.dt/p.dx;
+
+	f.Zy[iix(x,y,z,p)] = (p_bar_y_plus - p_bar_y_minus)*p.dt/p.dx;
+
+	f.Zz[iix(x,y,z,p)] = (p_bar_z_plus - p_bar_z_minus)*p.dt/p.dx;
+      }
+    }
+  }
+
+
+
+
+
+
+
 
 
   // Clean up memory. Surely we don't need all these temporary arrays?
