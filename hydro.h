@@ -66,6 +66,7 @@ typedef struct {
   double *Vy;
   double *Vz;
   double *W;
+  double **V;
 } hydro_fields;
 
 // main.c
