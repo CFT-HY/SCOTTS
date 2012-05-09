@@ -115,63 +115,6 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
   double ubarx, ubary, ubarz, W;
 
 
-  /*
-  // phi lives inside zones, Z lives on zone boundaries
-  // phi is half a timestep ahead of Z (being zonal)
-  // therefore the phi that Z sees is phiav, and the gradient of phi is dxphi
-  for(x = 0; x < p.N; x++) {
-    dxphi[x] = 0.5*(f.phiold[nb[x][0]] + f.phi[nb[x][0]] 
-		    - f.phiold[x] - f.phi[x])/p.dx;
-    phiav[x] = 0.5*(f.phiold[x] + f.phi[x]);
-  }
-
-  // Reflective BC's wrap
-  dxphi[0] = 0.0;
-
-  // Precompute potential on TIMESLICE
-  Vdpot(p, f.T, phiav, Vdmid);
-
-  
-  // Field-fluid interaction and artificial viscosity for 'E'
-  for(x = 0; x < p.N; x++) {
-
-   
-    // evolve Z (eq 10 of 9512202)
-    
-    f.Z[x] = f.Z[x] - p.dt*0.5*(p.C*(f.W[x] + f.W[nb[x][0]])		\
-				// eta times boundary centred gamma
-				*(0.5*(f.pi[x] + f.pi[nb[x][0]]) 
-				  + f.v[x]*dxphi[x] ) 			\
-				// boundary centred pi, v*grad(phi)
-				+(Vdmid[x] + Vdmid[nb[x][0]]))*dxphi[x];
-                                //  SPAT'Y recentred potential times grad(phi)
-
-				
-
-    // zone centred gamma times (already zone centred) pi
-    // plus v*grad(phi) which is all zone centred
-    gpi = f.W[x]*(f.pi[x] + 0.5*(f.v[nb[x][1]]*dxphi[nb[x][1]] 
-				  + f.v[x]*dxphi[x]));
-    // in above, could change nb[x][1] to nb[x][0] from fortran
-    // for both v and dxphi
-
-    // evolve E (eq 9 of 9512202)
-    f.E[x] = f.E[x] + p.dt*(p.C*gpi*gpi + gpi*Vdmid[x]);
-    // first term is coupling to scalar field, second is potential
-
-    dv = f.v[x] - f.v[nb[x][1]];
-
-    // D term deleted in the following four lines
-    if (dv < 0)
-      Q[x] = p.Cav*f.E[x]*dv*dv;
-    else
-      Q[x] = 0.0;
-
-    // Artificial viscosity term
-    f.E[x] = f.E[x] - p.dt*Q[x]*f.W[x]*dv/p.dx;
-
-  }
-  */
 
   // Section 3.4.4
 
@@ -195,7 +138,6 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
     }
   }
 
-  //  fprintf(stderr,"X E[0]=%lf\n",f.E[0]);
 
 
   // Pressure acceleration (and artificial viscosity for 'Z')
@@ -242,17 +184,14 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
   }
 
 
-  // 1D: Q term related to artificial viscosity; otherwise W&M eq (2.103)
-  //    f.Z[x] = f.Z[x] - p.dt*(f.p[nb[x][0]] - f.p[x] + Q[nb[x][0]] - Q[x])/p.dx;
 
-  
+
 
   // update velocity v; denominator is W&M eq (2.85)
   // but note grid is Eulerian and D=0
   // then gv is the four-velocity (2.84)
   // (what we call kappa they call sigma, ish?)
-
-
+  //
   // Section 3.4.5, equations 3.5.7, 3.5.8
   for(x = 0; x < p.L; x++) {
     for(y = 0; y < p.L; y++) {
@@ -379,49 +318,6 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
       }
     }
   }
-  //fprintf(stderr,"Y E[0]=%lf\n",f.E[0]);
-
-
-  /*
-  // Original comment: "Obtain boost factor W and pressure work on boost"
-  for(x = 0; x < p.N; x++) {
-    Wold[x] = f.W[x];
-
-    // Calculate new zone-centred boost factor
-    // this is just a repeat of what we did above...
-    inner = 0.5*(f.Z[nb[x][1]] + f.Z[x])/(f.kappa[x]*f.E[x]);
-
-    // inner*inner should equal U^2 + U[nb[x][1]]^2
-    // to give the zone centred gamma factor
-    // instead this uses the arithmetic mean (cf W&M eq 2.88)
-    f.W[x] = sqrt(1.0 + inner*inner);
-
-    // This is W&M eq (2.89), poor man's way of doing the power
-    s = (f.kappa[x] - 1)*(f.W[x] - Wold[x])/(f.W[x] + Wold[x]);
-    // sort of E*exp(-2.0*s)
-    f.E[x] = f.E[x]*(1-s)/(1+s);
-
-  }
-  */
-
-  /*
-
-  // Pressure work on divergence
-  // Original comment: "Like CW, use time-averaged  W,  but new  v."
-  for(x = 0; x < p.N; x++) {
-
-    // Velocity times area (boundary coord squared)
-    //times poor man's volume gamma
-    Wv[x] = f.v[x]
-      *(f.W[x] + f.W[nb[x][0]])/2.0;
-    // this is W*V, we calculate
-  
-      // previously (why Wold is here, no idea):
-      //      *(Wold[x] + W[x] + W[nb[x][0]] + W[nb[x][0]])/4.0;
-
-  }
-  */
-
 
 
 
@@ -450,32 +346,6 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
       }
     }
   }
-
-  //  fprintf(stderr,"Z E[0]=%lf\n\n",f.E[0]);
-
-
-  /*
-  // (grad w)/dx
-  for(x = 0; x < p.N; x++) {
-
-    // W&M (2.92) and (2.93) combined: divergence
-    s = (Wv[x] - Wv[nb[x][1]])/p.dx;
-    // divide by zone volume times zone centred boost (previously W[x] + Wold[x], not sure why)
-    s = s/1.0;
-
-    // by this stage s should have contributions from inside (2.91) and (2.93)
-    // here we do the kappa multiplication and divide by 2 in preparation for the poor man's exponential
-    // we also divide by the common zone centred gamma factor
-    s =  s*(f.kappa[x] - 1.0) * p.dt/(2.0*f.W[x]);
-
-    // smells like W&M eq (2.93)
-    // similar to E*exp(-2.0*s);
-    f.E[x] = f.E[x]*(1-s)/(1+s);
-  }
-  */
-
-
-
 
 
   // Clean up memory. Surely we don't need all these temporary arrays?
