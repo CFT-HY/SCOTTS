@@ -40,6 +40,11 @@ void alloc_fields(hydro_fields *f, hydro_params p) {
   // and used in hydro)
   f->p = (double *) malloc(p.N*sizeof(double));
 
+  f->V = (double **) malloc(3*sizeof(double *));
+  f->V[0] = f->Vx;
+  f->V[1] = f->Vy;
+  f->V[2] = f->Vz;
+
   // (calloc considered harmful)
 }
 

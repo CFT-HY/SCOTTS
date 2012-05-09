@@ -5,76 +5,24 @@
  */
 #include "hydro.h"
 
-// straight from fortran
-
-// advect zone quantities (ie state variable, eg E)
-/*
-void donor_E(hydro_fields f, int **nb, hydro_params p) {
-
-  double s = p.dt/p.dx;
-
-  int x;
-
-  // Flux field
-  double *F = (double *) malloc(p.N*sizeof(double));
-  // (Slow: see comments about this in eos.c)
-
-
-
-  // Calculate flux
-  // see advection chapter (4) PDF included
-  // 1.0 in what follows will be upgraded to area of a cube later
-  for(x = 0; x < p.N; x++) {
-    if(f.v[x] >= 0.0)
-      F[x] = f.v[x]*1.0*f.E[x];
-    else
-      F[x] = f.v[x]*1.0*f.E[nb[x][0]];
-  }
-
-  // BC's wrap
-  F[0] = 0.0;
-
-
-  for(x = 0; x < p.N; x++)
-    f.E[x] = f.E[x] - s*(F[x] - F[nb[x][1]])/(1.0);
-
-  free(F);
-
-}
-*/
-
 
 void donor_E_dir(hydro_fields f, int **nb, hydro_params p, int dir) {
 
-
-  double s = p.dt/p.dx;
-
   int x;
 
   // Flux field
   double *F = (double *) malloc(p.N*sizeof(double));
 
-  double *V;
-
-  if(dir == 0) {
-    V = f.Vx;
-  } else if(dir == 1) {
-    V = f.Vy;
-  } else {
-    V = f.Vz;
-  }
-
-
-
   for(x = 0; x < p.N; x++) {
-      if(V[x] >= 0.0)
-	F[x] = V[x]*1.0*f.E[x];
+      if(f.V[dir][x] >= 0.0)
+	F[x] = f.V[dir][x]*1.0*f.E[x];
       else
-	F[x] = V[x]*1.0*f.E[nb[x][2*dir]];
+	F[x] = f.V[dir][x]*1.0*f.E[nb[x][2*dir]];
   }
 
+  
   for(x = 0; x < p.N; x++)
-    f.E[x] = f.E[x] - s*(F[x] - F[nb[x][2*dir + 1]])/(p.dx);
+    f.E[x] = f.E[x] - p.dt*(F[x] - F[nb[x][2*dir + 1]])/(p.dx);
 
 
   free(F);
