@@ -105,12 +105,8 @@ void eq_of_state(hydro_fields f, hydro_params p);
 
 // transport.c
 
-void donor_E(hydro_fields f, int **nb, hydro_params p);
-void donor_Z(hydro_fields f, int **nb, hydro_params p);
-/*
-void transport_E(hydro_fields f, int **nb, hydro_params p);
-void transport_Z(hydro_fields f, int **nb, hydro_params p);
-*/
+void advect_E(hydro_fields f, int **nb, hydro_params p);
+void advect_Z(hydro_fields f, int **nb, hydro_params p);
 
 // initial.c
 /*
