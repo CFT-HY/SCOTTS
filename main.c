@@ -281,6 +281,7 @@ int main(int argc, char *argv[])
 	     current_energy, 
 	     field_energy(f, nb, p), wmax);
 
+      fflush(stdout);
 
       fprintf(stderr, "Energy violation: %lf%%\n",
 	      100.0*fabs((current_energy-initial_energy)/initial_energy));
@@ -295,9 +296,9 @@ int main(int argc, char *argv[])
     // Advection of state variables
     
     //    fprintf(stderr,"don-be E[0] = %lf\n", f.E[0]);
-    //        advect_E(f, nb, p);
+    // advect_E(f, nb, p);
     //    fprintf(stderr,"don-af E[0] = %lf\n", f.E[0]);
-	//        advect_Z(f, nb, p);
+    // advect_Z(f, nb, p);
     
     // Calculate EOS
     eq_of_state(f, p);

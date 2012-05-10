@@ -141,9 +141,9 @@ void advect_E(hydro_fields f, int **nb, hydro_params p) {
   //  order = ldrand48() % 3;
   order = 0;
 
-  donor_E_dir(f, nb, p, order);
-  donor_E_dir(f, nb, p, (order + 1) % 3);
-  donor_E_dir(f, nb, p, (order + 2) % 3);
+  transport_E_dir(f, nb, p, order);
+  transport_E_dir(f, nb, p, (order + 1) % 3);
+  transport_E_dir(f, nb, p, (order + 2) % 3);
 
   //  donor_E_dir(f, nb, p, order);
   //  donor_E_dir(f, nb, p, (order + 1) % 3);
