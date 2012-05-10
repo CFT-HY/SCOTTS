@@ -188,7 +188,7 @@ void initial_3D(hydro_fields f, hydro_params p) {
 	if( (x + y + z) > p.L/4 && (x + y + z) < 3*p.L/4)
 	  f.E[iix(x,y,z,p)] = 1.0;
 	else
-	  f.E[iix(x,y,z,p)] = 0.5;
+	  f.E[iix(x,y,z,p)] = 0.9;
 
 		  // f.E[iix(x,y,z,p)] = drand48(); // 1.0;
 	  //	else
