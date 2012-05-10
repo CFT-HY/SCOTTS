@@ -149,7 +149,7 @@ void initial_3D(hydro_fields f, hydro_params p) {
   double sigmlo = 2.0*sqrt(2.0)/81.0*p.alpha*p.alpha*p.alpha
     /(p.lambda*p.lambda*sqrt(p.lambda));
 
-  srand48(time());
+  //  srand48(time());
 
   fprintf(stderr, \
 	  "** Initial conditions magic:\n" \
