@@ -326,11 +326,11 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
 
 	
 
-	f.Zx[iix(x,y,z,p)] = f.Zx[iix(x,y,z,p)] - 0.5*(p_bar_x_plus - p_bar_x_minus)*p.dt/p.dx;
+	f.Zx[iix(x,y,z,p)] = f.Zx[iix(x,y,z,p)] - (p_bar_x_plus - p_bar_x_minus)*p.dt/p.dx;
 
-	f.Zy[iix(x,y,z,p)] = f.Zy[iix(x,y,z,p)] - 0.5*(p_bar_y_plus - p_bar_y_minus)*p.dt/p.dx;
+	f.Zy[iix(x,y,z,p)] = f.Zy[iix(x,y,z,p)] - (p_bar_y_plus - p_bar_y_minus)*p.dt/p.dx;
 
-	f.Zz[iix(x,y,z,p)] = f.Zz[iix(x,y,z,p)] - 0.5*(p_bar_z_plus - p_bar_z_minus)*p.dt/p.dx;
+	f.Zz[iix(x,y,z,p)] = f.Zz[iix(x,y,z,p)] - (p_bar_z_plus - p_bar_z_minus)*p.dt/p.dx;
       }
     }
   }

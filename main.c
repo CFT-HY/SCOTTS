@@ -295,9 +295,9 @@ int main(int argc, char *argv[])
     // Advection of state variables
     
     //    fprintf(stderr,"don-be E[0] = %lf\n", f.E[0]);
-    advect_E(f, nb, p);
+    //        advect_E(f, nb, p);
     //    fprintf(stderr,"don-af E[0] = %lf\n", f.E[0]);
-    advect_Z(f, nb, p);
+	//        advect_Z(f, nb, p);
     
     // Calculate EOS
     eq_of_state(f, p);

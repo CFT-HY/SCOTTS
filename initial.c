@@ -185,10 +185,10 @@ void initial_3D(hydro_fields f, hydro_params p) {
 	
 	f.T[iix(x,y,z,p)] = p.Tconst;
 	
-	if( (x + y + z) > p.L/4 && (x + y + z) < 3*p.L/4)
-	  f.E[iix(x,y,z,p)] = 1.0;
+	if( (x ) > p.L/4 && (x ) < 3*p.L/4)
+	  f.E[iix(x,y,z,p)] = 1.8;
 	else
-	  f.E[iix(x,y,z,p)] = 0.9;
+	  f.E[iix(x,y,z,p)] = 0.7;
 
 		  // f.E[iix(x,y,z,p)] = drand48(); // 1.0;
 	  //	else
