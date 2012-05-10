@@ -116,26 +116,21 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
 
 
 
-  // Section 3.4.4
+  // Section 3.4.4 -- pressure terms
+  for(x = 0; x < p.N; x++) {
+	qx = (f.Vx[nb[x][0]] - f.Vx[x])/p.dx;
+	qy = (f.Vy[nb[x][2]] - f.Vy[x])/p.dx;
+	qz = (f.Vz[nb[x][4]] - f.Vz[x])/p.dx;
 
-  for(x = 0; x < p.L; x++) {
-    for(y = 0; y < p.L; y++) {
-      for(z = 0; z < p.L; z++) {
-	qx = (f.Vx[iix(x+1,y,z,p)] - f.Vx[iix(x,y,z,p)])/p.dx;
-	qy = (f.Vy[iix(x,y+1,z,p)] - f.Vy[iix(x,y,z,p)])/p.dx;
-	qz = (f.Vz[iix(x,y,z+1,p)] - f.Vz[iix(x,y,z,p)])/p.dx;
+	divv = qx + qy + qz;
 
-	divv = 0.5*(qx+qy+qz);
-	
+	/*	
+	s = 0.5*(f.kappa[x] - 1.0)*divv*p.dt/2.0;
+	f.E[x] = f.E[x]*(1-s)/(1+s);
+	*/
 
-	s = (f.kappa[x] - 1.0)*divv*p.dt/2.0;
+	f.E[x] = f.E[x]*exp(-1.0*(f.kappa[x] - 1.0)*divv*p.dt);
 
-	f.E[iix(x,y,z,p)] = f.E[iix(x,y,z,p)]*(1-s)/(1+s);
-
-
-
-      }
-    }
   }
 
 
@@ -145,25 +140,24 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
   // (what we call kappa they call sigma, ish?)
   //
   // Section 3.4.5, equations 3.5.7, 3.5.8
-  for(x = 0; x < p.L; x++) {
-    for(y = 0; y < p.L; y++) {
-      for(z = 0; z < p.L; z++) {  
+  for(x = 0; x < p.N; x++) {
 
-	sigmabar = (f.kappa[iix(x,y,z,p)]*f.E[iix(x,y,z,p)] 
-		    + f.kappa[iix(x-1,y,z,p)]*f.E[iix(x-1,y,z,p)]
-		    + f.kappa[iix(x-1,y-1,z,p)]*f.E[iix(x-1,y-1,z,p)]
-		    + f.kappa[iix(x-1,y-1,z-1,p)]*f.E[iix(x-1,y-1,z-1,p)]
-		    + f.kappa[iix(x,y-1,z-1,p)]*f.E[iix(x,y-1,z-1,p)]
-		    + f.kappa[iix(x-1,y,z-1,p)]*f.E[iix(x-1,y,z-1,p)]
-		    + f.kappa[iix(x,y-1,z,p)]*f.E[iix(x,y-1,z,p)]
-		    + f.kappa[iix(x,y,z-1,p)]*f.E[iix(x,y,z-1,p)])/8.0;
-
-	f.Ux[iix(x,y,z,p)] = f.Zx[iix(x,y,z,p)]/sigmabar;
-	f.Uy[iix(x,y,z,p)] = f.Zy[iix(x,y,z,p)]/sigmabar;
-	f.Uz[iix(x,y,z,p)] = f.Zz[iix(x,y,z,p)]/sigmabar;
-      }
-    }
+    sigmabar = (f.kappa[x]*f.E[x] 
+		+ f.kappa[nb[x][1]]*f.E[nb[x][1]]
+		+ f.kappa[nb[nb[x][1]][3]]*f.E[nb[nb[x][1]][3]]
+		+ f.kappa[nb[nb[nb[x][1]][3]][5]]*f.E[nb[nb[nb[x][1]][3]][5]]
+		+ f.kappa[nb[nb[x][3]][5]]*f.E[nb[nb[x][3]][5]]
+		+ f.kappa[nb[nb[x][1]][5]]*f.E[nb[nb[x][1]][5]]
+		+ f.kappa[nb[x][3]]*f.E[nb[x][3]]
+		+ f.kappa[nb[x][5]]*f.E[nb[x][5]])/8.0;
+    
+    f.Ux[x] = f.Zx[x]/sigmabar;
+    f.Uy[x] = f.Zy[x]/sigmabar;
+    f.Uz[x] = f.Zz[x]/sigmabar;
   }
+
+
+  // section 3.4.5 continued
   // face-centred x-cpt of 3-velocity
   for(x = 0; x < p.L; x++) {
     for(y = 0; y < p.L; y++) {
@@ -253,13 +247,17 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
 	Wold[iix(x,y,z,p)] = f.W[iix(x,y,z,p)];
 	f.W[iix(x,y,z,p)] = sqrt(1.0 + utildex*utildex + utildey*utildey + utildez*utildez);
 
-	s = (f.kappa[iix(x,y,z,p)] - 1)*(f.W[iix(x,y,z,p)] - Wold[iix(x,y,z,p)])
-	  /(f.W[iix(x,y,z,p)] + Wold[iix(x,y,z,p)]);
+	//	s = (f.kappa[iix(x,y,z,p)] - 1)*(f.W[iix(x,y,z,p)] - Wold[iix(x,y,z,p)])
+	//	  /(f.W[iix(x,y,z,p)] + Wold[iix(x,y,z,p)]);
+	//	f.E[iix(x,y,z,p)] = f.E[iix(x,y,z,p)]*(1-s)/(1+s);
 	// sort of E*exp(-2.0*s)
 
 
+	// Top of p90 ch 3
+	f.E[iix(x,y,z,p)] = f.E[iix(x,y,z,p)]*pow(Wold[iix(x,y,z,p)]/f.W[iix(x,y,z,p)],f.kappa[iix(x,y,z,p)]-1.0);
 
-	f.E[iix(x,y,z,p)] = f.E[iix(x,y,z,p)]*(1-s)/(1+s);
+
+
 
 
 
@@ -269,7 +267,7 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
 
 
 
-
+  // Last bit of 3.4.6
   for(x = 0; x < p.L; x++) {
     for(y = 0; y < p.L; y++) {
       for(z = 0; z < p.L; z++) {
@@ -284,16 +282,16 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
 
 	gradv = (qx+qy+qz)/f.W[iix(x,y,z,p)];
 
-	s = (f.kappa[x] - 1.0)*gradv/2.0;
-
-
-	f.E[iix(x,y,z,p)] = f.E[iix(x,y,z,p)]*(1-s)/(1+s);
-
+	//	s = (f.kappa[x] - 1.0)*gradv/2.0;
+	//	f.E[iix(x,y,z,p)] = f.E[iix(x,y,z,p)]*(1-s)/(1+s);
+	f.E[iix(x,y,z,p)] = f.E[iix(x,y,z,p)]*exp(-1.0*(f.kappa[iix(x,y,z,p)]-1.0)*gradv);
 
 
       }
     }
   }
+
+
 
 
   // Pressure acceleration (and artificial viscosity for 'Z')
@@ -327,17 +325,16 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
 
 
 	
-	//	if(f.E[iix(x,y,z,p)] > 10)
 
+	f.Zx[iix(x,y,z,p)] = f.Zx[iix(x,y,z,p)] - 0.5*(p_bar_x_plus - p_bar_x_minus)*p.dt/p.dx;
 
-	f.Zx[iix(x,y,z,p)] = (p_bar_x_plus - p_bar_x_minus)*p.dt/p.dx;
+	f.Zy[iix(x,y,z,p)] = f.Zy[iix(x,y,z,p)] - 0.5*(p_bar_y_plus - p_bar_y_minus)*p.dt/p.dx;
 
-	f.Zy[iix(x,y,z,p)] = (p_bar_y_plus - p_bar_y_minus)*p.dt/p.dx;
-
-	f.Zz[iix(x,y,z,p)] = (p_bar_z_plus - p_bar_z_minus)*p.dt/p.dx;
+	f.Zz[iix(x,y,z,p)] = f.Zz[iix(x,y,z,p)] - 0.5*(p_bar_z_plus - p_bar_z_minus)*p.dt/p.dx;
       }
     }
   }
+
 
 
 
