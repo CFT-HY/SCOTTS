@@ -159,64 +159,53 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
 
   // section 3.4.5 continued
   // face-centred x-cpt of 3-velocity
-  for(x = 0; x < p.L; x++) {
-    for(y = 0; y < p.L; y++) {
-      for(z = 0; z < p.L; z++) {  
+  for(x = 0; x < p.N; x++) {
 
-	ubarx = (f.Ux[iix(x,y,z,p)] + f.Ux[iix(x,y+1,z,p)] 
-		 + f.Ux[iix(x,y,z+1,p)] + f.Ux[iix(x,y+1,z+1,p)])/4.0;
-
-	ubary = (f.Uy[iix(x,y,z,p)] + f.Uy[iix(x,y+1,z,p)] 
-		 + f.Uy[iix(x,y,z+1,p)] + f.Uy[iix(x,y+1,z+1,p)])/4.0;
-
-	ubarz = (f.Uz[iix(x,y,z,p)] + f.Uz[iix(x,y+1,z,p)] 
-		 + f.Uz[iix(x,y,z+1,p)] + f.Uz[iix(x,y+1,z+1,p)])/4.0;
-
-	Wfacex[iix(x,y,z,p)] = sqrt(1.0 + ubarx*ubarx + ubary*ubary + ubarz*ubarz);
-
-	f.Vx[iix(x,y,z,p)] = ubarx/Wfacex[iix(x,y,z,p)];
-      }
-    }
+    ubarx = (f.Ux[x] + f.Ux[nb[x][2]] 
+	     + f.Ux[nb[x][4]] + f.Ux[nb[nb[x][2]][4]])/4.0;
+    
+    ubary = (f.Uy[x] + f.Uy[nb[x][2]]
+	     + f.Uy[nb[x][4]] + f.Uy[nb[nb[x][2]][4]])/4.0;
+    
+    ubarz = (f.Uz[x] + f.Uz[nb[x][2]]
+	     + f.Uz[nb[x][4]] + f.Uz[nb[nb[x][2]][4]])/4.0;
+    
+    Wfacex[x] = sqrt(1.0 + ubarx*ubarx + ubary*ubary + ubarz*ubarz);
+    
+    f.Vx[x] = ubarx/Wfacex[x];
   }
   // y-cpt
-  for(x = 0; x < p.L; x++) {
-    for(y = 0; y < p.L; y++) {
-      for(z = 0; z < p.L; z++) {  
+  for(x = 0; x < p.N; x++) {
 
-	ubarx = (f.Ux[iix(x,y,z,p)] + f.Ux[iix(x+1,y,z,p)] 
-		 + f.Ux[iix(x,y,z+1,p)] + f.Ux[iix(x+1,y,z+1,p)])/4.0;
+	ubarx = (f.Ux[x] + f.Ux[nb[x][0]] 
+		 + f.Ux[nb[x][4]] + f.Ux[nb[nb[x][0]][4]])/4.0;
 
-	ubary = (f.Uy[iix(x,y,z,p)] + f.Uy[iix(x+1,y,z,p)] 
-		 + f.Uy[iix(x,y,z+1,p)] + f.Uy[iix(x+1,y,z+1,p)])/4.0;
+	ubary = (f.Uy[x] + f.Uy[nb[x][0]] 
+		 + f.Uy[nb[x][4]] + f.Uy[nb[nb[x][0]][4]])/4.0;
 
-	ubarz = (f.Uz[iix(x,y,z,p)] + f.Uz[iix(x+1,y,z,p)] 
-		 + f.Uz[iix(x,y,z+1,p)] + f.Uz[iix(x+1,y,z+1,p)])/4.0;
+	ubarz = (f.Uz[x] + f.Uz[nb[x][0]] 
+		 + f.Uz[nb[x][4]] + f.Uz[nb[nb[x][0]][4]])/4.0;
 
-	Wfacey[iix(x,y,z,p)] = sqrt(1.0 + ubarx*ubarx + ubary*ubary + ubarz*ubarz);
+	Wfacey[x] = sqrt(1.0 + ubarx*ubarx + ubary*ubary + ubarz*ubarz);
 
-	f.Vy[iix(x,y,z,p)] = ubary/Wfacey[iix(x,y,z,p)];
-      }
-    }
+	f.Vy[x] = ubary/Wfacey[x];
+
   }
   // z-cpt
-  for(x = 0; x < p.L; x++) {
-    for(y = 0; y < p.L; y++) {
-      for(z = 0; z < p.L; z++) {  
+  for(x = 0; x < p.N; x++) {
 
-	ubarx = (f.Ux[iix(x,y,z,p)] + f.Ux[iix(x,y+1,z,p)] 
-		 + f.Ux[iix(x+1,y,z,p)] + f.Ux[iix(x+1,y+1,z,p)])/4.0;
-
-	ubary = (f.Uy[iix(x,y,z,p)] + f.Uy[iix(x,y+1,z,p)] 
-		 + f.Uy[iix(x+1,y,z,p)] + f.Uy[iix(x+1,y+1,z,p)])/4.0;
-
-	ubarz = (f.Uz[iix(x,y,z,p)] + f.Uz[iix(x,y+1,z,p)] 
-		 + f.Uz[iix(x+1,y,z,p)] + f.Uz[iix(x+1,y+1,z,p)])/4.0;
-
-	Wfacez[iix(x,y,z,p)] = sqrt(1.0 + ubarx*ubarx + ubary*ubary + ubarz*ubarz);
-
-	f.Vz[iix(x,y,z,p)] = ubarz/Wfacez[iix(x,y,z,p)];
-      }
-    }
+    ubarx = (f.Ux[x] + f.Ux[nb[x][2]] 
+	     + f.Ux[nb[x][0]] + f.Ux[nb[nb[x][0]][2]])/4.0;
+    
+    ubary = (f.Uy[x] + f.Uy[nb[x][2]] 
+	     + f.Uy[nb[x][0]] + f.Uy[nb[nb[x][0]][2]])/4.0;
+    
+    ubarz = (f.Uz[x] + f.Uz[nb[x][2]] 
+	     + f.Uz[nb[x][0]] + f.Uz[nb[nb[x][0]][2]])/4.0;
+    
+    Wfacez[x] = sqrt(1.0 + ubarx*ubarx + ubary*ubary + ubarz*ubarz);
+    
+    f.Vz[x] = ubarz/Wfacez[x];
   }
 
   // End section 3.4.5
@@ -268,27 +257,22 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
 
 
   // Last bit of 3.4.6
-  for(x = 0; x < p.L; x++) {
-    for(y = 0; y < p.L; y++) {
-      for(z = 0; z < p.L; z++) {
-	qx = (f.Vx[iix(x,y,z,p)] + f.Vx[iix(x+1,y,z,p)])
-	  *(Wfacex[iix(x+1,y,z,p)] - Wfacex[iix(x,y,z,p)])*p.dt/(2.0*p.dx);
-
-	qy = (f.Vy[iix(x,y,z,p)] + f.Vy[iix(x,y+1,z,p)])
-	  *(Wfacey[iix(x,y+1,z,p)] - Wfacey[iix(x,y,z,p)])*p.dt/(2.0*p.dx);
-
-	qz = (f.Vz[iix(x,y,z,p)] + f.Vz[iix(x,y,z+1,p)])
-	  *(Wfacez[iix(x,y,z+1,p)] - Wfacez[iix(x,y,z,p)])*p.dt/(2.0*p.dx);
-
-	gradv = (qx+qy+qz)/f.W[iix(x,y,z,p)];
-
-	//	s = (f.kappa[x] - 1.0)*gradv/2.0;
-	//	f.E[iix(x,y,z,p)] = f.E[iix(x,y,z,p)]*(1-s)/(1+s);
-	f.E[iix(x,y,z,p)] = f.E[iix(x,y,z,p)]*exp(-1.0*(f.kappa[iix(x,y,z,p)]-1.0)*gradv);
-
-
-      }
-    }
+  for(x = 0; x < p.N; x++) {
+    qx = (f.Vx[x] + f.Vx[nb[x][0]])
+      *(Wfacex[nb[x][0]] - Wfacex[x])*p.dt/(2.0*p.dx);
+    
+    qy = (f.Vy[x] + f.Vy[nb[x][2]])
+      *(Wfacey[nb[x][2]] - Wfacey[x])*p.dt/(2.0*p.dx);
+    
+    qz = (f.Vz[x] + f.Vz[nb[x][4]])
+      *(Wfacez[nb[x][4]] - Wfacez[x])*p.dt/(2.0*p.dx);
+    
+    gradv = (qx+qy+qz)/f.W[x];
+    
+    //	s = (f.kappa[x] - 1.0)*gradv/2.0;
+    //	f.E[iix(x,y,z,p)] = f.E[iix(x,y,z,p)]*(1-s)/(1+s);
+    f.E[x] = f.E[x]*exp(-1.0*(f.kappa[x]-1.0)*gradv);
+       
   }
 
 

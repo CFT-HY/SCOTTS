@@ -2,7 +2,7 @@
 
 # How long the simulation takes
 L      32
-steps  2000
+steps  100
 
 # How big the simulation is
 dx     0.125
