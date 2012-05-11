@@ -80,6 +80,15 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
   DBPutQuadvar1(dbfile, "Zz", "quadmesh", f.Zz, meshsize, 3,
 		NULL, 0, DB_DOUBLE, DB_NODECENT, NULL);
 
+  DBPutQuadvar1(dbfile, "Vx", "quadmesh", f.Vx, meshsize, 3,
+		NULL, 0, DB_DOUBLE, DB_NODECENT, NULL);
+
+  DBPutQuadvar1(dbfile, "Vy", "quadmesh", f.Vy, meshsize, 3,
+		NULL, 0, DB_DOUBLE, DB_NODECENT, NULL);
+
+  DBPutQuadvar1(dbfile, "Vz", "quadmesh", f.Vz, meshsize, 3,
+		NULL, 0, DB_DOUBLE, DB_NODECENT, NULL);
+
 
   DBClose(dbfile);
 
