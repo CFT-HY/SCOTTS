@@ -290,15 +290,11 @@ int main(int argc, char *argv[])
     // Do field step
     evolve_field(f, nb, p);
     
-    
-    //    fprintf(stderr,"E[0] = %lf\n", f.E[0]);
-    //    fprintf(stderr,"E[L,L,L] = %lf\n", f.E[iix(p.L-1,p.L-1,p.L-1,p)]);
     // Advection of state variables
-    
-    //    fprintf(stderr,"don-be E[0] = %lf\n", f.E[0]);
-    // advect_E(f, nb, p);
-    //    fprintf(stderr,"don-af E[0] = %lf\n", f.E[0]);
-    // advect_Z(f, nb, p);
+    advect_E(f, nb, p);
+
+    // Advection of momentum
+    advect_Z(f, nb, p);
     
     // Calculate EOS
     eq_of_state(f, p);
@@ -306,8 +302,6 @@ int main(int argc, char *argv[])
     // Do the hydro bits
     evolve_hydro(f, nb, p);
 
-    //   dump(f.Zx,p);
-    
     // Solve for T
     find_Ta(f, p);
     
