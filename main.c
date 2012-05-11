@@ -36,6 +36,8 @@ void alloc_fields(hydro_fields *f, hydro_params p) {
   // and used in hydro)
   f->kappa = (double *) malloc(p.N*sizeof(double));
 
+
+
   // pressure (obtained by eq_of_state first time
   // and used in hydro)
   f->p = (double *) malloc(p.N*sizeof(double));
@@ -44,6 +46,18 @@ void alloc_fields(hydro_fields *f, hydro_params p) {
   f->V[0] = f->Vx;
   f->V[1] = f->Vy;
   f->V[2] = f->Vz;
+
+  f->U = (double **) malloc(3*sizeof(double *));
+
+  f->U[0] = f->Ux;
+  f->U[1] = f->Uy;
+  f->U[2] = f->Uz;
+
+  f->deltaM = (double **) malloc(3*sizeof(double *));
+
+  f->deltaM[0] = (double *) malloc(p.N*sizeof(double));
+  f->deltaM[1] = (double *) malloc(p.N*sizeof(double));
+  f->deltaM[2] = (double *) malloc(p.N*sizeof(double));
 
   // (calloc considered harmful)
 }
@@ -113,6 +127,15 @@ void free_fields(hydro_fields *f) {
   free(f->kappa);
   free(f->p);
   free(f->pi);
+
+  free(f->deltaM[0]);
+  free(f->deltaM[1]);
+  free(f->deltaM[2]);
+  free(f->deltaM);
+
+  free(f->U);
+  free(f->V);
+ 
 }
 
 int iix(int x, int y, int z, hydro_params p) {
@@ -289,9 +312,11 @@ int main(int argc, char *argv[])
 
     // Do field step
     evolve_field(f, nb, p);
+
     
     // Advection of state variables
     advect_E(f, nb, p);
+
 
     // Advection of momentum
     advect_Z(f, nb, p);
