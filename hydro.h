@@ -79,11 +79,9 @@ int iix(int x, int y, int z, hydro_params p);
 // evolve.c
 
 void evolve_backstep(hydro_fields f, int **nb, hydro_params p);
-
 void evolve_field(hydro_fields f, int **nb, hydro_params p);
-
 void evolve_hydro(hydro_fields f, int **nb, hydro_params p);
-
+void artificial_viscosity(hydro_fields f, int **nb, hydro_params p);
 
 // potential.c
 
