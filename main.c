@@ -337,6 +337,10 @@ int main(int argc, char *argv[])
     
   } // main loop ends here
 
+  for(x=0;x<p.L;x++) {
+    fprintf(stderr,"%d %lf\n", x, f.Vx[iix(x,0,0,p)]);
+  }
+
   fclose(phi_fh);
 
   // Clean up memory
