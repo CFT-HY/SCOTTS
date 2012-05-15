@@ -13,7 +13,7 @@ void silo_init(hydro_params p)
   //    fprintf(stderr,"p.silostep is %d\n", p.silostep);
   
   char silodir[100];
-  sprintf(silodir,"silage-%d",0*(int)getpid());
+  sprintf(silodir,"silage-%d",(int)getpid());
   if(mkdir(silodir,07777))
     perror(silodir);
   
@@ -35,7 +35,7 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
   DBfile *dbfile = NULL;
 
   char silodir[100];
-  sprintf(silodir,"silage-%d",0*(int)getpid());
+  sprintf(silodir,"silage-%d",(int)getpid());
 
   /* Create a unique filename for the new Silo file */
   char filename[100];
