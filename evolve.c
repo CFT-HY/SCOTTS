@@ -376,3 +376,113 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
   free(dxphi);
   free(Q);
 }
+
+void artificial_viscosity(hydro_fields f, int **nb, hydro_params p) {
+  int x;
+
+  double Ux, Uxp, Uy, Uyp, Uz, Uzp;
+
+  double *zoneDiv = (double *)malloc(p.N*sizeof(double));  
+
+  double Q = 1.0;
+  double L = p.dt;
+
+  double Umin, Umax, Udix, Udiv;
+  double *c = (double *)malloc(p.N*sizeof(double));  
+  double *qx = (double *)malloc(p.N*sizeof(double));  
+  double *q = (double *)malloc(p.N*sizeof(double));  
+  double *tx = (double *)malloc(p.N*sizeof(double));  
+  double g, F;
+  double delta, deltam, deltav;
+  double a,b,C;
+  double qt;
+  double A = 0.25;
+
+
+  double cs = 0.025;
+
+
+  // Zone centred divergence (W&M p93, bottom)
+  for(x=0;x<p.N;x++) {
+
+    Ux = f.Ux[x] + f.Ux[nb[x][2]] + f.Ux[nb[x][4]] + f.Ux[nb[nb[x][2]][4]];
+    Uxp = f.Ux[nb[x][0]] + f.Ux[nb[nb[x][2]][0]] + f.Ux[nb[nb[x][4]][0]]
+      + f.Ux[nb[nb[nb[x][2]][4]][0]];
+
+    Uy = f.Uy[x] + f.Uy[nb[x][0]] + f.Uy[nb[x][4]] + f.Uy[nb[nb[x][0]][4]];
+    Uyp = f.Uy[nb[x][2]] + f.Uy[nb[nb[x][0]][2]] + f.Uy[nb[nb[x][4]][2]]
+      + f.Uy[nb[nb[nb[x][0]][4]][2]];
+
+    Uz = f.Uz[x] + f.Uz[nb[x][0]] + f.Uz[nb[x][2]] + f.Uz[nb[nb[x][0]][2]];
+    Uzp = f.Uz[nb[x][4]] + f.Uz[nb[nb[x][0]][4]] + f.Uz[nb[nb[x][2]][4]]
+      + f.Uz[nb[nb[nb[x][0]][2]][4]];
+
+    zoneDiv[x] =  0.25*(Uxp - Ux + Uyp - Uy + Uzp - Uz)/p.dx;
+
+  }
+
+
+
+
+  // x-direction art visc
+  for(x=0; x<p.N; x++) {
+    Umin = minof3(f.Ux[nb[x][1]],f.Ux[x],f.Ux[nb[x][0]]);
+    Umax = maxof3(f.Ux[nb[x][1]],f.Ux[x],f.Ux[nb[x][0]]);
+    Udix = minof2(Umax-f.Ux[x],f.Ux[x]-Umin);
+
+    if((f.Ux[nb[x][0]]-f.Ux[x])*(f.Ux[x]-f.Ux[nb[x][1]]) > 0) {
+      Udiv = Udix;
+    } else {
+      Udiv = 0;
+    }
+
+    c[x] = 0.5*(f.Ux[x] - f.Ux[nb[x][0]] + f.Ux[nb[x][1]] - f.Ux[x])/p.dx;
+  }
+
+  for(x=0; x<p.N; x++) {
+    g = sqrt(1.0 + f.Ux[x]*f.Ux[x] + f.Uy[x]*f.Uy[x] + f.Uz[x]*f.Uz[x]);
+    F = f.kappa[x]*f.E[x] + f.kappa[nb[x][5]]*f.E[nb[x][5]]
+      + f.kappa[nb[x][3]]*f.E[nb[x][3]] + f.kappa[nb[nb[x][5]][3]]*f.E[nb[nb[x][5]][3]];
+    delta = f.Ux[nb[x][0]] - f.Ux[x] - 0.5*p.dx*(c[x] + c[nb[x][0]])/g;
+
+
+
+    if(delta*(f.Ux[nb[x][0]]-f.Ux[x]) > 0.0)
+      deltam = delta;
+    else
+      deltam = 0.0;
+
+    deltav = minof2(deltam,0.0);
+
+    qx[x] = F*(Q*deltav - L*cs);
+    tx[x] = F*deltav*(f.Vx[x] + f.Vx[nb[x][0]]);
+  }
+
+
+  for(x=0;x<p.N;x++) {
+    if(zoneDiv[x] > 0)
+      q[x] = 0.0;
+    else
+      q[x] = 0.25*(qx[x] + qx[nb[x][4]] + qx[nb[x][2]] + qx[nb[nb[x][2]][4]]);
+
+    a = tx[x] + tx[nb[x][2]] + tx[nb[x][4]] + tx[nb[nb[x][2]][4]];
+    b = 0.0;
+    C = 0.0;
+
+    qt = q[x] - (a + b + C)*A/32.0;
+
+    if(zoneDiv[x] < 0)
+      qt = 0.0;
+
+    f.E[x] = f.E[x] + (q[x] - qt)*zoneDiv[x];
+
+  }
+
+
+  free(zoneDiv);
+  free(c);
+  free(qx);
+  free(q);
+  free(tx);
+
+}

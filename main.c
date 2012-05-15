@@ -327,6 +327,8 @@ int main(int argc, char *argv[])
     // Do the hydro bits
     evolve_hydro(f, nb, p);
 
+    artificial_viscosity(f, nb, p);
+
     // Solve for T
     find_Ta(f, p);
     
