@@ -196,7 +196,7 @@ void initial_3D(hydro_fields f, hydro_params p) {
 
 	
 			
-	if( (x < p.Lx/4) || (x > 3*p.Lx/4))
+	if( (x < p.Lx/2))
 	  f.E[iix(x,y,z,p)] = El;
 	else
 	  f.E[iix(x,y,z,p)] = Er;
