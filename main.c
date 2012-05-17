@@ -139,7 +139,7 @@ void free_fields(hydro_fields *f) {
 }
 
 int iix(int x, int y, int z, hydro_params p) {
-  return ((x+p.L)%p.L)*p.L*p.L + ((y+p.L)%p.L)*p.L + ((z+p.L)%p.L);
+  return ((x+p.Lx)%p.Lx)*p.Ly*p.Lz + ((y+p.Ly)%p.Ly)*p.Lz + ((z+p.Lz)%p.Lz);
 }
 
 int **init_nb(hydro_params p) {
@@ -150,18 +150,18 @@ int **init_nb(hydro_params p) {
   // set up nb lookup table
   nb = (int **) malloc(p.N*sizeof(int *));
   
-  for(x=0; x<p.L; x++) {
-    for(y=0; y<p.L; y++) {
-      for(z=0; z<p.L; z++) {
+  for(x=0; x<p.Lx; x++) {
+    for(y=0; y<p.Ly; y++) {
+      for(z=0; z<p.Lz; z++) {
     
-	nb[x*p.L*p.L + y*p.L + z] = (int *)malloc(6*sizeof(int));
+	nb[x*p.Ly*p.Lz + y*p.Lz + z] = (int *)malloc(6*sizeof(int));
 
-	nb[x*p.L*p.L + y*p.L + z][0] = iix(x+1, y, z, p);
-	nb[x*p.L*p.L + y*p.L + z][1] = iix(x-1, y, z, p);
-        nb[x*p.L*p.L + y*p.L + z][2] = iix(x, y+1, z, p);
-	nb[x*p.L*p.L + y*p.L + z][3] = iix(x, y-1, z, p);
-	nb[x*p.L*p.L + y*p.L + z][4] = iix(x, y, z+1, p);
-	nb[x*p.L*p.L + y*p.L + z][5] = iix(x, y, z-1, p);
+	nb[x*p.Ly*p.Lz + y*p.Lz + z][0] = iix(x+1, y, z, p);
+	nb[x*p.Ly*p.Lz + y*p.Lz + z][1] = iix(x-1, y, z, p);
+        nb[x*p.Ly*p.Lz + y*p.Lz + z][2] = iix(x, y+1, z, p);
+	nb[x*p.Ly*p.Lz + y*p.Lz + z][3] = iix(x, y-1, z, p);
+	nb[x*p.Ly*p.Lz + y*p.Lz + z][4] = iix(x, y, z+1, p);
+	nb[x*p.Ly*p.Lz + y*p.Lz + z][5] = iix(x, y, z-1, p);
       }
     }
   }
@@ -190,7 +190,7 @@ int main(int argc, char *argv[])
 
   
 
-  p.N = p.L*p.L*p.L;
+  p.N = p.Lx*p.Ly*p.Lz;
 
   // Calculate terms in potential
   p.alpha = 1.0/sqrt(2.0*p.sigma*
@@ -275,7 +275,8 @@ int main(int argc, char *argv[])
   // Output of some field at every time step
   FILE *phi_fh = fopen("field.dat","w");
 #ifdef SILO
-  silo_init(p);
+  if(p.interval > 0)
+    silo_init(p);
 #endif // SILO
 
   // Step back for leapfrog initial conds
@@ -287,7 +288,7 @@ int main(int argc, char *argv[])
 
   for(step = 0; step < p.steps; step++) {
 
-    if(step % p.interval == 0) {
+    if((p.interval > 0) && (step % p.interval == 0)) {
 
 #ifdef SILO
       write_silo_step(f, p, step);
@@ -299,10 +300,12 @@ int main(int argc, char *argv[])
 
       current_energy = total_energy(f, nb, p);
 
-      printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\n",
+      
+      fprintf(stderr,"%04d\t%6lf\t%6lf\t%6lf\t%6lf\n",
 	     step, t,
 	     current_energy, 
 	     field_energy(f, nb, p), wmax);
+      
 
       fflush(stdout);
 
@@ -311,7 +314,7 @@ int main(int argc, char *argv[])
     }
 
     // Do field step
-    evolve_field(f, nb, p);
+    //    evolve_field(f, nb, p);
 
     
     // Advection of state variables
@@ -327,10 +330,10 @@ int main(int argc, char *argv[])
     // Do the hydro bits
     evolve_hydro(f, nb, p);
 
-    artificial_viscosity(f, nb, p);
+    //    artificial_viscosity(f, nb, p);
 
     // Solve for T
-    find_Ta(f, p);
+    // find_Ta(f, p);
     
     t += p.dt;
 
@@ -339,9 +342,11 @@ int main(int argc, char *argv[])
     
   } // main loop ends here
 
-  for(x=0;x<p.L;x++) {
-    fprintf(stderr,"%d %lf\n", x, f.Vx[iix(x,0,0,p)]);
+  
+  for(x=0;x<p.Lx;x++) {
+    fprintf(stdout,"%d %lf %lf\n", x, f.Vx[iix(x,0,0,p)], f.E[iix(x,0,0,p)]);
   }
+  
 
   fclose(phi_fh);
 

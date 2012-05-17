@@ -17,7 +17,7 @@
 typedef struct {
   double dx;
   double dt;
-  int L;
+  int Lx, Ly, Lz;
   int steps;
 
   double Cav;

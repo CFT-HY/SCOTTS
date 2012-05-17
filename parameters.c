@@ -33,7 +33,10 @@ hydro_params get_parameters(char *infile)
   int set_dx = 0;
   int set_dt = 0;
  
-  int set_L = 0;
+  int set_Lx = 0;
+  int set_Ly = 0;
+  int set_Lz = 0;
+
   int set_steps = 0;
 
   int set_Cav = 0;
@@ -107,9 +110,17 @@ hydro_params get_parameters(char *infile)
       parameters.dt = strtod(value,NULL);
       set_dt = 1;
     }    
-    else if(!strcasecmp(key,"L")) {
-      parameters.L = strtol(value,NULL,10);
-      set_L = 1;
+    else if(!strcasecmp(key,"Lx")) {
+      parameters.Lx = strtol(value,NULL,10);
+      set_Lx = 1;
+    } 
+    else if(!strcasecmp(key,"Ly")) {
+      parameters.Ly = strtol(value,NULL,10);
+      set_Ly = 1;
+    } 
+    else if(!strcasecmp(key,"Lz")) {
+      parameters.Lz = strtol(value,NULL,10);
+      set_Lz = 1;
     } 
     else if(!strcasecmp(key,"steps")) {
       parameters.steps = strtol(value,NULL,10);
@@ -162,8 +173,14 @@ hydro_params get_parameters(char *infile)
   } else if(!set_dt) {
     fprintf(stderr, "Did not set parameter \'dt\'\n");
     exit(100);
-  } else if(!set_L) {
-    fprintf(stderr, "Did not set parameter \'L\'\n");
+  } else if(!set_Lx) {
+    fprintf(stderr, "Did not set parameter \'Lx\'\n");
+    exit(100);
+  } else if(!set_Ly) {
+    fprintf(stderr, "Did not set parameter \'Ly\'\n");
+    exit(100);
+  } else if(!set_Lz) {
+    fprintf(stderr, "Did not set parameter \'Lz\'\n");
     exit(100);
   } else if(!set_steps) {
     fprintf(stderr, "Did not set parameter \'steps\'\n");
@@ -194,12 +211,14 @@ hydro_params get_parameters(char *infile)
 
   // Report what we found
   fprintf(stderr,"-- Read parameters from %s:\n" \
-	  "-- dx %g, dt %g, L %d, steps %d\n" \
+	  "-- dx %g, dt %g, steps %d\n" \
+	  "-- Lx %d, Ly %d, Lz %d\n" \
 	  "-- Cav %g, C %g,\n" \
 	  "-- Lheat %g, sigma %g, lcorr %g\n" \
 	  "-- interval %d\n",
 	  infile,
-	  parameters.dx, parameters.dt, parameters.L, parameters.steps, \
+	  parameters.dx, parameters.dt, parameters.steps, \
+	  parameters.Lx, parameters.Ly, parameters.Lz, \
 	  parameters.Cav, parameters.C, \
 	  parameters.Lheat, parameters.sigma, parameters.lcorr, \
 	  parameters.interval);

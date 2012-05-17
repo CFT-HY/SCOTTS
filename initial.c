@@ -173,24 +173,33 @@ void initial_3D(hydro_fields f, hydro_params p) {
 	  "** phimin %g, cstrab %g, Rtenab %g\n", \
 	  phimin, cstrab, Rtenab);
 
+  double Er, El, rE;
+
+  rE = 50.0;
+
+  Er = 1.0/(1.0+rE);
+  El = rE*Er;
+
+
+
   int x, y, z;
 
-  for(x = 0; x < p.L; x++) {
-    for(y = 0; y < p.L; y++) {
-      for(z = 0; z < p.L; z++) {
+  for(x = 0; x < p.Lx; x++) {
+    for(y = 0; y < p.Ly; y++) {
+      for(z = 0; z < p.Lz; z++) {
 
 	f.phi[iix(x,y,z,p)] = 0.0; // cstrab*(1.0 + 0.1*drand48());
 
 	f.pifull[iix(x,y,z,p)] = 0.0;
 	
-	f.T[iix(x,y,z,p)] = p.Tconst;
+	f.T[iix(x,y,z,p)] = 0.0; // p.Tconst;
 
 	
 			
-	if( (x  ) > p.L/4 && (x ) < 3*p.L/4)
-	  f.E[iix(x,y,z,p)] = 0.51;
+	if( (x < p.Lx/4) || (x > 3*p.Lx/4))
+	  f.E[iix(x,y,z,p)] = El;
 	else
-	  f.E[iix(x,y,z,p)] = 0.5;
+	  f.E[iix(x,y,z,p)] = Er;
 		
 
 	
