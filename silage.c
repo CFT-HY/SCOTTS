@@ -48,18 +48,25 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
   int *meshsize = (int *)malloc(3*sizeof(int));
 
 
-  for(i=0;i<3;i++)
-    meshsize[i] = p.L;
+  meshsize[0] = p.Lx;
+  meshsize[1] = p.Ly;
+  meshsize[2] = p.Lz;
 
   double **mesh = (double **)malloc(p.N*sizeof(double *));
 
-  for(i=0;i<3;i++)
-    mesh[i] = (double *)malloc(p.N*sizeof(double));
+  
+  mesh[0] = (double *)malloc(p.Lx*sizeof(double));
+  mesh[1] = (double *)malloc(p.Ly*sizeof(double));
+  mesh[2] = (double *)malloc(p.Lz*sizeof(double));
 
-  for(x=0; x<p.L; x++) {
-    for(i=0; i<3; i++) {
-      mesh[i][x] = p.dx*((double)x);
-    }
+  for(x=0; x<p.Lx; x++) {
+      mesh[0][x] = p.dx*((double)x);
+  }
+  for(x=0; x<p.Ly; x++) {
+      mesh[1][x] = p.dx*((double)x);
+  }
+  for(x=0; x<p.Lz; x++) {
+      mesh[2][x] = p.dx*((double)x);
   }
 
   
