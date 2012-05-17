@@ -128,7 +128,8 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
 	f.E[x] = f.E[x]*(1-s)/(1+s);
 	*/
 
-	f.E[x] = f.E[x]*exp(-0.5*(f.kappa[x] - 1.0)*divv*p.dt);
+	// Is it 1.0 or 0.5?
+	f.E[x] = f.E[x]*exp(-1.0*(f.kappa[x] - 1.0)*divv*p.dt);
 
   }
 
@@ -162,14 +163,23 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
   // face-centred x-cpt of 3-velocity
   for(x = 0; x < p.N; x++) {
 
-    ubarx = (f.Ux[x] + f.Ux[nb[x][2]] 
-	     + f.Ux[nb[x][4]] + f.Ux[nb[nb[x][2]][4]])/4.0;
+    ubarx = (f.Ux[x]
+	     + f.Ux[nb[x][2]] 
+	     + f.Ux[nb[x][4]]
+	     + f.Ux[nb[nb[x][2]][4]]
+	     )/4.0;
     
-    ubary = (f.Uy[x] + f.Uy[nb[x][2]]
-	     + f.Uy[nb[x][4]] + f.Uy[nb[nb[x][2]][4]])/4.0;
+    ubary = (f.Uy[x]
+	     + f.Uy[nb[x][2]]
+	     + f.Uy[nb[x][4]]
+	     + f.Uy[nb[nb[x][2]][4]]
+	     )/4.0;
     
-    ubarz = (f.Uz[x] + f.Uz[nb[x][2]]
-	     + f.Uz[nb[x][4]] + f.Uz[nb[nb[x][2]][4]])/4.0;
+    ubarz = (f.Uz[x]
+	     + f.Uz[nb[x][2]]
+	     + f.Uz[nb[x][4]]
+	     + f.Uz[nb[nb[x][2]][4]]
+	     )/4.0;
     
     Wfacex[x] = sqrt(1.0 + ubarx*ubarx + ubary*ubary + ubarz*ubarz);
     
@@ -178,14 +188,23 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
   // y-cpt
   for(x = 0; x < p.N; x++) {
 
-	ubarx = (f.Ux[x] + f.Ux[nb[x][0]] 
-		 + f.Ux[nb[x][4]] + f.Ux[nb[nb[x][0]][4]])/4.0;
+	ubarx = (f.Ux[x]
+		 + f.Ux[nb[x][0]] 
+		 + f.Ux[nb[x][4]]
+		 + f.Ux[nb[nb[x][0]][4]]
+		 )/4.0;
 
-	ubary = (f.Uy[x] + f.Uy[nb[x][0]] 
-		 + f.Uy[nb[x][4]] + f.Uy[nb[nb[x][0]][4]])/4.0;
+	ubary = (f.Uy[x]
+		 + f.Uy[nb[x][0]] 
+		 + f.Uy[nb[x][4]]
+		 + f.Uy[nb[nb[x][0]][4]]
+		 )/4.0;
 
-	ubarz = (f.Uz[x] + f.Uz[nb[x][0]] 
-		 + f.Uz[nb[x][4]] + f.Uz[nb[nb[x][0]][4]])/4.0;
+	ubarz = (f.Uz[x]
+		 + f.Uz[nb[x][0]] 
+		 + f.Uz[nb[x][4]]
+		 + f.Uz[nb[nb[x][0]][4]]
+		 )/4.0;
 
 	Wfacey[x] = sqrt(1.0 + ubarx*ubarx + ubary*ubary + ubarz*ubarz);
 
@@ -274,7 +293,9 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
     // Top of p90 ch 3
     f.E[x] = f.E[x]*pow(Wold[x]/f.W[x],f.kappa[x]-1.0);
 
+
   }
+
 
 
   // Last bit of 3.4.6
@@ -295,7 +316,6 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
     f.E[x] = f.E[x]*exp(-1.0*(f.kappa[x]-1.0)*gradv);
        
   }
-
 
 
   // Pressure acceleration (and artificial viscosity for 'Z')
@@ -353,12 +373,6 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
     f.Zz[x] = f.Zz[x] - (p_bar_z_plus - p_bar_z_minus)*p.dt/p.dx;
 
   }
-
-
-
-
-
-
 
 
 
