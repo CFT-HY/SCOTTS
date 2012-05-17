@@ -333,7 +333,7 @@ int main(int argc, char *argv[])
     //    artificial_viscosity(f, nb, p);
 
     // Solve for T
-    // find_Ta(f, p);
+    find_Ta(f, p);
     
     t += p.dt;
 
