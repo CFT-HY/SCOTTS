@@ -184,6 +184,10 @@ int main(int argc, char *argv[])
 {
   fprintf(stderr,"3D hydro port\n");
 
+  if(argc != 2) {
+    fprintf(stderr,"Usage: hydro <parameter file>\n");
+    return 100;
+  }
 
   // Parse params from stdin
   hydro_params p = get_parameters(argv[1]);
@@ -317,18 +321,21 @@ int main(int argc, char *argv[])
     //    evolve_field(f, nb, p);
 
     
-    // Advection of state variables
-    advect_E(f, nb, p);
-
-
-    // Advection of momentum
-    advect_Z(f, nb, p);
     
     // Calculate EOS
     eq_of_state(f, p);
 
     // Do the hydro bits
     evolve_hydro(f, nb, p);
+
+
+    // Advection of state variables
+    donor_E(f, nb, p);
+    //    transport_E_dir(f, nb, p, 0);
+
+    // Advection of momentum
+    //    donor_Z(f, nb, p);
+
 
     //    artificial_viscosity(f, nb, p);
 

@@ -1,6 +1,6 @@
 /* parameters.c
  *
- * Load parameters from stdin, in form "key value".
+ * Load parameters from infile, in form "key value".
  */
 #include "hydro.h"
 
@@ -8,7 +8,7 @@
 /* hydro_params get_parameters()
  *
  * Mostly boilerplate code for parsing lines of the form "key value" 
- * from a file (currently stdin).
+ * from a file.
  *
  * I previously did this call-by-reference, but the parameters struct
  * (defined in hydro.h) makes the calls a lot neater, even if what is

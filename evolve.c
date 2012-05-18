@@ -115,6 +115,7 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
   double ubarx, ubary, ubarz, W;
 
 
+
   // Section 3.4.4 -- pressure terms
   for(x = 0; x < p.N; x++) {
 	qx = (f.Vx[nb[x][0]] - f.Vx[x])/p.dx;
@@ -124,15 +125,15 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
 	divv = qx + qy + qz;
 
 		
-	s = 0.5*(f.kappa[x] - 1.0)*divv*p.dt/2.0;
-	f.E[x] = f.E[x]*(1-s)/(1+s);
+	// s = 0.5*(f.kappa[x] - 1.0)*divv*p.dt/2.0;
+	// f.E[x] = f.E[x]*(1-s)/(1+s);
 	
 
 	// Is it 1.0 or 0.5? -- not the major problem I think
 	// also note that dx=1.0 still get problems
 	// so it is not some factor of dx somewhere
 	// nor is it this particular expression:
-	//	f.E[x] = f.E[x]*exp(-2.0*(f.kappa[x] - 1.0)*divv*p.dt);
+	f.E[x] = f.E[x]*exp(-1.0*(f.kappa[x] - 1.0)*divv*p.dt);
 
   }
 
@@ -376,6 +377,7 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
     f.Zz[x] = f.Zz[x] - (p_bar_z_plus - p_bar_z_minus)*p.dt/p.dx;
 
   }
+
 
 
 
