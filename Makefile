@@ -5,7 +5,8 @@ CFLAGS := -O3
 LIBS := -lm -lsiloh5
 
 OBJECTS := main.o evolve.o potential.o energy.o eos.o \
-	transport.o initial.o output.o parameters.o silage.o
+	transport.o initial.o output.o parameters.o silage.o \
+	util.o
 
 BINARY := run/hydro
 

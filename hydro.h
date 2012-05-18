@@ -133,3 +133,10 @@ hydro_params get_parameters(char *filename);
 void silo_init(hydro_params p);
 void write_silo_step(hydro_fields f, hydro_params p, int step);
 #endif // SILO
+
+
+// util.c
+
+double minof3(double a, double b, double c);
+double maxof3(double a, double b, double c);
+double minof2(double a, double b);
