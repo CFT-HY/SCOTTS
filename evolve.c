@@ -115,6 +115,66 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
   double ubarx, ubary, ubarz, W;
 
 
+  // Pressure acceleration
+  // W&M sec 2.4.12, 3.5.1, DONE
+  for(x = 0; x < p.N; x++) {
+
+    // equation (3.68)
+    // repeated calculation of these unnecessary, so split it out later
+    p_bar_x_plus = (f.p[x]
+		    + f.p[nb[x][3]] 
+		    + f.p[nb[x][5]]
+		    + f.p[nb[nb[x][3]][5]]
+		    )/4.0;
+    
+    p_bar_x_minus = (f.p[nb[x][1]] 
+		     + f.p[nb[nb[x][1]][3]]
+		     + f.p[nb[nb[x][1]][5]]
+		     + f.p[nb[nb[nb[x][1]][3]][5]]
+		     )/4.0;
+    
+    p_bar_y_plus = (f.p[x]
+		    + f.p[nb[x][1]] 
+		    + f.p[nb[x][5]]
+		    + f.p[nb[nb[x][1]][5]]
+		    )/4.0;
+    
+    
+    p_bar_y_minus = (f.p[nb[x][3]]
+		     + f.p[nb[nb[x][1]][3]] 
+		     + f.p[nb[nb[x][3]][5]]
+		     + f.p[nb[nb[nb[x][1]][3]][5]]
+		     )/4.0;
+    
+    
+    p_bar_z_plus = (f.p[x]
+		    + f.p[nb[x][1]] 
+		    + f.p[nb[x][3]]
+		    + f.p[nb[nb[x][1]][3]]
+		    )/4.0;
+    
+    
+    p_bar_z_minus = (f.p[nb[x][5]]
+		     + f.p[nb[nb[x][1]][5]] 
+		     + f.p[nb[nb[x][3]][5]]
+		     + f.p[nb[nb[nb[x][1]][3]][5]]
+		     )/4.0;
+    
+    
+	
+    
+    f.Zx[x] = f.Zx[x] - (p_bar_x_plus - p_bar_x_minus)*p.dt/p.dx;
+    
+    f.Zy[x] = f.Zy[x] - (p_bar_y_plus - p_bar_y_minus)*p.dt/p.dx;
+    
+    f.Zz[x] = f.Zz[x] - (p_bar_z_plus - p_bar_z_minus)*p.dt/p.dx;
+
+  }
+
+
+
+
+
 
   // Section 3.4.4 -- pressure terms
   for(x = 0; x < p.N; x++) {
@@ -320,65 +380,6 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
     f.E[x] = f.E[x]*exp(-1.0*(f.kappa[x]-1.0)*gradv);
        
   }
-
-
-  // Pressure acceleration
-  // W&M sec 2.4.12, 3.5.1, DONE
-  for(x = 0; x < p.N; x++) {
-
-    // equation (3.68)
-    // repeated calculation of these unnecessary, so split it out later
-    p_bar_x_plus = (f.p[x]
-		    + f.p[nb[x][3]] 
-		    + f.p[nb[x][5]]
-		    + f.p[nb[nb[x][3]][5]]
-		    )/4.0;
-    
-    p_bar_x_minus = (f.p[nb[x][1]] 
-		     + f.p[nb[nb[x][1]][3]]
-		     + f.p[nb[nb[x][1]][5]]
-		     + f.p[nb[nb[nb[x][1]][3]][5]]
-		     )/4.0;
-    
-    p_bar_y_plus = (f.p[x]
-		    + f.p[nb[x][1]] 
-		    + f.p[nb[x][5]]
-		    + f.p[nb[nb[x][1]][5]]
-		    )/4.0;
-    
-    
-    p_bar_y_minus = (f.p[nb[x][3]]
-		     + f.p[nb[nb[x][1]][3]] 
-		     + f.p[nb[nb[x][3]][5]]
-		     + f.p[nb[nb[nb[x][1]][3]][5]]
-		     )/4.0;
-    
-    
-    p_bar_z_plus = (f.p[x]
-		    + f.p[nb[x][1]] 
-		    + f.p[nb[x][3]]
-		    + f.p[nb[nb[x][1]][3]]
-		    )/4.0;
-    
-    
-    p_bar_z_minus = (f.p[nb[x][5]]
-		     + f.p[nb[nb[x][1]][5]] 
-		     + f.p[nb[nb[x][3]][5]]
-		     + f.p[nb[nb[nb[x][1]][3]][5]]
-		     )/4.0;
-    
-    
-	
-    
-    f.Zx[x] = f.Zx[x] - (p_bar_x_plus - p_bar_x_minus)*p.dt/p.dx;
-    
-    f.Zy[x] = f.Zy[x] - (p_bar_y_plus - p_bar_y_minus)*p.dt/p.dx;
-    
-    f.Zz[x] = f.Zz[x] - (p_bar_z_plus - p_bar_z_minus)*p.dt/p.dx;
-
-  }
-
-
 
 
 

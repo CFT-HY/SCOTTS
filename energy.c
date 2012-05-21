@@ -79,11 +79,11 @@ double total_energy(hydro_fields f, int **nb, hydro_params p) {
 
   // Cast here
   //  vol = (double)(f.xe[p.N-1]);
-  vol = ((double)(p.Lx*p.Ly*p.Lz))*p.dx*p.dx*p.dx;
+  //  vol = ((double)(p.Lx*p.Ly*p.Lz))*p.dx*p.dx*p.dx;
 
   Etot = (restE+kinE+kinphi+grdphi);
 
-  return Etot/vol;
+  return Etot; // /vol;
 
 
 
