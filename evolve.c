@@ -164,6 +164,8 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
 	
     
     f.Zx[x] = f.Zx[x] - (p_bar_x_plus - p_bar_x_minus)*p.dt/p.dx;
+    // No difference:
+    //    f.Zx[x] = f.Zx[x] - (f.p[x] - f.p[nb[x][1]])*p.dt/p.dx;
     
     f.Zy[x] = f.Zy[x] - (p_bar_y_plus - p_bar_y_minus)*p.dt/p.dx;
     
@@ -171,32 +173,8 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
 
   }
 
-
-
-
-
-
-  // Section 3.4.4 -- pressure terms
-  for(x = 0; x < p.N; x++) {
-	qx = (f.Vx[nb[x][0]] - f.Vx[x])/p.dx;
-	qy = (f.Vy[nb[x][2]] - f.Vy[x])/p.dx;
-	qz = (f.Vz[nb[x][4]] - f.Vz[x])/p.dx;
-
-	divv = qx + qy + qz;
-
-		
-	// s = 0.5*(f.kappa[x] - 1.0)*divv*p.dt/2.0;
-	// f.E[x] = f.E[x]*(1-s)/(1+s);
-	
-
-	// Is it 1.0 or 0.5? -- not the major problem I think
-	// also note that dx=1.0 still get problems
-	// so it is not some factor of dx somewhere
-	// nor is it this particular expression:
-	f.E[x] = f.E[x]*exp(-1.0*(f.kappa[x] - 1.0)*divv*p.dt);
-
-  }
-
+  fprintf(stderr,"p[0] = %lf, p[1] = %lf\n", f.p[0], f.p[1]);
+  fprintf(stderr,"Z[0] = %lf, Z[1] = %lf\n", f.Zx[0], f.Zx[1]);
 
   // update velocity v; denominator is W&M eq (2.85)
   // but note grid is Eulerian and D=0
@@ -205,6 +183,12 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
   //
   // Section 3.4.5, equations 3.5.7, 3.5.8
   for(x = 0; x < p.N; x++) {
+
+    f.Ux[x]  = 2.0*f.Zx[x] / (f.kappa[x]*(f.E[x] + f.E[nb[x][0]]) );
+
+    if(x == 0)
+      fprintf(stderr,"old Ux = %lf\n", f.Ux[1]);
+
 
     sigmabar = (f.kappa[x]*f.E[x] 
 		+ f.kappa[nb[x][1]]*f.E[nb[x][1]]
@@ -215,10 +199,14 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
 		+ f.kappa[nb[x][3]]*f.E[nb[x][3]]
 		+ f.kappa[nb[x][5]]*f.E[nb[x][5]]
 		)/8.0;
-    
+
+   
     f.Ux[x] = f.Zx[x]/sigmabar;
     f.Uy[x] = f.Zy[x]/sigmabar;
     f.Uz[x] = f.Zz[x]/sigmabar;
+
+    if(x == 0)
+      fprintf(stderr,"Ux = %lf\n", f.Ux[1]);
 
   }
 
@@ -306,6 +294,8 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
 
   // End section 3.4.5
 
+  fprintf(stderr,"Vx[1] = %lf\n", f.Vx[1]);
+  getchar();
 
 
   // Section 3.4.6
@@ -340,7 +330,10 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
 	       + f.Uz[nb[nb[x][0]][2]]
 	       + f.Uz[nb[nb[nb[x][0]][2]][4]]
 	       )/8.0;
-    
+
+    if(x < 3 || x > p.N-3)
+      fprintf(stderr,"utildex %d = %lf\n", x, utildex);
+     
     Wold[x] = f.W[x];
     f.W[x] = sqrt(1.0 
 		  + utildex*utildex 
@@ -358,7 +351,43 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
     f.E[x] = f.E[x]*pow(Wold[x]/f.W[x],f.kappa[x]-1.0);
 
 
+
+
   }
+
+  fprintf(stderr,"N-2 powarg = %lf/%lf\n", Wold[p.N-2],f.W[p.N-2]);
+  fprintf(stderr,"N-1 powarg = %lf/%lf\n", Wold[p.N-1],f.W[p.N-1]);
+  fprintf(stderr,"0 powarg = %lf/%lf\n", Wold[0],f.W[0]);
+  fprintf(stderr,"1 powarg = %lf/%lf\n", Wold[1],f.W[1]);
+  fprintf(stderr,"2 powarg = %lf/%lf\n", Wold[2],f.W[2]);
+
+  fprintf(stderr,"powe! E[0] = %lf\n", f.E[0]);
+
+
+  // Section 3.4.4 -- pressure terms
+  for(x = 0; x < p.N; x++) {
+	qx = (f.Vx[nb[x][0]] - f.Vx[x])/p.dx;
+	qy = (f.Vy[nb[x][2]] - f.Vy[x])/p.dx;
+	qz = (f.Vz[nb[x][4]] - f.Vz[x])/p.dx;
+
+	divv = qx + qy + qz;
+
+		
+	// s = 0.5*(f.kappa[x] - 1.0)*divv*p.dt/2.0;
+	// f.E[x] = f.E[x]*(1-s)/(1+s);
+	
+
+	// Is it 1.0 or 0.5? -- not the major problem I think
+	// also note that dx=1.0 still get problems
+	// so it is not some factor of dx somewhere
+	// nor is it this particular expression:
+	f.E[x] = f.E[x]*exp(-1.0*(f.kappa[x] - 1.0)*divv*p.dt);
+
+  }
+
+
+
+
 
 
 
