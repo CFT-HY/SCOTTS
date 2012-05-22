@@ -323,15 +323,15 @@ int main(int argc, char *argv[])
     
     
     // Calculate EOS
-    eq_of_state(f, p);
+    //    eq_of_state(f, p);
 
     // Do the hydro bits
-    evolve_hydro(f, nb, p);
+    // evolve_hydro(f, nb, p);
 
 
     // Advection of state variables
-    donor_E(f, nb, p);
-    //    transport_E_dir(f, nb, p, 0);
+    //    donor_E(f, nb, p);
+    transport_E_dir(f, nb, p, 0);
 
     // Advection of momentum
     //    donor_Z(f, nb, p);
@@ -340,7 +340,7 @@ int main(int argc, char *argv[])
     //    artificial_viscosity(f, nb, p);
 
     // Solve for T
-    find_Ta(f, p);
+    //    find_Ta(f, p);
     
     t += p.dt;
 

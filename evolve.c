@@ -173,8 +173,8 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
 
   }
 
-  fprintf(stderr,"p[0] = %lf, p[1] = %lf\n", f.p[0], f.p[1]);
-  fprintf(stderr,"Z[0] = %lf, Z[1] = %lf\n", f.Zx[0], f.Zx[1]);
+  //  fprintf(stderr,"p[0] = %lf, p[1] = %lf\n", f.p[0], f.p[1]);
+  //  fprintf(stderr,"Z[0] = %lf, Z[1] = %lf\n", f.Zx[0], f.Zx[1]);
 
   // update velocity v; denominator is W&M eq (2.85)
   // but note grid is Eulerian and D=0
@@ -186,9 +186,10 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
 
     f.Ux[x]  = 2.0*f.Zx[x] / (f.kappa[x]*(f.E[x] + f.E[nb[x][0]]) );
 
+    /*
     if(x == 0)
       fprintf(stderr,"old Ux = %lf\n", f.Ux[1]);
-
+    */
 
     sigmabar = (f.kappa[x]*f.E[x] 
 		+ f.kappa[nb[x][1]]*f.E[nb[x][1]]
@@ -205,9 +206,10 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
     f.Uy[x] = f.Zy[x]/sigmabar;
     f.Uz[x] = f.Zz[x]/sigmabar;
 
+    /*
     if(x == 0)
       fprintf(stderr,"Ux = %lf\n", f.Ux[1]);
-
+    */
   }
 
 
@@ -294,8 +296,8 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
 
   // End section 3.4.5
 
-  fprintf(stderr,"Vx[1] = %lf\n", f.Vx[1]);
-  getchar();
+  //  fprintf(stderr,"Vx[1] = %lf\n", f.Vx[1]);
+  //  getchar();
 
 
   // Section 3.4.6
@@ -331,8 +333,8 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
 	       + f.Uz[nb[nb[nb[x][0]][2]][4]]
 	       )/8.0;
 
-    if(x < 3 || x > p.N-3)
-      fprintf(stderr,"utildex %d = %lf\n", x, utildex);
+    //    if(x < 3 || x > p.N-3)
+    //      fprintf(stderr,"utildex %d = %lf\n", x, utildex);
      
     Wold[x] = f.W[x];
     f.W[x] = sqrt(1.0 
@@ -354,7 +356,7 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
 
 
   }
-
+  /*
   fprintf(stderr,"N-2 powarg = %lf/%lf\n", Wold[p.N-2],f.W[p.N-2]);
   fprintf(stderr,"N-1 powarg = %lf/%lf\n", Wold[p.N-1],f.W[p.N-1]);
   fprintf(stderr,"0 powarg = %lf/%lf\n", Wold[0],f.W[0]);
@@ -362,7 +364,7 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
   fprintf(stderr,"2 powarg = %lf/%lf\n", Wold[2],f.W[2]);
 
   fprintf(stderr,"powe! E[0] = %lf\n", f.E[0]);
-
+  */
 
   // Section 3.4.4 -- pressure terms
   for(x = 0; x < p.N; x++) {

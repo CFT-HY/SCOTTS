@@ -200,7 +200,7 @@ void initial_3D(hydro_fields f, hydro_params p) {
 	  f.E[iix(x,y,z,p)] = El;
 	else
 	  f.E[iix(x,y,z,p)] = Er;
-		
+
 
 	
 	//	f.E[iix(x,y,z,p)] = 1.0 + drand48()*1.5;
