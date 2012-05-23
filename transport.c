@@ -1,3 +1,4 @@
+
 /* transport.c
  *
  * Do advection. Two versions, depending on whether the
@@ -7,37 +8,123 @@
 
 
 
-/* 1D port */
-// advect zone quantities (ie state variable, eg E) 
-void donor_E(hydro_fields f, int **nb, hydro_params p) {
+/* Donor cell advection for E in direction dir */
+void donor_E_dir(hydro_fields f, int **nb, hydro_params p, int dir) {
 
   int x;
 
-  // Flux field
-  double *F = (double *) malloc(p.N*sizeof(double));
-  // (Slow: see comments about this in eos.c)
-
-  // Calculate flux
-  // see advection chapter (4) PDF included
-  // 1.0 in what follows will be upgraded to area of a cube later
-
   for(x = 0; x < p.N; x++) {
-    if(f.Vx[x] >= 0.0)
-      F[x] = f.Vx[x]*f.E[nb[x][1]];
+    if(f.V[dir][x] >= 0.0)
+      f.F[dir][x] = f.V[dir][x]*f.E[nb[x][2*dir + 1]];
     else
-      F[x] = f.Vx[x]*f.E[x];
+      f.F[dir][x] = f.V[dir][x]*f.E[x];
   }
 
-
-  
   for(x = 0; x < p.N; x++)
-    f.E[x] = f.E[x] + p.dt*(F[x] - F[nb[x][0]])/p.dx;
+    f.E[x] = f.E[x] + p.dt*(f.F[dir][x] - f.F[dir][nb[x][2*dir]])/p.dx;
   
-
-  free(F);
-
 }
 
+
+// straight from fortran
+void donor_Z_dir(hydro_fields f, int **nb, hydro_params p, int dir) {
+
+  double vc;
+  int x;
+
+  int j;
+
+  double *Vbody = (double *)malloc(p.N*sizeof(double));
+  double *Ubody = (double *)malloc(p.N*sizeof(double));
+  double *F = (double *)malloc(p.N*sizeof(double));
+
+  double **deltaMI = (double **)malloc(3*sizeof(double *));
+  deltaMI[0] = (double *)malloc(p.N*sizeof(double));
+  deltaMI[1] = (double *)malloc(p.N*sizeof(double));
+  deltaMI[2] = (double *)malloc(p.N*sizeof(double));
+
+  double **deltaMIb = (double **)malloc(3*sizeof(double *));
+  deltaMIb[0] = (double *)malloc(p.N*sizeof(double));
+  deltaMIb[1] = (double *)malloc(p.N*sizeof(double));
+  deltaMIb[2] = (double *)malloc(p.N*sizeof(double));
+
+
+  // Regenerate fluxes of inertial density
+  
+  for(x = 0; x < p.N; x++) {
+
+    Vbody[x] = f.V[dir][x]
+      + 0.0*0.125*(f.V[dir][x]
+	      + f.V[dir][nb[x][1]]
+	      + f.V[dir][nb[x][3]]
+	      + f.V[dir][nb[x][5]]
+	      + f.V[dir][nb[nb[x][1]][3]]
+	      + f.V[dir][nb[nb[x][1]][5]] 
+	      + f.V[dir][nb[nb[x][3]][5]]
+	      + f.V[dir][nb[nb[nb[x][1]][3]][5]]
+	      );
+    
+    for(j= 0; j < 3; j++) {
+
+      if(Vbody[x] >= 0.0)
+	f.F[j][x] = Vbody[x]*f.Z[j][x];
+      else
+	f.F[j][x] = Vbody[x]*f.Z[j][nb[x][2*dir]];
+    }
+  }
+  
+
+
+  // Eq 2.11
+  for(x = 0; x < p.N; x++) {
+    f.Z[dir][x] = f.Z[dir][x] - p.dt*(f.F[0][x] - f.F[0][nb[x][1]])/p.dx;
+    f.Z[dir][x] = f.Z[dir][x] - p.dt*(f.F[1][x] - f.F[1][nb[x][3]])/p.dx;
+    f.Z[dir][x] = f.Z[dir][x] - p.dt*(f.F[2][x] - f.F[2][nb[x][5]])/p.dx;
+  }
+
+  free(F);
+  free(Vbody);
+  free(Ubody);
+  free(deltaMI[0]);
+  free(deltaMI[1]);
+  free(deltaMI[2]);
+  free(deltaMI);
+  free(deltaMIb[0]);
+  free(deltaMIb[1]);
+  free(deltaMIb[2]);
+  free(deltaMIb);
+}
+
+void advect_E(hydro_fields f, int **nb, hydro_params p) {
+
+  int order; 
+  order = lrand48() % 3;
+
+  donor_E_dir(f, nb, p, order);
+  donor_E_dir(f, nb, p, (order + 1) % 3);
+  donor_E_dir(f, nb, p, (order + 2) % 3);
+}
+
+
+
+
+void advect_Z(hydro_fields f, int **nb, hydro_params p) {
+
+  int order; 
+  order = lrand48() % 3;
+
+  donor_Z_dir(f, nb, p, order);
+  donor_Z_dir(f, nb, p, (order + 1) % 3);
+  donor_Z_dir(f, nb, p, (order + 2) % 3);
+}
+
+
+
+
+
+/*******************************************
+ * ADVANCED STUFF                          *
+ *******************************************/
 
 double phi(double x) {
   //return maxof3(0.0,minof2(1.0,2.0*x),minof2(2.0,x));
@@ -102,15 +189,15 @@ void transport_E_dir(hydro_fields f, int **nb, hydro_params p, int dir) {
 
     /*
     if(f.V[dir][x] > 0)
-      f.deltaM[dir][x] = (f.E[nb[x][2*dir + 1]] + 0.5*delta[nb[x][2*dir + 1]]
+      f.F[dir][x] = (f.E[nb[x][2*dir + 1]] + 0.5*delta[nb[x][2*dir + 1]]
 			  *(p.dx - 0.0*f.V[dir][x]*p.dt))*f.V[dir][x]*p.dt;
     theta = 1.0;
     else
-      f.deltaM[dir][x] = (f.E[x] - 0.5*delta[x]
+      f.F[dir][x] = (f.E[x] - 0.5*delta[x]
 			  *(p.dx + 0.0*f.V[dir][x]*p.dt))*f.V[dir][x]*p.dt;
     */
 
-    f.deltaM[dir][x] = 0.5*f.Vx[x]*((1.0+theta)*f.E[nb[x][2*dir+1]] + (1.0-theta)*f.E[x])
+    f.F[dir][x] = 0.5*f.Vx[x]*((1.0+theta)*f.E[nb[x][2*dir+1]] + (1.0-theta)*f.E[x])
       + 0.5*fabs(f.Vx[x])*(1.0-fabs(f.Vx[x]*p.dt/p.dx))*phi(r[x])*(f.E[x] - f.E[nb[x][2*dir+1]]);
 
     if(isnan(0.5*fabs(f.Vx[x])*(1.0-fabs(f.Vx[x]*p.dt/p.dx))*phi(r[x])*(f.E[x] - f.E[nb[x][2*dir+1]]))) {
@@ -123,9 +210,9 @@ void transport_E_dir(hydro_fields f, int **nb, hydro_params p, int dir) {
 
   // Eq 2.115
   for(x = 0; x < p.N; x++) {
-    f.E[x] = f.E[x] + p.dt*(f.deltaM[dir][x] - f.deltaM[dir][nb[x][2*dir]])/p.dx;
+    f.E[x] = f.E[x] + p.dt*(f.F[dir][x] - f.F[dir][nb[x][2*dir]])/p.dx;
     if(isnan(f.E[x])) {
-      fprintf(stderr,"x=%d E went nan: deltaM = %lf, %lf\n", x, f.deltaM[dir][x], f.deltaM[dir][nb[x][2*dir]]);
+      fprintf(stderr,"x=%d E went nan: F = %lf, %lf\n", x, f.F[dir][x], f.F[dir][nb[x][2*dir]]);
     }
   }
 
@@ -162,9 +249,9 @@ void transport_Z_dir(hydro_fields f, int **nb, hydro_params p, int dir) {
 
   // Eq 2.119 -- flux
   for(x=0; x<p.N; x++) {
-    deltaMI[0][x] = f.deltaM[0][x]*(f.kappa[x] + f.kappa[nb[x][1]])*0.5;
-    deltaMI[1][x] = f.deltaM[1][x]*(f.kappa[x] + f.kappa[nb[x][3]])*0.5;
-    deltaMI[2][x] = f.deltaM[2][x]*(f.kappa[x] + f.kappa[nb[x][5]])*0.5;
+    deltaMI[0][x] = f.F[0][x]*(f.kappa[x] + f.kappa[nb[x][1]])*0.5;
+    deltaMI[1][x] = f.F[1][x]*(f.kappa[x] + f.kappa[nb[x][3]])*0.5;
+    deltaMI[2][x] = f.F[2][x]*(f.kappa[x] + f.kappa[nb[x][5]])*0.5;
   }
 
 
@@ -221,11 +308,13 @@ void transport_Z_dir(hydro_fields f, int **nb, hydro_params p, int dir) {
   }
 
 
-  // Eq 2.115
+  // Eq 2.11
   for(x = 0; x < p.N; x++) {
-    f.E[x] = f.E[x] - p.dt*(deltaMIb[0][x]*F[x] - deltaMIb[0][nb[x][0]]*F[nb[x][0]])/p.dx;
-    f.E[x] = f.E[x] - p.dt*(deltaMIb[1][x]*F[x] - deltaMIb[1][nb[x][2]]*F[nb[x][2]])/p.dx;
-    f.E[x] = f.E[x] - p.dt*(deltaMIb[2][x]*F[x] - deltaMIb[2][nb[x][4]]*F[nb[x][4]])/p.dx;
+    if(dir == 0) {
+    f.Zx[x] = f.Zx[x] - p.dt*(deltaMIb[0][x]*F[x] - deltaMIb[0][nb[x][0]]*F[nb[x][0]])/p.dx;
+    f.Zx[x] = f.Zx[x] - p.dt*(deltaMIb[1][x]*F[x] - deltaMIb[1][nb[x][2]]*F[nb[x][2]])/p.dx;
+    f.Zx[x] = f.Zx[x] - p.dt*(deltaMIb[2][x]*F[x] - deltaMIb[2][nb[x][4]]*F[nb[x][4]])/p.dx;
+    }
   }
 
 
@@ -246,30 +335,4 @@ void transport_Z_dir(hydro_fields f, int **nb, hydro_params p, int dir) {
 
 }
 
-
-
-void advect_E(hydro_fields f, int **nb, hydro_params p) {
-
-  int order; 
-  order = lrand48() % 3;
-    
-  transport_E_dir(f, nb, p, order);
-  transport_E_dir(f, nb, p, (order + 1) % 3);
-  transport_E_dir(f, nb, p, (order + 2) % 3);    
-
-}
-
-
-
-
-void advect_Z(hydro_fields f, int **nb, hydro_params p) {
-
-  int order; 
-  order = lrand48() % 3;
-
-  transport_Z_dir(f, nb, p, order);
-  transport_Z_dir(f, nb, p, (order + 1) % 3);
-  transport_Z_dir(f, nb, p, (order + 2) % 3);
-
-}
 
