@@ -206,6 +206,7 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
     f.Uy[x] = f.Zy[x]/sigmabar;
     f.Uz[x] = f.Zz[x]/sigmabar;
 
+    //    fprintf(stderr,"%lf %lf\n", f.Zx[x], sigmabar);
     /*
     if(x == 0)
       fprintf(stderr,"Ux = %lf\n", f.Ux[1]);
@@ -333,6 +334,7 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
 	       + f.Uz[nb[nb[nb[x][0]][2]][4]]
 	       )/8.0;
 
+
     //    if(x < 3 || x > p.N-3)
     //      fprintf(stderr,"utildex %d = %lf\n", x, utildex);
      
@@ -355,7 +357,10 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
 
 
 
+
   }
+
+
   /*
   fprintf(stderr,"N-2 powarg = %lf/%lf\n", Wold[p.N-2],f.W[p.N-2]);
   fprintf(stderr,"N-1 powarg = %lf/%lf\n", Wold[p.N-1],f.W[p.N-1]);

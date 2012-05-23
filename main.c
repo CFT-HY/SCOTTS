@@ -46,6 +46,11 @@ void alloc_fields(hydro_fields *f, hydro_params p) {
   f->V[0] = f->Vx;
   f->V[1] = f->Vy;
   f->V[2] = f->Vz;
+  
+  f->Z = (double **) malloc(3*sizeof(double *));
+  f->Z[0] = f->Zx;
+  f->Z[1] = f->Zy;
+  f->Z[2] = f->Zz;
 
   f->U = (double **) malloc(3*sizeof(double *));
 
@@ -53,11 +58,11 @@ void alloc_fields(hydro_fields *f, hydro_params p) {
   f->U[1] = f->Uy;
   f->U[2] = f->Uz;
 
-  f->deltaM = (double **) malloc(3*sizeof(double *));
+  f->F = (double **) malloc(3*sizeof(double *));
 
-  f->deltaM[0] = (double *) malloc(p.N*sizeof(double));
-  f->deltaM[1] = (double *) malloc(p.N*sizeof(double));
-  f->deltaM[2] = (double *) malloc(p.N*sizeof(double));
+  f->F[0] = (double *) malloc(p.N*sizeof(double));
+  f->F[1] = (double *) malloc(p.N*sizeof(double));
+  f->F[2] = (double *) malloc(p.N*sizeof(double));
 
   // (calloc considered harmful)
 }
@@ -128,10 +133,10 @@ void free_fields(hydro_fields *f) {
   free(f->p);
   free(f->pi);
 
-  free(f->deltaM[0]);
-  free(f->deltaM[1]);
-  free(f->deltaM[2]);
-  free(f->deltaM);
+  free(f->F[0]);
+  free(f->F[1]);
+  free(f->F[2]);
+  free(f->F);
 
   free(f->U);
   free(f->V);
@@ -277,7 +282,7 @@ int main(int argc, char *argv[])
   // printf("Step\ttime\tenergy\twallps\n");
 
   // Output of some field at every time step
-  FILE *phi_fh = fopen("field.dat","w");
+  //  FILE *phi_fh = fopen("field.dat","w");
 #ifdef SILO
   if(p.interval > 0)
     silo_init(p);
@@ -287,7 +292,7 @@ int main(int argc, char *argv[])
   evolve_backstep(f, nb, p);
 
   // Record how many lattice sites in output file, to keep self contained
-  fwrite(&p.N, sizeof(int), 1, phi_fh);
+  //  fwrite(&p.N, sizeof(int), 1, phi_fh);
 
 
   for(step = 0; step < p.steps; step++) {
@@ -298,9 +303,9 @@ int main(int argc, char *argv[])
       write_silo_step(f, p, step);
 #endif // SILO
       // Write time step, x coords and velocity field
-      fwrite(&t, sizeof(double), 1, phi_fh);
-      fwrite(f.E, sizeof(double), p.N, phi_fh);
-      fwrite(f.p, sizeof(double), p.N, phi_fh);
+      //      fwrite(&t, sizeof(double), 1, phi_fh);
+      //      fwrite(f.E, sizeof(double), p.N, phi_fh);
+      //      fwrite(f.p, sizeof(double), p.N, phi_fh);
 
       current_energy = total_energy(f, nb, p);
 
@@ -323,24 +328,22 @@ int main(int argc, char *argv[])
     
     
     // Calculate EOS
-    //    eq_of_state(f, p);
+    eq_of_state(f, p);
 
     // Do the hydro bits
-    // evolve_hydro(f, nb, p);
+    evolve_hydro(f, nb, p);
 
 
     // Advection of state variables
-    //    donor_E(f, nb, p);
-    transport_E_dir(f, nb, p, 0);
-
+    advect_E(f, nb, p);
     // Advection of momentum
-    //    donor_Z(f, nb, p);
+    advect_Z(f, nb, p);
 
 
     //    artificial_viscosity(f, nb, p);
 
     // Solve for T
-    //    find_Ta(f, p);
+    find_Ta(f, p);
     
     t += p.dt;
 
@@ -349,13 +352,14 @@ int main(int argc, char *argv[])
     
   } // main loop ends here
 
-  
+  int y = ((int)floor(p.Ly/2));
+
   for(x=0;x<p.Lx;x++) {
-    fprintf(stdout,"%d %lf %lf\n", x, f.Vx[iix(x,0,0,p)], f.E[iix(x,0,0,p)]);
+    fprintf(stdout,"%d %lf %lf\n", x, f.Vx[iix(x,y,0,p)], f.E[iix(x,y,0,p)]);
   }
   
 
-  fclose(phi_fh);
+  //  fclose(phi_fh);
 
   // Clean up memory
   free_nb(nb, p);
