@@ -39,15 +39,12 @@ void evolve_field(hydro_fields f, int **nb, hydro_params p) {
     f.pi[x] = (1+s)*f.pi[x]/(1-s);
 
     // gradient term
-#warning evolve_field p.C term not done!
-    /*
     f.pi[x] = f.pi[x] 
-      - 0.5*p.C*f.W[x]*(f.v[nb[x][1]]*(f.phi[x]-f.phi[nb[x][1]])
-			 + f.v[x]*(f.phi[nb[x][0]] - f.phi[x]))/p.dx;
-    */
+      - 0.5*p.C*f.W[x]*(f.Vx[nb[x][1]]*(f.phi[x]-f.phi[nb[x][1]])
+			+ f.Vx[x]*(f.phi[nb[x][0]] - f.phi[x]))/p.dx;    
 
     // scalar field gradient and potential terms
-    f.pi[x] = f.pi[x] 
+    f.pi[x] = f.pi[x]
       + p.dt
       *((f.phi[nb[x][0]] + f.phi[nb[x][2]] + f.phi[nb[x][4]]
 	 - 6.0*f.phi[x] 
@@ -114,6 +111,30 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
 
   double ubarx, ubary, ubarz, W;
 
+  Vdpot(p, f.T, f.phi, Vdmid);
+
+  for(x = 0; x < p.N; x++) {
+    f.Zx[x] = f.Zx[x] - p.dt*0.5*(p.C*(f.W[x] + f.W[nb[x][0]])
+				  *(0.5*(f.pi[x]+f.pi[nb[x][0]])
+				    + f.Vx[x]*(f.phi[nb[x][0]] - f.phi[x])/p.dx)
+				  + (Vdmid[x] + Vdmid[nb[x][0]]))
+				       *(f.phi[nb[x][0]] - f.phi[x])/p.dx;
+    
+    /*
+      Z(j) = Z(j) - dt*0.5* ( C*(gb(j)+gb(j+1)) *
+      .      ( 0.5*(pi(j)+pi(j+1)) + v(j)*dxfi(j) )
+      .      +(Vdmid(j)+Vdmid(j+1)) ) * dxfi(j)
+    */
+
+
+    //    gpi = gb(j) * ( pi(j) + 0.5*(v(j-1)*dxfi(j-1)+v(j)*dxfi(j)) )
+    //      E(j) = E(j) + dt * (C*gpi**2 + Vdmid(j)*gpi)
+
+    gpi = f.W[x]*(f.pi[x] + 0.5*(f.Vx[nb[x][1]]*(f.phi[x]-f.phi[nb[x][1]])/p.dx
+				 + f.Vx[x]*(f.phi[nb[x][0]] - f.phi[x])/p.dx));
+    f.E[x] = f.E[x] + p.dt*(p.C*gpi*gpi + gpi*Vdmid[x]);
+
+  }
 
   // Pressure acceleration
   // W&M sec 2.4.12, 3.5.1, DONE

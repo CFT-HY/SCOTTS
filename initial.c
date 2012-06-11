@@ -142,6 +142,57 @@ void create_gaussian_bubble(hydro_fields f, hydro_params p) {
 
 
 
+void initial_1D_bubble(hydro_fields f, hydro_params p) {
+  double sigmlo = 2.0*sqrt(2.0)/81.0*p.alpha*p.alpha*p.alpha
+    /(p.lambda*p.lambda*sqrt(p.lambda));
+
+  fprintf(stderr, \
+          "** Initial conditions magic:\n" \
+          "** sigmlo %g\n", sigmlo);
+
+  double phimin =  ( p.alpha*p.Tconst
+		     + sqrt((p.alpha*p.Tconst)
+			    *(p.alpha*p.Tconst) -
+			    4*p.lambda*p.gamma*(p.Tconst
+                                           *p.Tconst -
+						p.T0*p.T0)) )
+    / (2*p.lambda);
+
+  double cstrab = 1.0*phimin;
+
+  double Rlapab = 2.0*sigmlo/(-1.0*Vf(p, p.Tconst, phimin));
+
+  double Rtenab = Rlapab;
+
+  fprintf(stderr, \
+          "** phimin %g, cstrab %g, Rtenab %g\n", \
+          phimin, cstrab, Rtenab);
+
+  int x;
+
+  for(x = 0; x < p.N; x++) {
+    f.xe[x] = -1.0*p.xxwall + (x-0.0)*p.dx;
+    f.xc[x] = -1.0*p.xxwall + (x-0.5)*p.dx;
+    f.phi[x] = cstrab*exp(-1.0*((double)(x-p.Lx/2))*((double)(x-p.Lx/2))
+			  /2.0/(Rtenab*Rtenab) );
+
+    f.pifull[x] = 0.0;
+
+    f.T[x] = p.Tconst;
+
+    f.E[x] = 3.0*p.a*f.T[x]*f.T[x]*f.T[x]*f.T[x]
+      + Vf(p, f.T[x], f.phi[x])
+      - f.T[x]*VTf(p, f.T[x], f.phi[x]);
+
+    f.Zx[x] = 0.0;
+    f.Vx[x] = 0.0;
+    f.W[x] = 1.0;
+
+  }
+}
+
+
+
 
 void initial_3D(hydro_fields f, hydro_params p) {
   
@@ -188,11 +239,11 @@ void initial_3D(hydro_fields f, hydro_params p) {
     for(y = 0; y < p.Ly; y++) {
       for(z = 0; z < p.Lz; z++) {
 
-	f.phi[iix(x,y,z,p)] = 0.0; // cstrab*(1.0 + 0.1*drand48());
+
 
 	f.pifull[iix(x,y,z,p)] = 0.0;
 	
-	f.T[iix(x,y,z,p)] = 0.0; // p.Tconst;
+	f.T[iix(x,y,z,p)] = p.Tconst;
 
 	
 	/*			
@@ -202,11 +253,26 @@ void initial_3D(hydro_fields f, hydro_params p) {
 	  f.E[iix(x,y,z,p)] = Er;
 	*/
 
+	double dist = sqrt(pow((double)(x - p.Lx/2),2.0) + pow((double)(y - p.Ly/2),2.0));
+
+	f.phi[iix(x,y,z,p)] = cstrab*exp(-1.0*dist*dist/2.0/(Rtenab*Rtenab));
+
+
+
+
+
+	f.E[iix(x,y,z,p)] = 3.0*p.a*f.T[iix(x,y,z,p)]*f.T[iix(x,y,z,p)]
+	  *f.T[iix(x,y,z,p)]*f.T[iix(x,y,z,p)]
+	  + Vf(p, f.T[iix(x,y,z,p)], f.phi[iix(x,y,z,p)])
+	  - f.T[iix(x,y,z,p)]*VTf(p, f.T[iix(x,y,z,p)], f.phi[iix(x,y,z,p)]);
+	
+
+	/*
 	if( sqrt((x-p.Lx/2)*(x-p.Lx/2)+(y-p.Ly/2)*(y-p.Ly/2)) < 40)
 	  f.E[iix(x,y,z,p)] = El;
 	else
 	  f.E[iix(x,y,z,p)] = Er;
-
+	*/
 	
 	//	f.E[iix(x,y,z,p)] = 1.0 + drand48()*1.5;
 
