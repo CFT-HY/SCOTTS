@@ -263,7 +263,7 @@ int main(int argc, char *argv[])
   }
   */
 
-  initial_3D(f,p);
+  initial_1D_bubble(f,p);
 
   fprintf(stderr, "Initial conditions done\n");
 
@@ -323,7 +323,7 @@ int main(int argc, char *argv[])
     }
 
     // Do field step
-    //    evolve_field(f, nb, p);
+    evolve_field(f, nb, p);
 
     
     
@@ -354,7 +354,7 @@ int main(int argc, char *argv[])
 
 
   for(x=0;x<p.Lx;x++) {
-    fprintf(stdout,"%d %lf %lf\n", x, f.Vx[iix(x,x,0,p)], f.E[iix(x,x,0,p)]);
+    fprintf(stdout,"%d %lf %lf %lf\n", x, f.Vx[iix(x,x,0,p)], f.E[iix(x,x,0,p)], f.phi[iix(x,x,0,p)]);
   }
   
 

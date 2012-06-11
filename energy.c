@@ -66,6 +66,7 @@ double total_energy(hydro_fields f, int **nb, hydro_params p) {
     kinphi += 0.5*f.pifull[x]*f.pifull[x]*vol;
 
     // gradient term
+    
     grdphi += 0.125*((f.phi[nb[x][0]] - f.phi[nb[x][1]])/p.dx)
       *((f.phi[nb[x][0]] - f.phi[nb[x][1]])/p.dx)*vol;
 
@@ -74,7 +75,7 @@ double total_energy(hydro_fields f, int **nb, hydro_params p) {
 
     grdphi += 0.125*((f.phi[nb[x][4]] - f.phi[nb[x][5]])/p.dx)
       *((f.phi[nb[x][4]] - f.phi[nb[x][5]])/p.dx)*vol;
-
+      
   }
 
   // Cast here
