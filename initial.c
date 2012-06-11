@@ -168,25 +168,31 @@ void initial_1D_bubble(hydro_fields f, hydro_params p) {
           "** phimin %g, cstrab %g, Rtenab %g\n", \
           phimin, cstrab, Rtenab);
 
-  int x;
+  int x, y, z;
 
-  for(x = 0; x < p.N; x++) {
-    f.xe[x] = -1.0*p.xxwall + (x-0.0)*p.dx;
-    f.xc[x] = -1.0*p.xxwall + (x-0.5)*p.dx;
-    f.phi[x] = cstrab*exp(-1.0*((double)(x-p.Lx/2))*((double)(x-p.Lx/2))
-			  /2.0/(Rtenab*Rtenab) );
+  for(x = 0; x < p.Lx; x++) {
+    for(y = 0; y < p.Ly; y++) {
+      for(z = 0; z < p.Lz; z++) {
 
-    f.pifull[x] = 0.0;
-
-    f.T[x] = p.Tconst;
-
-    f.E[x] = 3.0*p.a*f.T[x]*f.T[x]*f.T[x]*f.T[x]
-      + Vf(p, f.T[x], f.phi[x])
-      - f.T[x]*VTf(p, f.T[x], f.phi[x]);
-
-    f.Zx[x] = 0.0;
-    f.Vx[x] = 0.0;
-    f.W[x] = 1.0;
+	f.phi[iix(x,y,z,p)] = cstrab*exp(-1.0*
+			      ( ((double)(x-p.Lx/2))*((double)(x-p.Lx/2))
+				+ ((double)(y-p.Ly/2))*((double)(y-p.Ly/2))
+				)
+			      /2.0/(Rtenab*Rtenab) );
+	
+	f.pifull[iix(x,y,z,p)] = 0.0;
+	
+	f.T[iix(x,y,z,p)] = p.Tconst;
+	
+	f.E[iix(x,y,z,p)] = 3.0*p.a*f.T[iix(x,y,z,p)]*f.T[iix(x,y,z,p)]*f.T[iix(x,y,z,p)]*f.T[iix(x,y,z,p)]
+	  + Vf(p, f.T[iix(x,y,z,p)], f.phi[iix(x,y,z,p)])
+	  - f.T[iix(x,y,z,p)]*VTf(p, f.T[iix(x,y,z,p)], f.phi[iix(x,y,z,p)]);
+	
+	f.Zx[iix(x,y,z,p)] = 0.0;
+	f.Vx[iix(x,y,z,p)] = 0.0;
+	f.W[iix(x,y,z,p)] = 1.0;
+      }
+    }
 
   }
 }
