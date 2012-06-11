@@ -53,23 +53,25 @@ void donor_Z_dir(hydro_fields f, int **nb, hydro_params p, int dir) {
   
   for(x = 0; x < p.N; x++) {
 
-    Vbody[x] = f.V[dir][x]
-      + 0.0*0.125*(f.V[dir][x]
-	      + f.V[dir][nb[x][1]]
-	      + f.V[dir][nb[x][3]]
-	      + f.V[dir][nb[x][5]]
-	      + f.V[dir][nb[nb[x][1]][3]]
-	      + f.V[dir][nb[nb[x][1]][5]] 
-	      + f.V[dir][nb[nb[x][3]][5]]
-	      + f.V[dir][nb[nb[nb[x][1]][3]][5]]
-	      );
-    
     for(j= 0; j < 3; j++) {
+      Vbody[x] =  0.5*(f.V[j][x] + f.V[j][nb[x][2*j]]);
+      /*
+            + 0.0*0.125*(f.V[j][x]
+	      + f.V[j][nb[x][0]]
+	      + f.V[j][nb[x][2]]
+	      + f.V[j][nb[x][4]]
+	      + f.V[j][nb[nb[x][0]][2]]
+	      + f.V[j][nb[nb[x][2]][4]] 
+	      + f.V[j][nb[nb[x][0]][4]]
+	      + f.V[j][nb[nb[nb[x][0]][2]][4]]
+	      );
+      */
+
 
       if(Vbody[x] >= 0.0)
-	f.F[j][x] = Vbody[x]*f.Z[j][x];
+	f.F[j][x] = Vbody[x]*f.Z[dir][x];
       else
-	f.F[j][x] = Vbody[x]*f.Z[j][nb[x][2*dir]];
+	f.F[j][x] = Vbody[x]*f.Z[dir][nb[x][2*j]];
     }
   }
   
@@ -95,6 +97,7 @@ void donor_Z_dir(hydro_fields f, int **nb, hydro_params p, int dir) {
   free(deltaMIb);
 }
 
+
 void advect_E(hydro_fields f, int **nb, hydro_params p) {
 
   int order; 
@@ -117,6 +120,17 @@ void advect_Z(hydro_fields f, int **nb, hydro_params p) {
   donor_Z_dir(f, nb, p, (order + 1) % 3);
   donor_Z_dir(f, nb, p, (order + 2) % 3);
 }
+
+
+
+
+
+
+
+
+
+
+
 
 
 
