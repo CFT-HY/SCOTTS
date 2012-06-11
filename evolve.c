@@ -42,6 +42,10 @@ void evolve_field(hydro_fields f, int **nb, hydro_params p) {
     f.pi[x] = f.pi[x] 
       - 0.5*p.C*f.W[x]*(f.Vx[nb[x][1]]*(f.phi[x]-f.phi[nb[x][1]])
 			+ f.Vx[x]*(f.phi[nb[x][0]] - f.phi[x]))/p.dx;    
+      - 0.5*p.C*f.W[x]*(f.Vy[nb[x][3]]*(f.phi[x]-f.phi[nb[x][3]])
+			+ f.Vy[x]*(f.phi[nb[x][0]] - f.phi[x]))/p.dx;    
+      - 0.5*p.C*f.W[x]*(f.Vz[nb[x][5]]*(f.phi[x]-f.phi[nb[x][5]])
+			+ f.Vz[x]*(f.phi[nb[x][0]] - f.phi[x]))/p.dx;    
 
     // scalar field gradient and potential terms
     f.pi[x] = f.pi[x]
@@ -119,6 +123,19 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
 				    + f.Vx[x]*(f.phi[nb[x][0]] - f.phi[x])/p.dx)
 				  + (Vdmid[x] + Vdmid[nb[x][0]]))
 				       *(f.phi[nb[x][0]] - f.phi[x])/p.dx;
+
+    f.Zy[x] = f.Zy[x] - p.dt*0.5*(p.C*(f.W[x] + f.W[nb[x][2]])
+				  *(0.5*(f.pi[x]+f.pi[nb[x][2]])
+				    + f.Vy[x]*(f.phi[nb[x][2]] - f.phi[x])/p.dx)
+				  + (Vdmid[x] + Vdmid[nb[x][2]]))
+				       *(f.phi[nb[x][2]] - f.phi[x])/p.dx;
+
+
+    f.Zz[x] = f.Zz[x] - p.dt*0.5*(p.C*(f.W[x] + f.W[nb[x][4]])
+				  *(0.5*(f.pi[x]+f.pi[nb[x][4]])
+				    + f.Vz[x]*(f.phi[nb[x][4]] - f.phi[x])/p.dx)
+				  + (Vdmid[x] + Vdmid[nb[x][4]]))
+				       *(f.phi[nb[x][4]] - f.phi[x])/p.dx;
     
     /*
       Z(j) = Z(j) - dt*0.5* ( C*(gb(j)+gb(j+1)) *
@@ -132,6 +149,16 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
 
     gpi = f.W[x]*(f.pi[x] + 0.5*(f.Vx[nb[x][1]]*(f.phi[x]-f.phi[nb[x][1]])/p.dx
 				 + f.Vx[x]*(f.phi[nb[x][0]] - f.phi[x])/p.dx));
+    f.E[x] = f.E[x] + p.dt*(p.C*gpi*gpi + gpi*Vdmid[x]);
+
+
+    gpi = f.W[x]*(f.pi[x] + 0.5*(f.Vy[nb[x][3]]*(f.phi[x]-f.phi[nb[x][3]])/p.dx
+				 + f.Vy[x]*(f.phi[nb[x][2]] - f.phi[x])/p.dx));
+    f.E[x] = f.E[x] + p.dt*(p.C*gpi*gpi + gpi*Vdmid[x]);
+
+
+    gpi = f.W[x]*(f.pi[x] + 0.5*(f.Vz[nb[x][5]]*(f.phi[x]-f.phi[nb[x][5]])/p.dx
+				 + f.Vz[x]*(f.phi[nb[x][4]] - f.phi[x])/p.dx));
     f.E[x] = f.E[x] + p.dt*(p.C*gpi*gpi + gpi*Vdmid[x]);
 
   }
