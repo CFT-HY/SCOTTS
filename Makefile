@@ -1,4 +1,4 @@
-CC := gcc # -DSILO
+CC := gcc -DSILO
 
 CFLAGS := -O3
 

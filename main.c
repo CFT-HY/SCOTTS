@@ -352,10 +352,9 @@ int main(int argc, char *argv[])
     
   } // main loop ends here
 
-  int y = ((int)floor(p.Ly/2));
 
   for(x=0;x<p.Lx;x++) {
-    fprintf(stdout,"%d %lf %lf\n", x, f.Vx[iix(x,y,0,p)], f.E[iix(x,y,0,p)]);
+    fprintf(stdout,"%d %lf %lf\n", x, f.Vx[iix(x,x,0,p)], f.E[iix(x,x,0,p)]);
   }
   
 
