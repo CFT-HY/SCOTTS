@@ -142,7 +142,7 @@ void create_gaussian_bubble(hydro_fields f, hydro_params p) {
 
 
 
-void initial_1D_bubble(hydro_fields f, hydro_params p) {
+void initial_scalar_bubble(hydro_fields f, hydro_params p) {
   double sigmlo = 2.0*sqrt(2.0)/81.0*p.alpha*p.alpha*p.alpha
     /(p.lambda*p.lambda*sqrt(p.lambda));
 
@@ -187,7 +187,7 @@ void initial_1D_bubble(hydro_fields f, hydro_params p) {
 	f.E[iix(x,y,z,p)] = 3.0*p.a*f.T[iix(x,y,z,p)]*f.T[iix(x,y,z,p)]*f.T[iix(x,y,z,p)]*f.T[iix(x,y,z,p)]
 	  + Vf(p, f.T[iix(x,y,z,p)], f.phi[iix(x,y,z,p)])
 	  - f.T[iix(x,y,z,p)]*VTf(p, f.T[iix(x,y,z,p)], f.phi[iix(x,y,z,p)]);
-	
+
 	f.Zx[iix(x,y,z,p)] = 0.0;
 	f.Vx[iix(x,y,z,p)] = 0.0;
 	f.W[iix(x,y,z,p)] = 1.0;
@@ -246,52 +246,105 @@ void initial_3D(hydro_fields f, hydro_params p) {
       for(z = 0; z < p.Lz; z++) {
 
 
+	f.phi[iix(x,y,z,p)] = 0.0; // cstrab*(1.0 + 0.1*drand48());
 
 	f.pifull[iix(x,y,z,p)] = 0.0;
 	
-	f.T[iix(x,y,z,p)] = p.Tconst;
+	f.T[iix(x,y,z,p)] = 0.0; // p.Tconst;
 
-	
-	/*			
-	if( ((x+y+z) < (p.Lx+p.Ly+p.Lz)/2))
-	  f.E[iix(x,y,z,p)] = El;
-	else
-	  f.E[iix(x,y,z,p)] = Er;
-	*/
-
-	double dist = p.dx*sqrt(pow((double)(x - p.Lx/2),2.0) + pow((double)(y - p.Ly/2),2.0));
-
-	f.phi[iix(x,y,z,p)] = cstrab*exp(-1.0*dist*dist/2.0/(Rtenab*Rtenab));
-
-
-
-
-
-	f.E[iix(x,y,z,p)] = 3.0*p.a*f.T[iix(x,y,z,p)]*f.T[iix(x,y,z,p)]
-	  *f.T[iix(x,y,z,p)]*f.T[iix(x,y,z,p)]
-	  + Vf(p, f.T[iix(x,y,z,p)], f.phi[iix(x,y,z,p)])
-	  - f.T[iix(x,y,z,p)]*VTf(p, f.T[iix(x,y,z,p)], f.phi[iix(x,y,z,p)]);
-	
-
-	/*
 	if( sqrt((x-p.Lx/2)*(x-p.Lx/2)+(y-p.Ly/2)*(y-p.Ly/2)) < 40)
 	  f.E[iix(x,y,z,p)] = El;
 	else
 	  f.E[iix(x,y,z,p)] = Er;
-	*/
-	
-	//	f.E[iix(x,y,z,p)] = 1.0 + drand48()*1.5;
-
-		  // f.E[iix(x,y,z,p)] = drand48(); // 1.0;
-	  //	else
-	  //	  f.E[iix(x,y,z,p)] = 0.1;
-	  /* 3.0*p.a*f.T[x]*f.T[x]*f.T[x]*f.T[x]
-	  + Vf(p, f.T[x], f.phi[x])
-	  - f.T[x]*VTf(p, f.T[x], f.phi[x]); */
 	
 	
     // For debugging purposes
     // fprintf(stderr,"xc = %lf fi = %lf E = %lf\n", xc[x], phi[x],E[x]);
+
+
+	
+
+
+	f.Zx[iix(x,y,z,p)] = 0.0;	
+	f.Zy[iix(x,y,z,p)] = 0.0;
+	f.Zz[iix(x,y,z,p)] = 0.0;
+	
+	
+	f.W[iix(x,y,z,p)] = 1.0;
+	
+      }
+    }
+  }
+}
+
+
+
+
+
+void initial_step(hydro_fields f, hydro_params p) {
+  
+
+  double sigmlo = 2.0*sqrt(2.0)/81.0*p.alpha*p.alpha*p.alpha
+    /(p.lambda*p.lambda*sqrt(p.lambda));
+
+  //  srand48(time());
+
+  fprintf(stderr, \
+	  "** Initial conditions magic:\n" \
+	  "** sigmlo %g\n", sigmlo);
+  
+  double phimin =  ( p.alpha*p.Tconst 
+		    + sqrt((p.alpha*p.Tconst)
+			   *(p.alpha*p.Tconst) - 
+			   4*p.lambda*p.gamma*(p.Tconst
+					   *p.Tconst -
+					   p.T0*p.T0)) )
+    / (2*p.lambda);
+
+  double cstrab = 1.0*phimin;
+
+  double Rlapab = 2.0*sigmlo/(-1.0*Vf(p, p.Tconst, phimin));
+
+  double Rtenab = Rlapab;
+
+  fprintf(stderr, \
+	  "** phimin %g, cstrab %g, Rtenab %g\n", \
+	  phimin, cstrab, Rtenab);
+
+  double Er, El, rE;
+
+  rE = 50.0;
+
+  Er = 1.0/(1.0+rE);
+  El = rE*Er;
+
+
+
+  int x, y, z;
+
+  for(x = 0; x < p.Lx; x++) {
+    for(y = 0; y < p.Ly; y++) {
+      for(z = 0; z < p.Lz; z++) {
+
+
+	f.phi[iix(x,y,z,p)] = 0.0; // cstrab*(1.0 + 0.1*drand48());
+
+	f.pifull[iix(x,y,z,p)] = 0.0;
+	
+	f.T[iix(x,y,z,p)] = 0.0; // p.Tconst;
+
+	if( x < p.Lx/2)
+	  f.E[iix(x,y,z,p)] = El;
+	else
+	  f.E[iix(x,y,z,p)] = Er;
+	
+	
+    // For debugging purposes
+    // fprintf(stderr,"xc = %lf fi = %lf E = %lf\n", xc[x], phi[x],E[x]);
+
+
+	
+
 
 	f.Zx[iix(x,y,z,p)] = 0.0;	
 	f.Zy[iix(x,y,z,p)] = 0.0;

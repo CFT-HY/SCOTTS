@@ -263,7 +263,9 @@ int main(int argc, char *argv[])
   }
   */
 
-  initial_1D_bubble(f,p);
+  initial_scalar_bubble(f,p);
+  //   initial_3D(f,p);
+    // initial_step(f,p);
 
   fprintf(stderr, "Initial conditions done\n");
 
