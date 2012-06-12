@@ -28,6 +28,7 @@ typedef struct {
   double lcorr;
 
   int interval;
+  int silointerval;
   int initial;
 
   // The following parameters are calculated

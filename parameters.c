@@ -47,6 +47,7 @@ hydro_params get_parameters(char *infile)
   int set_lcorr = 0;
 
   int set_interval = 0;
+  int set_silointerval = 0;
 
   int set_initial = 0;
 
@@ -150,6 +151,10 @@ hydro_params get_parameters(char *infile)
       parameters.interval = strtod(value,NULL);
       set_interval = 1;
     }
+    else if(!strcasecmp(key,"silointerval")) {
+      parameters.silointerval = strtod(value,NULL);
+      set_silointerval = 1;
+    }
     else if(!strcasecmp(key,"initial")) {
       if(!strcasecmp(value, "shocktube")) {
 	parameters.initial = INIT_SHOCK_TUBE;
@@ -203,6 +208,9 @@ hydro_params get_parameters(char *infile)
   } else if(!set_interval) {
     fprintf(stderr, "Did not set parameter \'interval\'\n");
     exit(100);
+  } else if(!set_silointerval) {
+    fprintf(stderr, "Did not set parameter \'silointerval\'\n");
+    exit(100);
   } else if(!set_initial) {
     fprintf(stderr, "Did not set parameter \'initial\'\n");
     exit(100);
@@ -215,13 +223,13 @@ hydro_params get_parameters(char *infile)
 	  "-- Lx %d, Ly %d, Lz %d\n" \
 	  "-- Cav %g, C %g,\n" \
 	  "-- Lheat %g, sigma %g, lcorr %g\n" \
-	  "-- interval %d\n",
+	  "-- interval %d, silointerval %d\n",
 	  infile,
 	  parameters.dx, parameters.dt, parameters.steps, \
 	  parameters.Lx, parameters.Ly, parameters.Lz, \
 	  parameters.Cav, parameters.C, \
 	  parameters.Lheat, parameters.sigma, parameters.lcorr, \
-	  parameters.interval);
+	  parameters.interval, parameters.silointerval);
 
   if(parameters.initial == INIT_SHOCK_TUBE) {
     fprintf(stderr, "-- shock tube\n");
