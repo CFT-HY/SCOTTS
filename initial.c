@@ -175,7 +175,7 @@ void initial_1D_bubble(hydro_fields f, hydro_params p) {
       for(z = 0; z < p.Lz; z++) {
 
 	f.phi[iix(x,y,z,p)] = cstrab*exp(-1.0*
-			      ( ((double)(x-p.Lx/2))*((double)(x-p.Lx/2))
+			      p.dx*p.dx*( ((double)(x-p.Lx/2))*((double)(x-p.Lx/2))
 				+ ((double)(y-p.Ly/2))*((double)(y-p.Ly/2))
 				)
 			      /2.0/(Rtenab*Rtenab) );
@@ -259,7 +259,7 @@ void initial_3D(hydro_fields f, hydro_params p) {
 	  f.E[iix(x,y,z,p)] = Er;
 	*/
 
-	double dist = sqrt(pow((double)(x - p.Lx/2),2.0) + pow((double)(y - p.Ly/2),2.0));
+	double dist = p.dx*sqrt(pow((double)(x - p.Lx/2),2.0) + pow((double)(y - p.Ly/2),2.0));
 
 	f.phi[iix(x,y,z,p)] = cstrab*exp(-1.0*dist*dist/2.0/(Rtenab*Rtenab));
 

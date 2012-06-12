@@ -354,7 +354,7 @@ int main(int argc, char *argv[])
 
 
   for(x=0;x<p.Lx;x++) {
-    fprintf(stdout,"%d %lf %lf %lf\n", x, f.Vx[iix(x,x,0,p)], f.E[iix(x,x,0,p)], f.phi[iix(x,x,0,p)]);
+    fprintf(stdout,"%lf %lf %lf %lf\n", (x*p.dx), f.Vx[iix(x,x,0,p)], f.E[iix(x,x,0,p)], f.phi[iix(x,x,0,p)]);
   }
   
 
