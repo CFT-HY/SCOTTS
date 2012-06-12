@@ -284,7 +284,7 @@ int main(int argc, char *argv[])
   // Output of some field at every time step
   //  FILE *phi_fh = fopen("field.dat","w");
 #ifdef SILO
-  if(p.interval > 0)
+  if(p.silointerval > 0)
     silo_init(p);
 #endif // SILO
 
@@ -297,11 +297,15 @@ int main(int argc, char *argv[])
 
   for(step = 0; step < p.steps; step++) {
 
-    if((p.interval > 0) && (step % p.interval == 0)) {
-
+    if((p.silointerval > 0) && (step % p.silointerval == 0)) {
 #ifdef SILO
       write_silo_step(f, p, step);
 #endif // SILO
+    }
+
+    if((p.interval > 0) && (step % p.interval == 0)) {
+
+
       // Write time step, x coords and velocity field
       //      fwrite(&t, sizeof(double), 1, phi_fh);
       //      fwrite(f.E, sizeof(double), p.N, phi_fh);
