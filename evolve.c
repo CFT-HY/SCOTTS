@@ -39,20 +39,22 @@ void evolve_field(hydro_fields f, int **nb, hydro_params p) {
     f.pi[x] = (1+s)*f.pi[x]/(1-s);
 
     // gradient term
-    f.pi[x] = f.pi[x] 
-      - 0.5*p.C*f.W[x]*(f.Vx[nb[x][1]]*(f.phi[x]-f.phi[nb[x][1]])
-			+ f.Vx[x]*(f.phi[nb[x][0]] - f.phi[x]))/p.dx;    
-      - 0.5*p.C*f.W[x]*(f.Vy[nb[x][3]]*(f.phi[x]-f.phi[nb[x][3]])
-			+ f.Vy[x]*(f.phi[nb[x][0]] - f.phi[x]))/p.dx;    
-      - 0.5*p.C*f.W[x]*(f.Vz[nb[x][5]]*(f.phi[x]-f.phi[nb[x][5]])
-			+ f.Vz[x]*(f.phi[nb[x][0]] - f.phi[x]))/p.dx;    
+    f.pi[x] = f.pi[x] - (
+			 + 0.5*p.dt*p.C*f.W[x]*(f.Vx[nb[x][1]]*(f.phi[x] - f.phi[nb[x][1]])
+						+ f.Vx[x]*(f.phi[nb[x][0]] - f.phi[x]))/p.dx
+			 + 0.5*p.dt*p.C*f.W[x]*(f.Vy[nb[x][3]]*(f.phi[x] - f.phi[nb[x][3]])
+			 			+ f.Vy[x]*(f.phi[nb[x][2]] - f.phi[x]))/p.dx
+			 + 0.5*p.dt*p.C*f.W[x]*(f.Vz[nb[x][5]]*(f.phi[x] - f.phi[nb[x][5]])
+						+ f.Vz[x]*(f.phi[nb[x][4]] - f.phi[x]))/p.dx
+			 )/(1-s);
 
     // scalar field gradient and potential terms
     f.pi[x] = f.pi[x]
       + p.dt
       *((f.phi[nb[x][0]] + f.phi[nb[x][2]] + f.phi[nb[x][4]]
 	 - 6.0*f.phi[x] 
-	 + f.phi[nb[x][1]] + f.phi[nb[x][3]] + f.phi[nb[x][5]])/(p.dx*p.dx)
+	 + f.phi[nb[x][1]] + f.phi[nb[x][3]] + f.phi[nb[x][5]]
+	 )/(p.dx*p.dx)
 	- Vdf(p, f.T[x], f.phi[x]));
     
 
@@ -115,7 +117,12 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
 
   double ubarx, ubary, ubarz, W;
 
-  Vdpot(p, f.T, f.phi, Vdmid);
+
+  for(x = 0; x < p.N; x++) {
+    phiav[x] = 0.5*(f.phiold[x] + f.phi[x]);
+  }
+
+  Vdpot(p, f.T, phiav, Vdmid);
 
   for(x = 0; x < p.N; x++) {
     f.Zx[x] = f.Zx[x] - p.dt*0.5*(p.C*(f.W[x] + f.W[nb[x][0]])
@@ -147,18 +154,18 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
     //    gpi = gb(j) * ( pi(j) + 0.5*(v(j-1)*dxfi(j-1)+v(j)*dxfi(j)) )
     //      E(j) = E(j) + dt * (C*gpi**2 + Vdmid(j)*gpi)
 
-    gpi = f.W[x]*(f.pi[x] + 0.5*(f.Vx[nb[x][1]]*(f.phi[x]-f.phi[nb[x][1]])/p.dx
-				 + f.Vx[x]*(f.phi[nb[x][0]] - f.phi[x])/p.dx));
+    gpi = f.W[x]*(f.pi[x] + 0.5*(f.Vx[x]*(f.phi[x]-f.phi[nb[x][1]])/p.dx
+				 + f.Vx[nb[x][0]]*(f.phi[nb[x][0]] - f.phi[x])/p.dx));
     f.E[x] = f.E[x] + p.dt*(p.C*gpi*gpi + gpi*Vdmid[x]);
 
 
-    gpi = f.W[x]*(f.pi[x] + 0.5*(f.Vy[nb[x][3]]*(f.phi[x]-f.phi[nb[x][3]])/p.dx
-				 + f.Vy[x]*(f.phi[nb[x][2]] - f.phi[x])/p.dx));
+    gpi = f.W[x]*(f.pi[x] + 0.5*(f.Vy[x]*(f.phi[x]-f.phi[nb[x][3]])/p.dx
+				 + f.Vy[nb[x][2]]*(f.phi[nb[x][2]] - f.phi[x])/p.dx));
     f.E[x] = f.E[x] + p.dt*(p.C*gpi*gpi + gpi*Vdmid[x]);
 
 
-    gpi = f.W[x]*(f.pi[x] + 0.5*(f.Vz[nb[x][5]]*(f.phi[x]-f.phi[nb[x][5]])/p.dx
-				 + f.Vz[x]*(f.phi[nb[x][4]] - f.phi[x])/p.dx));
+    gpi = f.W[x]*(f.pi[x] + 0.5*(f.Vz[x]*(f.phi[x]-f.phi[nb[x][5]])/p.dx
+				 + f.Vz[nb[x][4]]*(f.phi[nb[x][4]] - f.phi[x])/p.dx));
     f.E[x] = f.E[x] + p.dt*(p.C*gpi*gpi + gpi*Vdmid[x]);
 
   }
