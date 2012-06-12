@@ -289,7 +289,7 @@ int main(int argc, char *argv[])
 #endif // SILO
 
   // Step back for leapfrog initial conds
-  evolve_backstep(f, nb, p);
+  //  evolve_backstep(f, nb, p);
 
   // Record how many lattice sites in output file, to keep self contained
   //  fwrite(&p.N, sizeof(int), 1, phi_fh);
