@@ -263,8 +263,8 @@ int main(int argc, char *argv[])
   }
   */
 
-  initial_scalar_bubble(f,p);
-  //   initial_3D(f,p);
+   initial_scalar_bubble(f,p);
+  //    initial_3D(f,p);
     // initial_step(f,p);
 
   fprintf(stderr, "Initial conditions done\n");
@@ -336,8 +336,15 @@ int main(int argc, char *argv[])
     // Calculate EOS
     eq_of_state(f, p);
 
+
+
     // Do the hydro bits
     evolve_hydro(f, nb, p);
+
+    if(step == p.steps - 1)
+      for(x=0;x<p.Lx;x++) {
+	fprintf(stdout,"%lf %.10lf %.10lf %.10lf %.10lf %.10lf\n", (x*p.dx), f.Vx[iix(x,x,0,p)], f.E[iix(x,x,0,p)], f.phi[iix(x,x,0,p)], f.T[iix(x,x,0,p)], f.Zx[iix(x,x,0,p)]);
+      }
 
 
     // Advection of state variables
@@ -348,20 +355,24 @@ int main(int argc, char *argv[])
 
     //    artificial_viscosity(f, nb, p);
 
+
+
     // Solve for T
     find_Ta(f, p);
+
+
     
     t += p.dt;
 
     wmax = get_gamma_max(f, p);
 
+
     
   } // main loop ends here
 
 
-  for(x=0;x<p.Lx;x++) {
-    fprintf(stdout,"%lf %lf %lf %lf\n", (x*p.dx), f.Vx[iix(x,x,0,p)], f.E[iix(x,x,0,p)], f.phi[iix(x,x,0,p)]);
-  }
+
+
   
 
   //  fclose(phi_fh);
