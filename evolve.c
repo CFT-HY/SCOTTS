@@ -139,61 +139,58 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
 
   for(x = 0; x < p.N; x++) {
 
+    double vdnb = 0.125*(Vdmid[nb[x][1]] + Vdmid[x] + Vdmid[nb[x][3]] + Vdmid[nb[nb[x][1]][3]]
+			 + Vdmid[nb[x][5]] + Vdmid[nb[nb[x][5]][3]] + Vdmid[nb[nb[x][5]][1]] + Vdmid[nb[nb[nb[x][1]][3]][5]]);
+
+
+    double pinb = 0.125*(f.pi[nb[x][1]] + f.pi[x] + f.pi[nb[x][3]] + f.pi[nb[nb[x][1]][3]]
+			 + f.pi[nb[x][5]] + f.pi[nb[nb[x][5]][3]] + f.pi[nb[nb[x][5]][1]] + f.pi[nb[nb[nb[x][1]][3]][5]]);
+
+
+    double wnb = 0.125*(f.W[nb[x][1]] + f.W[x] + f.W[nb[x][3]] + f.W[nb[nb[x][1]][3]]
+			 + f.W[nb[x][5]] + f.W[nb[nb[x][5]][3]] + f.W[nb[nb[x][5]][1]] + f.W[nb[nb[nb[x][1]][3]][5]]);
+
+   
+    double dxphinb0 = 0.25*(dxphi[0][nb[x][1]] + dxphi[0][nb[nb[x][3]][1]]
+			   + dxphi[0][nb[nb[x][5]][1]] + dxphi[0][nb[nb[nb[x][1]][3]][5]]);
+
+
+    double dxphinb1 = 0.25*(dxphi[1][nb[x][3]] + dxphi[1][nb[nb[x][3]][1]]
+			   + dxphi[1][nb[nb[x][5]][3]] + dxphi[1][nb[nb[nb[x][1]][3]][5]]);
+
+    double dxphinb2 = 0.25*(dxphi[2][nb[x][5]] + dxphi[2][nb[nb[x][5]][1]]
+			   + dxphi[2][nb[nb[x][5]][3]] + dxphi[2][nb[nb[nb[x][1]][3]][5]]);
+
+   
     
-    f.Zx[x] = f.Zx[x] - p.dt*0.5*(p.C*(f.W[x] + f.W[nb[x][1]])
-				  *(0.5*(f.pi[x]+f.pi[nb[x][1]])
-				    + f.Vx[x]*dxphi[0][nb[x][1]]))
-      *dxphi[0][nb[x][1]];
-
-    f.Zx[x] = f.Zx[x] - p.dt*0.5*(Vdmid[nb[x][1]] + Vdmid[x])*dxphi[0][nb[x][1]];
-
-				    
-
-    f.Zy[x] = f.Zy[x] - p.dt*0.5*(p.C*(f.W[x] + f.W[nb[x][3]])
-				  *(0.5*(f.pi[x]+f.pi[nb[x][3]])
-				    + f.Vy[x]*dxphi[1][nb[x][3]]))
-      *dxphi[1][nb[x][3]];	
-
-    f.Zy[x] = f.Zy[x] - p.dt*0.5*(Vdmid[nb[x][3]] + Vdmid[x])*dxphi[1][nb[x][3]];
-
-				       
-    f.Zz[x] = f.Zz[x] - p.dt*0.5*(p.C*(f.W[x] + f.W[nb[x][5]])
-				  *(0.5*(f.pi[x]+f.pi[nb[x][5]])
-				    + f.Vz[x]*dxphi[2][nb[x][5]]))
-      *dxphi[2][nb[x][5]];
-
-    f.Zz[x] = f.Zz[x] - p.dt*0.5*(Vdmid[nb[x][5]] + Vdmid[x])*dxphi[2][nb[x][5]];
-				       
-				       
-
-				       
-    /*
-      Z(j) = Z(j) - dt*0.5* ( C*(gb(j)+gb(j+1)) *
-      .      ( 0.5*(pi(j)+pi(j+1)) + v(j)*dxfi(j) )
-      .      +(Vdmid(j)+Vdmid(j+1)) ) * dxfi(j)
-    */
-
-
-    //    gpi = gb(j) * ( pi(j) + 0.5*(v(j-1)*dxfi(j-1)+v(j)*dxfi(j)) )
-    //      E(j) = E(j) + dt * (C*gpi**2 + Vdmid(j)*gpi)
-
+    f.Zx[x] = f.Zx[x] - p.dt*p.C*wnb*pinb*dxphinb0;
+    f.Zy[x] = f.Zy[x] - p.dt*p.C*wnb*pinb*dxphinb1;
+    f.Zz[x] = f.Zz[x] - p.dt*p.C*wnb*pinb*dxphinb2;
     
-    
-    gpi = f.W[x]*(f.pi[x] + 0.5*(f.Vx[nb[x][1]]*dxphi[0][nb[x][1]]
-				 + f.Vx[x]*dxphi[0][x]));
+    f.Zy[x] = f.Zy[x] - p.dt*p.C*wnb*f.Vy[x]*dxphinb1*dxphinb1;
+    f.Zx[x] = f.Zx[x] - p.dt*p.C*wnb*f.Vx[x]*dxphinb0*dxphinb0;    
+    f.Zz[x] = f.Zz[x] - p.dt*p.C*wnb*f.Vz[x]*dxphinb2*dxphinb2;
+
+    f.Zx[x] = f.Zx[x] - p.dt*vdnb*dxphinb0;     
+    f.Zy[x] = f.Zy[x] - p.dt*vdnb*dxphinb1;
+    f.Zz[x] = f.Zz[x] - p.dt*vdnb*dxphinb2;
+				       
+    gpi = f.W[x]*(f.pi[x] + 0.5*(f.Vx[x]*dxphi[0][nb[x][1]]
+				 + f.Vx[nb[x][0]]*dxphi[0][x]));
     f.E[x] = f.E[x] + p.dt*(p.C*gpi*gpi + gpi*Vdmid[x]);
 
 
-    gpi = f.W[x]*(f.pi[x] + 0.5*(f.Vy[nb[x][3]]*dxphi[1][nb[x][3]]
-				 + f.Vy[x]*dxphi[1][x]));
+    gpi = f.W[x]*(f.pi[x] + 0.5*(f.Vy[x]*dxphi[1][nb[x][3]]
+				 + f.Vy[nb[x][2]]*dxphi[1][x]));
     f.E[x] = f.E[x] + p.dt*(p.C*gpi*gpi + gpi*Vdmid[x]);
 
-    gpi = f.W[x]*(f.pi[x] + 0.5*(f.Vz[nb[x][5]]*dxphi[2][nb[x][5]]
-				 + f.Vz[x]*dxphi[2][x]));
+    gpi = f.W[x]*(f.pi[x] + 0.5*(f.Vz[x]*dxphi[2][nb[x][5]]
+				 + f.Vz[nb[x][4]]*dxphi[2][x]));
     f.E[x] = f.E[x] + p.dt*(p.C*gpi*gpi + gpi*Vdmid[x]);
-    
     
   }
+
+
 
   // Pressure acceleration
   // W&M sec 2.4.12, 3.5.1, DONE
@@ -244,8 +241,6 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
 	
     
     f.Zx[x] = f.Zx[x] - (p_bar_x_plus - p_bar_x_minus)*p.dt/p.dx;
-    // No difference:
-    //    f.Zx[x] = f.Zx[x] - (f.p[x] - f.p[nb[x][1]])*p.dt/p.dx;
     
     f.Zy[x] = f.Zy[x] - (p_bar_y_plus - p_bar_y_minus)*p.dt/p.dx;
     
@@ -253,8 +248,7 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
 
   }
 
-  //  fprintf(stderr,"p[0] = %lf, p[1] = %lf\n", f.p[0], f.p[1]);
-  //  fprintf(stderr,"Z[0] = %lf, Z[1] = %lf\n", f.Zx[0], f.Zx[1]);
+
 
   // update velocity v; denominator is W&M eq (2.85)
   // but note grid is Eulerian and D=0
@@ -263,8 +257,6 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
   //
   // Section 3.4.5, equations 3.5.7, 3.5.8
   for(x = 0; x < p.N; x++) {
-
-    f.Ux[x]  = 2.0*f.Zx[x] / (f.kappa[x]*(f.E[x] + f.E[nb[x][0]]) );
 
     /*
     if(x == 0)
@@ -294,7 +286,6 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
   }
 
 
-
   // section 3.4.5 continued
   // face-centred x-cpt of 3-velocity
   for(x = 0; x < p.N; x++) {
@@ -305,13 +296,13 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
 	     + f.Ux[nb[nb[x][2]][4]]
 	     )/4.0;
     
-    ubary = (f.Uy[x]
+    ubary = 1.0*(f.Uy[x]
 	     + f.Uy[nb[x][2]]
 	     + f.Uy[nb[x][4]]
 	     + f.Uy[nb[nb[x][2]][4]]
 	     )/4.0;
     
-    ubarz = (f.Uz[x]
+    ubarz = 1.0*(f.Uz[x]
 	     + f.Uz[nb[x][2]]
 	     + f.Uz[nb[x][4]]
 	     + f.Uz[nb[nb[x][2]][4]]
@@ -321,10 +312,14 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
     
     f.Vx[x] = ubarx/Wfacex[x];
   }
+
+
+
+
   // y-cpt
   for(x = 0; x < p.N; x++) {
 
-	ubarx = (f.Ux[x]
+	ubarx = 1.0*(f.Ux[x]
 		 + f.Ux[nb[x][0]] 
 		 + f.Ux[nb[x][4]]
 		 + f.Ux[nb[nb[x][0]][4]]
@@ -336,7 +331,7 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
 		 + f.Uy[nb[nb[x][0]][4]]
 		 )/4.0;
 
-	ubarz = (f.Uz[x]
+	ubarz = 1.0*(f.Uz[x]
 		 + f.Uz[nb[x][0]] 
 		 + f.Uz[nb[x][4]]
 		 + f.Uz[nb[nb[x][0]][4]]
@@ -350,13 +345,13 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
   // z-cpt
   for(x = 0; x < p.N; x++) {
 
-    ubarx = (f.Ux[x]
+    ubarx = 1.0*(f.Ux[x]
 	     + f.Ux[nb[x][2]] 
 	     + f.Ux[nb[x][0]]
 	     + f.Ux[nb[nb[x][0]][2]]
 	     )/4.0;
     
-    ubary = (f.Uy[x]
+    ubary = 1.0*(f.Uy[x]
 	     + f.Uy[nb[x][2]] 
 	     + f.Uy[nb[x][0]]
 	     + f.Uy[nb[nb[x][0]][2]]
@@ -375,6 +370,8 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
     
     f.Vz[x] = ubarz/Wfacez[x];
   }
+
+
 
   // End section 3.4.5
 
@@ -444,19 +441,6 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
 
 
 
-
-
-
-  /*
-  fprintf(stderr,"N-2 powarg = %lf/%lf\n", Wold[p.N-2],f.W[p.N-2]);
-  fprintf(stderr,"N-1 powarg = %lf/%lf\n", Wold[p.N-1],f.W[p.N-1]);
-  fprintf(stderr,"0 powarg = %lf/%lf\n", Wold[0],f.W[0]);
-  fprintf(stderr,"1 powarg = %lf/%lf\n", Wold[1],f.W[1]);
-  fprintf(stderr,"2 powarg = %lf/%lf\n", Wold[2],f.W[2]);
-
-  fprintf(stderr,"powe! E[0] = %lf\n", f.E[0]);
-  */
-
   // Section 3.4.4 -- pressure terms
   for(x = 0; x < p.N; x++) {
 	qx = (f.Vx[nb[x][0]] - f.Vx[x])/p.dx;
@@ -477,6 +461,7 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
 	f.E[x] = f.E[x]*exp(-1.0*(f.kappa[x] - 1.0)*divv*p.dt);
 
   }
+
 
 
 
