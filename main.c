@@ -344,10 +344,10 @@ int main(int argc, char *argv[])
     if(step == p.steps - 1)
       for(x=0;x<p.Lx;x++) {
 	fprintf(stdout,"%lf %.10lf %.10lf %.10lf %.10lf %.10lf %.10lf\n", (x*p.dx), f.Vx[iix(x,x,0,p)],
-		f.Ux[iix(x,x,0,p)],
-		/* f.Ux[iix(x,x,0,p)] */ f.Ux[nb[iix(x,x,0,p)][2]],
-		/* f.phi[iix(x,x,0,p)] */ f.Ux[nb[iix(x,x,0,p)][4]],
-		/* f.T[iix(x,x,0,p)] */ f.Ux[nb[nb[iix(x,x,0,p)][2]][4]],
+		f.Ux[iix(x,x+1,0,p)],
+		f.Ux[iix(x,x,0,p)], // f.Ux[nb[iix(x,x,0,p)][2]],
+		f.phi[iix(x,x,0,p)], // f.Ux[nb[iix(x,x,0,p)][4]],
+		f.T[iix(x,x,0,p)], // f.Ux[nb[nb[iix(x,x,0,p)][2]][4]],
 		f.Zx[iix(x,x,0,p)]);
       }
 
