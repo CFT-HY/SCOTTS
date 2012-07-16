@@ -252,7 +252,7 @@ void initial_3D(hydro_fields f, hydro_params p) {
 	
 	f.T[iix(x,y,z,p)] = 0.0; // p.Tconst;
 
-	if( sqrt((x-p.Lx/2)*(x-p.Lx/2)+(y-p.Ly/2)*(y-p.Ly/2)) < 40)
+	if( (x + y) < p.Lx/2  || (x + y) > 3*p.Lx/2) //  sqrt((x-p.Lx/2)*(x-p.Lx/2)+(y-p.Ly/2)*(y-p.Ly/2)) < 40)
 	  f.E[iix(x,y,z,p)] = El;
 	else
 	  f.E[iix(x,y,z,p)] = Er;
