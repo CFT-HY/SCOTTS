@@ -81,23 +81,43 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
   DBPutQuadvar1(dbfile, "phi", "quadmesh", f.phi, meshsize, 3,
 		NULL, 0, DB_DOUBLE, DB_NODECENT, NULL);
 
-  DBPutQuadvar1(dbfile, "Zx", "quadmesh", f.Zx, meshsize, 3,
-		NULL, 0, DB_DOUBLE, DB_NODECENT, NULL);
 
-  DBPutQuadvar1(dbfile, "Zy", "quadmesh", f.Zy, meshsize, 3,
-		NULL, 0, DB_DOUBLE, DB_NODECENT, NULL);
+  char *ux_name = "Ux";
+  char *uy_name = "Uy";
+  char *uz_name = "Uz";
 
-  DBPutQuadvar1(dbfile, "Zz", "quadmesh", f.Zz, meshsize, 3,
-		NULL, 0, DB_DOUBLE, DB_NODECENT, NULL);
+  char *u_names[3];
+  u_names[0] = ux_name;
+  u_names[1] = uy_name;
+  u_names[2] = uz_name;
 
-  DBPutQuadvar1(dbfile, "Vx", "quadmesh", f.Vx, meshsize, 3,
-		NULL, 0, DB_DOUBLE, DB_NODECENT, NULL);
+  DBPutQuadvar(dbfile, "U", "quadmesh", 3, u_names, f.U, meshsize, 3,
+	       NULL, 0, DB_DOUBLE, DB_NODECENT, NULL);
 
-  DBPutQuadvar1(dbfile, "Vy", "quadmesh", f.Vy, meshsize, 3,
-		NULL, 0, DB_DOUBLE, DB_NODECENT, NULL);
+  char *vx_name = "Vx";
+  char *vy_name = "Vy";
+  char *vz_name = "Vz";
 
-  DBPutQuadvar1(dbfile, "Vz", "quadmesh", f.Vz, meshsize, 3,
-		NULL, 0, DB_DOUBLE, DB_NODECENT, NULL);
+  char *v_names[3];
+  v_names[0] = vx_name;
+  v_names[1] = vy_name;
+  v_names[2] = vz_name;
+
+  DBPutQuadvar(dbfile, "V", "quadmesh", 3, v_names, f.V, meshsize, 3,
+	       NULL, 0, DB_DOUBLE, DB_NODECENT, NULL);
+
+
+  char *zx_name = "Zx";
+  char *zy_name = "Zy";
+  char *zz_name = "Zz";
+
+  char *z_names[3];
+  z_names[0] = zx_name;
+  z_names[1] = zy_name;
+  z_names[2] = zz_name;
+
+  DBPutQuadvar(dbfile, "Z", "quadmesh", 3, z_names, f.Z, meshsize, 3,
+	       NULL, 0, DB_DOUBLE, DB_NODECENT, NULL);
 
 
   DBClose(dbfile);

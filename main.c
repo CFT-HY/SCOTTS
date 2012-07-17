@@ -144,7 +144,7 @@ void free_fields(hydro_fields *f) {
 }
 
 int iix(int x, int y, int z, hydro_params p) {
-  return ((x+p.Lx)%p.Lx)*p.Ly*p.Lz + ((y+p.Ly)%p.Ly)*p.Lz + ((z+p.Lz)%p.Lz);
+  return ((z+p.Lz)%p.Lz)*p.Ly*p.Lx + ((y+p.Ly)%p.Ly)*p.Lx + ((x+p.Lx)%p.Lx);
 }
 
 int **init_nb(hydro_params p) {
@@ -159,14 +159,14 @@ int **init_nb(hydro_params p) {
     for(y=0; y<p.Ly; y++) {
       for(z=0; z<p.Lz; z++) {
     
-	nb[x*p.Ly*p.Lz + y*p.Lz + z] = (int *)malloc(6*sizeof(int));
+	nb[iix(x, y, z, p)] = (int *)malloc(6*sizeof(int));
 
-	nb[x*p.Ly*p.Lz + y*p.Lz + z][0] = iix(x+1, y, z, p);
-	nb[x*p.Ly*p.Lz + y*p.Lz + z][1] = iix(x-1, y, z, p);
-        nb[x*p.Ly*p.Lz + y*p.Lz + z][2] = iix(x, y+1, z, p);
-	nb[x*p.Ly*p.Lz + y*p.Lz + z][3] = iix(x, y-1, z, p);
-	nb[x*p.Ly*p.Lz + y*p.Lz + z][4] = iix(x, y, z+1, p);
-	nb[x*p.Ly*p.Lz + y*p.Lz + z][5] = iix(x, y, z-1, p);
+	nb[iix(x, y, z, p)][0] = iix(x+1, y, z, p);
+	nb[iix(x, y, z, p)][1] = iix(x-1, y, z, p);
+        nb[iix(x, y, z, p)][2] = iix(x, y+1, z, p);
+	nb[iix(x, y, z, p)][3] = iix(x, y-1, z, p);
+	nb[iix(x, y, z, p)][4] = iix(x, y, z+1, p);
+	nb[iix(x, y, z, p)][5] = iix(x, y, z-1, p);
       }
     }
   }
@@ -343,8 +343,9 @@ int main(int argc, char *argv[])
 
     if(step == p.steps - 1)
       for(x=0;x<p.Lx;x++) {
-	fprintf(stdout,"%lf %.10lf %.10lf %.10lf %.10lf %.10lf %.10lf\n", (x*p.dx), f.Vx[iix(x,x,0,p)],
-		f.Ux[iix(x,x+1,0,p)],
+	fprintf(stdout,"%lf %.10lf %.10lf %.10lf %.10lf %.10lf %.10lf %.10lf\n", (x*p.dx), f.Vx[iix(x,x,0,p)],
+		f.Vx[iix(x,x+1,0,p)],
+		f.Vx[iix(x,x-1,0,p)],
 		f.Ux[iix(x,x,0,p)], // f.Ux[nb[iix(x,x,0,p)][2]],
 		f.phi[iix(x,x,0,p)], // f.Ux[nb[iix(x,x,0,p)][4]],
 		f.T[iix(x,x,0,p)], // f.Ux[nb[nb[iix(x,x,0,p)][2]][4]],

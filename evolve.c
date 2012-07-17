@@ -296,13 +296,13 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
 	     + f.Ux[nb[nb[x][2]][4]]
 	     )/4.0;
     
-    ubary = 1.0*(f.Uy[x]
+    ubary = (f.Uy[x]
 	     + f.Uy[nb[x][2]]
 	     + f.Uy[nb[x][4]]
 	     + f.Uy[nb[nb[x][2]][4]]
 	     )/4.0;
     
-    ubarz = 1.0*(f.Uz[x]
+    ubarz = (f.Uz[x]
 	     + f.Uz[nb[x][2]]
 	     + f.Uz[nb[x][4]]
 	     + f.Uz[nb[nb[x][2]][4]]
@@ -319,7 +319,7 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
   // y-cpt
   for(x = 0; x < p.N; x++) {
 
-	ubarx = 1.0*(f.Ux[x]
+	ubarx = (f.Ux[x]
 		 + f.Ux[nb[x][0]] 
 		 + f.Ux[nb[x][4]]
 		 + f.Ux[nb[nb[x][0]][4]]
@@ -331,7 +331,7 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
 		 + f.Uy[nb[nb[x][0]][4]]
 		 )/4.0;
 
-	ubarz = 1.0*(f.Uz[x]
+	ubarz = (f.Uz[x]
 		 + f.Uz[nb[x][0]] 
 		 + f.Uz[nb[x][4]]
 		 + f.Uz[nb[nb[x][0]][4]]
@@ -345,13 +345,13 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
   // z-cpt
   for(x = 0; x < p.N; x++) {
 
-    ubarx = 1.0*(f.Ux[x]
+    ubarx = (f.Ux[x]
 	     + f.Ux[nb[x][2]] 
 	     + f.Ux[nb[x][0]]
 	     + f.Ux[nb[nb[x][0]][2]]
 	     )/4.0;
     
-    ubary = 1.0*(f.Uy[x]
+    ubary = (f.Uy[x]
 	     + f.Uy[nb[x][2]] 
 	     + f.Uy[nb[x][0]]
 	     + f.Uy[nb[nb[x][0]][2]]
