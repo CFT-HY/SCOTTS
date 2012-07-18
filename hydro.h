@@ -57,21 +57,13 @@ typedef struct {
   double *phiold;
   double *p;
   double *E;
-  double *Zx;
-  double *Zy;
-  double *Zz;
-  double *Ux;
-  double *Uy;
-  double *Uz;
-  double *Vx;
-  double *Vy;
-  double *Vz;
   double *W;
 
   double **V;
   double **U;
   double **F;
   double **Z;
+
 } hydro_fields;
 
 // main.c

@@ -1,14 +1,14 @@
 CC := gcc -DSILO
 
 # on pc168
-# CFLAGS := -O3
+CFLAGS := -O3
 # on my mac:
-CFLAGS := -O3 -I/Users/weir/Installed/silo-4.8-bsd/include/
+# CFLAGS := -O3 -I/Users/weir/Installed/silo-4.8-bsd/include/
 
 # on pc168:
-# LIBS := -lm -lsiloh5
+LIBS := -lm -lsiloh5
 # on my mac:
-LIBS := -lm -L/Users/weir/Installed/silo-4.8-bsd/lib/ -lsilo
+# LIBS := -lm -L/Users/weir/Installed/silo-4.8-bsd/lib/ -lsilo
 
 
 OBJECTS := main.o evolve.o potential.o energy.o eos.o \

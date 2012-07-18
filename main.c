@@ -15,15 +15,6 @@ void alloc_fields(hydro_fields *f, hydro_params p) {
   f->pifull = (double *) malloc(p.N*sizeof(double));
   f->T = (double *) malloc(p.N*sizeof(double));
   f->E = (double *) malloc(p.N*sizeof(double));
-  f->Zx = (double *) malloc(p.N*sizeof(double));
-  f->Zy = (double *) malloc(p.N*sizeof(double));
-  f->Zz = (double *) malloc(p.N*sizeof(double));
-  f->Ux = (double *) malloc(p.N*sizeof(double));
-  f->Uy = (double *) malloc(p.N*sizeof(double));
-  f->Uz = (double *) malloc(p.N*sizeof(double));
-  f->Vx = (double *) malloc(p.N*sizeof(double));
-  f->Vy = (double *) malloc(p.N*sizeof(double));
-  f->Vz = (double *) malloc(p.N*sizeof(double));
   f->W = (double *) malloc(p.N*sizeof(double));
   
   // pi gets initialised in backstep
@@ -43,20 +34,22 @@ void alloc_fields(hydro_fields *f, hydro_params p) {
   f->p = (double *) malloc(p.N*sizeof(double));
 
   f->V = (double **) malloc(3*sizeof(double *));
-  f->V[0] = f->Vx;
-  f->V[1] = f->Vy;
-  f->V[2] = f->Vz;
+
+  f->V[0] = (double *) malloc(p.N*sizeof(double));
+  f->V[1] = (double *) malloc(p.N*sizeof(double));
+  f->V[2] = (double *) malloc(p.N*sizeof(double));
   
   f->Z = (double **) malloc(3*sizeof(double *));
-  f->Z[0] = f->Zx;
-  f->Z[1] = f->Zy;
-  f->Z[2] = f->Zz;
+
+  f->Z[0] = (double *) malloc(p.N*sizeof(double));
+  f->Z[1] = (double *) malloc(p.N*sizeof(double));
+  f->Z[2] = (double *) malloc(p.N*sizeof(double));
 
   f->U = (double **) malloc(3*sizeof(double *));
 
-  f->U[0] = f->Ux;
-  f->U[1] = f->Uy;
-  f->U[2] = f->Uz;
+  f->U[0] = (double *) malloc(p.N*sizeof(double));
+  f->U[1] = (double *) malloc(p.N*sizeof(double));
+  f->U[2] = (double *) malloc(p.N*sizeof(double));
 
   f->F = (double **) malloc(3*sizeof(double *));
 
@@ -92,15 +85,15 @@ void zero_fields(hydro_fields f, hydro_params p) {
     f.pifull[x] = 0.0000;
     f.T[x] = 0.0000;
     f.E[x] = 0.0000;
-    f.Zx[x] = 0.0000;
-    f.Zy[x] = 0.0000;
-    f.Zz[x] = 0.0000;
-    f.Ux[x] = 0.0000;
-    f.Uy[x] = 0.0000;
-    f.Uz[x] = 0.0000;
-    f.Vx[x] = 0.0000;
-    f.Vy[x] = 0.0000;
-    f.Vz[x] = 0.0000;
+    f.Z[0][x] = 0.0000;
+    f.Z[1][x] = 0.0000;
+    f.Z[2][x] = 0.0000;
+    f.U[0][x] = 0.0000;
+    f.U[1][x] = 0.0000;
+    f.U[2][x] = 0.0000;
+    f.V[0][x] = 0.0000;
+    f.V[1][x] = 0.0000;
+    f.V[2][x] = 0.0000;
     f.W[x] = 0.0000;
 
     f.pi[x] = 0.0000;
@@ -119,15 +112,15 @@ void free_fields(hydro_fields *f) {
   free(f->phiold);
   free(f->T);
   free(f->E);
-  free(f->Zx);
-  free(f->Zy);
-  free(f->Zz);
-  free(f->Ux);
-  free(f->Uy);
-  free(f->Uz);
-  free(f->Vx);
-  free(f->Vy);
-  free(f->Vz);
+  free(f->Z[0]);
+  free(f->Z[1]);
+  free(f->Z[2]);
+  free(f->U[0]);
+  free(f->U[1]);
+  free(f->U[2]);
+  free(f->V[0]);
+  free(f->V[1]);
+  free(f->V[2]);
   free(f->W);
   free(f->kappa);
   free(f->p);
@@ -343,13 +336,15 @@ int main(int argc, char *argv[])
 
     if(step == p.steps - 1)
       for(x=0;x<p.Lx;x++) {
-	fprintf(stdout,"%lf %.10lf %.10lf %.10lf %.10lf %.10lf %.10lf %.10lf\n", (x*p.dx), f.Vx[iix(x,x,0,p)],
-		f.Vx[iix(x,x+1,0,p)],
-		f.Vx[iix(x,x-1,0,p)],
-		f.Ux[iix(x,x,0,p)], // f.Ux[nb[iix(x,x,0,p)][2]],
+	fprintf(stdout,"%lf %.10lf %.10lf %.10lf %.10lf %.10lf %.10lf %.10lf\n",
+		(x*p.dx),
+		f.V[0][iix(x,x,0,p)],
+		f.V[0][iix(x,x+1,0,p)],
+		f.V[0][iix(x,x-1,0,p)],
+		f.U[0][iix(x,x,0,p)], // f.Ux[nb[iix(x,x,0,p)][2]],
 		f.phi[iix(x,x,0,p)], // f.Ux[nb[iix(x,x,0,p)][4]],
 		f.T[iix(x,x,0,p)], // f.Ux[nb[nb[iix(x,x,0,p)][2]][4]],
-		f.Zx[iix(x,x,0,p)]);
+		f.Z[0][iix(x,x,0,p)]);
       }
 
 

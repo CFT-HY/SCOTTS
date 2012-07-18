@@ -211,13 +211,13 @@ void transport_E_dir(hydro_fields f, int **nb, hydro_params p, int dir) {
 			  *(p.dx + 0.0*f.V[dir][x]*p.dt))*f.V[dir][x]*p.dt;
     */
 
-    f.F[dir][x] = 0.5*f.Vx[x]*((1.0+theta)*f.E[nb[x][2*dir+1]] + (1.0-theta)*f.E[x])
-      + 0.5*fabs(f.Vx[x])*(1.0-fabs(f.Vx[x]*p.dt/p.dx))*phi(r[x])*(f.E[x] - f.E[nb[x][2*dir+1]]);
+    f.F[dir][x] = 0.5*f.V[0][x]*((1.0+theta)*f.E[nb[x][2*dir+1]] + (1.0-theta)*f.E[x])
+      + 0.5*fabs(f.V[0][x])*(1.0-fabs(f.V[0][x]*p.dt/p.dx))*phi(r[x])*(f.E[x] - f.E[nb[x][2*dir+1]]);
 
-    if(isnan(0.5*fabs(f.Vx[x])*(1.0-fabs(f.Vx[x]*p.dt/p.dx))*phi(r[x])*(f.E[x] - f.E[nb[x][2*dir+1]]))) {
+    if(isnan(0.5*fabs(f.V[0][x])*(1.0-fabs(f.V[0][x]*p.dt/p.dx))*phi(r[x])*(f.E[x] - f.E[nb[x][2*dir+1]]))) {
 
       fprintf(stderr,"went nan! x=%d\n",x);
-      fprintf(stderr,"%lf %lf %lf<-%lf %lf\n", 0.5*fabs(f.Vx[x]),(1.0-fabs(f.Vx[x]*p.dt/p.dx)),phi(r[x]),r[x],(f.E[x] - f.E[nb[x][2*dir+1]]));
+      fprintf(stderr,"%lf %lf %lf<-%lf %lf\n", 0.5*fabs(f.V[0][x]),(1.0-fabs(f.V[0][x]*p.dt/p.dx)),phi(r[x]),r[x],(f.E[x] - f.E[nb[x][2*dir+1]]));
     }
 
   }
@@ -325,9 +325,9 @@ void transport_Z_dir(hydro_fields f, int **nb, hydro_params p, int dir) {
   // Eq 2.11
   for(x = 0; x < p.N; x++) {
     if(dir == 0) {
-    f.Zx[x] = f.Zx[x] - p.dt*(deltaMIb[0][x]*F[x] - deltaMIb[0][nb[x][0]]*F[nb[x][0]])/p.dx;
-    f.Zx[x] = f.Zx[x] - p.dt*(deltaMIb[1][x]*F[x] - deltaMIb[1][nb[x][2]]*F[nb[x][2]])/p.dx;
-    f.Zx[x] = f.Zx[x] - p.dt*(deltaMIb[2][x]*F[x] - deltaMIb[2][nb[x][4]]*F[nb[x][4]])/p.dx;
+    f.Z[0][x] = f.Z[0][x] - p.dt*(deltaMIb[0][x]*F[x] - deltaMIb[0][nb[x][0]]*F[nb[x][0]])/p.dx;
+    f.Z[0][x] = f.Z[0][x] - p.dt*(deltaMIb[1][x]*F[x] - deltaMIb[1][nb[x][2]]*F[nb[x][2]])/p.dx;
+    f.Z[0][x] = f.Z[0][x] - p.dt*(deltaMIb[2][x]*F[x] - deltaMIb[2][nb[x][4]]*F[nb[x][4]])/p.dx;
     }
   }
 
