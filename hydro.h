@@ -63,9 +63,14 @@ typedef struct {
   int N;
   double T0;
 
-#ifdef MPI
-  int totalN;
   int fieldN;
+
+  int size;
+  int rank;
+
+#ifdef MPI
+
+  int totalN;
   int slicex;
   int slicey;
   
@@ -95,6 +100,38 @@ typedef struct {
   int inner_xMyP;
   int inner_xPyM;
   int inner_xPyP;
+
+  // Endposts
+  int offset_xMyeM;
+  int offset_xMyeP;
+  int offset_xPyeM;
+  int offset_xPyeP;
+  int offset_yMxeM;
+  int offset_yMxeP;
+  int offset_yPxeM;
+  int offset_yPxeP;
+
+
+
+  // Ranks of neighbours
+  int rank_xM;
+  int rank_xP;
+  int rank_yM;
+  int rank_yP;
+
+  int rank_xMyM;
+  int rank_xMyP;
+  int rank_xPyM;
+  int rank_xPyP;
+
+
+
+
+
+  int myposx;
+  int myposy;
+
+  int **inverse;
 
 #endif // MPI
  
@@ -132,11 +169,14 @@ int iix(int x, int y, int z, hydro_params p);
 
 
 // arrangement.c
-void layout(hydro_params p);
-int **init_nb(hydro_params p);
+void layout(hydro_params *p);
+int **init_nb(hydro_params *p);
 int get_x(int n, hydro_params p);
 int get_y(int n, hydro_params p);
 int get_z(int n, hydro_params p);
+void halo_field(double *field, hydro_params p);
+double reduce_sum(double result, hydro_params p);
+double reduce_max(double result, hydro_params p);
 
 // evolve.c
 
@@ -194,7 +234,7 @@ void papi_finalise();
 
 // parameters.c
 
-hydro_params get_parameters(char *filename);
+void get_parameters(char *filename, hydro_params *p);
 
 // silage.c
 

@@ -13,6 +13,10 @@ void donor_E_dir(hydro_fields f, int **nb, hydro_params p, int dir) {
 
   int x;
 
+  halo_field(f.V[dir],p);
+  halo_field(f.E,p);
+
+
   for(x = 0; x < p.N; x++) {
     if(f.V[dir][x] >= 0.0)
       f.F[dir][x] = f.V[dir][x]*f.E[nb[x][2*dir + 1]];
@@ -20,9 +24,16 @@ void donor_E_dir(hydro_fields f, int **nb, hydro_params p, int dir) {
       f.F[dir][x] = f.V[dir][x]*f.E[x];
   }
 
+
+  halo_field(f.F[dir],p);
+
+
   for(x = 0; x < p.N; x++)
     f.E[x] = f.E[x] + p.dt*(f.F[dir][x] - f.F[dir][nb[x][2*dir]])/p.dx;
   
+  halo_field(f.E, p);
+
+
 }
 
 
@@ -76,6 +87,9 @@ void donor_Z_dir(hydro_fields f, int **nb, hydro_params p, int dir) {
   }
   
 
+  halo_field(f.F[0],p);
+  halo_field(f.F[1],p);
+  halo_field(f.F[2],p);
 
   // Eq 2.11
   for(x = 0; x < p.N; x++) {
@@ -101,11 +115,12 @@ void donor_Z_dir(hydro_fields f, int **nb, hydro_params p, int dir) {
 void advect_E(hydro_fields f, int **nb, hydro_params p) {
 
   int order; 
-  order = lrand48() % 3;
+  order = 0; // for deterministic results across sites: lrand48() % 3;
 
   donor_E_dir(f, nb, p, order);
   donor_E_dir(f, nb, p, (order + 1) % 3);
   donor_E_dir(f, nb, p, (order + 2) % 3);
+
 }
 
 
@@ -114,11 +129,21 @@ void advect_E(hydro_fields f, int **nb, hydro_params p) {
 void advect_Z(hydro_fields f, int **nb, hydro_params p) {
 
   int order; 
-  order = lrand48() % 3;
+  order = 0; // lrand48() % 3;
 
   donor_Z_dir(f, nb, p, order);
+  halo_field(f.Z[0], p);
+  halo_field(f.Z[1], p);
+  halo_field(f.Z[2], p);
   donor_Z_dir(f, nb, p, (order + 1) % 3);
+  halo_field(f.Z[0], p);
+  halo_field(f.Z[1], p);
+  halo_field(f.Z[2], p);
   donor_Z_dir(f, nb, p, (order + 2) % 3);
+  halo_field(f.Z[0], p);
+  halo_field(f.Z[1], p);
+  halo_field(f.Z[2], p);
+
 }
 
 

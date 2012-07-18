@@ -7,55 +7,55 @@
 
 void alloc_fields(hydro_fields *f, hydro_params p) {
   // location labels set up in initial condition functions
-  f->xe = (double *) malloc(p.N*sizeof(double));
-  f->xc = (double *) malloc(p.N*sizeof(double));
+  f->xe = (double *) malloc(p.fieldN*sizeof(double));
+  f->xc = (double *) malloc(p.fieldN*sizeof(double));
 
   // fields below also set up in initial condition functions
-  f->phi = (double *) malloc(p.N*sizeof(double));
-  f->pifull = (double *) malloc(p.N*sizeof(double));
-  f->T = (double *) malloc(p.N*sizeof(double));
-  f->E = (double *) malloc(p.N*sizeof(double));
-  f->W = (double *) malloc(p.N*sizeof(double));
+  f->phi = (double *) malloc(p.fieldN*sizeof(double));
+  f->pifull = (double *) malloc(p.fieldN*sizeof(double));
+  f->T = (double *) malloc(p.fieldN*sizeof(double));
+  f->E = (double *) malloc(p.fieldN*sizeof(double));
+  f->W = (double *) malloc(p.fieldN*sizeof(double));
   
   // pi gets initialised in backstep
-  f->pi = (double *) malloc(p.N*sizeof(double));
+  f->pi = (double *) malloc(p.fieldN*sizeof(double));
 
   // phiold initialised by evolve_field
-  f->phiold = (double *) malloc(p.N*sizeof(double));
+  f->phiold = (double *) malloc(p.fieldN*sizeof(double));
 
   // equation of state (obtained by eq_of_state first time
   // and used in hydro)
-  f->kappa = (double *) malloc(p.N*sizeof(double));
+  f->kappa = (double *) malloc(p.fieldN*sizeof(double));
 
 
 
   // pressure (obtained by eq_of_state first time
   // and used in hydro)
-  f->p = (double *) malloc(p.N*sizeof(double));
+  f->p = (double *) malloc(p.fieldN*sizeof(double));
 
   f->V = (double **) malloc(3*sizeof(double *));
 
-  f->V[0] = (double *) malloc(p.N*sizeof(double));
-  f->V[1] = (double *) malloc(p.N*sizeof(double));
-  f->V[2] = (double *) malloc(p.N*sizeof(double));
+  f->V[0] = (double *) malloc(p.fieldN*sizeof(double));
+  f->V[1] = (double *) malloc(p.fieldN*sizeof(double));
+  f->V[2] = (double *) malloc(p.fieldN*sizeof(double));
   
   f->Z = (double **) malloc(3*sizeof(double *));
 
-  f->Z[0] = (double *) malloc(p.N*sizeof(double));
-  f->Z[1] = (double *) malloc(p.N*sizeof(double));
-  f->Z[2] = (double *) malloc(p.N*sizeof(double));
+  f->Z[0] = (double *) malloc(p.fieldN*sizeof(double));
+  f->Z[1] = (double *) malloc(p.fieldN*sizeof(double));
+  f->Z[2] = (double *) malloc(p.fieldN*sizeof(double));
 
   f->U = (double **) malloc(3*sizeof(double *));
 
-  f->U[0] = (double *) malloc(p.N*sizeof(double));
-  f->U[1] = (double *) malloc(p.N*sizeof(double));
-  f->U[2] = (double *) malloc(p.N*sizeof(double));
+  f->U[0] = (double *) malloc(p.fieldN*sizeof(double));
+  f->U[1] = (double *) malloc(p.fieldN*sizeof(double));
+  f->U[2] = (double *) malloc(p.fieldN*sizeof(double));
 
   f->F = (double **) malloc(3*sizeof(double *));
 
-  f->F[0] = (double *) malloc(p.N*sizeof(double));
-  f->F[1] = (double *) malloc(p.N*sizeof(double));
-  f->F[2] = (double *) malloc(p.N*sizeof(double));
+  f->F[0] = (double *) malloc(p.fieldN*sizeof(double));
+  f->F[1] = (double *) malloc(p.fieldN*sizeof(double));
+  f->F[2] = (double *) malloc(p.fieldN*sizeof(double));
 
   // (calloc considered harmful)
 }
@@ -77,7 +77,7 @@ void zero_fields(hydro_fields f, hydro_params p) {
 
   // We don't need to do this because create_gaussian_bubble
   // initialises everything, but it keeps valgrind quiet.
-  for(x=0;x<p.N;x++) {
+  for(x=0;x<p.fieldN;x++) {
     f.xe[x] = 0.0000;
     f.xc[x] = 0.0000;
 
@@ -140,10 +140,26 @@ void free_fields(hydro_fields *f) {
 
 int main(int argc, char *argv[])
 {
-  fprintf(stderr,"3D hydro port\n");
+
+
+  hydro_params p;
+
+#ifdef MPI
+  MPI_Init(&argc, &argv);
+  MPI_Comm_rank(MPI_COMM_WORLD, &p.rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &p.size);
+#else // MPI
+  p.rank = 0;
+  p.size = 1;
+#endif // MPI
+
+
+  if(!p.rank)
+    fprintf(stderr,"3D hydro port\n");
 
   if(argc != 2) {
-    fprintf(stderr,"Usage: hydro <parameter file>\n");
+    if(!p.rank)
+      fprintf(stderr,"Usage: hydro <parameter file>\n");
     return 100;
   }
 
@@ -153,7 +169,7 @@ int main(int argc, char *argv[])
 
 
   // Parse params from stdin
-  hydro_params p = get_parameters(argv[1]);
+  get_parameters(argv[1],&p);
 
 
 
@@ -170,10 +186,11 @@ int main(int argc, char *argv[])
   p.lambda = 1.0/(3.0*p.sigma*pow(p.lcorr,3.0));
 
   // What did we find?
-  fprintf(stderr,
-	  "-- calculated potential terms\n" \
-	  "-- alpha %g, gamma %g, lambda %g\n", \
-	  p.alpha, p.gamma, p.lambda);
+  if(!p.rank) 
+    fprintf(stderr,
+	    "-- calculated potential terms\n"	\
+	    "-- alpha %g, gamma %g, lambda %g\n",	\
+	    p.alpha, p.gamma, p.lambda);
 
   // Make these user-modifiable eventually
   p.Tconst = 0.86;
@@ -187,8 +204,10 @@ int main(int argc, char *argv[])
 		       /9.0/p.gamma/p.lambda);
 
 
+
+
   // Set up layout for any parallelism
-  layout(p);
+  layout(&p);
 
 
   // time iterate
@@ -204,15 +223,27 @@ int main(int argc, char *argv[])
 
   double initial_energy, current_energy;
 
+  int **nb;
+
+  nb = init_nb(&p);
+
+  if(!p.rank)
+    fprintf(stderr, "- Initialised neighbour lookup table.\n");
+
+
+  //  fprintf(stderr,"Check get_x(0,p): %d\n", get_x(0,p));
+
   // Just runs malloc on all the fields therein
   alloc_fields(&f, p);
 
-  fprintf(stderr, "- Allocated fields.\n");
+  if(!p.rank)
+    fprintf(stderr, "- Allocated fields.\n");
 
   // For safety, set everything to zero
   zero_fields(f, p);
 
-  fprintf(stderr, "- Zeroed fields.\n");
+  if(!p.rank)
+    fprintf(stderr, "- Zeroed fields.\n");
 
   // initial conditions
   /*  if(p.initial == INIT_BUBBLE) {
@@ -229,18 +260,24 @@ int main(int argc, char *argv[])
   //      initial_3D(f,p);
     // initial_step(f,p);
 
-  fprintf(stderr, "Initial conditions done\n");
+  halo_field(f.phi, p);
+  halo_field(f.pifull, p);
+  halo_field(f.E, p);
+  halo_field(f.Z[0], p);
+  halo_field(f.Z[1], p);
+  halo_field(f.Z[2], p);
+  halo_field(f.W, p);
 
-  int **nb;
 
-  nb = init_nb(p);
+  if(!p.rank)
+    fprintf(stderr, "Initial conditions done\n");
 
-  fprintf(stderr, "- Initialised neighbour lookup table.\n");
 
-  initial_energy = total_energy(f, nb, p);
+  initial_energy = reduce_sum(total_energy(f, nb, p),p);
 
-  fprintf(stderr, "Initial avg energy per site: %g\n", 
-	  initial_energy);
+  if(!p.rank)
+    fprintf(stderr, "Initial avg energy per site: %g\n", 
+	    initial_energy);
 
   // Output headers
   // printf("Step\ttime\tenergy\twallps\n");
@@ -263,6 +300,8 @@ int main(int argc, char *argv[])
   //  fwrite(&p.N, sizeof(int), 1, phi_fh);
 
 
+  double current_field_energy, current_wmax;
+
   for(step = 0; step < p.steps; step++) {
 
     if((p.silointerval > 0) && (step % p.silointerval == 0)) {
@@ -279,19 +318,23 @@ int main(int argc, char *argv[])
       //      fwrite(f.E, sizeof(double), p.N, phi_fh);
       //      fwrite(f.p, sizeof(double), p.N, phi_fh);
 
-      current_energy = total_energy(f, nb, p);
-
+      current_energy = reduce_sum(total_energy(f, nb, p),p);
+      current_field_energy = reduce_sum(field_energy(f, nb, p),p);
+      current_wmax = reduce_max(wmax, p);
       
-      fprintf(stderr,"%04d\t%6lf\t%6lf\t%6lf\t%6lf\n",
-	     step, t,
-	     current_energy, 
-	     field_energy(f, nb, p), wmax);
+      if(!p.rank)
+	fprintf(stderr,"%04d\t%6lf\t%6lf\t%6lf\t%6lf\n",
+		step, t,
+		current_energy,
+		current_field_energy,
+		current_wmax);
       
 
       fflush(stdout);
 
-      fprintf(stderr, "Energy violation: %lf%%\n",
-	      100.0*fabs((current_energy-initial_energy)/initial_energy));
+      if(!p.rank)
+	fprintf(stderr, "Energy violation: %lf%%\n",
+		100.0*fabs((current_energy-initial_energy)/initial_energy));
     }
 
     // Do field step
@@ -307,26 +350,24 @@ int main(int argc, char *argv[])
     // Do the hydro bits
     evolve_hydro(f, nb, p);
 
-    /*
+    
     if(step == p.steps - 1)
-      for(x=0;x<p.Lx;x++) {
-	fprintf(stdout,"%lf %.10lf %.10lf %.10lf %.10lf %.10lf %.10lf %.10lf\n",
-		(x*p.dx),
-		f.V[0][iix(x,x,0,p)],
-		f.V[0][iix(x,x+1,0,p)],
-		f.V[0][iix(x,x-1,0,p)],
-		f.U[0][iix(x,x,0,p)], // f.Ux[nb[iix(x,x,0,p)][2]],
-		f.phi[iix(x,x,0,p)], // f.Ux[nb[iix(x,x,0,p)][4]],
-		f.T[iix(x,x,0,p)], // f.Ux[nb[nb[iix(x,x,0,p)][2]][4]],
-		f.Z[0][iix(x,x,0,p)]);
-      }
-    */
+      for(x=0;x<p.N;x++) {
+	if(get_x(x,p) == get_y(x,p)) {
+	  fprintf(stdout,"%lf %.10lf %.10lf %.10lf %.10lf %.10lf\n",
+		  (get_x(x,p)*p.dx),
+		  f.V[0][x],
+		  f.U[0][x],
+		  f.phi[x],
+		  f.T[x],
+		  f.Z[0][x]);
+	}
+      }    
 
     // Advection of state variables
     advect_E(f, nb, p);
     // Advection of momentum
     advect_Z(f, nb, p);
-
 
     //    artificial_viscosity(f, nb, p);
 
@@ -351,6 +392,10 @@ int main(int argc, char *argv[])
   papi_finalise();
 #endif // PAPI
   
+
+#ifdef MPI
+  MPI_Finalize();
+#endif // MPI
 
   //  fclose(phi_fh);
 

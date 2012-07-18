@@ -20,6 +20,8 @@ void evolve_backstep(hydro_fields f, int **nb, hydro_params p) {
       *(f.pifull[nb[x][0]] - 2.0*f.pifull[x] + f.pifull[nb[x][1]])/(p.dx*p.dx)
       + 0.5*p.dt*Vdf(p, f.T[x], f.phi[x] - 0.25*p.dt*f.pifull[x]);
 
+
+  halo_field(f.pi, p);
 }
 
 
@@ -69,6 +71,12 @@ void evolve_field(hydro_fields f, int **nb, hydro_params p) {
     f.phi[x] = f.phi[x] + p.dt*f.pi[x];
   }
 
+  halo_field(f.pi, p);
+  halo_field(f.pifull, p);
+
+  halo_field(f.phi, p);
+  halo_field(f.phiold, p);
+
 }
 
 
@@ -90,23 +98,20 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
 
   int x;
   
-  double *Vdmid = (double *)malloc(p.N*sizeof(double));
-  double *Wold = (double *)malloc(p.N*sizeof(double));
+  double *Vdmid = (double *)malloc(p.fieldN*sizeof(double));
+  double *Wold = (double *)malloc(p.fieldN*sizeof(double));
   
-  double *phiav = (double *)malloc(p.N*sizeof(double));
+  double *phiav = (double *)malloc(p.fieldN*sizeof(double));
   double **dxphi = (double **) malloc(3*sizeof(double *));
-  dxphi[0] = (double *)malloc(p.N*sizeof(double));
-  dxphi[1] = (double *)malloc(p.N*sizeof(double));
-  dxphi[2] = (double *)malloc(p.N*sizeof(double));
+  dxphi[0] = (double *)malloc(p.fieldN*sizeof(double));
+  dxphi[1] = (double *)malloc(p.fieldN*sizeof(double));
+  dxphi[2] = (double *)malloc(p.fieldN*sizeof(double));
   
-  double *Wv = (double *)malloc(p.N*sizeof(double));
 
+  double *Wfacex = (double *)malloc(p.fieldN*sizeof(double));
+  double *Wfacey = (double *)malloc(p.fieldN*sizeof(double));
+  double *Wfacez = (double *)malloc(p.fieldN*sizeof(double));
 
-  double *Wfacex = (double *)malloc(p.N*sizeof(double));
-  double *Wfacey = (double *)malloc(p.N*sizeof(double));
-  double *Wfacez = (double *)malloc(p.N*sizeof(double));
-
-  double *Q = (double *)malloc(p.N*sizeof(double));
   
   double gpi, dv, gv, inner, s;
 
@@ -135,7 +140,15 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
 
   }
 
+  halo_field(dxphi[0], p);
+  halo_field(dxphi[1], p);
+  halo_field(dxphi[2], p);
+
   Vdpot(p, f.T, phiav, Vdmid);
+
+
+  halo_field(phiav, p);
+  halo_field(Vdmid, p);
 
   for(x = 0; x < p.N; x++) {
 
@@ -189,6 +202,13 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
     f.E[x] = f.E[x] + p.dt*(p.C*gpi*gpi + gpi*Vdmid[x]);
     
   }
+
+
+  halo_field(f.Z[0], p);
+  halo_field(f.Z[1], p);
+  halo_field(f.Z[2], p);
+  halo_field(f.E, p);
+  halo_field(f.p, p);
 
 
 
@@ -249,6 +269,11 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
   }
 
 
+  halo_field(f.Z[0], p);
+  halo_field(f.Z[1], p);
+  halo_field(f.Z[2], p);
+
+
 
   // update velocity v; denominator is W&M eq (2.85)
   // but note grid is Eulerian and D=0
@@ -284,6 +309,10 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
       fprintf(stderr,"Ux = %lf\n", f.U[0][1]);
     */
   }
+
+  halo_field(f.U[0], p);
+  halo_field(f.U[1], p);
+  halo_field(f.U[2], p);
 
 
   // section 3.4.5 continued
@@ -372,6 +401,11 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
   }
 
 
+  halo_field(f.V[0], p);
+  halo_field(f.V[1], p);
+  halo_field(f.V[2], p);
+
+
 
   // End section 3.4.5
 
@@ -438,8 +472,12 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
   }
 
 
+  halo_field(f.E, p);
+  halo_field(f.W, p);
 
-
+  halo_field(Wfacex, p);
+  halo_field(Wfacey, p);
+  halo_field(Wfacez, p);
 
   // Section 3.4.4 -- pressure terms
   for(x = 0; x < p.N; x++) {
@@ -465,7 +503,7 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
 
 
 
-
+  halo_field(f.E, p);
 
 
 
@@ -489,6 +527,9 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
   }
 
 
+  halo_field(f.E, p);
+
+
 
   // Clean up memory. Surely we don't need all these temporary arrays?
 
@@ -498,13 +539,11 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
   free(Wfacex);
   free(Wfacey); 
   free(Wfacez);
-  free(Wv);
   free(phiav);
   free(dxphi[0]);
   free(dxphi[1]);
   free(dxphi[2]);
   free(dxphi);
-  free(Q);
 }
 
 void artificial_viscosity(hydro_fields f, int **nb, hydro_params p) {
