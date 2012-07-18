@@ -1,4 +1,4 @@
-CC := gcc -DPAPI # -DSILO
+CC := gcc -DSILO # -DPAPI -DSILO
 
 # on pc168
 CFLAGS := -O3

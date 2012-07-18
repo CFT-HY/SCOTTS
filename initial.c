@@ -177,14 +177,15 @@ void initial_scalar_bubble(hydro_fields f, hydro_params p) {
 	f.phi[iix(x,y,z,p)] = cstrab*exp(-1.0*
 			      p.dx*p.dx*( ((double)(x-p.Lx/2))*((double)(x-p.Lx/2))
 				+ ((double)(y-p.Ly/2))*((double)(y-p.Ly/2))
-				)
+				+ ((double)(z-p.Lz/2))*((double)(z-p.Lz/2)))
 			      /2.0/(Rtenab*Rtenab) );
 	
 	f.pifull[iix(x,y,z,p)] = 0.0;
 	
 	f.T[iix(x,y,z,p)] = p.Tconst;
 	
-	f.E[iix(x,y,z,p)] = 3.0*p.a*f.T[iix(x,y,z,p)]*f.T[iix(x,y,z,p)]*f.T[iix(x,y,z,p)]*f.T[iix(x,y,z,p)]
+	f.E[iix(x,y,z,p)] = 3.0*p.a*f.T[iix(x,y,z,p)]*f.T[iix(x,y,z,p)]
+	  *f.T[iix(x,y,z,p)]*f.T[iix(x,y,z,p)]
 	  + Vf(p, f.T[iix(x,y,z,p)], f.phi[iix(x,y,z,p)])
 	  - f.T[iix(x,y,z,p)]*VTf(p, f.T[iix(x,y,z,p)], f.phi[iix(x,y,z,p)]);
 
