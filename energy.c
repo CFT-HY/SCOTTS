@@ -33,9 +33,9 @@ double field_energy(hydro_fields f, int **nb, hydro_params p) {
 
   // Cast here
   //  vol = (double)(f.xe[p.N-1]);
-  vol = ((double)(p.Lx*p.Ly*p.Lz))*p.dx*p.dx*p.dx;
+  //  vol = ((double)(p.N))*p.dx*p.dx*p.dx;
 
-  return Etot/vol;
+  return Etot;
 
 
 }

@@ -1,5 +1,5 @@
-CC := gcc -DSILO # -DPAPI -DSILO
-# CC := mpicc -DMPI
+# CC := gcc -DSILO # -DPAPI -DSILO
+CC := mpicc -DMPI
 
 # on pc168
 CFLAGS := -O3

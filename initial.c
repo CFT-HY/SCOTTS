@@ -146,9 +146,10 @@ void initial_scalar_bubble(hydro_fields f, hydro_params p) {
   double sigmlo = 2.0*sqrt(2.0)/81.0*p.alpha*p.alpha*p.alpha
     /(p.lambda*p.lambda*sqrt(p.lambda));
 
-  fprintf(stderr, \
-          "** Initial conditions magic:\n" \
-          "** sigmlo %g\n", sigmlo);
+  if(!p.rank)
+    fprintf(stderr,			   \
+	    "** Initial conditions magic:\n"	\
+	    "** sigmlo %g\n", sigmlo);
 
   double phimin =  ( p.alpha*p.Tconst
 		     + sqrt((p.alpha*p.Tconst)
@@ -164,9 +165,10 @@ void initial_scalar_bubble(hydro_fields f, hydro_params p) {
 
   double Rtenab = Rlapab;
 
-  fprintf(stderr, \
-          "** phimin %g, cstrab %g, Rtenab %g\n", \
-          phimin, cstrab, Rtenab);
+  if(!p.rank)
+    fprintf(stderr,					\
+	    "** phimin %g, cstrab %g, Rtenab %g\n",	\
+	    phimin, cstrab, Rtenab);
 
   int x, y, z;
   int i;
@@ -175,6 +177,8 @@ void initial_scalar_bubble(hydro_fields f, hydro_params p) {
     x = get_x(i, p);
     y = get_y(i, p);
     z = get_z(i, p);
+    //    fprintf(stderr,"x=%d, y=%d, z=%d\n", x, y, z);
+
     
     f.phi[i] = cstrab*exp(-1.0*
 			  p.dx*p.dx*( ((double)(x-p.Lx/2))*((double)(x-p.Lx/2))
@@ -208,9 +212,10 @@ void initial_3D(hydro_fields f, hydro_params p) {
 
   //  srand48(time());
 
-  fprintf(stderr, \
-	  "** Initial conditions magic:\n" \
-	  "** sigmlo %g\n", sigmlo);
+  if(!p.rank)
+    fprintf(stderr,			   \
+	    "** Initial conditions magic:\n"	\
+	    "** sigmlo %g\n", sigmlo);
   
   double phimin =  ( p.alpha*p.Tconst 
 		    + sqrt((p.alpha*p.Tconst)
@@ -226,9 +231,10 @@ void initial_3D(hydro_fields f, hydro_params p) {
 
   double Rtenab = Rlapab;
 
-  fprintf(stderr, \
-	  "** phimin %g, cstrab %g, Rtenab %g\n", \
-	  phimin, cstrab, Rtenab);
+  if(!p.rank)
+    fprintf(stderr,				  \
+	    "** phimin %g, cstrab %g, Rtenab %g\n",	\
+	    phimin, cstrab, Rtenab);
 
   double Er, El, rE;
 
@@ -240,40 +246,35 @@ void initial_3D(hydro_fields f, hydro_params p) {
 
 
   int x, y, z;
+  int i;
 
-  for(x = 0; x < p.Lx; x++) {
-    for(y = 0; y < p.Ly; y++) {
-      for(z = 0; z < p.Lz; z++) {
+  for(i=0; i < p.N; i++) {
+    x = get_x(i, p);
+    y = get_y(i, p);
+    z = get_z(i, p);
 
+    f.phi[i] = 0.0; // cstrab*(1.0 + 0.1*drand48());
 
-	f.phi[iix(x,y,z,p)] = 0.0; // cstrab*(1.0 + 0.1*drand48());
-
-	f.pifull[iix(x,y,z,p)] = 0.0;
+    f.pifull[i] = 0.0;
 	
-	f.T[iix(x,y,z,p)] = 0.0; // p.Tconst;
+    f.T[i] = 0.0; // p.Tconst;
 
-	if( (x + y) < p.Lx/2  || (x + y) > 3*p.Lx/2) //  sqrt((x-p.Lx/2)*(x-p.Lx/2)+(y-p.Ly/2)*(y-p.Ly/2)) < 40)
-	  f.E[iix(x,y,z,p)] = El;
-	else
-	  f.E[iix(x,y,z,p)] = Er;
+    if( (x + y) < p.Lx/2  || (x + y) > 3*p.Lx/2) //  sqrt((x-p.Lx/2)*(x-p.Lx/2)+(y-p.Ly/2)*(y-p.Ly/2)) < 40)
+      f.E[i] = El;
+    else
+      f.E[i] = Er;
 	
 	
     // For debugging purposes
     // fprintf(stderr,"xc = %lf fi = %lf E = %lf\n", xc[x], phi[x],E[x]);
 
-
+    f.Z[0][i] = 0.0;	
+    f.Z[1][i] = 0.0;
+    f.Z[2][i] = 0.0;
+    
+    
+    f.W[i] = 1.0;
 	
-
-
-	f.Z[0][iix(x,y,z,p)] = 0.0;	
-	f.Z[1][iix(x,y,z,p)] = 0.0;
-	f.Z[2][iix(x,y,z,p)] = 0.0;
-	
-	
-	f.W[iix(x,y,z,p)] = 1.0;
-	
-      }
-    }
   }
 }
 
@@ -289,9 +290,10 @@ void initial_step(hydro_fields f, hydro_params p) {
 
   //  srand48(time());
 
-  fprintf(stderr, \
-	  "** Initial conditions magic:\n" \
-	  "** sigmlo %g\n", sigmlo);
+  if(!p.rank)
+    fprintf(stderr,			   \
+	    "** Initial conditions magic:\n"	\
+	    "** sigmlo %g\n", sigmlo);
   
   double phimin =  ( p.alpha*p.Tconst 
 		    + sqrt((p.alpha*p.Tconst)
@@ -307,10 +309,11 @@ void initial_step(hydro_fields f, hydro_params p) {
 
   double Rtenab = Rlapab;
 
-  fprintf(stderr, \
-	  "** phimin %g, cstrab %g, Rtenab %g\n", \
-	  phimin, cstrab, Rtenab);
-
+  if(!p.rank)
+    fprintf(stderr,				  \
+	    "** phimin %g, cstrab %g, Rtenab %g\n",	\
+	    phimin, cstrab, Rtenab);
+  
   double Er, El, rE;
 
   rE = 50.0;
@@ -321,40 +324,37 @@ void initial_step(hydro_fields f, hydro_params p) {
 
 
   int x, y, z;
+  int i;
 
-  for(x = 0; x < p.Lx; x++) {
-    for(y = 0; y < p.Ly; y++) {
-      for(z = 0; z < p.Lz; z++) {
+  for(i=0; i < p.N; i++) {
+
+    x = get_x(i, p);
+    y = get_y(i, p);
+    z = get_z(i, p);
 
 
-	f.phi[iix(x,y,z,p)] = 0.0; // cstrab*(1.0 + 0.1*drand48());
-
-	f.pifull[iix(x,y,z,p)] = 0.0;
+    f.phi[i] = 0.0; // cstrab*(1.0 + 0.1*drand48());
+    
+    f.pifull[i] = 0.0;
 	
-	f.T[iix(x,y,z,p)] = 0.0; // p.Tconst;
-
-	if( x < p.Lx/2)
-	  f.E[iix(x,y,z,p)] = El;
-	else
-	  f.E[iix(x,y,z,p)] = Er;
+    f.T[i] = 0.0; // p.Tconst;
+    
+    if( x < p.Lx/2)
+      f.E[i] = El;
+    else
+      f.E[i] = Er;
 	
 	
     // For debugging purposes
     // fprintf(stderr,"xc = %lf fi = %lf E = %lf\n", xc[x], phi[x],E[x]);
 
-
+    f.Z[0][i] = 0.0;	
+    f.Z[1][i] = 0.0;
+    f.Z[2][i] = 0.0;
+    
+    
+    f.W[i] = 1.0;
 	
-
-
-	f.Z[0][iix(x,y,z,p)] = 0.0;	
-	f.Z[1][iix(x,y,z,p)] = 0.0;
-	f.Z[2][iix(x,y,z,p)] = 0.0;
-	
-	
-	f.W[iix(x,y,z,p)] = 1.0;
-	
-      }
-    }
   }
 }
 

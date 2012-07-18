@@ -25,10 +25,9 @@
  * naive use of fgets, but this is unlikely to cause trouble
  * with the sort of parameters we are using.
  */
-hydro_params get_parameters(char *infile)
+void get_parameters(char *infile, hydro_params *p)
 {
 
-  hydro_params parameters;
 
   int set_dx = 0;
   int set_dt = 0;
@@ -104,66 +103,66 @@ hydro_params get_parameters(char *infile)
 
     // Check for parameters (in order)
     if(!strcasecmp(key,"dx")) {
-      parameters.dx = strtod(value,NULL);
+      p->dx = strtod(value,NULL);
       set_dx = 1;
     }
     else if(!strcasecmp(key,"dt")) {
-      parameters.dt = strtod(value,NULL);
+      p->dt = strtod(value,NULL);
       set_dt = 1;
     }    
     else if(!strcasecmp(key,"Lx")) {
-      parameters.Lx = strtol(value,NULL,10);
+      p->Lx = strtol(value,NULL,10);
       set_Lx = 1;
     } 
     else if(!strcasecmp(key,"Ly")) {
-      parameters.Ly = strtol(value,NULL,10);
+      p->Ly = strtol(value,NULL,10);
       set_Ly = 1;
     } 
     else if(!strcasecmp(key,"Lz")) {
-      parameters.Lz = strtol(value,NULL,10);
+      p->Lz = strtol(value,NULL,10);
       set_Lz = 1;
     } 
     else if(!strcasecmp(key,"steps")) {
-      parameters.steps = strtol(value,NULL,10);
+      p->steps = strtol(value,NULL,10);
       set_steps = 1;
     }
     else if(!strcasecmp(key,"Cav")) {
-      parameters.Cav = strtod(value,NULL);
+      p->Cav = strtod(value,NULL);
       set_Cav = 1;
     }
     else if(!strcasecmp(key,"C")) {
-      parameters.C = strtod(value,NULL);
+      p->C = strtod(value,NULL);
       set_C = 1;
     }
     else if(!strcasecmp(key,"Lheat")) {
-      parameters.Lheat = strtod(value,NULL);
+      p->Lheat = strtod(value,NULL);
       set_Lheat = 1;
     }
     else if(!strcasecmp(key,"sigma")) {
-      parameters.sigma = strtod(value,NULL);
+      p->sigma = strtod(value,NULL);
       set_sigma = 1;
     }
     else if(!strcasecmp(key,"lcorr")) {
-      parameters.lcorr = strtod(value,NULL);
+      p->lcorr = strtod(value,NULL);
       set_lcorr = 1;
     }
     else if(!strcasecmp(key,"interval")) {
-      parameters.interval = strtod(value,NULL);
+      p->interval = strtod(value,NULL);
       set_interval = 1;
     }
     else if(!strcasecmp(key,"silointerval")) {
-      parameters.silointerval = strtod(value,NULL);
+      p->silointerval = strtod(value,NULL);
       set_silointerval = 1;
     }
     else if(!strcasecmp(key,"initial")) {
       if(!strcasecmp(value, "shocktube")) {
-	parameters.initial = INIT_SHOCK_TUBE;
+	p->initial = INIT_SHOCK_TUBE;
       } else if(!strcasecmp(value, "bubble")) {
-	parameters.initial = INIT_BUBBLE;
+	p->initial = INIT_BUBBLE;
       } else {
 	fprintf(stderr, "warning, unrecognised value for initial" \
 		" (%s); defaulting to bubble.\n", value);
-	parameters.initial = INIT_BUBBLE;
+	p->initial = INIT_BUBBLE;
       }
       set_initial = 1;
     }
@@ -217,29 +216,31 @@ hydro_params get_parameters(char *infile)
   }
 
 
-  // Report what we found
-  fprintf(stderr,"-- Read parameters from %s:\n" \
-	  "-- dx %g, dt %g, steps %d\n" \
-	  "-- Lx %d, Ly %d, Lz %d\n" \
-	  "-- Cav %g, C %g,\n" \
-	  "-- Lheat %g, sigma %g, lcorr %g\n" \
-	  "-- interval %d, silointerval %d\n",
-	  infile,
-	  parameters.dx, parameters.dt, parameters.steps, \
-	  parameters.Lx, parameters.Ly, parameters.Lz, \
-	  parameters.Cav, parameters.C, \
-	  parameters.Lheat, parameters.sigma, parameters.lcorr, \
-	  parameters.interval, parameters.silointerval);
 
-  if(parameters.initial == INIT_SHOCK_TUBE) {
-    fprintf(stderr, "-- shock tube\n");
-  } else if(parameters.initial == INIT_BUBBLE) {
-    fprintf(stderr, "-- bubble\n");
-  } else {
-    fprintf(stderr, "-- warning, somehow have unknown initial conds.\n");
+  if(!p->rank) {
+    // Report what we found
+    fprintf(stderr,"-- Read parameters from %s:\n"	\
+	    "-- dx %g, dt %g, steps %d\n"		\
+	    "-- Lx %d, Ly %d, Lz %d\n"			\
+	    "-- Cav %g, C %g,\n"			\
+	    "-- Lheat %g, sigma %g, lcorr %g\n"		\
+	    "-- interval %d, silointerval %d\n",
+	    infile,
+	    p->dx, p->dt, p->steps,		\
+	    p->Lx, p->Ly, p->Lz,		\
+	    p->Cav, p->C,			\
+	    p->Lheat, p->sigma, p->lcorr,	\
+	    p->interval, p->silointerval);
+    
+    if(p->initial == INIT_SHOCK_TUBE) {
+      fprintf(stderr, "-- shock tube\n");
+    } else if(p->initial == INIT_BUBBLE) {
+      fprintf(stderr, "-- bubble\n");
+    } else {
+      fprintf(stderr, "-- warning, somehow have unknown initial conds.\n");
+    }
+    
   }
-
-  return parameters;
 
 }
 
