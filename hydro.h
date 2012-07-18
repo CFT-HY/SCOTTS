@@ -6,13 +6,29 @@
 #include <math.h>
 #include <stdio.h>
 #include <strings.h>
+#include <malloc.h>
 
 #ifdef SILO
 #include <silo.h>
 #endif // SILO
 
+#ifdef PAPI
+#include <papi.h>
+#endif // PAPI
+
 #define INIT_SHOCK_TUBE 1
 #define INIT_BUBBLE 2
+
+// Composed directions
+#define DIR_02 6
+#define DIR_04 7
+#define DIR_24 8
+#define DIR_13 9
+#define DIR_15 10
+#define DIR_35 11
+#define DIR_024 12
+#define DIR_135 13
+
 
 typedef struct {
   double dx;
@@ -116,6 +132,13 @@ void initial_3D(hydro_fields f, hydro_params p);
 
 double wallpos(hydro_fields f, hydro_params p);
 double get_gamma_max(hydro_fields f, hydro_params p);
+
+// papi.c
+
+#ifdef PAPI
+void papi_init();
+void papi_finalise();
+#endif // PAPI
 
 // parameters.c
 
