@@ -188,8 +188,8 @@ void initial_scalar_bubble(hydro_fields f, hydro_params p) {
 	  + Vf(p, f.T[iix(x,y,z,p)], f.phi[iix(x,y,z,p)])
 	  - f.T[iix(x,y,z,p)]*VTf(p, f.T[iix(x,y,z,p)], f.phi[iix(x,y,z,p)]);
 
-	f.Zx[iix(x,y,z,p)] = 0.0;
-	f.Vx[iix(x,y,z,p)] = 0.0;
+	f.Z[0][iix(x,y,z,p)] = 0.0;
+	f.V[0][iix(x,y,z,p)] = 0.0;
 	f.W[iix(x,y,z,p)] = 1.0;
       }
     }
@@ -265,9 +265,9 @@ void initial_3D(hydro_fields f, hydro_params p) {
 	
 
 
-	f.Zx[iix(x,y,z,p)] = 0.0;	
-	f.Zy[iix(x,y,z,p)] = 0.0;
-	f.Zz[iix(x,y,z,p)] = 0.0;
+	f.Z[0][iix(x,y,z,p)] = 0.0;	
+	f.Z[1][iix(x,y,z,p)] = 0.0;
+	f.Z[2][iix(x,y,z,p)] = 0.0;
 	
 	
 	f.W[iix(x,y,z,p)] = 1.0;
@@ -346,9 +346,9 @@ void initial_step(hydro_fields f, hydro_params p) {
 	
 
 
-	f.Zx[iix(x,y,z,p)] = 0.0;	
-	f.Zy[iix(x,y,z,p)] = 0.0;
-	f.Zz[iix(x,y,z,p)] = 0.0;
+	f.Z[0][iix(x,y,z,p)] = 0.0;	
+	f.Z[1][iix(x,y,z,p)] = 0.0;
+	f.Z[2][iix(x,y,z,p)] = 0.0;
 	
 	
 	f.W[iix(x,y,z,p)] = 1.0;
