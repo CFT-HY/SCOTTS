@@ -16,6 +16,10 @@
 #include <papi.h>
 #endif // PAPI
 
+#ifdef MPI
+#include <mpi.h>
+#endif // MPI
+
 #define INIT_SHOCK_TUBE 1
 #define INIT_BUBBLE 2
 
@@ -59,6 +63,43 @@ typedef struct {
   int N;
   double T0;
 
+#ifdef MPI
+  int totalN;
+  int fieldN;
+  int slicex;
+  int slicey;
+  
+
+  int inner;
+
+  // Single haloes
+  int offset_xM;
+  int offset_xP;
+  int offset_yM;
+  int offset_yP;
+  
+  // Double haloes
+  int offset_xMyM;
+  int offset_xMyP;
+  int offset_xPyM;
+  int offset_xPyP;
+    
+  // Single haloes
+  int inner_xM;
+  int inner_xP;
+  int inner_yM;
+  int inner_yP;
+  
+  // Double haloes
+  int inner_xMyM;
+  int inner_xMyP;
+  int inner_xPyM;
+  int inner_xPyP;
+
+#endif // MPI
+ 
+
+
 
 } hydro_params;
 
@@ -82,9 +123,20 @@ typedef struct {
 
 } hydro_fields;
 
+
+
 // main.c
 
 int iix(int x, int y, int z, hydro_params p);
+
+
+
+// arrangement.c
+void layout(hydro_params p);
+int **init_nb(hydro_params p);
+int get_x(int n, hydro_params p);
+int get_y(int n, hydro_params p);
+int get_z(int n, hydro_params p);
 
 // evolve.c
 

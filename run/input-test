@@ -1,9 +1,9 @@
 # Example input file for 1D weak deflagration?
 
 # How long the simulation takes
-Lx      96
-Ly	96
-Lz	96
+Lx      64
+Ly	64
+Lz	64
 steps  1000
 
 # How big the simulation is
