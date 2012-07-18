@@ -136,65 +136,6 @@ void free_fields(hydro_fields *f) {
  
 }
 
-int iix(int x, int y, int z, hydro_params p) {
-  return ((z+p.Lz)%p.Lz)*p.Ly*p.Lx + ((y+p.Ly)%p.Ly)*p.Lx + ((x+p.Lx)%p.Lx);
-}
-
-int **init_nb(hydro_params p) {
-  int x, y, z;
-
-  int **nb;
-
-  // set up nb lookup table
-  nb = (int **) malloc(p.N*sizeof(int *));
-  
-  for(x=0; x<p.Lx; x++) {
-    for(y=0; y<p.Ly; y++) {
-      for(z=0; z<p.Lz; z++) {
-    
-	nb[iix(x, y, z, p)] = (int *)malloc(14*sizeof(int));
-
-	nb[iix(x, y, z, p)][0] = iix(x+1, y, z, p);
-	nb[iix(x, y, z, p)][1] = iix(x-1, y, z, p);
-        nb[iix(x, y, z, p)][2] = iix(x, y+1, z, p);
-	nb[iix(x, y, z, p)][3] = iix(x, y-1, z, p);
-	nb[iix(x, y, z, p)][4] = iix(x, y, z+1, p);
-	nb[iix(x, y, z, p)][5] = iix(x, y, z-1, p);
-
-	/*
-	 * Composed directions improve performance as soon as the system
-	 * ceases to fit inside cache. At small volumes (and hence
-	 * lower dimensionalities) it is up to 20% slower, but
-	 * we are interested in good performance on large volumes:
-	 * not likely that each node will be able to fit everything
-	 * in cache.
-	 */
-      
-	nb[iix(x, y, z, p)][DIR_02] = iix(x+1, y+1, z, p);
-	nb[iix(x, y, z, p)][DIR_04] = iix(x+1, y, z+1, p);
-        nb[iix(x, y, z, p)][DIR_24] = iix(x, y+1, z+1, p);
-	nb[iix(x, y, z, p)][DIR_13] = iix(x-1, y-1, z, p);
-	nb[iix(x, y, z, p)][DIR_15] = iix(x-1, y, z-1, p);
-	nb[iix(x, y, z, p)][DIR_35] = iix(x, y-1, z-1, p);
-
-	nb[iix(x, y, z, p)][DIR_024] = iix(x+1, y+1, z+1, p);
-	nb[iix(x, y, z, p)][DIR_135] = iix(x-1, y-1, z-1, p);
-      }
-    }
-  }
-
-  return nb;
-}
-
-void free_nb(int **nb, hydro_params p) {
-  int x;
-
-  for(x=0; x<p.N; x++) {
-    free(nb[x]);
-  }
-  
-  free(nb);
-}
 
 
 int main(int argc, char *argv[])
@@ -214,7 +155,7 @@ int main(int argc, char *argv[])
   // Parse params from stdin
   hydro_params p = get_parameters(argv[1]);
 
-  
+
 
   p.N = p.Lx*p.Ly*p.Lz;
 
@@ -244,6 +185,10 @@ int main(int argc, char *argv[])
   // Ugly but it's a straight conversion of the fortran
   p.T0 = sqrt(1.0-2.0*p.alpha*p.alpha
 		       /9.0/p.gamma/p.lambda);
+
+
+  // Set up layout for any parallelism
+  layout(p);
 
 
   // time iterate
@@ -362,6 +307,7 @@ int main(int argc, char *argv[])
     // Do the hydro bits
     evolve_hydro(f, nb, p);
 
+    /*
     if(step == p.steps - 1)
       for(x=0;x<p.Lx;x++) {
 	fprintf(stdout,"%lf %.10lf %.10lf %.10lf %.10lf %.10lf %.10lf %.10lf\n",
@@ -374,7 +320,7 @@ int main(int argc, char *argv[])
 		f.T[iix(x,x,0,p)], // f.Ux[nb[nb[iix(x,x,0,p)][2]][4]],
 		f.Z[0][iix(x,x,0,p)]);
       }
-
+    */
 
     // Advection of state variables
     advect_E(f, nb, p);

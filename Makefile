@@ -1,4 +1,5 @@
 CC := gcc -DSILO # -DPAPI -DSILO
+# CC := mpicc -DMPI
 
 # on pc168
 CFLAGS := -O3
@@ -13,7 +14,7 @@ LIBS := -lm -lsiloh5 -lpapi
 
 OBJECTS := main.o evolve.o potential.o energy.o eos.o \
 	transport.o initial.o output.o parameters.o silage.o \
-	util.o papi.o
+	util.o papi.o arrangement.o
 
 BINARY := run/hydro
 
