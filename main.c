@@ -152,7 +152,7 @@ int **init_nb(hydro_params p) {
     for(y=0; y<p.Ly; y++) {
       for(z=0; z<p.Lz; z++) {
     
-	nb[iix(x, y, z, p)] = (int *)malloc(6*sizeof(int));
+	nb[iix(x, y, z, p)] = (int *)malloc(14*sizeof(int));
 
 	nb[iix(x, y, z, p)][0] = iix(x+1, y, z, p);
 	nb[iix(x, y, z, p)][1] = iix(x-1, y, z, p);
@@ -160,6 +160,25 @@ int **init_nb(hydro_params p) {
 	nb[iix(x, y, z, p)][3] = iix(x, y-1, z, p);
 	nb[iix(x, y, z, p)][4] = iix(x, y, z+1, p);
 	nb[iix(x, y, z, p)][5] = iix(x, y, z-1, p);
+
+	/*
+	 * Composed directions improve performance as soon as the system
+	 * ceases to fit inside cache. At small volumes (and hence
+	 * lower dimensionalities) it is up to 20% slower, but
+	 * we are interested in good performance on large volumes:
+	 * not likely that each node will be able to fit everything
+	 * in cache.
+	 */
+      
+	nb[iix(x, y, z, p)][DIR_02] = iix(x+1, y+1, z, p);
+	nb[iix(x, y, z, p)][DIR_04] = iix(x+1, y, z+1, p);
+        nb[iix(x, y, z, p)][DIR_24] = iix(x, y+1, z+1, p);
+	nb[iix(x, y, z, p)][DIR_13] = iix(x-1, y-1, z, p);
+	nb[iix(x, y, z, p)][DIR_15] = iix(x-1, y, z-1, p);
+	nb[iix(x, y, z, p)][DIR_35] = iix(x, y-1, z-1, p);
+
+	nb[iix(x, y, z, p)][DIR_024] = iix(x+1, y+1, z+1, p);
+	nb[iix(x, y, z, p)][DIR_135] = iix(x-1, y-1, z-1, p);
       }
     }
   }
@@ -186,6 +205,11 @@ int main(int argc, char *argv[])
     fprintf(stderr,"Usage: hydro <parameter file>\n");
     return 100;
   }
+
+  mallopt( M_MMAP_MAX, 0 );  /* don't use mmap */
+  /* HACK: don't release memory by calling sbrk */
+  mallopt( M_TRIM_THRESHOLD, -1 );
+
 
   // Parse params from stdin
   hydro_params p = get_parameters(argv[1]);
@@ -283,6 +307,10 @@ int main(int argc, char *argv[])
     silo_init(p);
 #endif // SILO
 
+#ifdef PAPI
+  papi_init();
+#endif // PAPI
+
   // Step back for leapfrog initial conds
   //  evolve_backstep(f, nb, p);
 
@@ -373,7 +401,9 @@ int main(int argc, char *argv[])
 
 
 
-
+#ifdef PAPI
+  papi_finalise();
+#endif // PAPI
   
 
   //  fclose(phi_fh);
