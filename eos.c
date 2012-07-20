@@ -28,7 +28,7 @@ void find_Ta(hydro_fields f, hydro_params p) {
     f.T[x] = sqrt((1.0/(6.0*p.a)) * (0.5*p.gamma*f.phi[x]*f.phi[x] + sqrt(Tfix)));
   }
 
-  halo_field(f.T, p);
+  //  halo_field(f.T, p);
 }
 
 
@@ -67,6 +67,6 @@ void eq_of_state(hydro_fields f, hydro_params p) {
 
   halo_field(f.p, p);
   halo_field(f.kappa, p);
-  halo_field(f.T, p);
+  // halo_field(f.T, p);
 
 }

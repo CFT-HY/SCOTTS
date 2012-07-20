@@ -147,7 +147,6 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
   Vdpot(p, f.T, phiav, Vdmid);
 
 
-  halo_field(phiav, p);
   halo_field(Vdmid, p);
 
   for(x = 0; x < p.N; x++) {
@@ -204,11 +203,10 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
   }
 
 
-  halo_field(f.Z[0], p);
-  halo_field(f.Z[1], p);
-  halo_field(f.Z[2], p);
-  halo_field(f.E, p);
-  halo_field(f.p, p);
+  // halo_field(f.Z[0], p);
+  // halo_field(f.Z[1], p);
+  // halo_field(f.Z[2], p);
+  //  halo_field(f.E, p);
 
 
 
@@ -269,9 +267,9 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
   }
 
 
-  halo_field(f.Z[0], p);
-  halo_field(f.Z[1], p);
-  halo_field(f.Z[2], p);
+  //  halo_field(f.Z[0], p);
+  //  halo_field(f.Z[1], p);
+  //  halo_field(f.Z[2], p);
 
 
 
@@ -472,8 +470,8 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
   }
 
 
-  halo_field(f.E, p);
-  halo_field(f.W, p);
+
+  //  halo_field(f.W, p);
 
   halo_field(Wfacex, p);
   halo_field(Wfacey, p);
@@ -503,7 +501,7 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
 
 
 
-  halo_field(f.E, p);
+  //  halo_field(f.E, p);
 
 
 

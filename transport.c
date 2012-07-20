@@ -13,8 +13,8 @@ void donor_E_dir(hydro_fields f, int **nb, hydro_params p, int dir) {
 
   int x;
 
-  halo_field(f.V[dir],p);
-  halo_field(f.E,p);
+  //  halo_field(f.V[dir],p);
+  //  halo_field(f.E,p);
 
 
   for(x = 0; x < p.N; x++) {
@@ -98,6 +98,8 @@ void donor_Z_dir(hydro_fields f, int **nb, hydro_params p, int dir) {
     f.Z[dir][x] = f.Z[dir][x] - p.dt*(f.F[2][x] - f.F[2][nb[x][5]])/p.dx;
   }
 
+  halo_field(f.Z[dir], p);
+
   free(F);
   free(Vbody);
   free(Ubody);
@@ -132,17 +134,8 @@ void advect_Z(hydro_fields f, int **nb, hydro_params p) {
   order = 0; // lrand48() % 3;
 
   donor_Z_dir(f, nb, p, order);
-  halo_field(f.Z[0], p);
-  halo_field(f.Z[1], p);
-  halo_field(f.Z[2], p);
   donor_Z_dir(f, nb, p, (order + 1) % 3);
-  halo_field(f.Z[0], p);
-  halo_field(f.Z[1], p);
-  halo_field(f.Z[2], p);
   donor_Z_dir(f, nb, p, (order + 2) % 3);
-  halo_field(f.Z[0], p);
-  halo_field(f.Z[1], p);
-  halo_field(f.Z[2], p);
 
 }
 
