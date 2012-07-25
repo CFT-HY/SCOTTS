@@ -6,8 +6,13 @@
 #include <math.h>
 #include <stdio.h>
 #include <strings.h>
-#include <malloc.h>
 #include <time.h>
+
+#ifndef __APPLE__
+#include <malloc.h>
+#define HAVE_MALLOC_H
+#endif // ! __APPLE__
+
 
 #ifdef SILO
 #include <silo.h>
