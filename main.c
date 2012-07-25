@@ -163,9 +163,12 @@ int main(int argc, char *argv[])
     return 100;
   }
 
+#ifdef HAVE_MALLOC_H
   mallopt( M_MMAP_MAX, 0 );  /* don't use mmap */
   /* HACK: don't release memory by calling sbrk */
   mallopt( M_TRIM_THRESHOLD, -1 );
+  fprintf(stderr, "Disabled sbrk\n");
+#endif // HAVE_MALLOC_H
 
 
   // Parse params from stdin
