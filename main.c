@@ -209,6 +209,7 @@ int main(int argc, char *argv[])
   // Set up layout for any parallelism
   layout(&p);
 
+  p.comms_time = 0.0;
 
   // time iterate
   int step;
@@ -302,6 +303,11 @@ int main(int argc, char *argv[])
 
   double current_field_energy, current_wmax;
 
+  double cpu_time_used = 0.0;
+  clock_t start, end;
+
+  start = clock();
+
   for(step = 0; step < p.steps; step++) {
 
     if((p.silointerval > 0) && (step % p.silointerval == 0)) {
@@ -386,7 +392,7 @@ int main(int argc, char *argv[])
     
   } // main loop ends here
 
-
+  end = clock();
 
 #ifdef PAPI
   papi_finalise();
@@ -396,6 +402,11 @@ int main(int argc, char *argv[])
 #ifdef MPI
   MPI_Finalize();
 #endif // MPI
+
+
+  cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+
+  fprintf(stderr,"CPU time in main loop was %lf, of which %lf was comms\n", cpu_time_used, p.comms_time);
 
   //  fclose(phi_fh);
 
