@@ -396,6 +396,9 @@ void halo_field(double *field, hydro_params p) {
   MPI_Request request;
   MPI_Status stat;
 
+  clock_t start, end;
+  start = clock();
+
   //  fprintf(stderr, "Haloing field\n");
 
   /* <<
@@ -552,6 +555,10 @@ void halo_field(double *field, hydro_params p) {
 	       p.Lz, MPI_DOUBLE, p.rank_xMyP, 10004,
 	       MPI_COMM_WORLD, &stat);
 
+
+  end = clock();
+  //  fprintf(stderr,"end-start=%d\n", end-start);
+  p.comms_time += ((double) (end - start)) / CLOCKS_PER_SEC;
 }
 
     

@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <strings.h>
 #include <malloc.h>
+#include <time.h>
 
 #ifdef SILO
 #include <silo.h>
@@ -67,6 +68,8 @@ typedef struct {
 
   int size;
   int rank;
+
+  double comms_time;
 
 #ifdef MPI
 

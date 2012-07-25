@@ -1,10 +1,10 @@
 # Example input file for 1D weak deflagration?
 
 # How long the simulation takes
-Lx      512
-Ly	512
-Lz	1
-steps  801
+Lx      128
+Ly	128
+Lz	10
+steps  101
 
 # How big the simulation is
 dx     2.0
@@ -20,7 +20,7 @@ sigma  0.1
 lcorr  6.0
 
 # How often to write data
-interval 200
+interval 10
 silointerval 10
 
 # Initial conditions
