@@ -172,9 +172,6 @@ int main(int argc, char *argv[])
 
 #ifdef SILO
 
-#ifdef MPI
-#error SILO and MPI do not play well yet
-#endif // MPI
 
   if(p.silointerval > 0)
     silo_init(p);

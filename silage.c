@@ -47,25 +47,41 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
 
   int *meshsize = (int *)malloc(3*sizeof(int));
 
+  int sizex, sizey, sizez;
 
-  meshsize[0] = p.Lx;
-  meshsize[1] = p.Ly;
-  meshsize[2] = p.Lz;
+#ifdef MPI
+
+  sizex = p.slicex;
+  sizey = p.slicey;
+  sizez = p.Lz;
+
+#else
+
+  sizex = p.Lz;
+  sizey = p.Ly;
+  sizez = p.Lz;
+
+#endif
+
+
+  meshsize[0] = sizex;
+  meshsize[1] = sizey;
+  meshsize[2] = sizez;
 
   double **mesh = (double **)malloc(p.N*sizeof(double *));
 
   
-  mesh[0] = (double *)malloc(p.Lx*sizeof(double));
-  mesh[1] = (double *)malloc(p.Ly*sizeof(double));
-  mesh[2] = (double *)malloc(p.Lz*sizeof(double));
+  mesh[0] = (double *)malloc(sizex*sizeof(double));
+  mesh[1] = (double *)malloc(sizey*sizeof(double));
+  mesh[2] = (double *)malloc(sizez*sizeof(double));
 
-  for(x=0; x<p.Lx; x++) {
+  for(x=0; x<sizex; x++) {
       mesh[0][x] = p.dx*((double)x);
   }
-  for(x=0; x<p.Ly; x++) {
+  for(x=0; x<sizey; x++) {
       mesh[1][x] = p.dx*((double)x);
   }
-  for(x=0; x<p.Lz; x++) {
+  for(x=0; x<sizez; x++) {
       mesh[2][x] = p.dx*((double)x);
   }
 
