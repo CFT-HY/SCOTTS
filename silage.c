@@ -57,7 +57,7 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
 
 #else
 
-  sizex = p.Lz;
+  sizex = p.Lx;
   sizey = p.Ly;
   sizez = p.Lz;
 

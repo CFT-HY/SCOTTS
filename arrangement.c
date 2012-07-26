@@ -253,7 +253,9 @@ int local_iix(int x, int y, int z, hydro_params p) {
   }
 
   // 5. In the bulk
-  return x*p.slicey*p.Lz + y*p.Lz + ((z+p.Lz)%p.Lz);
+  // Faster:
+  //  return x*p.slicey*p.Lz + y*p.Lz + ((z+p.Lz)%p.Lz);
+  return ((z+p.Lz)%p.Lz)*p.slicey*p.slicex + y*p.slicex + x;
 }
 
 
@@ -672,7 +674,7 @@ int **init_inverse(hydro_params *p) {
   int x, y, z;
   int **inverse = (int **) malloc(p->N*sizeof(int *));
 
-  for(x=0; x<p->Lz; x++) {
+  for(x=0; x<p->Lx; x++) {
     for(y=0; y<p->Ly; y++) {
       for(z=0; z<p->Lz; z++) {
 	
