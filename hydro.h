@@ -1,35 +1,59 @@
 /* hydro.h
  *
- * Header file for C port of 1D spherical hydro code.
+ * Header file for hydro+scalar code.
  */
+
 #include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
 #include <strings.h>
 #include <time.h>
 
+// Apple doesn't seem to believe in malloc.h
 #ifndef __APPLE__
 #include <malloc.h>
 #define HAVE_MALLOC_H
 #endif // ! __APPLE__
 
-
+// Store time slice data in the Silo format
 #ifdef SILO
 #include <silo.h>
 #endif // SILO
 
+// Instrumentation using PAPI
 #ifdef PAPI
 #include <papi.h>
 #endif // PAPI
 
+// Parallelism with MPI
 #ifdef MPI
 #include <mpi.h>
 #endif // MPI
 
+
+/*
+ * Not sure these are useful in 3D, but a way of enumerating choices of the
+ * initial conditions and communicating that between the parameter input
+ * step and the initial conditions step.
+ */
 #define INIT_SHOCK_TUBE 1
 #define INIT_BUBBLE 2
 
-// Composed directions
+
+
+/*
+ * Composed directions
+ *
+ * In the neighbour lookup tables, we have nb[site][2*dim] for positive
+ * directions and nb[site][2*dim+1] for negative directions. To handle
+ * haloing gracefully, and avoid having invalid values of nb, we explicitly
+ * store the diagonal neighbours.
+ *
+ * It involves storing about 4*sizeof(double) (=8*sizeof(int)) extra
+ * information at each site; that is small fry compared to the
+ * ~21*sizeof(double) we're already storing (see struct hydro_fields).
+ */
+
 #define DIR_02 6
 #define DIR_04 7
 #define DIR_24 8
@@ -40,7 +64,17 @@
 #define DIR_135 13
 
 
+/*
+ * struct hydro_params
+ *
+ * Stores the parameters, including:
+ * - physics (supplied and derived quantities)
+ * - lattice geometry
+ * - communication (MPI) details
+ */
+
 typedef struct {
+
   double dx;
   double dt;
   int Lx, Ly, Lz;
@@ -121,7 +155,6 @@ typedef struct {
 
 
 
-  int table_size;
 
   int *table_xM;
   int *table_xP;
@@ -153,7 +186,6 @@ typedef struct {
   int myposx;
   int myposy;
 
-  int **inverse;
 
 #endif // MPI
  
@@ -166,8 +198,6 @@ typedef struct {
   double *phi;
   double *pi;
   double *pifull;
-  double *xe;
-  double *xc;
   double *T;
   double *kappa;
   double *phiold;
@@ -185,14 +215,12 @@ typedef struct {
 
 
 // main.c
-
-int iix(int x, int y, int z, hydro_params p);
-
-
+void alloc_fields(hydro_fields *f, hydro_params p);
+void zero_fields(hydro_fields f, hydro_params p);
+void free_fields(hydro_fields *f);
 
 // arrangement.c
 void layout(hydro_params *p);
-int **init_nb(hydro_params *p);
 int get_x(int n, hydro_params p);
 int get_y(int n, hydro_params p);
 int get_z(int n, hydro_params p);
@@ -202,6 +230,10 @@ double reduce_max(double result, hydro_params p);
 void init_comms_time(hydro_params *p);
 double get_comms_time(hydro_params *p);
 
+int **init_inverse(hydro_params *p);
+int **init_nb(hydro_params *p);
+void free_nb(int **nb, hydro_params *p);
+void free_inverse(int **nb, hydro_params *p);
 
 // evolve.c
 
@@ -243,7 +275,7 @@ double psibar(double x, double lbar);
 void create_gaussian_bubble(hydro_fields f, hydro_params p);
 void create_shock_tube(hydro_fields f, hydro_params p);
 */
-void initial_3D(hydro_fields f, hydro_params p);
+void initial_3D(hydro_fields f, hydro_params p, int **inverse);
 
 // output.c
 

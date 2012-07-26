@@ -142,7 +142,7 @@ void create_gaussian_bubble(hydro_fields f, hydro_params p) {
 
 
 
-void initial_scalar_bubble(hydro_fields f, hydro_params p) {
+void initial_scalar_bubble(hydro_fields f, hydro_params p, int **inverse) {
   double sigmlo = 2.0*sqrt(2.0)/81.0*p.alpha*p.alpha*p.alpha
     /(p.lambda*p.lambda*sqrt(p.lambda));
 
@@ -174,10 +174,9 @@ void initial_scalar_bubble(hydro_fields f, hydro_params p) {
   int i;
 
   for(i=0; i < p.N; i++) {
-    x = get_x(i, p);
-    y = get_y(i, p);
-    z = get_z(i, p);
-    //    fprintf(stderr,"x=%d, y=%d, z=%d\n", x, y, z);
+    x = inverse[i][0];
+    y = inverse[i][1];
+    z = inverse[i][2];
 
     
     f.phi[i] = cstrab*exp(-1.0*
@@ -204,7 +203,7 @@ void initial_scalar_bubble(hydro_fields f, hydro_params p) {
 
 
 
-void initial_3D(hydro_fields f, hydro_params p) {
+void initial_3D(hydro_fields f, hydro_params p, int **inverse) {
   
 
   double sigmlo = 2.0*sqrt(2.0)/81.0*p.alpha*p.alpha*p.alpha
@@ -249,9 +248,9 @@ void initial_3D(hydro_fields f, hydro_params p) {
   int i;
 
   for(i=0; i < p.N; i++) {
-    x = get_x(i, p);
-    y = get_y(i, p);
-    z = get_z(i, p);
+    x = inverse[i][0];
+    y = inverse[i][1];
+    z = inverse[i][2];
 
     f.phi[i] = 0.0; // cstrab*(1.0 + 0.1*drand48());
 
@@ -282,7 +281,7 @@ void initial_3D(hydro_fields f, hydro_params p) {
 
 
 
-void initial_step(hydro_fields f, hydro_params p) {
+void initial_step(hydro_fields f, hydro_params p, int **inverse) {
   
 
   double sigmlo = 2.0*sqrt(2.0)/81.0*p.alpha*p.alpha*p.alpha
@@ -328,9 +327,9 @@ void initial_step(hydro_fields f, hydro_params p) {
 
   for(i=0; i < p.N; i++) {
 
-    x = get_x(i, p);
-    y = get_y(i, p);
-    z = get_z(i, p);
+    x = inverse[i][0];
+    y = inverse[i][1];
+    z = inverse[i][2];
 
 
     f.phi[i] = 0.0; // cstrab*(1.0 + 0.1*drand48());

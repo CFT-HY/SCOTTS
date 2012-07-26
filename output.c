@@ -10,6 +10,7 @@
  * Estimated position of wall.
  * Straight from fortran _BUT_ no interpolation of position.
  */
+/* Doesn't really work for 3D
 double wallpos(hydro_fields f, hydro_params p) {
 
   int x, xmax;
@@ -31,7 +32,7 @@ double wallpos(hydro_fields f, hydro_params p) {
   return f.xc[xmax];
 
 }
-
+*/
 
 
 
@@ -56,3 +57,16 @@ double get_gamma_max(hydro_fields f, hydro_params p) {
   return gmax;
 
 }
+
+
+
+void dump(double *field, hydro_params p) {
+  int x;
+
+  fprintf(stderr,"%g", field[0]);
+  for(x=1;x<p.N;x++) {
+    fprintf(stderr,", %g", field[x]);
+  }
+  fprintf(stderr,"\n");
+}
+
