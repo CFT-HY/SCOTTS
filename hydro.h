@@ -74,7 +74,7 @@ typedef struct {
   int size;
   int rank;
 
-  double comms_time;
+  //  double comms_time;
 
 #ifdef MPI
 
@@ -119,6 +119,20 @@ typedef struct {
   int offset_yPxeM;
   int offset_yPxeP;
 
+
+
+  int table_size;
+
+  int *table_xM;
+  int *table_xP;
+
+  int *table_yM;
+  int *table_yP;
+
+  int *table_xMyM;
+  int *table_xMyP;
+  int *table_xPyM;
+  int *table_xPyP;
 
 
   // Ranks of neighbours
@@ -185,6 +199,9 @@ int get_z(int n, hydro_params p);
 void halo_field(double *field, hydro_params p);
 double reduce_sum(double result, hydro_params p);
 double reduce_max(double result, hydro_params p);
+void init_comms_time(hydro_params *p);
+double get_comms_time(hydro_params *p);
+
 
 // evolve.c
 

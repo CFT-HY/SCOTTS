@@ -226,7 +226,8 @@ int main(int argc, char *argv[])
   // Set up layout for any parallelism
   layout(&p);
 
-  p.comms_time = 0.0;
+  // Useless
+  init_comms_time(&p);
 
   // time iterate
   int step;
@@ -322,6 +323,10 @@ int main(int argc, char *argv[])
 
   double cpu_time_used = 0.0;
   clock_t start, end;
+
+#ifdef MPI
+  MPI_Barrier(MPI_COMM_WORLD);
+#endif // MPI
 
   start = clock();
 
@@ -423,7 +428,7 @@ int main(int argc, char *argv[])
 
   cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
 
-  fprintf(stderr,"CPU time in main loop was %lf, of which %lf was comms\n", cpu_time_used, p.comms_time);
+  fprintf(stderr,"CPU time in main loop was %lf, of which %lf was comms\n", cpu_time_used, get_comms_time(&p));
 
   //  fclose(phi_fh);
 
