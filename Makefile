@@ -1,4 +1,4 @@
-# CC := gcc # -DSILO # -DPAPI -DSILO
+# CC := gcc -DSILO # -DPAPI -DSILO
 CC := mpicc -DMPI -DSILO
 
 # on pc168
