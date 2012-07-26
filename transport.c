@@ -100,9 +100,10 @@ void donor_Z_dir(hydro_fields f, int **nb, hydro_params p, int dir) {
 
   halo_field(f.Z[dir], p);
 
-  free(F);
   free(Vbody);
   free(Ubody);
+  free(F);
+
   free(deltaMI[0]);
   free(deltaMI[1]);
   free(deltaMI[2]);

@@ -380,11 +380,12 @@ int **init_nb(hydro_params *p) {
 }
 
 
-void free_nb(int **nb, hydro_params p) {
+void free_nb(int **nb, hydro_params *p) {
   int x;
 
-  for(x=0; x<p.N; x++) {
+  for(x=0; x<p->N; x++) {
     free(nb[x]);
+    free(p->inverse[x]);
   }
 
   free(nb);
@@ -645,10 +646,10 @@ int **init_nb(hydro_params *p) {
 }
 
 
-void free_nb(int **nb, hydro_params p) {
+void free_nb(int **nb, hydro_params *p) {
   int x;
 
-  for(x=0; x<p.N; x++) {
+  for(x=0; x<p->N; x++) {
     free(nb[x]);
   }
 

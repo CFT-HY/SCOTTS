@@ -1,4 +1,4 @@
-# CC := gcc -DSILO # -DPAPI -DSILO
+# CC := gcc # -DSILO # -DPAPI -DSILO
 CC := mpicc -DMPI
 
 # on pc168
@@ -7,9 +7,9 @@ CFLAGS := -O3
 # CFLAGS := -O3 -I/Users/weir/Installed/silo-4.8-bsd/include/
 
 # on pc168:
-# LIBS := -lm -lsiloh5 -lpapi
+LIBS := -lm -lsiloh5 -lpapi
 # on my mac:
-LIBS := -lm -L/Users/weir/Installed/silo-4.8-bsd/lib/ -lsilo
+# LIBS := -lm -L/Users/weir/Installed/silo-4.8-bsd/lib/ -lsilo
 
 
 OBJECTS := main.o evolve.o potential.o energy.o eos.o \
