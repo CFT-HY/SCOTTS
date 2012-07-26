@@ -126,7 +126,6 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
   for(i=0;i<3;i++) {
     free(mesh[i]);
   }
-
   free(meshsize);
   free(mesh);
 

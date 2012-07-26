@@ -242,5 +242,7 @@ void get_parameters(char *infile, hydro_params *p)
     
   }
 
+  fclose(fp);
+
 }
 

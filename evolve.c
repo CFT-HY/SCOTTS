@@ -534,14 +534,19 @@ void evolve_hydro(hydro_fields f, int **nb, hydro_params p) {
 
   free(Vdmid);
   free(Wold);
-  free(Wfacex);
-  free(Wfacey); 
-  free(Wfacez);
+
   free(phiav);
+
   free(dxphi[0]);
   free(dxphi[1]);
   free(dxphi[2]);
   free(dxphi);
+
+  free(Wfacex);
+  free(Wfacey); 
+  free(Wfacez);
+
+
 }
 
 void artificial_viscosity(hydro_fields f, int **nb, hydro_params p) {

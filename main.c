@@ -107,32 +107,46 @@ void zero_fields(hydro_fields f, hydro_params p) {
 void free_fields(hydro_fields *f) {
   free(f->xe);
   free(f->xc);
+
   free(f->phi);
   free(f->pifull);
-  free(f->phiold);
   free(f->T);
   free(f->E);
-  free(f->Z[0]);
-  free(f->Z[1]);
-  free(f->Z[2]);
-  free(f->U[0]);
-  free(f->U[1]);
-  free(f->U[2]);
+  free(f->W);
+
+  free(f->pi);
+
+  free(f->phiold);
+
+  free(f->kappa);
+  free(f->p);
+
   free(f->V[0]);
   free(f->V[1]);
   free(f->V[2]);
-  free(f->W);
-  free(f->kappa);
-  free(f->p);
-  free(f->pi);
+
+  free(f->V);
+
+  free(f->Z[0]);
+  free(f->Z[1]);
+  free(f->Z[2]);
+
+  free(f->Z);
+
+  free(f->U[0]);
+  free(f->U[1]);
+  free(f->U[2]);
+
+  free(f->U);
 
   free(f->F[0]);
   free(f->F[1]);
   free(f->F[2]);
+
   free(f->F);
 
-  free(f->U);
-  free(f->V);
+
+
  
 }
 
@@ -414,7 +428,7 @@ int main(int argc, char *argv[])
   //  fclose(phi_fh);
 
   // Clean up memory
-  free_nb(nb, p);
+  free_nb(nb, &p);
   free_fields(&f);
   
   return 0;
