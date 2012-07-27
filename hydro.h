@@ -195,20 +195,36 @@ typedef struct {
 } hydro_params;
 
 typedef struct {
-  double *phi;
-  double *pi;
-  double *pifull;
-  double *T;
-  double *kappa;
-  double *phiold;
-  double *p;
-  double *E;
-  double *W;
+  double ***phi;
+  double ***pi;
+  double ***pifull;
+  double ***T;
+  double ***kappa;
+  double ***phiold;
+  double ***p;
+  double ***E;
+  double ***W;
 
-  double **V;
-  double **U;
-  double **F;
-  double **Z;
+  double ****V;
+  double ****U;
+  double ****F;
+  double ****Z;
+
+
+  double *phi_root;
+  double *pi_root;
+  double *pifull_root;
+  double *T_root;
+  double *kappa_root;
+  double *phiold_root;
+  double *p_root;
+  double *E_root;
+  double *W_root;
+
+  double **V_root;
+  double **U_root;
+  double **F_root;
+  double **Z_root;
 
 } hydro_fields;
 
@@ -217,14 +233,15 @@ typedef struct {
 // main.c
 void alloc_fields(hydro_fields *f, hydro_params p);
 void zero_fields(hydro_fields f, hydro_params p);
-void free_fields(hydro_fields *f);
+void free_fields(hydro_fields *f, hydro_params p);
+void free_field(hydro_params p, double ***field, double *true_field);
 
 // arrangement.c
 void layout(hydro_params *p);
 int get_x(int n, hydro_params p);
 int get_y(int n, hydro_params p);
 int get_z(int n, hydro_params p);
-void halo_field(double *field, hydro_params p);
+void halo_field(double ***field, hydro_params p);
 double reduce_sum(double result, hydro_params p);
 double reduce_max(double result, hydro_params p);
 void init_comms_time(hydro_params *p);
@@ -240,7 +257,7 @@ void free_inverse(int **nb, hydro_params *p);
 void evolve_backstep(hydro_fields f, int **nb, hydro_params p);
 void evolve_field(hydro_fields f, int **nb, hydro_params p);
 void evolve_hydro(hydro_fields f, int **nb, hydro_params p);
-void artificial_viscosity(hydro_fields f, int **nb, hydro_params p);
+// void artificial_viscosity(hydro_fields f, int **nb, hydro_params p);
 
 // potential.c
 
@@ -306,3 +323,6 @@ void write_silo_step(hydro_fields f, hydro_params p, int step);
 double minof3(double a, double b, double c);
 double maxof3(double a, double b, double c);
 double minof2(double a, double b);
+
+
+double ***make_field(hydro_params p, double *root);

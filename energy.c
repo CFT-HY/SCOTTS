@@ -7,29 +7,36 @@
 
 double field_energy(hydro_fields f, int **nb, hydro_params p) {
 
-  int x;
+  int x, y, z;
 
   double vol;
 
   double Etot = 0.0;
 
-  for(x = 0; x < p.N; x++) {
-    vol = p.dx*p.dx*p.dx;
 
-    Etot += 0.5*f.pifull[x]*f.pifull[x]*vol;
+  vol = p.dx*p.dx*p.dx;
 
-    Etot += 0.5*((f.phi[x] - f.phi[nb[x][1]])/p.dx)
-      *((f.phi[x] - f.phi[nb[x][1]])/p.dx)*vol;
+  for(x = 0; x < p.Lx; x++) {
+    for(y = 0; y < p.Ly; y++) {
+      for(z = 0; z < p.Lz; z++) {
 
-    Etot += 0.5*((f.phi[x] - f.phi[nb[x][3]])/p.dx)
-      *((f.phi[x] - f.phi[nb[x][3]])/p.dx)*vol;
-
-    Etot += 0.5*((f.phi[x] - f.phi[nb[x][5]])/p.dx)
-      *((f.phi[x] - f.phi[nb[x][5]])/p.dx)*vol;
-
-    Etot += Vf(p, f.T[x], f.phi[x])*vol;
-
+	
+	Etot += 0.5*f.pifull[x][y][z]*f.pifull[x][y][z]*vol;
+	
+	Etot += 0.5*((f.phi[x][y][z] - f.phi[(x-1+p.Lx)%p.Lx][y][z])/p.dx)
+	  *((f.phi[x][y][z] - f.phi[(x-1+p.Lx)%p.Lx][y][z])/p.dx)*vol;
+	
+	Etot += 0.5*((f.phi[x][y][z] - f.phi[x][(y-1+p.Ly)%p.Ly][z])/p.dx)
+	  *((f.phi[x][y][z] - f.phi[x][(y-1+p.Ly)%p.Ly][z])/p.dx)*vol;
+	
+	Etot += 0.5*((f.phi[x][y][z] - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx)
+	  *((f.phi[x][y][z] - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx)*vol;
+	
+	Etot += Vf(p, f.T[x][y][z], f.phi[x][y][z])*vol;
+      }
+    }
   }
+  
 
   // Cast here
   //  vol = (double)(f.xe[p.N-1]);
@@ -43,7 +50,7 @@ double field_energy(hydro_fields f, int **nb, hydro_params p) {
 // straight from fortran, slightly verbose way of doing it!
 double total_energy(hydro_fields f, int **nb, hydro_params p) {
 
-  int x;
+  int x, y, z;
 
   double vol;
 
@@ -53,37 +60,46 @@ double total_energy(hydro_fields f, int **nb, hydro_params p) {
   double kinphi = 0.0;
   double grdphi = 0.0;
 
-  for(x = 0; x < p.N; x++) {
-    vol = p.dx*p.dx*p.dx;
+  vol = p.dx*p.dx*p.dx;
 
-    // rest energy
-    restE += (f.E[x]/f.W[x])*vol;
+  for(x = 0; x < p.Lx; x++) {
+    for(y = 0; y < p.Ly; y++) {
+      for(z = 0; z < p.Lz; z++) {
 
-    // kinetic energy
-    kinE += f.kappa[x]*(f.E[x]/f.W[x])*(f.W[x]*f.W[x]-1.0)*vol;
 
-    // momentum squared (scalar field kinetic energy)
-    kinphi += 0.5*f.pifull[x]*f.pifull[x]*vol;
+	
+	// rest energy
+	restE += (f.E[x][y][z]/f.W[x][y][z])*vol;
+	
+	// kinetic energy
+	kinE += f.kappa[x][y][z]*(f.E[x][y][z]/f.W[x][y][z])*(f.W[x][y][z]*f.W[x][y][z]-1.0)*vol;
+	
+	// momentum squared (scalar field kinetic energy)
+	kinphi += 0.5*f.pifull[x][y][z]*f.pifull[x][y][z]*vol;
+	
+	// gradient term
+	
+	grdphi += 0.125*((f.phi[(x+1)%p.Lx][y][z] - f.phi[(x-1+p.Lx)%p.Lx][y][z])/p.dx)
+	  *((f.phi[(x+1)%p.Lx][y][z] - f.phi[(x-1+p.Lx)%p.Lx][y][z])/p.dx)*vol;
+	
+	grdphi += 0.125*((f.phi[x][(y+1)%p.Ly][z] - f.phi[x][(y-1+p.Ly)%p.Ly][z])/p.dx)
+	  *((f.phi[x][(y+1)%p.Ly][z] - f.phi[x][(y-1+p.Ly)%p.Ly][z])/p.dx)*vol;
+	
+	grdphi += 0.125*((f.phi[x][y][(z+1)%p.Lz] - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx)
+	  *((f.phi[x][y][(z+1)%p.Lz] - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx)*vol;
 
-    // gradient term
-    
-    grdphi += 0.125*((f.phi[nb[x][0]] - f.phi[nb[x][1]])/p.dx)
-      *((f.phi[nb[x][0]] - f.phi[nb[x][1]])/p.dx)*vol;
 
-    grdphi += 0.125*((f.phi[nb[x][2]] - f.phi[nb[x][3]])/p.dx)
-      *((f.phi[nb[x][2]] - f.phi[nb[x][3]])/p.dx)*vol;
-
-    grdphi += 0.125*((f.phi[nb[x][4]] - f.phi[nb[x][5]])/p.dx)
-      *((f.phi[nb[x][4]] - f.phi[nb[x][5]])/p.dx)*vol;
+      }
       
+    }
   }
 
   // Cast here
   //  vol = (double)(f.xe[p.N-1]);
   //  vol = ((double)(p.Lx*p.Ly*p.Lz))*p.dx*p.dx*p.dx;
-
+  
   Etot = (restE+kinE+kinphi+grdphi);
-
+  
   return Etot; // /vol;
 
 

@@ -173,36 +173,37 @@ void initial_scalar_bubble(hydro_fields f, hydro_params p, int **inverse) {
   int x, y, z;
   int i;
 
-  for(i=0; i < p.N; i++) {
-    x = inverse[i][0];
-    y = inverse[i][1];
-    z = inverse[i][2];
+  for(x=0;x<p.Lx;x++) {
+    for(y=0;y<p.Ly;y++) {
+      for(z=0;z<p.Lz;z++) {
 
     
-    f.phi[i] = cstrab*exp(-1.0*
+    f.phi[x][y][z] = cstrab*exp(-1.0*
 			  p.dx*p.dx*( ((double)(x-p.Lx/2))*((double)(x-p.Lx/2))
 				      + ((double)(y-p.Ly/2))*((double)(y-p.Ly/2))
 				      + ((double)(z-p.Lz/2))*((double)(z-p.Lz/2)))
 			  /2.0/(Rtenab*Rtenab) );
 	
-    f.pifull[i] = 0.0;
+    f.pifull[x][y][z] = 0.0;
 	
-    f.T[i] = p.Tconst;
+    f.T[x][y][z] = p.Tconst;
 	
-    f.E[i] = 3.0*p.a*f.T[i]*f.T[i]
-      *f.T[i]*f.T[i]
-      + Vf(p, f.T[i], f.phi[i])
-      - f.T[i]*VTf(p, f.T[i], f.phi[i]);
+    f.E[x][y][z] = 3.0*p.a*f.T[x][y][z]*f.T[x][y][z]
+      *f.T[x][y][z]*f.T[x][y][z]
+      + Vf(p, f.T[x][y][z], f.phi[x][y][z])
+      - f.T[x][y][z]*VTf(p, f.T[x][y][z], f.phi[x][y][z]);
     
-    f.Z[0][i] = 0.0;
-    f.V[0][i] = 0.0;
-    f.W[i] = 1.0;
+    f.Z[0][x][y][z] = 0.0;
+    f.V[0][x][y][z] = 0.0;
+    f.W[x][y][z] = 1.0;
+      }
+    }
   }
 }
 
 
 
-
+/*
 void initial_3D(hydro_fields f, hydro_params p, int **inverse) {
   
 
