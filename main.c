@@ -306,64 +306,155 @@ int main(int argc, char *argv[])
   // Clean up memory
   free_nb(nb, &p);
   free_inverse(inverse, &p);
-  free_fields(&f);
+  free_fields(&f, p);
   
   return 0;
 
 }
 
 
+double ***make_field(hydro_params p, double *root) {
+
+   
+  //  double *true_field = malloc(p.fieldN*sizeof(double));
 
 
+  double ***field = (double ***)malloc(p.Lx*sizeof(double **));
+  int x, y;
+
+  for(x=0;x<p.Lx;x++) {
+    field[x] = (double **)malloc(p.Ly*sizeof(double *));
+    for(y=0;y<p.Ly;y++) {
+      field[x][y] = &root[x*p.Ly*p.Lz + y*p.Lz];
+    }
+  }
+
+
+  //  free(field[0][0]);
+  //  field[0][0] = true_field;
+  
+
+
+    
+
+  return field;
+}
+
+// not convinced
+void free_field(hydro_params p, double ***field, double *true_field) {
+
+
+  int x, y, z;
+  
+  
+
+  //  double *true_field = field[0][0];
+
+  //  free(field[0][0]);
+
+  //  fprintf(stderr,"Freeing true field at %p\n", true_field);
+
+  free(true_field);
+
+  for(x=0;x<p.Lx;x++) {
+      free(field[x]);
+
+  }
+  
+
+
+  free(field);
+}
 
 void alloc_fields(hydro_fields *f, hydro_params p) {
 
   // fields below also set up in initial condition functions
-  f->phi = (double *) malloc(p.fieldN*sizeof(double));
-  f->pifull = (double *) malloc(p.fieldN*sizeof(double));
-  f->T = (double *) malloc(p.fieldN*sizeof(double));
-  f->E = (double *) malloc(p.fieldN*sizeof(double));
-  f->W = (double *) malloc(p.fieldN*sizeof(double));
+  f->phi_root = (double *)malloc(p.fieldN*sizeof(double));
+  f->phi = make_field(p, f->phi_root);
+
+  fprintf(stderr,"phi_root is at %p\n", f->phi_root);
+
+  f->pifull_root = (double *)malloc(p.fieldN*sizeof(double));
+  f->pifull = make_field(p, f->pifull_root);
+
+  fprintf(stderr,"pi_root is at %p\n", f->pifull_root);
+
+  f->T_root = (double *)malloc(p.fieldN*sizeof(double));
+  f->T = make_field(p, f->T_root);
+
+  f->E_root = (double *)malloc(p.fieldN*sizeof(double));
+  f->E = make_field(p, f->E_root);
+
+  f->W_root = (double *)malloc(p.fieldN*sizeof(double));
+  f->W = make_field(p, f->W_root);
   
   // pi gets initialised in backstep
-  f->pi = (double *) malloc(p.fieldN*sizeof(double));
+  f->pi_root = (double *)malloc(p.fieldN*sizeof(double));
+  f->pi = make_field(p, f->pi_root);
 
   // phiold initialised by evolve_field
-  f->phiold = (double *) malloc(p.fieldN*sizeof(double));
+  f->phiold_root = (double *)malloc(p.fieldN*sizeof(double));
+  f->phiold = make_field(p, f->phiold_root);
 
   // equation of state (obtained by eq_of_state first time
   // and used in hydro)
-  f->kappa = (double *) malloc(p.fieldN*sizeof(double));
+  f->kappa_root = (double *)malloc(p.fieldN*sizeof(double));
+  f->kappa = make_field(p, f->kappa_root);
+
 
 
 
   // pressure (obtained by eq_of_state first time
   // and used in hydro)
-  f->p = (double *) malloc(p.fieldN*sizeof(double));
+  f->p_root = (double *)malloc(p.fieldN*sizeof(double));
+  f->p = make_field(p, f->p_root);
 
-  f->V = (double **) malloc(3*sizeof(double *));
+  f->V = (double ****)malloc(3*sizeof(double ***));
+  f->V_root = (double **)malloc(3*sizeof(double *));
 
-  f->V[0] = (double *) malloc(p.fieldN*sizeof(double));
-  f->V[1] = (double *) malloc(p.fieldN*sizeof(double));
-  f->V[2] = (double *) malloc(p.fieldN*sizeof(double));
+  f->V_root[0] = (double *)malloc(p.fieldN*sizeof(double));
+  f->V_root[1] = (double *)malloc(p.fieldN*sizeof(double));
+  f->V_root[2] = (double *)malloc(p.fieldN*sizeof(double));
+
+  f->V[0] = make_field(p, f->V_root[0]);
+  f->V[1] = make_field(p, f->V_root[1]);
+  f->V[2] = make_field(p, f->V_root[2]);
+
   
-  f->Z = (double **) malloc(3*sizeof(double *));
+  f->Z = (double ****)malloc(3*sizeof(double ***));
+  f->Z_root = (double **)malloc(3*sizeof(double *));
 
-  f->Z[0] = (double *) malloc(p.fieldN*sizeof(double));
-  f->Z[1] = (double *) malloc(p.fieldN*sizeof(double));
-  f->Z[2] = (double *) malloc(p.fieldN*sizeof(double));
+  f->Z_root[0] = (double *)malloc(p.fieldN*sizeof(double));
+  f->Z_root[1] = (double *)malloc(p.fieldN*sizeof(double));
+  f->Z_root[2] = (double *)malloc(p.fieldN*sizeof(double));
 
-  f->U = (double **) malloc(3*sizeof(double *));
+  f->Z[0] = make_field(p, f->Z_root[0]);
+  f->Z[1] = make_field(p, f->Z_root[1]);
+  f->Z[2] = make_field(p, f->Z_root[2]);
 
-  f->U[0] = (double *) malloc(p.fieldN*sizeof(double));
-  f->U[1] = (double *) malloc(p.fieldN*sizeof(double));
-  f->U[2] = (double *) malloc(p.fieldN*sizeof(double));
+  f->U = (double ****)malloc(3*sizeof(double ***));
+  f->U_root = (double **)malloc(3*sizeof(double *));
 
-  f->F = (double **) malloc(3*sizeof(double *));
+  f->U_root[0] = (double *)malloc(p.fieldN*sizeof(double));
+  f->U_root[1] = (double *)malloc(p.fieldN*sizeof(double));
+  f->U_root[2] = (double *)malloc(p.fieldN*sizeof(double));
 
-  f->F[0] = (double *) malloc(p.fieldN*sizeof(double));
-  f->F[1] = (double *) malloc(p.fieldN*sizeof(double));
-  f->F[2] = (double *) malloc(p.fieldN*sizeof(double));
+  f->U[0] = make_field(p, f->U_root[0]);
+  f->U[1] = make_field(p, f->U_root[1]);
+  f->U[2] = make_field(p, f->U_root[2]);
+
+  f->F = (double ****)malloc(3*sizeof(double ***));
+  f->F_root = (double **)malloc(3*sizeof(double *));
+
+  f->F_root[0] = (double *)malloc(p.fieldN*sizeof(double));
+  f->F_root[1] = (double *)malloc(p.fieldN*sizeof(double));
+  f->F_root[2] = (double *)malloc(p.fieldN*sizeof(double));
+
+  f->F[0] = make_field(p, f->F_root[0]);
+  f->F[1] = make_field(p, f->F_root[1]);
+  f->F[2] = make_field(p, f->F_root[2]);
+
+  fprintf(stderr,"F_root[2] is at %p\n", f->F_root[2]);
 
   // (calloc considered harmful)
 }
@@ -379,65 +470,65 @@ void zero_fields(hydro_fields f, hydro_params p) {
   // initialises everything, but it keeps valgrind quiet.
   for(x=0;x<p.fieldN;x++) {
 
-    f.phi[x] = 0.0000;
-    f.pifull[x] = 0.0000;
-    f.T[x] = 0.0000;
-    f.E[x] = 0.0000;
-    f.Z[0][x] = 0.0000;
-    f.Z[1][x] = 0.0000;
-    f.Z[2][x] = 0.0000;
-    f.U[0][x] = 0.0000;
-    f.U[1][x] = 0.0000;
-    f.U[2][x] = 0.0000;
-    f.V[0][x] = 0.0000;
-    f.V[1][x] = 0.0000;
-    f.V[2][x] = 0.0000;
-    f.W[x] = 0.0000;
+    f.phi[0][0][x] = 0.0000;
+    f.pifull[0][0][x] = 0.0000;
+    f.T[0][0][x] = 0.0000;
+    f.E[0][0][x] = 0.0000;
+    f.Z[0][0][0][x] = 0.0000;
+    f.Z[1][0][0][x] = 0.0000;
+    f.Z[2][0][0][x] = 0.0000;
+    f.U[0][0][0][x] = 0.0000;
+    f.U[1][0][0][x] = 0.0000;
+    f.U[2][0][0][x] = 0.0000;
+    f.V[0][0][0][x] = 0.0000;
+    f.V[1][0][0][x] = 0.0000;
+    f.V[2][0][0][x] = 0.0000;
+    f.W[0][0][x] = 0.0000;
 
-    f.pi[x] = 0.0000;
-    f.phiold[x] = 0.0000;
-    f.kappa[x] = 0.0000;
-    f.p[x] = 0.0000;
+    f.pi[0][0][x] = 0.0000;
+    f.phiold[0][0][x] = 0.0000;
+    f.kappa[0][0][x] = 0.0000;
+    f.p[0][0][x] = 0.0000;
   }
 
 }
 
-void free_fields(hydro_fields *f) {
+void free_fields(hydro_fields *f, hydro_params p) {
 
-  free(f->phi);
-  free(f->pifull);
-  free(f->T);
-  free(f->E);
-  free(f->W);
+  free_field(p, f->phi, f->phi_root);
+  free_field(p, f->pifull, f->pifull_root);
+  free_field(p, f->T, f->T_root);
+  free_field(p, f->E, f->E_root);
+  free_field(p, f->W, f->W_root);
 
-  free(f->pi);
+  free_field(p, f->pi, f->pi_root);
 
-  free(f->phiold);
+  free_field(p, f->phiold, f->phiold_root);
 
-  free(f->kappa);
-  free(f->p);
+  free_field(p, f->kappa, f->kappa_root);
+  free_field(p, f->p, f->p_root);
 
-  free(f->V[0]);
-  free(f->V[1]);
-  free(f->V[2]);
+  free_field(p, f->V[0], f->V_root[0]);
+  free_field(p, f->V[1], f->V_root[1]);
+  free_field(p, f->V[2], f->V_root[2]);
 
   free(f->V);
 
-  free(f->Z[0]);
-  free(f->Z[1]);
-  free(f->Z[2]);
+  free_field(p, f->Z[0], f->Z_root[0]);
+  free_field(p, f->Z[1], f->Z_root[1]);
+  free_field(p, f->Z[2], f->Z_root[2]);
 
   free(f->Z);
 
-  free(f->U[0]);
-  free(f->U[1]);
-  free(f->U[2]);
+  free_field(p, f->U[0], f->U_root[0]);
+  free_field(p, f->U[1], f->U_root[1]);
+  free_field(p, f->U[2], f->U_root[2]);
 
   free(f->U);
 
-  free(f->F[0]);
-  free(f->F[1]);
-  free(f->F[2]);
+  free_field(p, f->F[0], f->F_root[0]);
+  free_field(p, f->F[1], f->F_root[1]);
+  free_field(p, f->F[2], f->F_root[2]);
 
   free(f->F);
 

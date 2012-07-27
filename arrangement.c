@@ -718,7 +718,7 @@ void layout(hydro_params *p) {
   p->fieldN = p->N;
 }
 
-void halo_field(double *field, hydro_params p) {
+void halo_field(double ***field, hydro_params p) {
   // do nothing
 }
 
