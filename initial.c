@@ -142,7 +142,7 @@ void create_gaussian_bubble(hydro_fields f, hydro_params p) {
 
 
 
-void initial_scalar_bubble(hydro_fields f, hydro_params p, int **inverse) {
+void initial_scalar_bubble(hydro_fields f, hydro_params p) {
   double sigmlo = 2.0*sqrt(2.0)/81.0*p.alpha*p.alpha*p.alpha
     /(p.lambda*p.lambda*sqrt(p.lambda));
 
@@ -173,14 +173,14 @@ void initial_scalar_bubble(hydro_fields f, hydro_params p, int **inverse) {
   int x, y, z;
   int i;
 
-  for(x=0;x<p.Lx;x++) {
-    for(y=0;y<p.Ly;y++) {
+  for(x=1;x<=p.Lx;x++) {
+    for(y=1;y<=p.Ly;y++) {
       for(z=0;z<p.Lz;z++) {
 
     
     f.phi[x][y][z] = cstrab*exp(-1.0*
-			  p.dx*p.dx*( ((double)(x-p.Lx/2))*((double)(x-p.Lx/2))
-				      + ((double)(y-p.Ly/2))*((double)(y-p.Ly/2))
+			  p.dx*p.dx*( ((double)(x-1-p.Lx/2))*((double)(x-1-p.Lx/2))
+				      + ((double)(y-1-p.Ly/2))*((double)(y-1-p.Ly/2))
 				      + ((double)(z-p.Lz/2))*((double)(z-p.Lz/2)))
 			  /2.0/(Rtenab*Rtenab) );
 	

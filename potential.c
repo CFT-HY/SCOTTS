@@ -44,7 +44,7 @@ void Vpot(hydro_params p,
 	  double *phi, double *Vprecalc) {
   int x;
 
-  for(x=0; x<p.N; x++)  {
+  for(x=0; x<p.fieldN; x++)  {
     Vprecalc[x] = Vf(p, T[x], phi[x]);
   }
 }
@@ -59,7 +59,7 @@ void Vdpot(hydro_params p,
 	    double *phi, double *Vprecalc) {
   int x;
 
-  for(x=0; x<p.N; x++)  {
+  for(x=0; x<p.fieldN; x++)  {
     Vprecalc[x] = Vdf(p, T[x], phi[x]);
   }
 }
