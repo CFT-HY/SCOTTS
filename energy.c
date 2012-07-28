@@ -5,7 +5,7 @@
 #include "hydro.h"
 
 
-double field_energy(hydro_fields f, int **nb, hydro_params p) {
+double field_energy(hydro_fields f, hydro_params p) {
 
   int x, y, z;
 
@@ -16,18 +16,18 @@ double field_energy(hydro_fields f, int **nb, hydro_params p) {
 
   vol = p.dx*p.dx*p.dx;
 
-  for(x = 0; x < p.Lx; x++) {
-    for(y = 0; y < p.Ly; y++) {
+  for(x = 1; x <= p.Lx; x++) {
+    for(y = 1; y <= p.Ly; y++) {
       for(z = 0; z < p.Lz; z++) {
 
 	
 	Etot += 0.5*f.pifull[x][y][z]*f.pifull[x][y][z]*vol;
 	
-	Etot += 0.5*((f.phi[x][y][z] - f.phi[(x-1+p.Lx)%p.Lx][y][z])/p.dx)
-	  *((f.phi[x][y][z] - f.phi[(x-1+p.Lx)%p.Lx][y][z])/p.dx)*vol;
+	Etot += 0.5*((f.phi[x][y][z] - f.phi[x-1][y][z])/p.dx)
+	  *((f.phi[x][y][z] - f.phi[x-1][y][z])/p.dx)*vol;
 	
-	Etot += 0.5*((f.phi[x][y][z] - f.phi[x][(y-1+p.Ly)%p.Ly][z])/p.dx)
-	  *((f.phi[x][y][z] - f.phi[x][(y-1+p.Ly)%p.Ly][z])/p.dx)*vol;
+	Etot += 0.5*((f.phi[x][y][z] - f.phi[x][y-1][z])/p.dx)
+	  *((f.phi[x][y][z] - f.phi[x][y-1][z])/p.dx)*vol;
 	
 	Etot += 0.5*((f.phi[x][y][z] - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx)
 	  *((f.phi[x][y][z] - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx)*vol;
@@ -48,7 +48,7 @@ double field_energy(hydro_fields f, int **nb, hydro_params p) {
 }
 
 // straight from fortran, slightly verbose way of doing it!
-double total_energy(hydro_fields f, int **nb, hydro_params p) {
+double total_energy(hydro_fields f, hydro_params p) {
 
   int x, y, z;
 
@@ -62,8 +62,8 @@ double total_energy(hydro_fields f, int **nb, hydro_params p) {
 
   vol = p.dx*p.dx*p.dx;
 
-  for(x = 0; x < p.Lx; x++) {
-    for(y = 0; y < p.Ly; y++) {
+  for(x = 1; x <= p.Lx; x++) {
+    for(y = 1; y <= p.Ly; y++) {
       for(z = 0; z < p.Lz; z++) {
 
 
@@ -79,11 +79,11 @@ double total_energy(hydro_fields f, int **nb, hydro_params p) {
 	
 	// gradient term
 	
-	grdphi += 0.125*((f.phi[(x+1)%p.Lx][y][z] - f.phi[(x-1+p.Lx)%p.Lx][y][z])/p.dx)
-	  *((f.phi[(x+1)%p.Lx][y][z] - f.phi[(x-1+p.Lx)%p.Lx][y][z])/p.dx)*vol;
+	grdphi += 0.125*((f.phi[x+1][y][z] - f.phi[x-1][y][z])/p.dx)
+	  *((f.phi[x+1][y][z] - f.phi[x-1][y][z])/p.dx)*vol;
 	
-	grdphi += 0.125*((f.phi[x][(y+1)%p.Ly][z] - f.phi[x][(y-1+p.Ly)%p.Ly][z])/p.dx)
-	  *((f.phi[x][(y+1)%p.Ly][z] - f.phi[x][(y-1+p.Ly)%p.Ly][z])/p.dx)*vol;
+	grdphi += 0.125*((f.phi[x][y+1][z] - f.phi[x][y-1][z])/p.dx)
+	  *((f.phi[x][y+1][z] - f.phi[x][y-1][z])/p.dx)*vol;
 	
 	grdphi += 0.125*((f.phi[x][y][(z+1)%p.Lz] - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx)
 	  *((f.phi[x][y][(z+1)%p.Lz] - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx)*vol;
@@ -97,6 +97,8 @@ double total_energy(hydro_fields f, int **nb, hydro_params p) {
   // Cast here
   //  vol = (double)(f.xe[p.N-1]);
   //  vol = ((double)(p.Lx*p.Ly*p.Lz))*p.dx*p.dx*p.dx;
+
+  //  fprintf(stderr,"%lf/%lf/%lf/%lf\n",restE,kinE,kinphi,grdphi);
   
   Etot = (restE+kinE+kinphi+grdphi);
   

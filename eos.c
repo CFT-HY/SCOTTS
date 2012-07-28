@@ -12,8 +12,8 @@ void find_Ta(hydro_fields f, hydro_params p) {
 
   double Tfix;
 
-  for(x=0; x<p.Lx; x++) {
-    for(y=0; y<p.Ly; y++) {
+  for(x=1; x<=p.Lx; x++) {
+    for(y=1; y<=p.Ly; y++) {
       for(z=0; z<p.Lz; z++) {
 	/*
 	 * NaN's happen when Tfix goes negative,
@@ -47,7 +47,7 @@ void eq_of_state(hydro_fields f, hydro_params p) {
    * Vpot call is most efficient either (cannot fuse loops between find_Ta,
    * Vpot and this function. Will get rid of both simultaneously.
    */
-  double *Vnew = (double *) malloc(p.N*sizeof(double));
+  double ***Vnew = make_field(p); // (double *) malloc(p.fieldN*sizeof(double));
 
   double tolE = 1e-3;
 
@@ -55,11 +55,11 @@ void eq_of_state(hydro_fields f, hydro_params p) {
 
 
 
-  Vpot(p, f.T[0][0], f.phi[0][0], Vnew);
+  Vpot(p, f.T[0][0], f.phi[0][0], Vnew[0][0]);
 
 
-  for(x=0; x<p.Lx; x++) {
-    for(y=0; y<p.Ly; y++) {
+  for(x=1; x<=p.Lx; x++) {
+    for(y=1; y<=p.Ly; y++) {
       for(z=0; z<p.Lz; z++) {
 
 	if(f.E[x][y][z] 
@@ -68,14 +68,15 @@ void eq_of_state(hydro_fields f, hydro_params p) {
 	  exit(100);
 	}
 	
-	f.p[x][y][z] = p.a*f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z] - Vnew[x*p.Ly*p.Lz + y*p.Lz + z];
+	f.p[x][y][z] = p.a*f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z] - Vnew[x][y][z];
 	f.kappa[x][y][z] = 1.0 + f.W[x][y][z]*f.p[x][y][z]/f.E[x][y][z];
 	
       }
     }
   }
   
-  free(Vnew);
+  //  free(Vnew);
+  free_field(p, Vnew);
 
   halo_field(f.p, p);
   halo_field(f.kappa, p);

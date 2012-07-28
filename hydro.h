@@ -234,7 +234,8 @@ typedef struct {
 void alloc_fields(hydro_fields *f, hydro_params p);
 void zero_fields(hydro_fields f, hydro_params p);
 void free_fields(hydro_fields *f, hydro_params p);
-void free_field(hydro_params p, double ***field, double *true_field);
+void free_field(hydro_params p, double ***field);
+double ***make_field(hydro_params p);
 
 // arrangement.c
 void layout(hydro_params *p);
@@ -249,14 +250,12 @@ double get_comms_time(hydro_params *p);
 
 int **init_inverse(hydro_params *p);
 int **init_nb(hydro_params *p);
-void free_nb(int **nb, hydro_params *p);
-void free_inverse(int **nb, hydro_params *p);
 
 // evolve.c
 
-void evolve_backstep(hydro_fields f, int **nb, hydro_params p);
-void evolve_field(hydro_fields f, int **nb, hydro_params p);
-void evolve_hydro(hydro_fields f, int **nb, hydro_params p);
+void evolve_backstep(hydro_fields f, hydro_params p);
+void evolve_field(hydro_fields f, hydro_params p);
+void evolve_hydro(hydro_fields f, hydro_params p);
 // void artificial_viscosity(hydro_fields f, int **nb, hydro_params p);
 
 // potential.c
@@ -271,8 +270,8 @@ void Vdpot(hydro_params p, double *T, double *phi, double *Vprecalc);
 
 // energy.c
 
-double field_energy(hydro_fields f, int **nb, hydro_params p);
-double total_energy(hydro_fields f, int **nb, hydro_params p);
+double field_energy(hydro_fields f, hydro_params p);
+double total_energy(hydro_fields f, hydro_params p);
 
 
 // eos.c
@@ -282,8 +281,8 @@ void eq_of_state(hydro_fields f, hydro_params p);
 
 // transport.c
 
-void advect_E(hydro_fields f, int **nb, hydro_params p);
-void advect_Z(hydro_fields f, int **nb, hydro_params p);
+void advect_E(hydro_fields f, hydro_params p);
+void advect_Z(hydro_fields f, hydro_params p);
 
 // initial.c
 /*
@@ -325,4 +324,4 @@ double maxof3(double a, double b, double c);
 double minof2(double a, double b);
 
 
-double ***make_field(hydro_params p, double *root);
+
