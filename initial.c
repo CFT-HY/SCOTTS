@@ -173,14 +173,17 @@ void initial_scalar_bubble(hydro_fields f, hydro_params p) {
   int x, y, z;
   int i;
 
-  for(x=1;x<=p.Lx;x++) {
-    for(y=1;y<=p.Ly;y++) {
+  //  fprintf(stderr,"my shiftx is %d and shifty is %d\n", p.shiftx, p.shifty);
+
+  for(x=1;x<=p.slicex;x++) {
+    for(y=1;y<=p.slicey;y++) {
       for(z=0;z<p.Lz;z++) {
 
+
     
-    f.phi[x][y][z] = cstrab*exp(-1.0*
-			  p.dx*p.dx*( ((double)(x-1-p.Lx/2))*((double)(x-1-p.Lx/2))
-				      + ((double)(y-1-p.Ly/2))*((double)(y-1-p.Ly/2))
+	f.phi[x][y][z] = cstrab*exp(-1.0*
+			  p.dx*p.dx*( ((double)(p.shiftx+x-1-p.Lx/2))*((double)(p.shiftx+x-1-p.Lx/2))
+				      + ((double)(p.shifty+y-1-p.Ly/2))*((double)(p.shifty+y-1-p.Ly/2))
 				      + ((double)(z-p.Lz/2))*((double)(z-p.Lz/2)))
 			  /2.0/(Rtenab*Rtenab) );
 	
@@ -192,7 +195,7 @@ void initial_scalar_bubble(hydro_fields f, hydro_params p) {
       *f.T[x][y][z]*f.T[x][y][z]
       + Vf(p, f.T[x][y][z], f.phi[x][y][z])
       - f.T[x][y][z]*VTf(p, f.T[x][y][z], f.phi[x][y][z]);
-    
+ 
     f.Z[0][x][y][z] = 0.0;
     f.V[0][x][y][z] = 0.0;
     f.W[x][y][z] = 1.0;

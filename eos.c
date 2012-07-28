@@ -12,8 +12,8 @@ void find_Ta(hydro_fields f, hydro_params p) {
 
   double Tfix;
 
-  for(x=1; x<=p.Lx; x++) {
-    for(y=1; y<=p.Ly; y++) {
+  for(x=1; x<=p.slicex; x++) {
+    for(y=1; y<=p.slicey; y++) {
       for(z=0; z<p.Lz; z++) {
 	/*
 	 * NaN's happen when Tfix goes negative,
@@ -58,8 +58,8 @@ void eq_of_state(hydro_fields f, hydro_params p) {
   Vpot(p, f.T[0][0], f.phi[0][0], Vnew[0][0]);
 
 
-  for(x=1; x<=p.Lx; x++) {
-    for(y=1; y<=p.Ly; y++) {
+  for(x=1; x<=p.slicex; x++) {
+    for(y=1; y<=p.slicey; y++) {
       for(z=0; z<p.Lz; z++) {
 
 	if(f.E[x][y][z] 

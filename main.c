@@ -307,16 +307,16 @@ int main(int argc, char *argv[])
 double ***make_field(hydro_params p) {
 
    
-  double *true_field = malloc((p.Lx+2)*(p.Ly+2)*(p.Lz)*sizeof(double));
+  double *true_field = malloc((p.slicex+2)*(p.slicey+2)*(p.Lz)*sizeof(double));
 
 
-  double ***field = (double ***)malloc((p.Lx+2)*sizeof(double **));
+  double ***field = (double ***)malloc((p.slicex+2)*sizeof(double **));
   int x, y;
 
-  for(x=0;x<(p.Lx+2);x++) {
-    field[x] = (double **)malloc((p.Ly+2)*sizeof(double *));
-    for(y=0;y<(p.Ly+2);y++) {
-      field[x][y] = &true_field[x*(p.Ly+2)*(p.Lz) + y*(p.Lz)];
+  for(x=0;x<(p.slicex+2);x++) {
+    field[x] = (double **)malloc((p.slicey+2)*sizeof(double *));
+    for(y=0;y<(p.slicey+2);y++) {
+      field[x][y] = &true_field[x*(p.slicey+2)*(p.Lz) + y*(p.Lz)];
     }
   }
 
@@ -345,7 +345,7 @@ void free_field(hydro_params p, double ***field) {
 
   //  fprintf(stderr,"Freeing true field at %p\n", true_field);
 
-  for(x=0;x<(p.Lx+2);x++) {
+  for(x=0;x<(p.slicex+2);x++) {
       free(field[x]);
 
   }
