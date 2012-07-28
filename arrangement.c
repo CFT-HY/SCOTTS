@@ -112,8 +112,7 @@ void layout(hydro_params *p) {
   p->totalN = p->N;
 
   // sites on a node = number of sites + halos + double halos
-  p->fieldN = (p->slicex*p->slicey*p->Lz)
-    + p->Lz*(2*(p->slicex + p->slicey) + 4);
+  p->fieldN = ((p->slicex+2)*(p->slicey+2)*p->Lz);
 
   if(!p->rank)
     fprintf(stderr,"Each node will need %d = %d + %d entries to store halo\n",
@@ -148,267 +147,9 @@ void layout(hydro_params *p) {
 	  p->rank_xMyM, p->rank_xMyP, p->rank_xPyM, p->rank_xPyP);
 
 
-}
 
-
-
-/* generate_offsets(hydro_params *)
- *
- * Just calculates offsets within the field files for halo data.
- * Also resizes the box to the right size (a legacy from when
- * the data to be haloed out was segmented and offset as well).
- */
-void generate_offsets(hydro_params *p) {
-
-  p->N = p->slicex*p->slicey*p->Lz;
-  if(!p->rank)
-    fprintf(stderr, "Resizing p->N to %d\n", p->N);
-
-  // Single haloes
-  p->offset_xM = p->N;
-  p->offset_xP = p->offset_xM + (p->Lz*p->slicey);
-  p->offset_yM = p->offset_xP + (p->Lz*p->slicey);
-  p->offset_yP = p->offset_yM + (p->Lz*p->slicex);
-
-  // Double haloes
-  p->offset_xMyM = p->offset_yP + (p->Lz*p->slicex);
-  p->offset_xMyP = p->offset_xMyM + p->Lz;
-  p->offset_xPyM = p->offset_xMyP + p->Lz;
-  p->offset_xPyP = p->offset_xPyM + p->Lz;
-
-  if(!p->rank)
-    fprintf(stderr,
-	    "Checking: number of sites including halo, %d, " \
-	    "equals final offset, %d\n",
-	    p->fieldN,
-	    p->offset_xPyP + p->Lz);
-
-
-}
-
-
-
-/* int local_iix(int x, int y, int z, hydro_params p)
- *
- * Working within the local box, give location of neighbours in
- * the array.
- */
-int local_iix(int x, int y, int z, hydro_params p) {
-
-  if (x < -1 || x > p.slicex || y < -1 || y > p.slicey) {
-    // Can't handle
-    fprintf(stderr,"Unable to handle local location (%d,%d,%d)\n", x, y, z);
-    exit(-45);
-  }
-
-
-  // Deal with offsets (locations of halo material)
-
-  // 1. Off left hand end of box
-  if (x == -1) {
-
-    // 1A Bottom left, double halo
-    if(y == -1) {
-      return p.offset_xMyM + ((z+p.Lz)%p.Lz);
-    }
-
-    // 1B Top left, double halo
-    if (y == p.slicey) {
-      return p.offset_xMyP + ((z+p.Lz)%p.Lz);
-    }
-
-    // 1C Left
-    return p.offset_xM + y*p.Lz + ((z+p.Lz)%p.Lz);
-  }
-    
-  
-  // 2. Off right hand end of box
-  if (x == p.slicex) {
-
-    // 2A Bottom right, double halo
-    if(y == -1) {
-      return p.offset_xPyM + ((z+p.Lz)%p.Lz);
-    }
-
-    // 2B Top right, double halo
-    if (y == p.slicey) {
-      return p.offset_xPyP + ((z+p.Lz)%p.Lz);
-    } 
-
-    // 2C Right
-    return p.offset_xP + y*p.Lz + ((z+p.Lz)%p.Lz);
-   
-  }
-
-  // 3. Off bottom of box
-  if (y == -1) {
-
-    return p.offset_yM + x*p.Lz + ((z+p.Lz)%p.Lz);
-
-  }
-
-  // 4. Off top of box
-  if (y == p.slicey) {
-
-    return p.offset_yP + x*p.Lz + ((z+p.Lz)%p.Lz);
-  }
-
-  // 5. In the bulk
-  // Faster:
-  //  return x*p.slicey*p.Lz + y*p.Lz + ((z+p.Lz)%p.Lz);
-  return ((z+p.Lz)%p.Lz)*p.slicey*p.slicex + y*p.slicex + x;
-}
-
-
-
-/* int **init_nb(hydro_params *p)
- *
- * Initialise the neighbour lookup table.
- */
-int **init_nb(hydro_params *p) {
-  int x, y, z;
-
-  int **nb;
-
-  generate_offsets(p);
-
-  // set up nb lookup table                                                                        
-  // each node does the same thing
-  nb = (int **) malloc(p->N*sizeof(int *));
-
-
-  for(x=0; x<p->slicex; x++) {
-    for(y=0; y<p->slicey; y++) {
-      for(z=0; z<p->Lz; z++) {
-
-        nb[local_iix(x,y,z,*p)] = (int *)malloc(14*sizeof(int));
-
-	// Standard directions
-        nb[local_iix(x,y,z,*p)][0] = local_iix(x+1, y, z, *p);
-        nb[local_iix(x,y,z,*p)][1] = local_iix(x-1, y, z, *p);
-        nb[local_iix(x,y,z,*p)][2] = local_iix(x, y+1, z, *p);
-        nb[local_iix(x,y,z,*p)][3] = local_iix(x, y-1, z, *p);
-        nb[local_iix(x,y,z,*p)][4] = local_iix(x, y, z+1, *p);
-        nb[local_iix(x,y,z,*p)][5] = local_iix(x, y, z-1, *p);
-
-	// Composed directions: used surprisingly frequently
-        nb[local_iix(x, y, z, *p)][DIR_02] = local_iix(x+1, y+1, z, *p);
-        nb[local_iix(x, y, z, *p)][DIR_04] = local_iix(x+1, y, z+1, *p);
-        nb[local_iix(x, y, z, *p)][DIR_24] = local_iix(x, y+1, z+1, *p);
-        nb[local_iix(x, y, z, *p)][DIR_13] = local_iix(x-1, y-1, z, *p);
-        nb[local_iix(x, y, z, *p)][DIR_15] = local_iix(x-1, y, z-1, *p);
-        nb[local_iix(x, y, z, *p)][DIR_35] = local_iix(x, y-1, z-1, *p);
-
-	// Double composed directions
-        nb[local_iix(x, y, z, *p)][DIR_024] = local_iix(x+1, y+1, z+1, *p);
-        nb[local_iix(x, y, z, *p)][DIR_135] = local_iix(x-1, y-1, z-1, *p);
-
-	// See also comment in hydro.h about composed directions
-	// and also below!
-
-      }
-    }
-  }
-
-
-
-  // Places where we can store the locations of stuff
-  // (less hastle than using MPI datatypes, I think!)
-  p->table_xM = (int *) malloc(p->Lz*p->slicey*sizeof(int));
-  p->table_xP = (int *) malloc(p->Lz*p->slicey*sizeof(int));
-
-  p->table_yM = (int *) malloc(p->Lz*p->slicex*sizeof(int));
-  p->table_yP = (int *) malloc(p->Lz*p->slicex*sizeof(int));
-
-  p->table_xMyM = (int *) malloc(p->Lz*sizeof(int)); 
-  p->table_xMyP = (int *) malloc(p->Lz*sizeof(int));
-  p->table_xPyM = (int *) malloc(p->Lz*sizeof(int));
-  p->table_xPyP = (int *) malloc(p->Lz*sizeof(int));
-
-
-  // And where stuff in the tables points to
-  for(z=0; z<p->Lz; z++) {
-    for(x=0; x<p->slicex; x++) {
-      p->table_yM[x*p->Lz + z] = local_iix(x, 0, z, *p);
-      p->table_yP[x*p->Lz + z] = local_iix(x, p->slicey-1, z, *p);
-    }
-
-    for(y=0; y<p->slicey; y++) {
-      p->table_xM[y*p->Lz + z] = local_iix(0, y, z, *p);
-      p->table_xP[y*p->Lz + z] = local_iix(p->slicex-1, y, z, *p);
-    }
-
-    p->table_xMyM[z] = local_iix(0, 0, z, *p);
-    p->table_xMyP[z] = local_iix(0, p->slicey-1, z, *p);
-    p->table_xPyM[z] = local_iix(p->slicex-1, 0, z, *p);
-    p->table_xPyP[z] = local_iix(p->slicex-1, p->slicey-1, z, *p);
-
-
-  }
-
-
-
-  return nb;
-}
-
-
-
-/* int **init_inverse(hydro_params *p)
- *
- * Reverse lookup from indexed sites to cartesian coordinates;
- * for (eg) initial conditions.
- */
-int **init_inverse(hydro_params *p) {
-
-
-  int x, y, z;
-  int **inverse = (int **) malloc(p->N*sizeof(int *));
-
-  for(x=0; x<p->slicex; x++) {
-    for(y=0; y<p->slicey; y++) {
-      for(z=0; z<p->Lz; z++) {
-
-
-        inverse[local_iix(x,y,z,*p)] = (int *)malloc(3*sizeof(int));
-	inverse[local_iix(x,y,z,*p)][0] = x+(p->slicex*p->myposx);
-	inverse[local_iix(x,y,z,*p)][1] = y+(p->slicey*p->myposy);
-	inverse[local_iix(x,y,z,*p)][2] = z;
-      }
-    }
-  }
-
-  return inverse;
-}
-
-
-/* void free_nb(int **nb, hydro_params *p)
- *
- * Frees each entry in the nb table, then nb itself
- */
-void free_nb(int **nb, hydro_params *p) {
-  int x;
-
-  for(x=0; x<p->N; x++) {
-    free(nb[x]);
-  }
-
-  free(nb);
-}
-
-
-/* void free_inverse(int **inverse, hydro_params *p)
- *
- * Frees each entry in the inverse table, then inverse itself
- */
-void free_inverse(int **inverse, hydro_params *p) {
-  int x;
-
-  for(x=0; x<p->N; x++) {
-    free(inverse[x]);
-  }
-
-  free(inverse);
-
+  p->shiftx = (p->slicex)*(p->myposx);
+  p->shifty = (p->slicey)*(p->myposy);
 }
 
 
@@ -416,39 +157,38 @@ void free_inverse(int **inverse, hydro_params *p) {
  *
  * Do halo communication of the variable in field to neighbours.
  */
-void halo_field(double *field, hydro_params p) {
+void halo_field(double ***field, hydro_params p) {
 
-  // set up
   MPI_Request request;
   MPI_Status stat;
 
-  // timing
+
   clock_t start, end;
 
-  // storage buffer
-  double *store;
-
-  int i;
-
-
   start = clock();
+
+  int mpi_counter = 1;
+  int x, y, z;
+
 
   /* <<
    *
    * SEND LEFT
    */
 
-  store = (double *)malloc(p.slicey*p.Lz*sizeof(double));
+  for(y = 1; y <= p.slicey; y++) {
+    for(z = 0; z < p.Lz; z++) {
 
-  for(i=0;i<p.slicey*p.Lz;i++) {
-    store[i] = field[p.table_xM[i]];
+      MPI_Sendrecv(&field[1][y][z],
+		   1, MPI_DOUBLE, p.rank_xM, mpi_counter,
+		   &field[p.slicex+1][y][z],
+		   1, MPI_DOUBLE, p.rank_xP, mpi_counter,
+		   MPI_COMM_WORLD, &stat);
+
+      mpi_counter++;
+    }
   }
 
-  MPI_Sendrecv(store,
-	       p.slicey*p.Lz, MPI_DOUBLE, p.rank_xM, 0,
-	       &field[p.offset_xP],
-	       p.slicey*p.Lz, MPI_DOUBLE, p.rank_xP, 0,
-	       MPI_COMM_WORLD, &stat);
 
 
   /* >>
@@ -456,20 +196,20 @@ void halo_field(double *field, hydro_params p) {
    * SEND RIGHT
    */
 
+  for(y = 1; y <= p.slicey; y++) {
+    for(z = 0; z < p.Lz; z++) {
 
-  for(i=0;i<p.slicey*p.Lz;i++) {
-    store[i] = field[p.table_xP[i]];
+
+      MPI_Sendrecv(&field[p.slicex][y][z],
+		   1, MPI_DOUBLE, p.rank_xP, mpi_counter,
+		   &field[0][y][z],
+		   1, MPI_DOUBLE, p.rank_xM, mpi_counter,
+		   MPI_COMM_WORLD, &stat);
+
+      mpi_counter++;
+    }
   }
 
-  MPI_Sendrecv(store,
-	       p.slicey*p.Lz, MPI_DOUBLE, p.rank_xP, 10,
-	       &field[p.offset_xM],
-	       p.slicey*p.Lz, MPI_DOUBLE, p.rank_xM, 10,
-	       MPI_COMM_WORLD, &stat);
-
-
-  free(store);
-  store = (double *)malloc(p.slicex*p.Lz*sizeof(double));
 
 
 
@@ -478,17 +218,18 @@ void halo_field(double *field, hydro_params p) {
    * SEND UP
    */
 
-  for(i=0;i<p.slicex*p.Lz;i++) {
-    store[i] = field[p.table_yP[i]];
+  for(x = 1; x <= p.slicex; x++) {
+    for(z = 0; z < p.Lz; z++) {
+
+      MPI_Sendrecv(&field[x][p.slicey][z],
+		   1, MPI_DOUBLE, p.rank_yP, mpi_counter,
+		   &field[x][0][z],
+		   1, MPI_DOUBLE, p.rank_yM, mpi_counter,
+		   MPI_COMM_WORLD, &stat);
+
+      mpi_counter++;
+    }
   }
-
-
-  // First the inner (slicex-2) bits
-  MPI_Sendrecv(store,
-	       p.slicex*p.Lz, MPI_DOUBLE, p.rank_yP, 100,
-	       &field[p.offset_yM],
-	       p.slicex*p.Lz, MPI_DOUBLE, p.rank_yM, 100,
-	       MPI_COMM_WORLD, &stat);
 
 
   /* \/ \/
@@ -496,71 +237,74 @@ void halo_field(double *field, hydro_params p) {
    * SEND DOWN
    */
 
-  for(i=0;i<p.slicex*p.Lz;i++) {
-    store[i] = field[p.table_yM[i]];
+
+  for(x = 1; x <= p.slicex; x++) {
+    for(z = 0; z < p.Lz; z++) {
+
+
+      MPI_Sendrecv(&field[x][1][z],
+		   1, MPI_DOUBLE, p.rank_yM, mpi_counter,
+		   &field[x][p.slicey+1][z],
+		   1, MPI_DOUBLE, p.rank_yP, mpi_counter,
+		   MPI_COMM_WORLD, &stat);
+
+
+      mpi_counter++;
+    }
   }
 
-  // First the inner (slicex-2) bits
-  MPI_Sendrecv(store,
-	       p.slicex*p.Lz, MPI_DOUBLE, p.rank_yM, 1000,
-	       &field[p.offset_yP],
-	       p.slicex*p.Lz, MPI_DOUBLE, p.rank_yP, 1000,
-	       MPI_COMM_WORLD, &stat);
-
-
-
-
-  for(i=0;i<p.Lz;i++) {
-    store[i] = field[p.table_xPyP[i]];
-  }
 
   /* [ ']
    *
    * SEND UP AND RIGHT
    */
 
-  for(i=0;i<p.Lz;i++) {
-    store[i] = field[p.table_xPyP[i]];
+
+
+  for(z = 0; z < p.Lz; z++) {
+      
+    MPI_Sendrecv(&field[p.slicex][p.slicey][z],
+		 1, MPI_DOUBLE, p.rank_xPyP, mpi_counter,
+		 &field[0][0][z],
+		 1, MPI_DOUBLE, p.rank_xMyM, mpi_counter,
+		 MPI_COMM_WORLD, &stat);
+
+    mpi_counter++;
   }
-
-  MPI_Sendrecv(store,
-	       p.Lz, MPI_DOUBLE, p.rank_xPyP, 10001,
-	       &field[p.offset_xMyM],
-	       p.Lz, MPI_DOUBLE, p.rank_xMyM, 10001,
-	       MPI_COMM_WORLD, &stat);
-
 
   /* [, ]
    *
    * SEND DOWN AND LEFT
    */
 
-  for(i=0;i<p.Lz;i++) {
-    store[i] = field[p.table_xMyM[i]];
+
+  for(z = 0; z < p.Lz; z++) {
+
+    MPI_Sendrecv(&field[1][1][z],
+		 1, MPI_DOUBLE, p.rank_xMyM, mpi_counter,
+		 &field[p.slicex+1][p.slicey+1][z],
+		 1, MPI_DOUBLE, p.rank_xPyP, mpi_counter,
+		 MPI_COMM_WORLD, &stat);
+      
+    mpi_counter++;
   }
-
-  MPI_Sendrecv(store,
-	       p.Lz, MPI_DOUBLE, p.rank_xMyM, 10002,
-	       &field[p.offset_xPyP],
-	       p.Lz, MPI_DOUBLE, p.rank_xPyP, 10002,
-	       MPI_COMM_WORLD, &stat);
-
 
   /* [' ]
    *
    * SEND UP AND LEFT
    */
 
-  for(i=0;i<p.Lz;i++) {
-    store[i] = field[p.table_xMyP[i]];
+  for(z = 0; z < p.Lz; z++) {
+      
+
+    MPI_Sendrecv(&field[1][p.slicey][z],
+		 1, MPI_DOUBLE, p.rank_xMyP, mpi_counter,
+		 &field[p.slicex+1][0][z],
+		 1, MPI_DOUBLE, p.rank_xPyM, mpi_counter,
+		 MPI_COMM_WORLD, &stat);
+
+    mpi_counter++;
   }
-
-
-  MPI_Sendrecv(store,
-	       p.Lz, MPI_DOUBLE, p.rank_xMyP, 10003,
-	       &field[p.offset_xPyM],
-	       p.Lz, MPI_DOUBLE, p.rank_xPyM, 10003,
-	       MPI_COMM_WORLD, &stat);
 
 
   /* [ ,]
@@ -568,18 +312,17 @@ void halo_field(double *field, hydro_params p) {
    * SEND DOWN AND RIGHT
    */
 
-  for(i=0;i<p.Lz;i++) {
-    store[i] = field[p.table_xPyM[i]];
+  for(z = 0; z < p.Lz; z++) {
+      
+    MPI_Sendrecv(&field[p.slicex][1][z],
+		 1, MPI_DOUBLE, p.rank_xPyM, mpi_counter,
+		 &field[0][p.slicey+1][z],
+		 1, MPI_DOUBLE, p.rank_xMyP, mpi_counter,
+		 MPI_COMM_WORLD, &stat);
+
+    mpi_counter++;
   }
 
-  MPI_Sendrecv(store,
-	       p.Lz, MPI_DOUBLE, p.rank_xPyM, 10004,
-	       &field[p.offset_xMyP],
-	       p.Lz, MPI_DOUBLE, p.rank_xMyP, 10004,
-	       MPI_COMM_WORLD, &stat);
-
-
-  free(store);
 
   end = clock();
 
@@ -621,7 +364,12 @@ double get_comms_time(hydro_params *p) {
 void layout(hydro_params *p) {
   fprintf(stderr,"Layout: doing nothing: no parallelism\n");
   p->fieldN = (p->Lx+2)*(p->Ly+2)*(p->Lz);
+  p->slicex = p->Lx;
+  p->slicey = p->Ly;
+  p->shiftx = 0;
+  p->shifty = 0;
 }
+
 
 void halo_field(double ***field, hydro_params p) {
 
@@ -699,6 +447,7 @@ void halo_field(double ***field, hydro_params p) {
       mpi_counter++;
     }
   }
+
 
 
   /* [ ']

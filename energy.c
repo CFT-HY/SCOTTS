@@ -16,8 +16,8 @@ double field_energy(hydro_fields f, hydro_params p) {
 
   vol = p.dx*p.dx*p.dx;
 
-  for(x = 1; x <= p.Lx; x++) {
-    for(y = 1; y <= p.Ly; y++) {
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
 
 	
@@ -62,12 +62,11 @@ double total_energy(hydro_fields f, hydro_params p) {
 
   vol = p.dx*p.dx*p.dx;
 
-  for(x = 1; x <= p.Lx; x++) {
-    for(y = 1; y <= p.Ly; y++) {
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
 
-
-	
+	       
 	// rest energy
 	restE += (f.E[x][y][z]/f.W[x][y][z])*vol;
 	
@@ -88,6 +87,7 @@ double total_energy(hydro_fields f, hydro_params p) {
 	grdphi += 0.125*((f.phi[x][y][(z+1)%p.Lz] - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx)
 	  *((f.phi[x][y][(z+1)%p.Lz] - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx)*vol;
 
+	  
 
       }
       

@@ -28,8 +28,8 @@ void donor_E_dir(hydro_fields f, hydro_params p, int dir) {
     dz = 1;
 
 
-  for(x = 1; x <= p.Lx; x++) {
-    for(y = 1; y <= p.Ly; y++) {
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
     if(f.V[dir][x][y][z] >= 0.0)
       f.F[dir][x][y][z] = f.V[dir][x][y][z]
@@ -43,8 +43,8 @@ void donor_E_dir(hydro_fields f, hydro_params p, int dir) {
   halo_field(f.F[dir],p);
 
 
-  for(x = 1; x <= p.Lx; x++) {
-    for(y = 1; y <= p.Ly; y++) {
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
 	f.E[x][y][z] = f.E[x][y][z] 
 	  + p.dt*(f.F[dir][x][y][z]
@@ -72,8 +72,8 @@ void donor_Z_dir(hydro_fields f, hydro_params p, int dir) {
 
   // Regenerate fluxes of inertial density
   
-  for(x = 1; x <= p.Lx; x++) {
-    for(y = 1; y <= p.Ly; y++) {
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
 
 
@@ -117,8 +117,8 @@ void donor_Z_dir(hydro_fields f, hydro_params p, int dir) {
   halo_field(f.F[2],p);
 
   // Eq 2.11
-  for(x = 1; x <= p.Lx; x++) {
-    for(y = 1; y <= p.Ly; y++) {
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
 
 

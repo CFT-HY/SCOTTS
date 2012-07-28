@@ -11,8 +11,8 @@ void evolve_backstep(hydro_fields f, hydro_params p) {
 
   int x, y, z;
 
-  for(x = 1; x <= p.Lx; x++) {
-    for(y = 1; y <= p.Ly; y++) {
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
 	f.pi[x][y][z] = f.pifull[x][y][z] - 0.5*p.dt
 	  *(f.phi[x+1][y][z] + f.phi[x][y+1][z] + f.phi[x][y][((z+1)%p.Lz)] 
@@ -37,8 +37,8 @@ void evolve_field(hydro_fields f, hydro_params p) {
   double piold, s;
 
   // Move conjugate momentum (leapfrog)
-  for(x = 1; x <= p.Lx; x++) {
-    for(y = 1; y <= p.Ly; y++) {
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
 
 
@@ -77,8 +77,8 @@ void evolve_field(hydro_fields f, hydro_params p) {
   }
 
   // Move field (leapfrog)
-  for(x = 1; x <= p.Lx; x++) {
-    for(y = 1; y <= p.Ly; y++) {
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
 	f.phiold[x][y][z] = f.phi[x][y][z];
 	f.phi[x][y][z] = f.phi[x][y][z] + p.dt*f.pi[x][y][z];
@@ -143,8 +143,8 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
   double ubarx, ubary, ubarz, W;
 
 
-  for(x = 1; x <= p.Lx; x++) {
-    for(y = 1; y <= p.Ly; y++) {
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
     phiav[x][y][z] = 0.5*(f.phiold[x][y][z] + f.phi[x][y][z]);
 
@@ -170,8 +170,8 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
 
   halo_field(Vdmid, p);
 
-  for(x = 1; x <= p.Lx; x++) {
-    for(y = 1; y <= p.Ly; y++) {
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
 
     double vdnb = 0.125*(Vdmid[x-1][y][z] + Vdmid[x][y][z] + Vdmid[x][y-1][z] + Vdmid[x-1][y-1][z]
@@ -236,8 +236,8 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
 
   // Pressure acceleration
   // W&M sec 2.4.12, 3.5.1, DONE
-  for(x = 1; x <= p.Lx; x++) {
-    for(y = 1; y <= p.Ly; y++) {
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
 
     // equation (3.68)
@@ -307,8 +307,8 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
   //
   // Section 3.4.5, equations 3.5.7, 3.5.8
 
-  for(x = 1; x <= p.Lx; x++) {
-    for(y = 1; y <= p.Ly; y++) {
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
 
     /*
@@ -347,8 +347,8 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
 
   // section 3.4.5 continued
   // face-centred x-cpt of 3-velocity
-  for(x = 1; x <= p.Lx; x++) {
-    for(y = 1; y <= p.Ly; y++) {
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
 
     ubarx = (f.U[0][x][y][z]
@@ -380,8 +380,8 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
 
 
   // y-cpt
-  for(x = 1; x <= p.Lx; x++) {
-    for(y = 1; y <= p.Ly; y++) {
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
 
 	ubarx = (f.U[0][x][y][z]
@@ -411,8 +411,8 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
   }
 
   // z-cpt
-  for(x = 1; x <= p.Lx; x++) {
-    for(y = 1; y <= p.Ly; y++) {
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
 
     ubarx = (f.U[0][x][y][z]
@@ -456,8 +456,8 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
   //  getchar();
 
   // Section 3.4.6
-  for(x = 1; x <= p.Lx; x++) {
-    for(y = 1; y <= p.Ly; y++) {
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
 
 
@@ -526,8 +526,8 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
   halo_field(Wfacez, p);
 
   // Section 3.4.4 -- pressure terms
-  for(x = 1; x <= p.Lx; x++) {
-    for(y = 1; y <= p.Ly; y++) {
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
 
 	qx = (f.V[0][x+1][y][z] - f.V[0][x][y][z])/p.dx;
@@ -558,8 +558,8 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
 
 
   // Last bit of 3.4.6
-  for(x = 1; x <= p.Lx; x++) {
-    for(y = 1; y <= p.Ly; y++) {
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
     qx = (f.V[0][x][y][z] + f.V[0][x+1][y][z])
       *(Wfacex[x+1][y][z] - Wfacex[x][y][z])*p.dt/(2.0*p.dx);

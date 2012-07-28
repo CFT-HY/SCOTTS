@@ -110,63 +110,16 @@ typedef struct {
 
   //  double comms_time;
 
+  int slicex;
+  int slicey;
+
+  int shiftx;
+  int shifty;
+
 #ifdef MPI
 
   int totalN;
-  int slicex;
-  int slicey;
-  
-
   int inner;
-
-  // Single haloes
-  int offset_xM;
-  int offset_xP;
-  int offset_yM;
-  int offset_yP;
-  
-  // Double haloes
-  int offset_xMyM;
-  int offset_xMyP;
-  int offset_xPyM;
-  int offset_xPyP;
-    
-  // Single haloes
-  int inner_xM;
-  int inner_xP;
-  int inner_yM;
-  int inner_yP;
-  
-  // Double haloes
-  int inner_xMyM;
-  int inner_xMyP;
-  int inner_xPyM;
-  int inner_xPyP;
-
-  // Endposts
-  int offset_xMyeM;
-  int offset_xMyeP;
-  int offset_xPyeM;
-  int offset_xPyeP;
-  int offset_yMxeM;
-  int offset_yMxeP;
-  int offset_yPxeM;
-  int offset_yPxeP;
-
-
-
-
-  int *table_xM;
-  int *table_xP;
-
-  int *table_yM;
-  int *table_yP;
-
-  int *table_xMyM;
-  int *table_xMyP;
-  int *table_xPyM;
-  int *table_xPyP;
-
 
   // Ranks of neighbours
   int rank_xM;
@@ -179,13 +132,8 @@ typedef struct {
   int rank_xPyM;
   int rank_xPyP;
 
-
-
-
-
   int myposx;
   int myposy;
-
 
 #endif // MPI
  
