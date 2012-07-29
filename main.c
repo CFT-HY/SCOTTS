@@ -160,7 +160,7 @@ int main(int argc, char *argv[])
 
   if(!p.rank)
     fprintf(stderr, "Initial avg energy per site: %g\n", 
-	    initial_energy);
+	    initial_energy/((double)p.N));
 
 
 #ifdef SILO
