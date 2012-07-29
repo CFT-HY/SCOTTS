@@ -38,22 +38,25 @@ double wallpos(hydro_fields f, hydro_params p) {
 
 double get_gamma_max(hydro_fields f, hydro_params p) {
 
-  int x, xmax;
+  int x, y, z, xmax;
 
   double gmax = f.W[0][0][0];
   
   double gtest;
 
   // Just search for maxmimum
-  for(x = 1; x < p.N; x++) {
-    gtest = f.W[0][0][x];
-    if(gtest > gmax) {
-      xmax = x;
-      gmax = gtest;
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+	gtest = f.W[x][y][z];
+	if(gtest > gmax) {
+	  gmax = gtest;
+	}
 
+      }
     }
   }
-
+  
   return gmax;
 
 }

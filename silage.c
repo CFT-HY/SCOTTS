@@ -49,26 +49,18 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
 
   int sizex, sizey, sizez;
 
-#ifdef MPI
-
-  sizex = p.slicex;
-  sizey = p.slicey;
+  sizex = p.slicex+2;
+  sizey = p.slicey+2;
   sizez = p.Lz;
 
-#else
 
-  sizex = p.Lx;
-  sizey = p.Ly;
-  sizez = p.Lz;
-
-#endif
 
 
   meshsize[0] = sizex;
   meshsize[1] = sizey;
   meshsize[2] = sizez;
 
-  double **mesh = (double **)malloc(p.N*sizeof(double *));
+  double **mesh = (double **)malloc(sizex*sizey*sizez*sizeof(double *));
 
   
   mesh[0] = (double *)malloc(sizex*sizeof(double));
@@ -91,13 +83,14 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
   DBPutQuadmesh(dbfile, "quadmesh", NULL, mesh, meshsize, 3,
 		DB_DOUBLE, DB_COLLINEAR, NULL);
 
-  DBPutQuadvar1(dbfile, "E", "quadmesh", f.E, meshsize, 3,
+  DBPutQuadvar1(dbfile, "phi", "quadmesh", f.phi[0][0], meshsize, 3,
 		NULL, 0, DB_DOUBLE, DB_NODECENT, NULL);
 
-  DBPutQuadvar1(dbfile, "phi", "quadmesh", f.phi, meshsize, 3,
+  DBPutQuadvar1(dbfile, "E", "quadmesh", f.E[0][0], meshsize, 3,
 		NULL, 0, DB_DOUBLE, DB_NODECENT, NULL);
 
 
+  /*
   char *ux_name = "Ux";
   char *uy_name = "Uy";
   char *uz_name = "Uz";
@@ -134,6 +127,8 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
 
   DBPutQuadvar(dbfile, "Z", "quadmesh", 3, z_names, f.Z, meshsize, 3,
 	       NULL, 0, DB_DOUBLE, DB_NODECENT, NULL);
+
+  */
 
 
   DBClose(dbfile);
