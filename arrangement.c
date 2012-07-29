@@ -177,16 +177,14 @@ void halo_field(double ***field, hydro_params p) {
    */
 
   for(y = 1; y <= p.slicey; y++) {
-    for(z = 0; z < p.Lz; z++) {
 
-      MPI_Sendrecv(&field[1][y][z],
-		   1, MPI_DOUBLE, p.rank_xM, mpi_counter,
-		   &field[p.slicex+1][y][z],
-		   1, MPI_DOUBLE, p.rank_xP, mpi_counter,
-		   MPI_COMM_WORLD, &stat);
-
-      mpi_counter++;
-    }
+    MPI_Sendrecv(&field[1][y][0],
+		 p.Lz, MPI_DOUBLE, p.rank_xM, mpi_counter,
+		 &field[p.slicex+1][y][0],
+		 p.Lz, MPI_DOUBLE, p.rank_xP, mpi_counter,
+		 MPI_COMM_WORLD, &stat);
+    
+    mpi_counter++;
   }
 
 
@@ -197,17 +195,15 @@ void halo_field(double ***field, hydro_params p) {
    */
 
   for(y = 1; y <= p.slicey; y++) {
-    for(z = 0; z < p.Lz; z++) {
 
-
-      MPI_Sendrecv(&field[p.slicex][y][z],
-		   1, MPI_DOUBLE, p.rank_xP, mpi_counter,
-		   &field[0][y][z],
-		   1, MPI_DOUBLE, p.rank_xM, mpi_counter,
-		   MPI_COMM_WORLD, &stat);
-
-      mpi_counter++;
-    }
+    MPI_Sendrecv(&field[p.slicex][y][0],
+		 p.Lz, MPI_DOUBLE, p.rank_xP, mpi_counter,
+		 &field[0][y][0],
+		 p.Lz, MPI_DOUBLE, p.rank_xM, mpi_counter,
+		 MPI_COMM_WORLD, &stat);
+    
+    mpi_counter++;
+    
   }
 
 
@@ -219,16 +215,14 @@ void halo_field(double ***field, hydro_params p) {
    */
 
   for(x = 1; x <= p.slicex; x++) {
-    for(z = 0; z < p.Lz; z++) {
 
-      MPI_Sendrecv(&field[x][p.slicey][z],
-		   1, MPI_DOUBLE, p.rank_yP, mpi_counter,
-		   &field[x][0][z],
-		   1, MPI_DOUBLE, p.rank_yM, mpi_counter,
+      MPI_Sendrecv(&field[x][p.slicey][0],
+		   p.Lz, MPI_DOUBLE, p.rank_yP, mpi_counter,
+		   &field[x][0][0],
+		   p.Lz, MPI_DOUBLE, p.rank_yM, mpi_counter,
 		   MPI_COMM_WORLD, &stat);
 
       mpi_counter++;
-    }
   }
 
 
@@ -239,18 +233,16 @@ void halo_field(double ***field, hydro_params p) {
 
 
   for(x = 1; x <= p.slicex; x++) {
-    for(z = 0; z < p.Lz; z++) {
 
 
-      MPI_Sendrecv(&field[x][1][z],
-		   1, MPI_DOUBLE, p.rank_yM, mpi_counter,
-		   &field[x][p.slicey+1][z],
-		   1, MPI_DOUBLE, p.rank_yP, mpi_counter,
+      MPI_Sendrecv(&field[x][1][0],
+		   p.Lz, MPI_DOUBLE, p.rank_yM, mpi_counter,
+		   &field[x][p.slicey+1][0],
+		   p.Lz, MPI_DOUBLE, p.rank_yP, mpi_counter,
 		   MPI_COMM_WORLD, &stat);
 
 
       mpi_counter++;
-    }
   }
 
 
@@ -261,16 +253,13 @@ void halo_field(double ***field, hydro_params p) {
 
 
 
-  for(z = 0; z < p.Lz; z++) {
-      
-    MPI_Sendrecv(&field[p.slicex][p.slicey][z],
-		 1, MPI_DOUBLE, p.rank_xPyP, mpi_counter,
-		 &field[0][0][z],
-		 1, MPI_DOUBLE, p.rank_xMyM, mpi_counter,
-		 MPI_COMM_WORLD, &stat);
-
-    mpi_counter++;
-  }
+  MPI_Sendrecv(&field[p.slicex][p.slicey][0],
+	       p.Lz, MPI_DOUBLE, p.rank_xPyP, mpi_counter,
+	       &field[0][0][0],
+	       p.Lz, MPI_DOUBLE, p.rank_xMyM, mpi_counter,
+	       MPI_COMM_WORLD, &stat);
+  
+  mpi_counter++;
 
   /* [, ]
    *
@@ -278,50 +267,44 @@ void halo_field(double ***field, hydro_params p) {
    */
 
 
-  for(z = 0; z < p.Lz; z++) {
 
-    MPI_Sendrecv(&field[1][1][z],
-		 1, MPI_DOUBLE, p.rank_xMyM, mpi_counter,
-		 &field[p.slicex+1][p.slicey+1][z],
-		 1, MPI_DOUBLE, p.rank_xPyP, mpi_counter,
-		 MPI_COMM_WORLD, &stat);
-      
-    mpi_counter++;
-  }
+  MPI_Sendrecv(&field[1][1][0],
+	       p.Lz, MPI_DOUBLE, p.rank_xMyM, mpi_counter,
+	       &field[p.slicex+1][p.slicey+1][0],
+	       p.Lz, MPI_DOUBLE, p.rank_xPyP, mpi_counter,
+	       MPI_COMM_WORLD, &stat);
+  
+  mpi_counter++;
+  
 
   /* [' ]
    *
    * SEND UP AND LEFT
    */
 
-  for(z = 0; z < p.Lz; z++) {
       
 
-    MPI_Sendrecv(&field[1][p.slicey][z],
-		 1, MPI_DOUBLE, p.rank_xMyP, mpi_counter,
-		 &field[p.slicex+1][0][z],
-		 1, MPI_DOUBLE, p.rank_xPyM, mpi_counter,
-		 MPI_COMM_WORLD, &stat);
-
-    mpi_counter++;
-  }
-
+  MPI_Sendrecv(&field[1][p.slicey][0],
+	       p.Lz, MPI_DOUBLE, p.rank_xMyP, mpi_counter,
+	       &field[p.slicex+1][0][0],
+	       p.Lz, MPI_DOUBLE, p.rank_xPyM, mpi_counter,
+	       MPI_COMM_WORLD, &stat);
+  
+  mpi_counter++;
+  
 
   /* [ ,]
    *
    * SEND DOWN AND RIGHT
    */
 
-  for(z = 0; z < p.Lz; z++) {
-      
-    MPI_Sendrecv(&field[p.slicex][1][z],
-		 1, MPI_DOUBLE, p.rank_xPyM, mpi_counter,
-		 &field[0][p.slicey+1][z],
-		 1, MPI_DOUBLE, p.rank_xMyP, mpi_counter,
-		 MPI_COMM_WORLD, &stat);
-
-    mpi_counter++;
-  }
+  MPI_Sendrecv(&field[p.slicex][1][0],
+	       p.Lz, MPI_DOUBLE, p.rank_xPyM, mpi_counter,
+	       &field[0][p.slicey+1][0],
+	       p.Lz, MPI_DOUBLE, p.rank_xMyP, mpi_counter,
+	       MPI_COMM_WORLD, &stat);
+  
+  mpi_counter++;
 
 
   end = clock();
