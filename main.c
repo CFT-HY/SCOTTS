@@ -304,6 +304,41 @@ int main(int argc, char *argv[])
 }
 
 
+
+double ****make_vector(hydro_params p) {
+
+   
+  double *true_field = malloc(3*(p.slicex+2)*(p.slicey+2)*(p.Lz)*sizeof(double));
+
+  int x, y, i;
+
+  double ****vector = (double ****) malloc(3*sizeof(double***));
+
+  for(i=0;i<3;i++) {
+    vector[i] = (double ***)malloc((p.slicex+2)*sizeof(double **));
+
+    for(x=0;x<(p.slicex+2);x++) {
+      vector[i][x] = (double **)malloc((p.slicey+2)*sizeof(double *));
+      for(y=0;y<(p.slicey+2);y++) {
+	vector[i][x][y]
+	  = &true_field[i*(p.slicex+2)*(p.slicey+2)*(p.Lz) + x*(p.slicey+2)*(p.Lz) + y*(p.Lz)];
+      }
+    }
+  }
+
+
+  //  free(field[0][0]);
+  vector[0][0][0] = true_field;
+  
+  
+  return vector;
+}
+
+
+
+
+
+
 double ***make_field(hydro_params p) {
 
    
@@ -355,6 +390,32 @@ void free_field(hydro_params p, double ***field) {
   free(field);
 }
 
+
+
+void free_vector(hydro_params p, double ****vector) {
+
+
+  int x, y, z, i;
+  
+  
+
+  free(vector[0][0][0]);
+
+  //  fprintf(stderr,"Freeing true field at %p\n", true_field);
+
+  for(i=0;i<3;i++) {
+    for(x=0;x<(p.slicex+2);x++) {
+      free(vector[i][x]);
+    }
+    free(vector[i]);
+  }
+  
+
+
+  free(vector);
+}
+
+
 void alloc_fields(hydro_fields *f, hydro_params p) {
 
   // fields below also set up in initial condition functions
@@ -381,12 +442,14 @@ void alloc_fields(hydro_fields *f, hydro_params p) {
   // and used in hydro)
   f->p = make_field(p);
 
-  f->V = (double ****)malloc(3*sizeof(double ***));
+  f->V = make_vector(p); 
+
+  /* (double ****)malloc(3*sizeof(double ***));
 
   f->V[0] = make_field(p);
   f->V[1] = make_field(p);
   f->V[2] = make_field(p);
-
+  */
   
   f->Z = (double ****)malloc(3*sizeof(double ***));
 
@@ -458,11 +521,14 @@ void free_fields(hydro_fields *f, hydro_params p) {
   free_field(p, f->kappa);
   free_field(p, f->p);
 
+  /*
   free_field(p, f->V[0]);
   free_field(p, f->V[1]);
   free_field(p, f->V[2]);
 
   free(f->V);
+  */
+  free_vector(p, f->V);
 
   free_field(p, f->Z[0]);
   free_field(p, f->Z[1]);

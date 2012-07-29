@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
+#include <string.h>
 #include <strings.h>
 #include <time.h>
 
@@ -184,6 +185,8 @@ void zero_fields(hydro_fields f, hydro_params p);
 void free_fields(hydro_fields *f, hydro_params p);
 void free_field(hydro_params p, double ***field);
 double ***make_field(hydro_params p);
+double ****make_vector(hydro_params p);
+void free_vector(hydro_params p, double ****vector);
 
 // arrangement.c
 void layout(hydro_params *p);
