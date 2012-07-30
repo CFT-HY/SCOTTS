@@ -12,13 +12,16 @@ void silo_init(hydro_params p)
   //  if(p.silostep > 0) {
   //    fprintf(stderr,"p.silostep is %d\n", p.silostep);
   
-  char silodir[100];
-  sprintf(silodir,"silage-%d",(int)getpid());
-  if(mkdir(silodir,07777))
-    perror(silodir);
+  //  char silodir[100];
+  //  sprintf(silodir,"silage-%d",(int)getpid());
+  if(mkdir(p.silodir,07777))
+    perror(p.silodir);
   
   fprintf(stderr,"created directory %s, where the silo will go\n",
-	  silodir);
+	  p.silodir);
+
+  //  DBSetCompression("METHOD=GZIP");
+
   //  }
 }
 
@@ -34,22 +37,21 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
 
   DBfile *dbfile = NULL;
 
-  char silodir[100];
-  sprintf(silodir,"silage-%d",(int)getpid());
+  //  char silodir[100];
+  //  sprintf(silodir,"silage-%d",(int)getpid());
 
   /* Create a unique filename for the new Silo file */
-  char filename[100];
-  sprintf(filename, "%s/output-%d-%06d.silo", silodir, (int)getpid(), step);  
+  char filename[600];
+  sprintf(filename, "%s/output-%d-%06d.silo", p.silodir, p.rank, step);  
   fprintf(stderr,"Writing step to %s\n",filename);  
   dbfile = DBCreate(filename, DB_CLOBBER, DB_LOCAL,
-                    "time step", DB_PDB);
-  
+                    "time step", DB_HDF5);
 
   DBoptlist *dboptlist = NULL;
 
   dboptlist = DBMakeOptlist(1);
 
-  int col_major = DB_ROWMAJOR;
+  int col_major = DB_COLMAJOR;
 
   DBAddOption(dboptlist, DBOPT_MAJORORDER, &col_major);
 
@@ -77,10 +79,10 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
 
 
   for(x=0; x<sizex; x++) {
-      mesh[0][x] = p.dx*((double)x);
+    mesh[0][x] = p.dx*((double)(x + p.shiftx - 1));
   }
   for(x=0; x<sizey; x++) {
-      mesh[1][x] = p.dx*((double)x);
+    mesh[1][x] = p.dx*((double)(x + p.shifty - 1));
   }
   for(x=0; x<sizez; x++) {
       mesh[2][x] = p.dx*((double)x);
@@ -97,8 +99,7 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
 
   DBPutQuadvar1(dbfile, "E", "quadmesh", f.E[0][0], meshsize, 3,
 		NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
-
-
+  
   /*
   char *ux_name = "Ux";
   char *uy_name = "Uy";
@@ -114,6 +115,7 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
 
   */
 
+  /*
   fprintf(stderr, "Writing V\n");
 
   char *vx_name = "Vx";
@@ -135,7 +137,7 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
   DBPutQuadvar(dbfile, "V", "quadmesh", 3, v_names, Vtemp, meshsize, 3,
   	       NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
 
-
+  */
 
 
 
@@ -157,13 +159,71 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
 
   DBClose(dbfile);
 
-  free(Vtemp);
+  //  free(Vtemp);
 
   for(i=0;i<3;i++) {
     free(mesh[i]);
   }
   free(meshsize);
   free(mesh);
+
+
+
+
+
+
+
+
+
+  if(!p.rank) {
+    sprintf(filename, "%s/root-%06d.silo", p.silodir, step);  
+    fprintf(stderr,"Writing root to %s\n",filename);  
+    dbfile = DBCreate(filename, DB_CLOBBER, DB_LOCAL,
+		      "time step", DB_PDB);
+    
+
+    char **names = (char **)malloc(p.size*sizeof(char *));
+    int *types = (int *)malloc(p.size*sizeof(int));
+
+    for(i=0; i<p.size;i++) {
+      names[i] = (char *)malloc(600*sizeof(char));
+    }
+
+
+    for(i=0;i<p.size;i++) {
+      types[i] = DB_QUAD_RECT;
+      sprintf(names[i], "output-%d-%06d.silo:quadmesh", i, step);
+    }
+
+    DBPutMultimesh(dbfile, "quadmesh", p.size, names, types, NULL);
+
+
+    for(i=0;i<p.size;i++) {
+      types[i] = DB_QUADVAR;
+      sprintf(names[i], "output-%d-%06d.silo:E", i, step);
+    }
+
+    DBPutMultivar(dbfile, "E", p.size, names, types, NULL);
+
+
+    for(i=0;i<p.size;i++) {
+      types[i] = DB_QUADVAR;
+      sprintf(names[i], "output-%d-%06d.silo:phi", i, step);
+    }
+
+    DBPutMultivar(dbfile, "phi", p.size, names, types, NULL);
+
+
+    for(i=0;i<p.size;i++) {
+      free(names[i]);
+    }
+
+  DBClose(dbfile);
+
+    free(names);
+    free(types);
+	
+  }
 
 }  
   

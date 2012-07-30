@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
 
   clock_t start, end;
 
-
+  int still_nucleate = 1;
 
 
 
@@ -137,7 +137,8 @@ int main(int argc, char *argv[])
   }
   */
 
-  initial_scalar_bubble(f, p);
+  initial_blank(f, p);
+  // initial_scalar_bubble(f, p);
   // initial_3D(f,p,inverse);
   // initial_step(f,p);
 
@@ -228,6 +229,35 @@ int main(int argc, char *argv[])
 		100.0*fabs((current_energy-initial_energy)/initial_energy));
       */
 
+    }
+
+    if(step % 100 == 0 && still_nucleate) {
+      fprintf(stderr,"Nucleating a bubble (safe distance = %d)\n", safe_distance(f,p));
+
+      int tryx = random()%p.Lx;
+      int tryy = random()%p.Ly;
+      int tryz = random()%p.Lz;
+
+      int attempts = 0;
+
+      while(!can_nucleate(f,p,tryx,tryy,tryz) && attempts < 20) {
+	if(!p.rank)
+	  fprintf(stderr,"Not allowed to nucleate at (%d,%d,%d)!\n",tryx,tryy,tryz);
+	tryx = random()%p.Lx;
+	tryy = random()%p.Ly;
+	tryz = random()%p.Lz;
+
+	attempts++;
+      }
+
+      if(attempts == 20) {
+	fprintf(stderr,"Gave up trying to nucleate!\n");
+	still_nucleate = 0;
+
+      } else {
+	nucleate_at(f, p, tryx, tryy, tryz);
+	halo_field(f.phi, p);
+      }
     }
 
     // Do field step
