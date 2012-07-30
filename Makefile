@@ -1,13 +1,17 @@
-# CC := gcc -DSILO  #  -DPAPI 
-CC := mpicc -DMPI  -DSILO #  -DPAPI
+# CC := gcc # -DSILO # -DPAPI -DSILO
+CC := mpicc -DMPI -DSILO
 
 # on pc168
 CFLAGS := -O3
+# on afo
+CFLAGS := -O3 -I/home/weir/Installed/silo-4.8-bsd/include/
 # on my mac:
 # CFLAGS := -O3 -I/Users/weir/Installed/silo-4.8-bsd/include/
 
 # on pc168:
-LIBS := -lm -lsiloh5  #  -lpapi
+# LIBS := -lm # -lsiloh5 -lpapi
+# on afo
+LIBS := -L/home/weir/Installed/silo-4.8-bsd/lib/ -lsilo
 # on my mac:
 # LIBS := -lm -L/Users/weir/Installed/silo-4.8-bsd/lib/ -lsilo
 
