@@ -45,7 +45,7 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
   sprintf(filename, "%s/output-%d-%06d.silo", p.silodir, p.rank, step);  
   fprintf(stderr,"Writing step to %s\n",filename);  
   dbfile = DBCreate(filename, DB_CLOBBER, DB_LOCAL,
-                    "time step", DB_HDF5);
+                    "time step", DB_PDB);
 
   DBoptlist *dboptlist = NULL;
 

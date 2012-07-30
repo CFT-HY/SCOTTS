@@ -1,14 +1,14 @@
 # Example input file for 1D weak deflagration?
 
 # How long the simulation takes
-Lx      128
-Ly	128
-Lz	128
-steps  2001
+Lx      200
+Ly	200
+Lz	200
+steps  1001
 
 # How big the simulation is
 dx     2.0
-dt     0.1
+dt     0.2
  
 # Viscosity terms
 Cav    0.0

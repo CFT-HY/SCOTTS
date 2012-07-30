@@ -87,9 +87,15 @@ void layout(hydro_params *p) {
 	p->slicey = p->slicey/prime[n];
       } else {
 	// Oops!
-	if(!p->rank)
-	  fprintf(stderr,"Should not get here\n");
-	exit(100);
+	if(!p->rank &&  (p->slicex % prime[n] != 0)) {
+	  fprintf(stderr,"Should not get here -- still can\'t divide by x!\n");
+	  exit(100);
+	} else {
+	  if(!p->rank) {
+	    fprintf(stderr,"Dividing x direction...\n");
+	  }
+	  p->slicex = p->slicex/prime[n];
+	}
 
       }
     }
