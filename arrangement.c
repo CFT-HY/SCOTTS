@@ -12,9 +12,6 @@ double comms_time;
 #ifdef MPI
 
 
-
-
-
 /*
  * Inspired by the contents of setup_layout_generic.c in Kari's code
  */
@@ -326,6 +323,15 @@ double reduce_max(double result, hydro_params p) {
 
   double total = 0.0;
   MPI_Allreduce(&result, &total, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+  return total;
+
+}
+
+
+int reduce_and(int result, hydro_params p) {
+
+  int total = 0;
+  MPI_Allreduce(&result, &total, 1, MPI_INT, MPI_LAND, MPI_COMM_WORLD);
   return total;
 
 }

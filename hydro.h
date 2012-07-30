@@ -117,6 +117,8 @@ typedef struct {
   int shiftx;
   int shifty;
 
+  char silodir[500];
+
 #ifdef MPI
 
   int totalN;
@@ -196,6 +198,7 @@ int get_z(int n, hydro_params p);
 void halo_field(double ***field, hydro_params p);
 double reduce_sum(double result, hydro_params p);
 double reduce_max(double result, hydro_params p);
+int reduce_and(int result, hydro_params p);
 void init_comms_time(hydro_params *p);
 double get_comms_time(hydro_params *p);
 
@@ -242,7 +245,10 @@ double psibar(double x, double lbar);
 void create_gaussian_bubble(hydro_fields f, hydro_params p);
 void create_shock_tube(hydro_fields f, hydro_params p);
 */
-void initial_3D(hydro_fields f, hydro_params p, int **inverse);
+void initial_3D(hydro_fields f, hydro_params p);
+void initial_blank(hydro_fields f, hydro_params p);
+void nucleate_at(hydro_fields f, hydro_params p, int x0, int y0, int z0);
+int can_nucleate(hydro_fields f, hydro_params p, int x0, int y0, int z0);
 
 // output.c
 

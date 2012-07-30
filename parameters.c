@@ -50,6 +50,8 @@ void get_parameters(char *infile, hydro_params *p)
 
   int set_initial = 0;
 
+  int set_silodir = 0;
+
   char key[100];
   char value[100];
   char total[200];
@@ -166,6 +168,15 @@ void get_parameters(char *infile, hydro_params *p)
       }
       set_initial = 1;
     }
+    else if(!strcasecmp(key,"silodir")) {
+     
+      if(strlen(value) > 500)
+	fprintf(stderr,"Warning: silodir name \"%s\" may be too long!\n", value);
+
+      strncpy(p->silodir, value, 500);
+     
+      set_silodir = 1;
+    }
 
 
   }
@@ -213,6 +224,9 @@ void get_parameters(char *infile, hydro_params *p)
   } else if(!set_initial) {
     fprintf(stderr, "Did not set parameter \'initial\'\n");
     exit(100);
+  } else if(!set_silodir) {
+    fprintf(stderr, "Did not set parameter \'silodir\'\n");
+    exit(100);
   }
 
 
@@ -224,13 +238,15 @@ void get_parameters(char *infile, hydro_params *p)
 	    "-- Lx %d, Ly %d, Lz %d\n"			\
 	    "-- Cav %g, C %g,\n"			\
 	    "-- Lheat %g, sigma %g, lcorr %g\n"		\
-	    "-- interval %d, silointerval %d\n",
+	    "-- interval %d, silointerval %d\n"         \
+	    "-- silodir \"%s\"\n",
 	    infile,
 	    p->dx, p->dt, p->steps,		\
 	    p->Lx, p->Ly, p->Lz,		\
 	    p->Cav, p->C,			\
 	    p->Lheat, p->sigma, p->lcorr,	\
-	    p->interval, p->silointerval);
+	    p->interval, p->silointerval,       \
+	    p->silodir);
     
     if(p->initial == INIT_SHOCK_TUBE) {
       fprintf(stderr, "-- shock tube\n");
