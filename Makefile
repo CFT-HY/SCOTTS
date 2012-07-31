@@ -1,24 +1,24 @@
 # CC := gcc # -DSILO # -DPAPI -DSILO
-CC := mpicc -DMPI -DSILO
+CC := mpicc -DMPI # -DFFT
 
 # on pc168
-CFLAGS := -O3
+CFLAGS := -O3 -L/home/weir/local/lib -I/home/weir/local/include
 # on afo
-CFLAGS := -O3 -I/home/weir/Installed/silo-4.8-bsd/include/
+# CFLAGS := -O3 -I/home/weir/Installed/silo-4.8-bsd/include/
 # on my mac:
 # CFLAGS := -O3 -I/Users/weir/Installed/silo-4.8-bsd/include/
 
 # on pc168:
-# LIBS := -lm # -lsiloh5 -lpapi
+LIBS := -lfftw3_mpi -lfftw3 -lm # -lsiloh5 -lpapi
 # on afo
-LIBS := -L/home/weir/Installed/silo-4.8-bsd/lib/ -lsilo
+# LIBS := -L/home/weir/Installed/silo-4.8-bsd/lib/ -lsilo
 # on my mac:
 # LIBS := -lm -L/Users/weir/Installed/silo-4.8-bsd/lib/ -lsilo
 
 
 OBJECTS := main.o evolve.o potential.o energy.o eos.o \
 	transport.o initial.o output.o parameters.o silage.o \
-	util.o papi.o arrangement.o
+	util.o papi.o arrangement.o fft.o
 
 BINARY := run/hydro
 

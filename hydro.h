@@ -31,6 +31,10 @@
 #include <mpi.h>
 #endif // MPI
 
+#ifdef FFT
+#include <fftw3-mpi.h>
+#endif // FFT
+
 
 /*
  * Not sure these are useful in 3D, but a way of enumerating choices of the
@@ -280,5 +284,7 @@ double minof3(double a, double b, double c);
 double maxof3(double a, double b, double c);
 double minof2(double a, double b);
 
-
-
+// fft.c
+#ifdef FFT
+void fft(hydro_fields f, hydro_params p);
+#endif // FFT
