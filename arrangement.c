@@ -514,6 +514,14 @@ double reduce_max(double result, hydro_params p) {
   return result;
 }
 
+int reduce_and(int result, hydro_params p) {
+
+  // do nothing
+  return result;
+
+}
+
+
 void init_comms_time(hydro_params *p) {
   comms_time = 0.0;
 }

@@ -50,6 +50,12 @@ void papi_init()
     exit(1);
   }
 
+  if (PAPI_add_event(EventSet, PAPI_TLB_DM) != PAPI_OK) {
+    fprintf(stderr, "Error adding PAPI_TLB_DM to event set!\n");
+    exit(1);
+  }
+
+
   /* Start counting events in the Event Set */
   if (PAPI_start(EventSet) != PAPI_OK) {
     fprintf(stderr, "Error calling PAPI_start with chosen event set!\n");
@@ -62,7 +68,7 @@ void papi_init()
 void papi_finalise()
 {
 
-  long_long values[4];
+  long_long values[5];
 
   fprintf(stderr, "Finalising PAPI counters...\n");
 
@@ -77,6 +83,7 @@ void papi_finalise()
   fprintf(stderr, "L1 misses: %lld\n", values[1]);
   fprintf(stderr, "L2 misses: %lld\n", values[2]);
   fprintf(stderr, "L3 misses: %lld\n", values[3]);
+  fprintf(stderr, "TLB misses: %lld\n", values[4]);
 }
 
 #endif // PAPI
