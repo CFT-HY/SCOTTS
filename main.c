@@ -212,11 +212,6 @@ int main(int argc, char *argv[])
 
     if((p.interval > 0) && (step % p.interval == 0)) {
 
-#ifdef FFT
-
-      fft(f,p);
-
-#endif // FFT
 
       current_energy = reduce_sum(total_energy(f, p), p);
       current_field_energy = reduce_sum(field_energy(f, p), p);
@@ -277,8 +272,16 @@ int main(int argc, char *argv[])
 
    
     // Dump a whole lot of stuff (currently just use Silo for that)    
+    if(step == p.steps - 1) {
+
+#ifdef FFT
+      
+      fft(f,p);
+    
+#endif // FFT
+    
+
     /*
-    if(step == p.steps - 1)
       for(x=0;x<p.N;x++) {
 	if(inverse[x][0] == inverse[x][1]) {
 	  fprintf(stdout,"%lf %.10lf %.10lf %.10lf %.10lf %.10lf\n",
@@ -291,7 +294,10 @@ int main(int argc, char *argv[])
 	  
 	}
       }    
+
     */
+
+    }
 
     // Advection of state variables
     advect_E(f, p);
