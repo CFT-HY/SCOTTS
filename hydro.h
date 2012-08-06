@@ -230,6 +230,7 @@ void Vdpot(hydro_params p, double *T, double *phi, double *Vprecalc);
 
 double field_energy(hydro_fields f, hydro_params p);
 double total_energy(hydro_fields f, hydro_params p);
+void energy_density(hydro_fields f, hydro_params p, double ***en);
 
 
 // eos.c

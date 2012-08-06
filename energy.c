@@ -109,3 +109,52 @@ double total_energy(hydro_fields f, hydro_params p) {
 }
     
 			    
+
+
+
+
+void energy_density(hydro_fields f, hydro_params p, double ***en) {
+
+  int x, y, z;
+
+  double vol;
+
+  vol = p.dx*p.dx*p.dx;
+
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+
+	en[x][y][z] = 0.0;
+
+	// rest energy
+	en[x][y][z] += (f.E[x][y][z]/f.W[x][y][z])*vol;
+	
+	// kinetic energy
+	en[x][y][z] += f.kappa[x][y][z]*(f.E[x][y][z]/f.W[x][y][z])*(f.W[x][y][z]*f.W[x][y][z]-1.0)*vol;
+	
+	// momentum squared (scalar field kinetic energy)
+	en[x][y][z] += 0.5*f.pifull[x][y][z]*f.pifull[x][y][z]*vol;
+	
+	// gradient term
+	
+	en[x][y][z] += 0.125*((f.phi[x+1][y][z] - f.phi[x-1][y][z])/p.dx)
+	  *((f.phi[x+1][y][z] - f.phi[x-1][y][z])/p.dx)*vol;
+	
+	en[x][y][z] += 0.125*((f.phi[x][y+1][z] - f.phi[x][y-1][z])/p.dx)
+	  *((f.phi[x][y+1][z] - f.phi[x][y-1][z])/p.dx)*vol;
+	
+	en[x][y][z] += 0.125*((f.phi[x][y][(z+1)%p.Lz] - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx)
+	  *((f.phi[x][y][(z+1)%p.Lz] - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx)*vol;
+
+	  
+
+      }
+      
+    }
+  }
+
+
+}
+    
+			    

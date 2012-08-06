@@ -405,7 +405,9 @@ void nucleate_at(hydro_fields f, hydro_params p, int x0, int y0, int z0) {
   int x, y, z;
   int i;
 
-  fprintf(stderr,"Nucleating at (%d,%d,%d)\n",x0,y0,z0);
+  if(!p.rank)
+    fprintf(stderr,"Nucleating at (%d,%d,%d)\n",x0,y0,z0);
+
   //  fprintf(stderr,"my shiftx is %d and shifty is %d\n", p.shiftx, p.shifty);
 
   int shortx, shorty, shortz;
@@ -447,7 +449,7 @@ void nucleate_at(hydro_fields f, hydro_params p, int x0, int y0, int z0) {
     }
   }
 
-  fprintf(stderr,"Done\n");
+  //  fprintf(stderr,"Done\n");
 }
 
 
