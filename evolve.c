@@ -65,7 +65,7 @@ void evolve_field(hydro_fields f, hydro_params p) {
 	 - 6.0*f.phi[x][y][z] 
 	 + f.phi[x-1][y][z] + f.phi[x][y-1][z] + f.phi[x][y][((z-1+p.Lz)%p.Lz)]
 	 )/(p.dx*p.dx)
-	- Vdf(p, f.T[x][y][z], f.phi[x][y][z]));
+	- Vdf(p, f.T[x][y][z], f.phi[x][y][z]))/(1-s);
     
 
     // pifull is (1.5*pi - 0.5*piold), not sure why
