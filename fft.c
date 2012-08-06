@@ -22,10 +22,26 @@ void fft(hydro_fields f, hydro_params p) {
 
   double ***en = make_field(p);
 
+  double *trim_en = (double *)malloc(p.slicex*p.slicey*p.Lz*sizeof(double));
 
   fftw_mpi_init();
 
   energy_density(f, p, en);
+
+  double checken = 0.0;
+  for(x=1; x<=p.slicex; x++) {
+    for(y=1; y<=p.slicey; y++) {
+      for(z=0; z<p.Lz; z++) {
+	checken += en[x][y][z];
+
+	trim_en[(x-1)*p.slicey*p.Lz + (y-1)*p.Lz + z] = en[x][y][z];
+      }
+    }
+  }
+
+  fprintf(stderr,"Check: energy density claimed %lf, total energy %lf\n",
+	  reduce_sum(checken, p), reduce_sum(total_energy(f, p), p));
+
 
   alloc_local = fftw_mpi_local_size_3d(n0, n1, n2,
 				       MPI_COMM_WORLD, &x_thickness, &x_start);
@@ -106,7 +122,7 @@ void fft(hydro_fields f, hydro_params p) {
 #endif // FFT_DEBUG
 
 	  memcpy(&slice[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
-		 &en[0][0][(x-p.shiftx)*p.slicey*p.Lz],
+		 &trim_en[(x-p.shiftx)*p.slicey*p.Lz],
 		 p.slicey*p.Lz*sizeof(double));
 	  continue;
 	}
@@ -139,7 +155,7 @@ void fft(hydro_fields f, hydro_params p) {
 	      p.rank, x*ny + p.myposy);
 #endif // FFT_DEBUG
 
-      MPI_Send(&en[0][0][(x-p.shiftx)*p.slicey*p.Lz],
+      MPI_Send(&trim_en[(x-p.shiftx)*p.slicey*p.Lz],
 	       p.slicey*p.Lz,
 	       MPI_DOUBLE,
 	       x/slab,
@@ -168,6 +184,23 @@ void fft(hydro_fields f, hydro_params p) {
   // Alloc slab array and do communication to get it into place
 
   
+#ifdef FFT_DEBUG
+  fprintf(stderr,"Done slabulation...\n");
+#endif // FFT_DEBUG
+
+  checken = 0.0;
+  for(x=0; x<slab; x++) {
+    for(y=0; y<p.Ly; y++) {
+      for(z=0; z<p.Lz; z++) {
+	checken += slice[x*p.Ly*p.Lz + y*p.Lz + z];
+      }
+    }
+  }
+
+  fprintf(stderr,"Second check: energy density claimed %lf\n",
+	  reduce_sum(checken, p));
+
+
 
 
   for(x=0;x<slab;x++) {
@@ -208,8 +241,8 @@ void fft(hydro_fields f, hydro_params p) {
     for(y=0;y<p.Ly;y++) {
       for(z=0;z<p.Lz;z++) {
 
-	if((x+x_start)==0 && y==0 && z==0)
-	  continue;
+	//	if((x+x_start)==0 && y==0 && z==0)
+	//	  continue;
 
 	kmode = sqrt(
 		     ((double)((x+x_start)*(x+x_start)))/((double)(p.Lx*p.Lx))
