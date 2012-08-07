@@ -455,8 +455,8 @@ void nucleate_at(hydro_fields f, hydro_params p, int x0, int y0, int z0) {
 
 
 
-/*
-void initial_3D(hydro_fields f, hydro_params p, int **inverse) {
+
+void initial_3D(hydro_fields f, hydro_params p) {
   
 
   double sigmlo = 2.0*sqrt(2.0)/81.0*p.alpha*p.alpha*p.alpha
@@ -500,37 +500,38 @@ void initial_3D(hydro_fields f, hydro_params p, int **inverse) {
   int x, y, z;
   int i;
 
-  for(i=0; i < p.N; i++) {
-    x = inverse[i][0];
-    y = inverse[i][1];
-    z = inverse[i][2];
 
-    f.phi[i] = 0.0; // cstrab*(1.0 + 0.1*drand48());
+  for(x=1;x<=p.slicex;x++) {
+    for(y=1;y<=p.slicey;y++) {
+      for(z=0;z<p.Lz;z++) {
 
-    f.pifull[i] = 0.0;
+    f.phi[x][y][z] = 0.0; // cstrab*(1.0 + 0.1*drand48());
+
+    f.pifull[x][y][z] = 0.0;
 	
-    f.T[i] = 0.0; // p.Tconst;
+    f.T[x][y][z] = 0.0; // p.Tconst;
 
-    if( (x + y) < p.Lx/2  || (x + y) > 3*p.Lx/2) //  sqrt((x-p.Lx/2)*(x-p.Lx/2)+(y-p.Ly/2)*(y-p.Ly/2)) < 40)
-      f.E[i] = El;
+    if( (x+p.shiftx-1 + y+p.shifty-1) < p.Lx/2  || (x+p.shiftx-1 + y+p.shifty-1) > 3*p.Lx/2) //  sqrt((x-p.Lx/2)*(x-p.Lx/2)+(y-p.Ly/2)*(y-p.Ly/2)) < 40)
+      f.E[x][y][z] = El;
     else
-      f.E[i] = Er;
+      f.E[x][y][z] = Er;
 	
 	
     // For debugging purposes
     // fprintf(stderr,"xc = %lf fi = %lf E = %lf\n", xc[x], phi[x],E[x]);
 
-    f.Z[0][i] = 0.0;	
-    f.Z[1][i] = 0.0;
-    f.Z[2][i] = 0.0;
+    f.Z[0][x][y][z] = 0.0;	
+    f.Z[1][x][y][z] = 0.0;
+    f.Z[2][x][y][z] = 0.0;
     
     
-    f.W[i] = 1.0;
-	
+    f.W[x][y][z] = 1.0;
+      }
+    }
   }
 }
 
-
+/*
 
 
 

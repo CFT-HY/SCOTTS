@@ -137,9 +137,9 @@ int main(int argc, char *argv[])
   }
   */
 
-  initial_blank(f, p);
-  // initial_scalar_bubble(f, p);
-  // initial_3D(f,p,inverse);
+  // initial_blank(f, p);
+  initial_scalar_bubble(f, p);
+  // initial_3D(f,p);
   // initial_step(f,p);
 
 
@@ -162,6 +162,7 @@ int main(int argc, char *argv[])
   if(!p.rank)
     fprintf(stderr, "Initial avg energy per site: %g\n", 
 	    initial_energy/((double)p.N));
+
 
 
 #ifdef SILO
@@ -198,6 +199,8 @@ int main(int argc, char *argv[])
 
   start = clock();
 
+  double t00;
+
   for(step = 0; step < p.steps; step++) {
 
     if((p.silointerval > 0) && (step % p.silointerval == 0)) {
@@ -211,6 +214,7 @@ int main(int argc, char *argv[])
     }
 
     if((p.interval > 0) && (step % p.interval == 0)) {
+
 
 
       current_energy = reduce_sum(total_energy(f, p), p);
@@ -232,6 +236,10 @@ int main(int argc, char *argv[])
 
     }
 
+
+
+
+    still_nucleate = 0;
     if(step % 100 == 0 && still_nucleate) {
       fprintf(stderr,"Nucleating a bubble (safe distance = %d)\n", safe_distance(f,p));
 
@@ -266,6 +274,14 @@ int main(int argc, char *argv[])
     
     // Calculate EOS
     eq_of_state(f, p);
+
+    
+      t00 = reduce_sum(tzerozero(f, p), p);
+      current_energy = reduce_sum(total_energy(f, p), p);
+      if(!p.rank)
+	fprintf(stderr, "Comparison: T00 seems to be: %6lf; energy %6lf\n",
+		t00, current_energy);
+    
 
     // Do the hydro bits
     evolve_hydro(f, p);
@@ -379,6 +395,39 @@ double ****make_vector(hydro_params p) {
 
 
 
+double ****make_tensor(hydro_params p) {
+
+
+   
+  double *true_field = malloc(TENSOR_CPTS*(p.slicex+2)*(p.slicey+2)*(p.Lz)*sizeof(double));
+
+  int x, y, i;
+
+  double ****tensor = (double ****) malloc(TENSOR_CPTS*sizeof(double***));
+
+  for(i=0;i<TENSOR_CPTS;i++) {
+    tensor[i] = (double ***)malloc((p.slicex+2)*sizeof(double **));
+
+    for(x=0;x<(p.slicex+2);x++) {
+      tensor[i][x] = (double **)malloc((p.slicey+2)*sizeof(double *));
+      for(y=0;y<(p.slicey+2);y++) {
+	tensor[i][x][y]
+	  = &true_field[i*(p.slicex+2)*(p.slicey+2)*(p.Lz) + x*(p.slicey+2)*(p.Lz) + y*(p.Lz)];
+      }
+    }
+  }
+
+
+  //  free(field[0][0]);
+  tensor[0][0][0] = true_field;
+  
+  
+  return tensor;
+}
+
+
+
+
 
 
 double ***make_field(hydro_params p) {
@@ -456,6 +505,31 @@ void free_vector(hydro_params p, double ****vector) {
 
   free(vector);
 }
+
+
+void free_tensor(hydro_params p, double ****tensor) {
+
+
+  int x, y, z, i;
+  
+  
+
+  free(tensor[0][0][0]);
+
+  //  fprintf(stderr,"Freeing true field at %p\n", true_field);
+
+  for(i=0;i<TENSOR_CPTS;i++) {
+    for(x=0;x<(p.slicex+2);x++) {
+      free(tensor[i][x]);
+    }
+    free(tensor[i]);
+  }
+  
+
+
+  free(tensor);
+}
+
 
 
 void alloc_fields(hydro_fields *f, hydro_params p) {
