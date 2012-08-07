@@ -164,6 +164,74 @@ double tzerozero(hydro_fields f, hydro_params p) {
 }
 
 
+void stress_energy(hydro_fields f, hydro_params p, double ****Tij) {
+
+  int x, y, z;
+
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+
+	// fluid bits
+
+	Tij[CPT_11][x][y][z] = (4.0*p.a*f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]
+				- f.T[x][y][z]*VTf(p, f.T[x][y][z], f.phi[x][y][z]))
+	  *f.U[0][x][y][z]*f.U[0][x][y][z];
+
+	Tij[CPT_21][x][y][z] = (4.0*p.a*f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]
+				- f.T[x][y][z]*VTf(p, f.T[x][y][z], f.phi[x][y][z]))
+	  *f.U[1][x][y][z]*f.U[0][x][y][z];
+
+	Tij[CPT_31][x][y][z] = (4.0*p.a*f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]
+				- f.T[x][y][z]*VTf(p, f.T[x][y][z], f.phi[x][y][z]))
+	  *f.U[2][x][y][z]*f.U[0][x][y][z];
+
+	Tij[CPT_22][x][y][z] = (4.0*p.a*f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]
+				- f.T[x][y][z]*VTf(p, f.T[x][y][z], f.phi[x][y][z]))
+	  *f.U[1][x][y][z]*f.U[1][x][y][z];
+
+	Tij[CPT_32][x][y][z] = (4.0*p.a*f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]
+				- f.T[x][y][z]*VTf(p, f.T[x][y][z], f.phi[x][y][z]))
+	  *f.U[2][x][y][z]*f.U[1][x][y][z];
+
+	Tij[CPT_33][x][y][z] = (4.0*p.a*f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]
+				- f.T[x][y][z]*VTf(p, f.T[x][y][z], f.phi[x][y][z]))
+	  *f.U[2][x][y][z]*f.U[2][x][y][z];
+
+
+	// Gradient bits
+
+	Tij[CPT_11][x][y][z] +=
+	  0.125*((f.phi[x+1][y][z] - f.phi[x-1][y][z])/p.dx)
+	  *((f.phi[x+1][y][z] - f.phi[x-1][y][z])/p.dx);
+
+	Tij[CPT_21][x][y][z] += 
+	  0.125*((f.phi[x+1][y][z] - f.phi[x-1][y][z])/p.dx)
+	  *((f.phi[x][y+1][z] - f.phi[x][y-1][z])/p.dx);
+
+	Tij[CPT_31][x][y][z] +=
+	  0.125*((f.phi[x][y][(z+1)%p.Lz] - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx)
+	  *((f.phi[x+1][y][z] - f.phi[x-1][y][z])/p.dx);
+
+	Tij[CPT_22][x][y][z] += 
+	  0.125*((f.phi[x][y+1][z] - f.phi[x][y-1][z])/p.dx)
+	  *((f.phi[x][y+1][z] - f.phi[x][y-1][z])/p.dx);
+
+	Tij[CPT_32][x][y][z] +=
+	  0.125*((f.phi[x][y][(z+1)%p.Lz] - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx)
+	  *((f.phi[x][y+1][z] - f.phi[x][y-1][z])/p.dx);
+
+	Tij[CPT_33][x][y][z] +=
+	  0.125*((f.phi[x][y][(z+1)%p.Lz] - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx)
+	  *((f.phi[x][y][(z+1)%p.Lz] - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx);
+
+
+      }
+    }
+  }
+
+}
+
 
 
 void energy_density(hydro_fields f, hydro_params p, double ***en) {
