@@ -303,7 +303,8 @@ double minof2(double a, double b);
 
 // fft.c
 #ifdef FFT
-void fft(hydro_fields f, hydro_params p);
+void fft_field(hydro_fields f, hydro_params p);
+void fft_tensor(hydro_fields f, hydro_params p);
 #endif // FFT
 
 

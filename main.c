@@ -294,7 +294,7 @@ int main(int argc, char *argv[])
 
 #ifdef FFT
       
-      fft(f,p);
+      fft_tensor(f,p);
     
 #endif // FFT
     
