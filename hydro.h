@@ -45,6 +45,14 @@
 #define INIT_BUBBLE 2
 
 
+#define TENSOR_CPTS 6
+
+#define CPT_11 0
+#define CPT_21 1
+#define CPT_31 2
+#define CPT_22 3
+#define CPT_32 4
+#define CPT_33 5
 
 /*
  * Composed directions
@@ -192,7 +200,9 @@ void free_fields(hydro_fields *f, hydro_params p);
 void free_field(hydro_params p, double ***field);
 double ***make_field(hydro_params p);
 double ****make_vector(hydro_params p);
+double ****make_tensor(hydro_params p);
 void free_vector(hydro_params p, double ****vector);
+void free_tensor(hydro_params p, double ****vector);
 
 // arrangement.c
 void layout(hydro_params *p);
@@ -289,3 +299,8 @@ double minof2(double a, double b);
 #ifdef FFT
 void fft(hydro_fields f, hydro_params p);
 #endif // FFT
+
+
+
+
+double tzerozero(hydro_fields f, hydro_params p);

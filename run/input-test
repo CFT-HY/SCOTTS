@@ -1,18 +1,18 @@
 # Example input file for 1D weak deflagration?
 
 # How long the simulation takes
-Lx     256
-Ly	256
+Lx     192
+Ly	192
 Lz	1
-steps  10001
+steps  100
 
 # How big the simulation is
-dx     4.0
+dx     1.0
 dt     0.1
  
 # Viscosity terms
 Cav    0.0
-C      0.1
+C      0.0
 
 # Potential parameters
 Lheat  0.1
@@ -20,7 +20,7 @@ sigma  0.1
 lcorr  6.0
 
 # How often to write data
-interval 20
+interval 10
 silointerval 0
 
 # Initial conditions

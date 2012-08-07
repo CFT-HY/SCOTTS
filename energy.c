@@ -72,7 +72,8 @@ double total_energy(hydro_fields f, hydro_params p) {
 	
 	// kinetic energy
 	kinE += f.kappa[x][y][z]*(f.E[x][y][z]/f.W[x][y][z])*(f.W[x][y][z]*f.W[x][y][z]-1.0)*vol;
-	
+
+		
 	// momentum squared (scalar field kinetic energy)
 	kinphi += 0.5*f.pifull[x][y][z]*f.pifull[x][y][z]*vol;
 	
@@ -87,7 +88,6 @@ double total_energy(hydro_fields f, hydro_params p) {
 	grdphi += 0.125*((f.phi[x][y][(z+1)%p.Lz] - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx)
 	  *((f.phi[x][y][(z+1)%p.Lz] - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx)*vol;
 
-	  
 
       }
       
@@ -109,6 +109,59 @@ double total_energy(hydro_fields f, hydro_params p) {
 }
     
 			    
+
+// as a test
+double tzerozero(hydro_fields f, hydro_params p) {
+
+  double total = 0.0;
+
+  int x, y, z;
+
+  double vol;
+
+  vol = p.dx*p.dx*p.dx;
+
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+
+	// d_mu phi d^nu phi
+	// pi field if 00, otherwise grad mu, grad nu
+	total += f.pifull[x][y][z]*f.pifull[x][y][z];
+
+	// d_alpha phi d^alpha phi
+	// (minus sign if 00, otherwise plus)
+	total -= (0.5*f.pifull[x][y][z]*f.pifull[x][y][z]
+		  - 0.125*((f.phi[x+1][y][z] - f.phi[x-1][y][z])/p.dx)
+		  *((f.phi[x+1][y][z] - f.phi[x-1][y][z])/p.dx)
+		  - 0.125*((f.phi[x][y+1][z] - f.phi[x][y-1][z])/p.dx)
+		  *((f.phi[x][y+1][z] - f.phi[x][y-1][z])/p.dx)
+		  - 0.125*((f.phi[x][y][(z+1)%p.Lz] - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx)
+		  *((f.phi[x][y][(z+1)%p.Lz] - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx))*vol;
+
+	// radiative fluid pressure
+	// (minus sign if 00, otherwise plus)
+	total -= (p.a*f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]);
+	
+	// potential
+	// (minus sign if 00, otherwise plus)
+	total -= (-1.0*Vf(p, f.T[x][y][z], f.phi[x][y][z]));
+
+	// fluid energy
+	// (remember U_mu U_nu's at the end, no other sign)
+	total += (4.0*p.a*f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]
+		  - f.T[x][y][z]*VTf(p, f.T[x][y][z], f.phi[x][y][z]))
+	  *f.W[x][y][z]*f.W[x][y][z];
+	// U = (W, U1, U2, U3)
+
+      }
+    }
+  }
+
+  return total;
+
+
+}
 
 
 
