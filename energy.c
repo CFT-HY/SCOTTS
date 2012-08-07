@@ -164,6 +164,8 @@ double tzerozero(hydro_fields f, hydro_params p) {
 }
 
 
+
+// ONLY stuff that is linear in the metric
 void stress_energy(hydro_fields f, hydro_params p, double ****Tij) {
 
   int x, y, z;
