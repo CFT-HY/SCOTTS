@@ -286,7 +286,9 @@ int main(int argc, char *argv[])
     // Do the hydro bits
     evolve_hydro(f, p);
 
-   
+    // Evolve metric perturbations
+    evolve_uij(f, p);
+
     // Dump a whole lot of stuff (currently just use Silo for that)    
     if(step == p.steps - 1) {
 
@@ -566,6 +568,7 @@ void alloc_fields(hydro_fields *f, hydro_params p) {
   f->V[1] = make_field(p);
   f->V[2] = make_field(p);
   */
+
   
   f->Z = (double ****)malloc(3*sizeof(double ***));
 
@@ -585,6 +588,9 @@ void alloc_fields(hydro_fields *f, hydro_params p) {
   f->F[1] = make_field(p);
   f->F[2] = make_field(p);
 
+  f->uij = make_tensor(p);
+  f->udotij = make_tensor(p);
+
   // (calloc considered harmful)
 }
 
@@ -594,6 +600,7 @@ void alloc_fields(hydro_fields *f, hydro_params p) {
 void zero_fields(hydro_fields f, hydro_params p) {
 
   int x;
+  int i;
 
   // We don't need to do this because create_gaussian_bubble
   // initialises everything, but it keeps valgrind quiet.
@@ -618,6 +625,11 @@ void zero_fields(hydro_fields f, hydro_params p) {
     f.phiold[0][0][x] = 0.0000;
     f.kappa[0][0][x] = 0.0000;
     f.p[0][0][x] = 0.0000;
+
+    for(i=0; i<TENSOR_CPTS; i++) {
+      f.uij[i][0][0][x] = 0.0;
+      f.udotij[i][0][0][x] = 0.0;
+    }
   }
 
 }
@@ -665,6 +677,9 @@ void free_fields(hydro_fields *f, hydro_params p) {
   free(f->F);
 
 
+  free_tensor(p, f->uij);
+
+  free_tensor(p, f->udotij);
 
  
 }
