@@ -2,6 +2,146 @@
 
 // #define FFT_DEBUG
 
+double proj(int T, double kx, double ky, double kz) {
+
+  double mag = sqrt(kx*kx + ky*ky + kz*kz);
+
+  kx = kx/mag;
+  ky = ky/mag;
+  kz = kz/mag;
+
+  double total = 0.0;
+
+  switch(T) {
+  case 11:
+    return 1.0 - 1.0*kx*kx;
+    break;
+  case 21:
+    return -1.0*kx*ky;
+    break;
+  case 31:
+    return -1.0*kx*kz;
+    break;
+  case 22:
+    return 1.0 - 1.0*ky*ky;
+    break;
+  case 32:
+    return -1.0*ky*kz;
+    break;
+  case 33:
+    return 1.0 - 1.0*kz*kz;
+    break;
+
+  default:
+    fprintf(stderr,"Unknown projector element! Nonsense will ensue...\n");
+  }
+  
+  return 0.0;
+}
+
+double lambda(int i, int j, int l, int m, double kx, double ky, double kz) {
+  
+  double total;
+
+  int cpt1, cpt2;
+
+  if(i > j)
+    cpt1 = i*10 + j;
+  else
+    cpt1 = j*10 + i;
+
+  if(l > m)
+    cpt2 = l*10 + m;
+  else
+    cpt2 = m*10 + l;
+
+  total -= 0.5*proj(cpt1, kx, ky, kz)*proj(cpt2, kx, ky, kz);
+
+  if(i > l)
+    cpt1 = i*10 + l;
+  else
+    cpt1 = l*10 + i;
+
+  if(j > m)
+    cpt2 = j*10 + m;
+  else
+    cpt2 = m*10 + j;
+
+  total += proj(cpt1, kx, ky, kz)*proj(cpt2, kx, ky, kz);
+
+
+  return total;
+
+}
+
+int index(int i, int j)
+{
+
+  if(i == 1) {
+    if(j == 1) {
+      return CPT_11;
+    } else if(j == 2) {
+      return CPT_21;
+    } else if(j == 3) {
+      return CPT_31;
+    }
+  } else if(i == 2) {
+    if(j == 1) {
+      return CPT_21;
+    } else if(j == 2) {
+      return CPT_22;
+    } else if(j == 3) {
+      return CPT_32;
+    }
+  } else if(i == 3) {
+    if(j == 1) {
+      return CPT_31;
+    } else if(j == 2) {
+      return CPT_32;
+    } else if(j == 3) {
+      return CPT_33;
+    }
+  }
+
+  fprintf(stderr,"Unrecognised indices: %d, %d\n", i, j);
+
+  return 99;
+}
+
+
+void gwproject(hydro_params p, int x_start, int slab, double *product, fftw_complex **udot) {
+
+  int i, j, l, m;
+  int x, y, z;
+  double kx, ky, kz;
+
+
+  for(x=x_start; x<x_start+slab; x++) {
+    for(y=0; y<p.Ly; y++) {
+      for(z=0; z<p.Lz; z++) {
+
+	kx = ((double)x)*2.0*M_PI/((double)p.Lx);
+	ky = ((double)y)*2.0*M_PI/((double)p.Ly);
+	kz = ((double)z)*2.0*M_PI/((double)p.Lz);
+	
+	product[x*p.Ly*p.Lz + y*p.Lz + z] = 0.0;
+
+	for(i=0; i<3; i++) {
+	  for(j=0; j<3; j++) {
+	    for(l=0; l<3; l++) {
+	      for(m=0; m<3; m++) {
+		product[x*p.Ly*p.Lz + y*p.Lz + z] +=
+		  lambda(i, j, l, m, kx, ky, kz)
+		  *udot[index(i,j)][x*p.Ly*p.Lz + y*p.Lz + z][0]
+		  *udot[index(l,m)][x*p.Ly*p.Lz + y*p.Lz + z][1];
+	      }
+	    }
+	  }
+	}
+      }
+    }
+  }
+
 #ifdef FFT
 
 void fft(hydro_fields f, hydro_params p) {
