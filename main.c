@@ -215,6 +215,12 @@ int main(int argc, char *argv[])
 
     if((p.interval > 0) && (step % p.interval == 0)) {
 
+#ifdef FFT
+      
+      fft_tensor(f,p);
+    
+#endif // FFT
+
 
 
       current_energy = reduce_sum(total_energy(f, p), p);
@@ -275,13 +281,13 @@ int main(int argc, char *argv[])
     // Calculate EOS
     eq_of_state(f, p);
 
-    
+    /*    
       t00 = reduce_sum(tzerozero(f, p), p);
       current_energy = reduce_sum(total_energy(f, p), p);
       if(!p.rank)
 	fprintf(stderr, "Comparison: T00 seems to be: %6lf; energy %6lf\n",
 		t00, current_energy);
-    
+    */
 
     // Do the hydro bits
     evolve_hydro(f, p);
