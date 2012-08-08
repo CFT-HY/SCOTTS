@@ -617,15 +617,27 @@ void evolve_uij(hydro_fields f, hydro_params p) {
 
   const double G = 1.0;
 
+
   stress_energy(f, p, Tij);
 
   for(i = 0; i < TENSOR_CPTS; i++) {
     for(x = 1; x <= p.slicex; x++) {
       for(y = 1; y <= p.slicey; y++) {
-	for(z = 0; z <= p.Lz; z++) {
+	for(z = 0; z < p.Lz; z++) {
 
 	  f.uij[i][x][y][z] = f.uij[i][x][y][z] + p.dt*f.udotij[i][x][y][z];
+	}
+      }
+    }
+  
 
+    halo_field(f.uij[i], p);
+
+
+
+    for(x = 1; x <= p.slicex; x++) {
+      for(y = 1; y <= p.slicey; y++) {
+	for(z = 0; z < p.Lz; z++) {
 	  f.udotij[i][x][y][z] = f.udotij[i][x][y][z] + p.dt*
 	    (f.uij[i][x+1][y][z] + f.uij[i][x][y+1][z] + f.uij[i][x][y][((z+1)%p.Lz)]
 	     - 6.0*f.uij[i][x][y][z]
@@ -634,11 +646,14 @@ void evolve_uij(hydro_fields f, hydro_params p) {
 	  
 	  
 	  f.udotij[i][x][y][z] = f.udotij[i][x][y][z] + p.dt*16.0*M_PI*G*Tij[i][x][y][z];
+
+	  
+
 	}
       }
     }
 
-    halo_field(f.udotij[i], p);
+
   }
 
 
