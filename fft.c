@@ -16,6 +16,7 @@ double proj(int T, double kx, double ky, double kz) {
   double total = 0.0;
 
   switch(T) {
+
   case 11:
     return 1.0 - 1.0*kx*kx;
     break;
@@ -37,6 +38,7 @@ double proj(int T, double kx, double ky, double kz) {
 
   default:
     fprintf(stderr,"Unknown projector element! Nonsense will ensue...\n");
+
   }
   
   return 0.0;
@@ -131,11 +133,12 @@ void gwproject(hydro_params p, int x_start, int slab, double *product, fftw_comp
 	
 	product[x*p.Ly*p.Lz + y*p.Lz + z] = 0.0;
 
+	// Sum over indices on lambda_{ij,lm} and udot_{ij}(k)
 	for(i=1; i<=3; i++) {
 	  for(j=1; j<=3; j++) {
 	    for(l=1; l<=3; l++) {
 	      for(m=1; m<=3; m++) {
-		//		fprintf(stderr,"lambda %lf, udot %lf, %lf\n", lambda(i, j, l, m, kx, ky, kz), udot[indexof(i,j)][x*p.Ly*p.Lz + y*p.Lz + z][0], udot[indexof(l,m)][x*p.Ly*p.Lz + y*p.Lz + z][1]);
+
 		product[x*p.Ly*p.Lz + y*p.Lz + z] +=
 		  lambda(i, j, l, m, kx, ky, kz)
 		  *
@@ -145,10 +148,13 @@ void gwproject(hydro_params p, int x_start, int slab, double *product, fftw_comp
 	    }
 	  }
 	}
+
       }
     }
   }
 }
+
+
 
 #ifdef FFT
 
@@ -426,6 +432,7 @@ void fft_field(hydro_fields f, hydro_params p) {
 
 
 
+
 void fft_tensor(hydro_fields f, hydro_params p) {
 
   ptrdiff_t x_thickness, x_start, alloc_local;
@@ -581,14 +588,16 @@ void fft_tensor(hydro_fields f, hydro_params p) {
 	for(z=0;z<p.Lz;z++) {
 	  outcpts[i][x*p.Ly*p.Lz + y*p.Lz + z][0] = out[x*p.Ly*p.Lz + y*p.Lz + z][0];
 	  outcpts[i][x*p.Ly*p.Lz + y*p.Lz + z][1] = out[x*p.Ly*p.Lz + y*p.Lz + z][1];
-	  total += outcpts[i][x*p.Ly*p.Lz + y*p.Lz + z][0];
+	  //	  total += outcpts[i][x*p.Ly*p.Lz + y*p.Lz + z][0];
 	}
       }
     }
 
+    /*
     if(!i) {
       fprintf(stderr,"total outcpts %d is %6.10lf\n", p.rank, reduce_sum(total,p));
     }
+    */
 
     // now to deal with out
 
@@ -600,8 +609,12 @@ void fft_tensor(hydro_fields f, hydro_params p) {
   if(!p.rank)
     fprintf(stderr,"slice 111: %.12lf\n", outcpts[0][p.Ly*p.Lz + p.Lz + 1][0]);
   */
-  
+
+
+  // The brains of the operation  
   gwproject(p, x_start, slab, slice, outcpts);
+
+
 
   double rhogw = 0.0;
 
