@@ -137,8 +137,8 @@ int main(int argc, char *argv[])
   }
   */
 
-  // initial_blank(f, p);
-  initial_scalar_bubble(f, p);
+  initial_blank(f, p);
+  //  initial_scalar_bubble(f, p);
   // initial_3D(f,p);
   // initial_step(f,p);
 
@@ -245,7 +245,6 @@ int main(int argc, char *argv[])
 
 
 
-    still_nucleate = 0;
     if(step % 100 == 0 && still_nucleate) {
       fprintf(stderr,"Nucleating a bubble (safe distance = %d)\n", safe_distance(f,p));
 
