@@ -6,10 +6,37 @@
 
 
 
+double ***make_field(hydro_params p) {
+
+   
+  double *true_field = malloc((p.slicex+2)*(p.slicey+2)*(p.Lz)*sizeof(double));
+
+
+  double ***field = (double ***)malloc((p.slicex+2)*sizeof(double **));
+  int x, y;
+
+  for(x=0;x<(p.slicex+2);x++) {
+    field[x] = (double **)malloc((p.slicey+2)*sizeof(double *));
+    for(y=0;y<(p.slicey+2);y++) {
+      field[x][y] = &true_field[x*(p.slicey+2)*(p.Lz) + y*(p.Lz)];
+    }
+  }
+
+
+  //  free(field[0][0]);
+  field[0][0] = true_field;
+
+  return field;
+}
+
+
+
+
 double ****make_vector(hydro_params p) {
 
    
-  double *true_field = malloc(3*(p.slicex+2)*(p.slicey+2)*(p.Lz)*sizeof(double));
+  double *true_field = malloc(3*(p.slicex+2)*(p.slicey+2)
+			      *(p.Lz)*sizeof(double));
 
   int x, y, i;
 
@@ -73,32 +100,6 @@ double ****make_tensor(hydro_params p) {
 
 
 
-double ***make_field(hydro_params p) {
-
-   
-  double *true_field = malloc((p.slicex+2)*(p.slicey+2)*(p.Lz)*sizeof(double));
-
-
-  double ***field = (double ***)malloc((p.slicex+2)*sizeof(double **));
-  int x, y;
-
-  for(x=0;x<(p.slicex+2);x++) {
-    field[x] = (double **)malloc((p.slicey+2)*sizeof(double *));
-    for(y=0;y<(p.slicey+2);y++) {
-      field[x][y] = &true_field[x*(p.slicey+2)*(p.Lz) + y*(p.Lz)];
-    }
-  }
-
-
-  //  free(field[0][0]);
-  field[0][0] = true_field;
-  
-
-
-    
-
-  return field;
-}
 
 // not convinced
 void free_field(hydro_params p, double ***field) {
@@ -175,6 +176,8 @@ void free_tensor(hydro_params p, double ****tensor) {
 
 
 
+
+
 void alloc_fields(hydro_fields *f, hydro_params p) {
 
   // fields below also set up in initial condition functions
@@ -210,30 +213,43 @@ void alloc_fields(hydro_fields *f, hydro_params p) {
   f->V[2] = make_field(p);
   */
 
-  
+
+  /*  
   f->Z = (double ****)malloc(3*sizeof(double ***));
 
   f->Z[0] = make_field(p);
   f->Z[1] = make_field(p);
   f->Z[2] = make_field(p);
+  */
 
+  f->Z = make_vector(p);
+
+  /*
   f->U = (double ****)malloc(3*sizeof(double ***));
 
   f->U[0] = make_field(p);
   f->U[1] = make_field(p);
   f->U[2] = make_field(p);
+  */
 
+  f->U = make_vector(p);
+
+  /*
   f->F = (double ****)malloc(3*sizeof(double ***));
 
   f->F[0] = make_field(p);
   f->F[1] = make_field(p);
   f->F[2] = make_field(p);
+  */
+
+  f->F = make_vector(p);
 
   f->uij = make_tensor(p);
   f->udotij = make_tensor(p);
 
   // (calloc considered harmful)
 }
+
 
 
 
@@ -299,24 +315,35 @@ void free_fields(hydro_fields *f, hydro_params p) {
   */
   free_vector(p, f->V);
 
+  /*
   free_field(p, f->Z[0]);
   free_field(p, f->Z[1]);
   free_field(p, f->Z[2]);
 
   free(f->Z);
+  */
 
+  free_vector(p, f->Z);
+
+  /*
   free_field(p, f->U[0]);
   free_field(p, f->U[1]);
   free_field(p, f->U[2]);
 
   free(f->U);
+  */
 
+  free_vector(p, f->U);
+
+  /*
   free_field(p, f->F[0]);
   free_field(p, f->F[1]);
   free_field(p, f->F[2]);
 
   free(f->F);
+  */
 
+  free_vector(p, f->F);
 
   free_tensor(p, f->uij);
 

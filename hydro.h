@@ -188,16 +188,22 @@ typedef struct {
 
 
 
+// main.c just contains main()
+
+
 // alloc.c
-void alloc_fields(hydro_fields *f, hydro_params p);
-void zero_fields(hydro_fields f, hydro_params p);
-void free_fields(hydro_fields *f, hydro_params p);
-void free_field(hydro_params p, double ***field);
 double ***make_field(hydro_params p);
 double ****make_vector(hydro_params p);
 double ****make_tensor(hydro_params p);
+
+void free_field(hydro_params p, double ***field);
 void free_vector(hydro_params p, double ****vector);
-void free_tensor(hydro_params p, double ****vector);
+void free_tensor(hydro_params p, double ****tensor);
+
+void alloc_fields(hydro_fields *f, hydro_params p);
+void zero_fields(hydro_fields f, hydro_params p);
+void free_fields(hydro_fields *f, hydro_params p);
+
 
 // arrangement.c
 void layout(hydro_params *p);
