@@ -262,23 +262,19 @@ void initial_3D(hydro_fields f, hydro_params p);
 
 
 // output.c
-
-double wallpos(hydro_fields f, hydro_params p);
 double get_gamma_max(hydro_fields f, hydro_params p);
+void dump(double *field, hydro_params p);
 
 // papi.c
-
 #ifdef PAPI
 void papi_init();
 void papi_finalise();
 #endif // PAPI
 
 // parameters.c
-
 void get_parameters(char *filename, hydro_params *p);
 
 // silage.c
-
 #ifdef SILO
 void silo_init(hydro_params p);
 void write_silo_step(hydro_fields f, hydro_params p, int step);
@@ -286,7 +282,6 @@ void write_silo_step(hydro_fields f, hydro_params p, int step);
 
 
 // util.c
-
 double minof3(double a, double b, double c);
 double maxof3(double a, double b, double c);
 double minof2(double a, double b);
@@ -296,9 +291,4 @@ double minof2(double a, double b);
 void fft_field(hydro_fields f, hydro_params p);
 void fft_tensor(hydro_fields f, hydro_params p);
 #endif // FFT
-
-
-
-
-
 
