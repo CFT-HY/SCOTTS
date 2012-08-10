@@ -1,23 +1,23 @@
 # Example input file
 
 # How long the simulation takes
-Lx      256
-Ly	256
-Lz	256
-steps  1
+Lx      96
+Ly	96
+Lz	96
+steps  1000
 
 # How big the simulation is
-dx     0.03
+dx     0.66666
 dt     0.1
  
 # Viscosity terms
 Cav    0.0
-C      1.0
+C      0.4
 
 # Potential parameters
 Lheat  0.1
 sigma  0.1
-lcorr  12.0
+lcorr  4.0
 
 # How often to write data
 interval 20

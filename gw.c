@@ -412,7 +412,7 @@ void fft_tensor(hydro_fields f, hydro_params p) {
   // we take G=1.0...
 
   fprintf(stderr,"Unnormalised GW energy density claimed %6.10lf\n",
-	  reduce_sum(rhogw, p)/(1.0*((double)(p.Lx*p.Ly*p.Lz))));
+	  reduce_sum(rhogw, p)/(1.0*((double)(p.Lx*p.Ly*p.Lz*p.dx*p.dx*p.dx))));
 
 
   
