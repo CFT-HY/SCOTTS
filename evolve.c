@@ -695,6 +695,7 @@ void evolve_uij(hydro_fields f, hydro_params p) {
 
   double ****Tij = make_tensor(p);
 
+  // c = hbar = mpl = G = 1
   const double G = 1.0;
 
 
