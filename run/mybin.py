@@ -1,6 +1,6 @@
 import sys, string, math
 
-nbins = 100
+nbins = 50
 
 mink = None;
 maxk = None;
