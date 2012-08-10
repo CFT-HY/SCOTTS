@@ -162,7 +162,7 @@ void get_parameters(char *infile, hydro_params *p)
       } else if(!strcasecmp(value, "bubble")) {
 	p->initial = INIT_BUBBLE;
       } else {
-	fprintf(stderr, "warning, unrecognised value for initial" \
+	fprintf(stderr, "warning, unrecognised value for initial"
 		" (%s); defaulting to bubble.\n", value);
 	p->initial = INIT_BUBBLE;
       }
@@ -171,7 +171,9 @@ void get_parameters(char *infile, hydro_params *p)
     else if(!strcasecmp(key,"silodir")) {
      
       if(strlen(value) > 500)
-	fprintf(stderr,"Warning: silodir name \"%s\" may be too long!\n", value);
+	fprintf(stderr,
+		"Warning: silodir name \"%s\" may be too long!\n",
+		value);
 
       strncpy(p->silodir, value, 500);
      
@@ -233,19 +235,19 @@ void get_parameters(char *infile, hydro_params *p)
 
   if(!p->rank) {
     // Report what we found
-    fprintf(stderr,"-- Read parameters from %s:\n"	\
-	    "-- dx %g, dt %g, steps %d\n"		\
-	    "-- Lx %d, Ly %d, Lz %d\n"			\
-	    "-- Cav %g, C %g,\n"			\
-	    "-- Lheat %g, sigma %g, lcorr %g\n"		\
-	    "-- interval %d, silointerval %d\n"         \
+    fprintf(stderr,"-- Read parameters from %s:\n"
+	    "-- dx %g, dt %g, steps %d\n"
+	    "-- Lx %d, Ly %d, Lz %d\n"
+	    "-- Cav %g, C %g,\n"
+	    "-- Lheat %g, sigma %g, lcorr %g\n"
+	    "-- interval %d, silointerval %d\n"
 	    "-- silodir \"%s\"\n",
 	    infile,
-	    p->dx, p->dt, p->steps,		\
-	    p->Lx, p->Ly, p->Lz,		\
-	    p->Cav, p->C,			\
-	    p->Lheat, p->sigma, p->lcorr,	\
-	    p->interval, p->silointerval,       \
+	    p->dx, p->dt, p->steps,
+	    p->Lx, p->Ly, p->Lz,
+	    p->Cav, p->C,
+	    p->Lheat, p->sigma, p->lcorr,
+	    p->interval, p->silointerval,
 	    p->silodir);
     
     if(p->initial == INIT_SHOCK_TUBE) {

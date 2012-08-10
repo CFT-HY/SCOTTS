@@ -67,8 +67,8 @@ int main(int argc, char *argv[])
   // What did we find?
   if(!p.rank) 
     fprintf(stderr,
-	    "-- calculated potential terms\n"	\
-	    "-- alpha %g, gamma %g, lambda %g\n",	\
+	    "-- calculated potential terms\n"
+	    "-- alpha %g, gamma %g, lambda %g\n",
 	    p.alpha, p.gamma, p.lambda);
 
   // Make these user-modifiable eventually
@@ -245,7 +245,8 @@ int main(int argc, char *argv[])
 
 
     if(step % 100 == 0 && still_nucleate) {
-      fprintf(stderr,"Nucleating a bubble (safe distance = %d)\n", safe_distance(f,p));
+      fprintf(stderr, "Nucleating a bubble (safe distance = %d)\n",
+	      safe_distance(f,p));
 
       int tryx = random()%p.Lx;
       int tryy = random()%p.Ly;
@@ -255,7 +256,8 @@ int main(int argc, char *argv[])
 
       while(!can_nucleate(f,p,tryx,tryy,tryz) && attempts < 20) {
 	if(!p.rank)
-	  fprintf(stderr,"Not allowed to nucleate at (%d,%d,%d)!\n",tryx,tryy,tryz);
+	  fprintf(stderr, "Not allowed to nucleate at (%d,%d,%d)!\n",
+		  tryx, tryy, tryz);
 	tryx = random()%p.Lx;
 	tryy = random()%p.Ly;
 	tryz = random()%p.Lz;
@@ -264,7 +266,7 @@ int main(int argc, char *argv[])
       }
 
       if(attempts == 20) {
-	fprintf(stderr,"Gave up trying to nucleate!\n");
+	fprintf(stderr, "Gave up trying to nucleate!\n");
 	still_nucleate = 0;
 
       } else {
