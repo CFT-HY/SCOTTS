@@ -23,14 +23,14 @@ double field_energy(hydro_fields f, hydro_params p) {
 	
 	Etot += 0.5*f.pifull[x][y][z]*f.pifull[x][y][z]*vol;
 	
-	Etot += 0.5*((f.phi[x][y][z] - f.phi[x-1][y][z])/p.dx)
-	  *((f.phi[x][y][z] - f.phi[x-1][y][z])/p.dx)*vol;
+	Etot += 0.125*((f.phi[x+1][y][z] - f.phi[x-1][y][z])/p.dx)
+	  *((f.phi[x+1][y][z] - f.phi[x-1][y][z])/p.dx)*vol;
 	
-	Etot += 0.5*((f.phi[x][y][z] - f.phi[x][y-1][z])/p.dx)
-	  *((f.phi[x][y][z] - f.phi[x][y-1][z])/p.dx)*vol;
+	Etot += 0.125*((f.phi[x][y+1][z] - f.phi[x][y-1][z])/p.dx)
+	  *((f.phi[x][y+1][z] - f.phi[x][y-1][z])/p.dx)*vol;
 	
-	Etot += 0.5*((f.phi[x][y][z] - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx)
-	  *((f.phi[x][y][z] - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx)*vol;
+	Etot += 0.125*((f.phi[x][y][(z+1)%p.Lz] - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx)
+	  *((f.phi[x][y][(z+1)%p.Lz] - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx)*vol;
 	
 	Etot += Vf(p, f.T[x][y][z], f.phi[x][y][z])*vol;
       }
@@ -142,7 +142,7 @@ double tzerozero(hydro_fields f, hydro_params p) {
 		  - 0.125*((f.phi[x][y][(z+1)%p.Lz] 
 			    - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx)
 		  *((f.phi[x][y][(z+1)%p.Lz]
-		     - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx))*vol;
+		     - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx));
 
 	// radiative fluid pressure
 	// (minus sign if 00, otherwise plus)
@@ -220,7 +220,6 @@ void stress_energy(hydro_fields f, hydro_params p, double ****Tij) {
 
 
 	// Gradient bits
-
 	Tij[CPT_11][x][y][z] +=
 	  0.25*((f.phi[x+1][y][z] - f.phi[x-1][y][z])/p.dx)
 	  *((f.phi[x+1][y][z] - f.phi[x-1][y][z])/p.dx);
