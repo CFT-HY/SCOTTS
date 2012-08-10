@@ -230,6 +230,8 @@ void fft_tensor(hydro_fields f, hydro_params p) {
   int x, y, z;
   int i;
 
+  double fft_norm = p.dx*p.dx*p.dx/pow(2.0*M_PI,1.5);
+
   double *trim = (double *)malloc(p.slicex*p.slicey*p.Lz*sizeof(double));
 
   double start = clock();
@@ -274,7 +276,7 @@ void fft_tensor(hydro_fields f, hydro_params p) {
   // Now planning  
   fftw_plan plan = fftw_mpi_plan_dft_3d(p.Lx, p.Ly, p.Lz,
 					in, out, MPI_COMM_WORLD,
-					FFTW_FORWARD, FFTW_ESTIMATE);
+					FFTW_BACKWARD, FFTW_ESTIMATE);
 
   for(i = 0; i < TENSOR_CPTS; i++) {
 
@@ -361,9 +363,9 @@ void fft_tensor(hydro_fields f, hydro_params p) {
       for(y=0;y<p.Ly;y++) {
 	for(z=0;z<p.Lz;z++) {
 	  outcpts[i][x*p.Ly*p.Lz + y*p.Lz + z][0] 
-	    = out[x*p.Ly*p.Lz + y*p.Lz + z][0];
+	    = fft_norm*out[x*p.Ly*p.Lz + y*p.Lz + z][0];
 	  outcpts[i][x*p.Ly*p.Lz + y*p.Lz + z][1]
-	    = out[x*p.Ly*p.Lz + y*p.Lz + z][1];
+	    = fft_norm*out[x*p.Ly*p.Lz + y*p.Lz + z][1];
 	  //	  total += outcpts[i][x*p.Ly*p.Lz + y*p.Lz + z][0];
 	}
       }
@@ -387,6 +389,8 @@ void fft_tensor(hydro_fields f, hydro_params p) {
   */
 
 
+  // At this point, we should have a normed FFT
+
   // The brains of the operation:
   // Turn the FFT'd tensor into projected power spectrum
   gwproject(p, x_start, slab, slice, outcpts);
@@ -405,8 +409,10 @@ void fft_tensor(hydro_fields f, hydro_params p) {
   }
 
 
-  fprintf(stderr,"GW energy density claimed %6.10lf\n",
-	  reduce_sum(rhogw, p)/((double)(p.Lx*p.Ly*p.Lz)));
+  // we take G=1.0...
+
+  fprintf(stderr,"Unnormalised GW energy density claimed %6.10lf\n",
+	  reduce_sum(rhogw, p)/(1.0*((double)(p.Lx*p.Ly*p.Lz))));
 
 
   
