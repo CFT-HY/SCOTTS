@@ -33,6 +33,8 @@
 
 #ifdef FFT
 
+// #define FFT_DEBUG
+
 #ifndef MPI
 #error Cannot use FFTW3 without MPI - local FFTs not implemented!
 #endif // !MPI
@@ -286,9 +288,12 @@ double minof3(double a, double b, double c);
 double maxof3(double a, double b, double c);
 double minof2(double a, double b);
 
-// fft.c
+
 #ifdef FFT
+// fft.c
 void fft_field(hydro_fields f, hydro_params p);
+
+// gw.c
 void fft_tensor(hydro_fields f, hydro_params p);
 #endif // FFT
 

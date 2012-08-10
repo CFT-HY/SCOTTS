@@ -37,7 +37,7 @@ LIBS :=   -lfftw3_mpi -lfftw3 -lm -lsiloh5
 
 OBJECTS := main.o evolve.o potential.o energy.o eos.o \
 	transport.o initial.o output.o parameters.o silage.o \
-	util.o papi.o arrangement.o fft.o alloc.o	
+	util.o papi.o arrangement.o fft.o alloc.o gw.o
 
 BINARY := run/hydro
 
