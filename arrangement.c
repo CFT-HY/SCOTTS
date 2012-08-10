@@ -112,7 +112,6 @@ void layout(hydro_params *p) {
     fprintf(stderr,"meaning %d nodes in x, %d nodes in y\n", nx, ny);
   }  
 
-  p->totalN = p->N;
 
   // sites on a node = number of sites + halos + double halos
   p->fieldN = ((p->slicex+2)*(p->slicey+2)*p->Lz);
@@ -120,7 +119,7 @@ void layout(hydro_params *p) {
   if(!p->rank)
     fprintf(stderr,"Each node will need %d = %d + %d entries to store halo\n",
 	    p->fieldN,
-	    p->totalN,
+	    p->N,
 	    p->Lz*(2*(p->slicex + p->slicey) + 4));
 
 
