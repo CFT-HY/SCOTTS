@@ -130,7 +130,7 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
   double ***Wfacez =  make_field(p);
 
   
-  double gpi, dv, gv, inner, s;
+  double gpi, dv, gv, s;
 
   double p_bar_x_plus, p_bar_x_minus, p_bar_y_plus, p_bar_y_minus, p_bar_z_plus, p_bar_z_minus;
 

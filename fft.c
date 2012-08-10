@@ -2,6 +2,8 @@
 
 // #define FFT_DEBUG
 
+#ifdef FFT
+
 double proj(int T, double kx, double ky, double kz) {
 
   double mag = sqrt(kx*kx + ky*ky + kz*kz);
@@ -154,9 +156,6 @@ void gwproject(hydro_params p, int x_start, int slab, double *product, fftw_comp
   }
 }
 
-
-
-#ifdef FFT
 
 void fft_field(hydro_fields f, hydro_params p) {
 

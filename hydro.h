@@ -32,6 +32,11 @@
 #endif // MPI
 
 #ifdef FFT
+
+#ifndef MPI
+#error Cannot use FFTW3 without MPI - local FFTs not implemented!
+#endif // !MPI
+
 #include <fftw3-mpi.h>
 #endif // FFT
 
@@ -45,6 +50,9 @@
 #define INIT_BUBBLE 2
 
 
+/*
+ * For the uij's, there are six components.
+ */
 #define TENSOR_CPTS 6
 
 #define CPT_11 0
@@ -54,29 +62,6 @@
 #define CPT_32 4
 #define CPT_33 5
 
-
-
-/*
- * Composed directions
- *
- * In the neighbour lookup tables, we have nb[site][2*dim] for positive
- * directions and nb[site][2*dim+1] for negative directions. To handle
- * haloing gracefully, and avoid having invalid values of nb, we explicitly
- * store the diagonal neighbours.
- *
- * It involves storing about 4*sizeof(double) (=8*sizeof(int)) extra
- * information at each site; that is small fry compared to the
- * ~21*sizeof(double) we're already storing (see struct hydro_fields).
- */
-
-#define DIR_02 6
-#define DIR_04 7
-#define DIR_24 8
-#define DIR_13 9
-#define DIR_15 10
-#define DIR_35 11
-#define DIR_024 12
-#define DIR_135 13
 
 
 /*
@@ -92,51 +77,69 @@ typedef struct {
 
   double dx;
   double dt;
+
   int Lx, Ly, Lz;
+
   int steps;
 
+  // NB: artificial viscosity not implemented yet!
   double Cav;
+
+  // C aka eta, the field viscosity
   double C;
 
+  // Input parameters for the potential
   double Lheat;
   double sigma;
   double lcorr;
 
-  int interval;
-  int silointerval;
-  int initial;
-
-  // The following parameters are calculated
-  double xxwall;
-  double Tconst;
-
+  // Calculated potential parameters
   double alpha;
   double lambda;
   double gamma;
 
-  double a;
-  int N;
+  // How often to deal with output
+  int interval;
+  int silointerval;
+
+  // Initial conditions type (see #defines above)
+  int initial;
+
+  // The following parameters are preset, but changeable in main.c
+  double Tconst;
   double T0;
 
+  // Degrees of freedom
+  double a;
+
+  // Number of physical sites in volume
+  int N;
+
+  // Sites in local area (including halo)
   int fieldN;
 
+  // How many nodes, and which are we
   int size;
   int rank;
 
   //  double comms_time;
 
+  // How many sites in each direction are unique to us
   int slicex;
   int slicey;
+  // -- i.e. we have (slicex+2)*(slicey+2)*Lz sites to ourselves
 
+  // Where do our sites start in the physical volume?
   int shiftx;
   int shifty;
+  // NB: the physical position of a site x is e.g. (x+shiftx-1)
 
+
+  // Where the silo files go
   char silodir[500];
 
-#ifdef MPI
 
-  int totalN;
-  int inner;
+#ifdef MPI
 
   // Ranks of neighbours
   int rank_xM;
@@ -144,20 +147,22 @@ typedef struct {
   int rank_yM;
   int rank_yP;
 
+  // Ranks of double neighbours
   int rank_xMyM;
   int rank_xMyP;
   int rank_xPyM;
   int rank_xPyP;
 
+  // Where am I in the domain decomposition?
   int myposx;
   int myposy;
 
 #endif // MPI
  
 
-
-
 } hydro_params;
+
+
 
 typedef struct {
   double ***phi;
@@ -178,26 +183,12 @@ typedef struct {
   double ****uij;
   double ****udotij;
 
-  double *phi_root;
-  double *pi_root;
-  double *pifull_root;
-  double *T_root;
-  double *kappa_root;
-  double *phiold_root;
-  double *p_root;
-  double *E_root;
-  double *W_root;
-
-  double **V_root;
-  double **U_root;
-  double **F_root;
-  double **Z_root;
 
 } hydro_fields;
 
 
 
-// main.c
+// alloc.c
 void alloc_fields(hydro_fields *f, hydro_params p);
 void zero_fields(hydro_fields f, hydro_params p);
 void free_fields(hydro_fields *f, hydro_params p);
