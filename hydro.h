@@ -217,20 +217,16 @@ int reduce_and(int result, hydro_params p);
 void init_comms_time(hydro_params *p);
 double get_comms_time(hydro_params *p);
 
-int **init_inverse(hydro_params *p);
-int **init_nb(hydro_params *p);
-
 // evolve.c
-
 void evolve_backstep(hydro_fields f, hydro_params p);
 void evolve_field(hydro_fields f, hydro_params p);
 void evolve_hydro(hydro_fields f, hydro_params p);
 void evolve_uij(hydro_fields f, hydro_params p);
 
+// Not implemented yet
 // void artificial_viscosity(hydro_fields f, int **nb, hydro_params p);
 
 // potential.c
-
 double Vf(hydro_params p, double T, double this_phi);
 double Vdf(hydro_params p, double T, double this_phi);
 double VTf(hydro_params p, double T, double this_phi);
@@ -240,11 +236,11 @@ void Vdpot(hydro_params p, double *T, double *phi, double *Vprecalc);
 
 
 // energy.c
-
 double field_energy(hydro_fields f, hydro_params p);
 double total_energy(hydro_fields f, hydro_params p);
 void energy_density(hydro_fields f, hydro_params p, double ***en);
-
+void stress_energy(hydro_fields f, hydro_params p, double ****Tij);
+double tzerozero(hydro_fields f, hydro_params p);
 
 // eos.c
 
@@ -257,16 +253,13 @@ void advect_E(hydro_fields f, hydro_params p);
 void advect_Z(hydro_fields f, hydro_params p);
 
 // initial.c
-/*
-void create_1D_bubble(hydro_fields f, hydro_params p);
-double psibar(double x, double lbar);
-void create_gaussian_bubble(hydro_fields f, hydro_params p);
-void create_shock_tube(hydro_fields f, hydro_params p);
-*/
-void initial_3D(hydro_fields f, hydro_params p);
+void initial_scalar_bubble(hydro_fields f, hydro_params p);
 void initial_blank(hydro_fields f, hydro_params p);
-void nucleate_at(hydro_fields f, hydro_params p, int x0, int y0, int z0);
+int safe_distance(hydro_fields f, hydro_params p);
 int can_nucleate(hydro_fields f, hydro_params p, int x0, int y0, int z0);
+void nucleate_at(hydro_fields f, hydro_params p, int x0, int y0, int z0);
+void initial_3D(hydro_fields f, hydro_params p);
+
 
 // output.c
 
@@ -306,7 +299,6 @@ void fft_tensor(hydro_fields f, hydro_params p);
 
 
 
-void stress_energy(hydro_fields f, hydro_params p, double ****Tij);
-double tzerozero(hydro_fields f, hydro_params p);
+
 
 
