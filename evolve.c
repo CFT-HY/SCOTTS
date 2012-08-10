@@ -737,6 +737,6 @@ void evolve_uij(hydro_fields f, hydro_params p) {
     }
   }
 
-
+  free_tensor(p, Tij);
 }
 
