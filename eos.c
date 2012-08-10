@@ -19,8 +19,10 @@ void find_Ta(hydro_fields f, hydro_params p) {
 	 * NaN's happen when Tfix goes negative,
 	 * they then spread out from here.
 	 */
-	Tfix = 0.25*p.gamma*p.gamma*f.phi[x][y][z]*f.phi[x][y][z]*f.phi[x][y][z]*f.phi[x][y][z]
-	  - 12.0*p.a*(0.25*p.lambda*f.phi[x][y][z]*f.phi[x][y][z]*f.phi[x][y][z]*f.phi[x][y][z]
+	Tfix = 0.25*p.gamma*p.gamma*f.phi[x][y][z]*f.phi[x][y][z]
+	  *f.phi[x][y][z]*f.phi[x][y][z]
+	  - 12.0*p.a*(0.25*p.lambda*f.phi[x][y][z]*f.phi[x][y][z]
+		      *f.phi[x][y][z]*f.phi[x][y][z]
 		      - 0.5*p.gamma*p.T0*p.T0*f.phi[x][y][z]*f.phi[x][y][z]
 		      - f.E[x][y][z]/f.W[x][y][z]);
 	
@@ -28,13 +30,15 @@ void find_Ta(hydro_fields f, hydro_params p) {
 	//      Tfix = 0.0;
 	
 	f.T[x][y][z] = sqrt((1.0/(6.0*p.a))
-			    * (0.5*p.gamma*f.phi[x][y][z]*f.phi[x][y][z] + sqrt(Tfix)));
+			    * (0.5*p.gamma*f.phi[x][y][z]*f.phi[x][y][z]
+			       + sqrt(Tfix)));
       }
     }
   }
 
   //  halo_field(f.T, p);
 }
+
 
 
 // Straight fortran port
@@ -47,7 +51,7 @@ void eq_of_state(hydro_fields f, hydro_params p) {
    * Vpot call is most efficient either (cannot fuse loops between find_Ta,
    * Vpot and this function. Will get rid of both simultaneously.
    */
-  double ***Vnew = make_field(p); // (double *) malloc(p.fieldN*sizeof(double));
+  double ***Vnew = make_field(p);
 
   double tolE = 1e-3;
 
@@ -63,13 +67,15 @@ void eq_of_state(hydro_fields f, hydro_params p) {
       for(z=0; z<p.Lz; z++) {
 
 	if(f.E[x][y][z] 
-	   < tolE*f.W[x][y][z]*3.0*p.a*f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]) {
+	   < tolE*f.W[x][y][z]*3.0*p.a*f.T[x][y][z]
+	   *f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]) {
 	  fprintf(stderr,"E getting dangerously small due to -ve V cont.\n");
 	  exit(100);
 	}
 
 	// pressure P is radiative pressure less the potential
-	f.p[x][y][z] = p.a*f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z] - Vnew[x][y][z];
+	f.p[x][y][z] = p.a*f.T[x][y][z]*f.T[x][y][z]
+	  *f.T[x][y][z]*f.T[x][y][z] - Vnew[x][y][z];
 	f.kappa[x][y][z] = 1.0 + f.W[x][y][z]*f.p[x][y][z]/f.E[x][y][z];
 	
       }

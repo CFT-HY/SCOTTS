@@ -12,6 +12,7 @@ double comms_time;
 #ifdef MPI
 
 
+
 /*
  * Inspired by the contents of setup_layout_generic.c in Kari's code
  */
@@ -153,6 +154,7 @@ void layout(hydro_params *p) {
   p->shiftx = (p->slicex)*(p->myposx);
   p->shifty = (p->slicey)*(p->myposy);
 }
+
 
 
 /* void halo_field(double *field, hydro_params p)
@@ -324,6 +326,7 @@ double reduce_sum(double result, hydro_params p) {
 
 }
 
+
 double reduce_max(double result, hydro_params p) {
 
   double total = 0.0;
@@ -340,6 +343,7 @@ int reduce_and(int result, hydro_params p) {
   return total;
 
 }
+
 
 void init_comms_time(hydro_params *p) {
   comms_time = 0.0;
