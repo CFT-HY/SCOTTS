@@ -222,27 +222,27 @@ void stress_energy(hydro_fields f, hydro_params p, double ****Tij) {
 	// Gradient bits
 
 	Tij[CPT_11][x][y][z] +=
-	  0.125*((f.phi[x+1][y][z] - f.phi[x-1][y][z])/p.dx)
+	  0.25*((f.phi[x+1][y][z] - f.phi[x-1][y][z])/p.dx)
 	  *((f.phi[x+1][y][z] - f.phi[x-1][y][z])/p.dx);
 
 	Tij[CPT_21][x][y][z] += 
-	  0.125*((f.phi[x+1][y][z] - f.phi[x-1][y][z])/p.dx)
+	  0.25*((f.phi[x+1][y][z] - f.phi[x-1][y][z])/p.dx)
 	  *((f.phi[x][y+1][z] - f.phi[x][y-1][z])/p.dx);
 
 	Tij[CPT_31][x][y][z] +=
-	  0.125*((f.phi[x][y][(z+1)%p.Lz] - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx)
+	  0.25*((f.phi[x][y][(z+1)%p.Lz] - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx)
 	  *((f.phi[x+1][y][z] - f.phi[x-1][y][z])/p.dx);
 
 	Tij[CPT_22][x][y][z] += 
-	  0.125*((f.phi[x][y+1][z] - f.phi[x][y-1][z])/p.dx)
+	  0.25*((f.phi[x][y+1][z] - f.phi[x][y-1][z])/p.dx)
 	  *((f.phi[x][y+1][z] - f.phi[x][y-1][z])/p.dx);
 
 	Tij[CPT_32][x][y][z] +=
-	  0.125*((f.phi[x][y][(z+1)%p.Lz] - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx)
+	  0.25*((f.phi[x][y][(z+1)%p.Lz] - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx)
 	  *((f.phi[x][y+1][z] - f.phi[x][y-1][z])/p.dx);
 
 	Tij[CPT_33][x][y][z] +=
-	  0.125*((f.phi[x][y][(z+1)%p.Lz] - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx)
+	  0.25*((f.phi[x][y][(z+1)%p.Lz] - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx)
 	  *((f.phi[x][y][(z+1)%p.Lz] - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx);
 
 
