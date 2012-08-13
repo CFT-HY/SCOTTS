@@ -215,6 +215,23 @@ int main(int argc, char *argv[])
 
     if((p.interval > 0) && (step % p.interval == 0)) {
 
+#ifdef FFT
+
+      /*      if(step == 100) {
+	int i;
+	for(x=0;x<p.fieldN;x++) {
+	  for(i=0; i<TENSOR_CPTS; i++) {
+	    f.uij[i][0][0][x] = 0.0;
+	    f.udotij[i][0][0][x] = 0.0;
+	  }
+	}
+
+	} */
+      
+      fft_tensor(f,p);
+    
+#endif // FFT
+
       current_energy = reduce_sum(total_energy(f, p), p);
       current_field_energy = reduce_sum(field_energy(f, p), p);
       current_wmax = reduce_max(get_gamma_max(f, p), p);
