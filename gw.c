@@ -411,9 +411,15 @@ void fft_tensor(hydro_fields f, hydro_params p) {
 
   // we take G=1.0...
 
-  fprintf(stderr,"Unnormalised GW energy density claimed %6.10lf\n",
-	  reduce_sum(rhogw, p)/(1.0*((double)(p.Lx*p.Ly*p.Lz*p.dx*p.dx*p.dx))));
+  double gwen = reduce_sum(rhogw, p)
+    /(1.0*((double)(p.Lx*p.Ly*p.Lz*p.dx*p.dx*p.dx)));
 
+  // To get energy density expect to have to divide by V again
+  // as it seems that keeping p.Lx*p.Ly*p.Lz*p.dx*p.dx*p.dx constant
+  // then gwen is constant.
+  if(!p.rank)
+    fprintf(stderr,
+	    "Unnormalised GW energy [density] claimed %6.10lf\n", gwen);
 
   
   // **** now calculate and output the power spectrum ****
