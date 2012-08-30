@@ -138,6 +138,26 @@ int main(int argc, char *argv[])
 
   //  initial_blank(f, p);
   initial_scalar_bubble(f, p);
+
+  for(step=0;step<4;step++) {
+      int tryx = random()%p.Lx;
+      int tryy = random()%p.Ly;
+      int tryz = random()%p.Lz;
+
+      while(!can_nucleate(f,p,tryx,tryy,tryz)) {
+	if(!p.rank)
+	  fprintf(stderr, "Not allowed to nucleate at (%d,%d,%d)!\n",
+		  tryx, tryy, tryz);
+	tryx = random()%p.Lx;
+	tryy = random()%p.Ly;
+	tryz = random()%p.Lz;
+
+      }
+
+      nucleate_at(f, p, tryx, tryy, tryz);
+      halo_field(f.phi, p);
+  }
+
   still_nucleate = 0;
   // initial_3D(f,p);
   // initial_step(f,p);
@@ -228,7 +248,7 @@ int main(int argc, char *argv[])
 
 	} */
       
-      fft_tensor(f,p);
+      fft_tensor(f,p,step,current_energy);
     
 #endif // FFT
 
@@ -310,7 +330,7 @@ int main(int argc, char *argv[])
 
 #ifdef FFT
       
-      fft_tensor(f,p);
+      fft_tensor(f,p,step,current_energy);
     
 #endif // FFT
     
@@ -355,7 +375,7 @@ int main(int argc, char *argv[])
 
 #ifdef FFT
       
-      fft_tensor(f,p);
+  fft_tensor(f,p,step,current_energy);
     
 #endif // FFT
 

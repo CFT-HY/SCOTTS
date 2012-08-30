@@ -326,6 +326,14 @@ double reduce_sum(double result, hydro_params p) {
 
 }
 
+int reduce_sum_int(int result, hydro_params p) {
+
+  int total = 0;
+  MPI_Allreduce(&result, &total, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+  return total;
+
+}
+
 
 double reduce_max(double result, hydro_params p) {
 

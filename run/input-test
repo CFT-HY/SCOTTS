@@ -1,10 +1,10 @@
 # Example input file
 
 # How long the simulation takes
-Lx      120
-Ly	120
-Lz	120
-steps  2000
+Lx      256
+Ly	256
+Lz	256
+steps  1000
 
 # How big the simulation is
 dx     1.0
@@ -20,8 +20,8 @@ sigma  0.1
 lcorr  6.0
 
 # How often to write data
-interval 40
-silointerval 40
+interval 10
+silointerval -1
 
 # Initial conditions
 initial bubble

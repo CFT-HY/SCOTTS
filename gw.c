@@ -70,7 +70,7 @@ double proj(int T, double kx, double ky, double kz) {
  */
 double lambda(int i, int j, int l, int m, double kx, double ky, double kz) {
   
-  double total;
+  double total = 0.0;
 
   int cpt1, cpt2;
 
@@ -213,7 +213,7 @@ void gwproject(hydro_params p, int x_start, int slab,
  * you decide to calculate the power spectrum several times during the
  * simulation be prepared to pre-calculate the above.
  */
-void fft_tensor(hydro_fields f, hydro_params p) {
+void fft_tensor(hydro_fields f, hydro_params p, int step, double energydensity) {
 
   ptrdiff_t x_thickness, x_start, alloc_local;
 
@@ -230,9 +230,12 @@ void fft_tensor(hydro_fields f, hydro_params p) {
   int x, y, z;
   int i;
 
-  double fft_norm = p.dx*p.dx*p.dx/pow(2.0*M_PI,1.5);
+  double fft_norm = p.a*p.a*p.a*p.dx*p.dx*p.dx/pow(2.0*M_PI,1.5);
 
   double *trim = (double *)malloc(p.slicex*p.slicey*p.Lz*sizeof(double));
+
+  if(!p.rank)
+    fprintf(stderr, "Starting FFT stuff.\n");
 
   double start = clock();
 
@@ -412,7 +415,7 @@ void fft_tensor(hydro_fields f, hydro_params p) {
   // we take G=1.0...
 
   double gwen = reduce_sum(rhogw, p)
-    /(1.0*((double)(p.Lx*p.Ly*p.Lz*p.dx*p.dx*p.dx)));
+    /(1.0*((double)(p.a*p.a*p.a*p.Lx*p.Ly*p.Lz*p.dx*p.dx*p.dx)));
 
   // To get energy density expect to have to divide by V again
   // as it seems that keeping p.Lx*p.Ly*p.Lz*p.dx*p.dx*p.dx constant
@@ -425,6 +428,8 @@ void fft_tensor(hydro_fields f, hydro_params p) {
   // **** now calculate and output the power spectrum ****
 
 
+
+#ifdef DUMPFFT
   // Temporary until we get the binning sorted out
   char fftdest[200];
 
@@ -440,25 +445,142 @@ void fft_tensor(hydro_fields f, hydro_params p) {
 	//	if((x+x_start)==0 && y==0 && z==0)
 	//	  continue;
 
+        if(((x+((int)x_start))>p.Lx/2) || (y> p.Ly/2) || (z>p.Lz/2))
+          continue;
+
+	kmode = sqrt(
+		     ((double)((x+((int)x_start))*(x+((int)x_start))))/((double)(p.Lx*p.Lx))
+		     + ((double)(y*y))/((double)(p.Ly*p.Ly))
+		     + ((double)(z*z))/((double)(p.Lz*p.Lz))
+		     )*2.0*M_PI;
+
+	/*
+	modsq = out[x*p.Ly*p.Lz + y*p.Lz + z][0]
+	  *out[x*p.Ly*p.Lz + y*p.Lz + z][0]
+	  + out[x*p.Ly*p.Lz + y*p.Lz + z][1]
+	  *out[x*p.Ly*p.Lz + y*p.Lz + z][1];
+	  */
+
+	fprintf(fp, "%lf %d %d %d %lf\n", kmode,
+		x + ((int)x_start), y, z, slice[x*p.Ly*p.Lz + y*p.Lz + z]);
+
+
+      }
+
+      fflush(fp);
+
+    }
+  }
+
+  close(fp);
+
+#else // not DUMPFFT
+  // calculate the power spectrum on the fly
+
+  int nbins = 200;
+  double mink = 0.0;
+  double maxk = 2.0*M_PI;
+
+  double dk = (maxk-mink)/((double)nbins);
+
+  double *bins = (double *)malloc(nbins*sizeof(double));
+  int *counts = (int *)malloc(nbins*sizeof(int));
+
+  for(i=0;i<nbins;i++) {
+    bins[i] = 0.0;
+    counts[i] = 0;
+  }
+
+  int whichbin;
+
+
+
+  for(x=0;x<slab;x++) {
+    for(y=0;y<p.Ly;y++) {
+      for(z=0;z<p.Lz;z++) {
+
+        if(((x+x_start)>p.Lx/2) || (y> p.Ly/2) || (z>p.Lz/2))
+          continue;
+	
 	kmode = sqrt(
 		     ((double)((x+x_start)*(x+x_start)))/((double)(p.Lx*p.Lx))
 		     + ((double)(y*y))/((double)(p.Ly*p.Ly))
 		     + ((double)(z*z))/((double)(p.Lz*p.Lz))
 		     )*2.0*M_PI;
 
-	modsq = out[x*p.Ly*p.Lz + y*p.Lz + z][0]
-	  *out[x*p.Ly*p.Lz + y*p.Lz + z][0]
-	  + out[x*p.Ly*p.Lz + y*p.Lz + z][1]
-	  *out[x*p.Ly*p.Lz + y*p.Lz + z][1];
+	whichbin = (int)floor(kmode/dk);
+	bins[whichbin] += slice[x*p.Ly*p.Lz + y*p.Lz + z];
+	counts[whichbin]++;
 
-	fprintf(fp, "%lf %d %d %d %g\n", kmode,
-		x + ((int)x_start), y, z, modsq);
+	//	if(step)
+	// fprintf(stderr,"%d %lf\n",whichbin,slice[x*p.Ly*p.Lz + y*p.Lz + z]);
 
       }
     }
   }
 
-  close(fp);
+
+  double red_value;
+  int red_count;
+
+  for(i=0;i<nbins;i++) {
+
+    red_value = reduce_sum(bins[i], p);
+    red_count = reduce_sum_int(counts[i], p);
+
+    bins[i] = red_value;
+    counts[i] = red_count;
+  }
+
+
+  double thisk = dk/2.0;
+  double comovingk, thisf, thisdiff, thisomega;
+
+  // not sure (includes h^2)
+  double omegarad = 3.5e-5;
+
+  double doffrac = pow(1.0/100.0,1.0/3.0);
+
+  // spokesman does the final analysis
+  if(!p.rank) {
+
+  char fftdest[200];
+
+  sprintf(fftdest,"power-step%d.txt", step);
+
+  FILE *fp = fopen(fftdest,"w");
+
+    for(i=0;i<nbins;i++) {
+
+      // thisk = sqrt((nx/Lx)^2 + (ny/Ly)^2 + (nz/Lz)^2) 2*pi
+      // so divide by dx
+      comovingk = thisk/(p.a*p.dx);
+
+      // formula taken as a given, looks correct
+      thisf = comovingk*6.0e10; // /(p.H)
+
+      // d(rhogw)/d(logk)
+      // (p.H^(-3) is comoving volume; 8*4*pi is the solid angle normalisation)
+      thisdiff = (comovingk*comovingk*comovingk/(32.0*M_PI))*bins[i]/(p.Lx*p.Ly*p.Lz*p.dx*p.dx*p.dx);
+
+      // omegaGW(k), as above but corrections for degrees of freedom, energy density and
+      // radiation density
+      thisomega = omegarad*doffrac*(1.0/energydensity)*thisdiff;
+
+      fprintf(fp, "%lf %lf %d %g %g\n", thisk, bins[i], counts[i], thisf, thisomega);
+
+      thisk = thisk + dk;
+    }
+
+  fclose(fp);
+
+  }
+
+
+
+#endif
+
+
 
   free(slice);
   free(trim);

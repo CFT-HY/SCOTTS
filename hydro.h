@@ -294,6 +294,6 @@ double minof2(double a, double b);
 void fft_field(hydro_fields f, hydro_params p);
 
 // gw.c
-void fft_tensor(hydro_fields f, hydro_params p);
+void fft_tensor(hydro_fields f, hydro_params p, int step, double energydensity);
 #endif // FFT
 
