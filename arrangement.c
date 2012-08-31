@@ -169,6 +169,8 @@ void halo_field(double ***field, hydro_params p) {
 
   clock_t start, end;
 
+  MPI_Barrier(MPI_COMM_WORLD);
+
   start = clock();
 
   int mpi_counter = 1;

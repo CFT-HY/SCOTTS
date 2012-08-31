@@ -1,13 +1,13 @@
 # Example input file
 
 # How long the simulation takes
-Lx      256
-Ly	256
-Lz	256
-steps  1000
+Lx      128
+Ly	128
+Lz	128
+steps  500
 
 # How big the simulation is
-dx     1.0
+dx     2.0
 dt     0.1
  
 # Viscosity terms
@@ -20,7 +20,7 @@ sigma  0.1
 lcorr  6.0
 
 # How often to write data
-interval 10
+interval 100
 silointerval -1
 
 # Initial conditions
