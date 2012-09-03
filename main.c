@@ -139,12 +139,15 @@ int main(int argc, char *argv[])
   //  initial_blank(f, p);
   initial_scalar_bubble(f, p);
 
-  for(step=0;step<4;step++) {
+  for(step=0;step<p.bubbles;step++) {
       int tryx = random()%p.Lx;
       int tryy = random()%p.Ly;
       int tryz = random()%p.Lz;
 
-      while(!can_nucleate(f,p,tryx,tryy,tryz)) {
+
+      int attempts = 0;
+
+      while(!can_nucleate(f,p,tryx,tryy,tryz) && attempts < 20) {
 	if(!p.rank)
 	  fprintf(stderr, "Not allowed to nucleate at (%d,%d,%d)!\n",
 		  tryx, tryy, tryz);
@@ -152,10 +155,18 @@ int main(int argc, char *argv[])
 	tryy = random()%p.Ly;
 	tryz = random()%p.Lz;
 
+	attempts++;
       }
 
-      nucleate_at(f, p, tryx, tryy, tryz);
-      halo_field(f.phi, p);
+      if(attempts == 20) {
+	fprintf(stderr, "Gave up trying to nucleate!\n");
+	still_nucleate = 0;
+	break;
+      } else {
+
+	nucleate_at(f, p, tryx, tryy, tryz);
+	halo_field(f.phi, p);
+      }
   }
 
   still_nucleate = 0;

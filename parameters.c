@@ -52,6 +52,8 @@ void get_parameters(char *infile, hydro_params *p)
 
   int set_silodir = 0;
 
+  int set_bubbles = 0;
+
   char key[100];
   char value[100];
   char total[200];
@@ -156,6 +158,10 @@ void get_parameters(char *infile, hydro_params *p)
       p->silointerval = strtod(value,NULL);
       set_silointerval = 1;
     }
+    else if(!strcasecmp(key,"bubbles")) {
+      p->bubbles = strtod(value,NULL);
+      set_bubbles = 1;
+    }
     else if(!strcasecmp(key,"initial")) {
       if(!strcasecmp(value, "shocktube")) {
 	p->initial = INIT_SHOCK_TUBE;
@@ -223,6 +229,9 @@ void get_parameters(char *infile, hydro_params *p)
   } else if(!set_silointerval) {
     fprintf(stderr, "Did not set parameter \'silointerval\'\n");
     exit(100);
+  } else if(!set_bubbles) {
+    fprintf(stderr, "Did not set parameter \'bubbles\'\n");
+    exit(100);
   } else if(!set_initial) {
     fprintf(stderr, "Did not set parameter \'initial\'\n");
     exit(100);
@@ -240,14 +249,14 @@ void get_parameters(char *infile, hydro_params *p)
 	    "-- Lx %d, Ly %d, Lz %d\n"
 	    "-- Cav %g, C %g,\n"
 	    "-- Lheat %g, sigma %g, lcorr %g\n"
-	    "-- interval %d, silointerval %d\n"
+	    "-- interval %d, silointerval %d, bubbles %d\n"
 	    "-- silodir \"%s\"\n",
 	    infile,
 	    p->dx, p->dt, p->steps,
 	    p->Lx, p->Ly, p->Lz,
 	    p->Cav, p->C,
 	    p->Lheat, p->sigma, p->lcorr,
-	    p->interval, p->silointerval,
+	    p->interval, p->silointerval, p->bubbles,
 	    p->silodir);
     
     if(p->initial == INIT_SHOCK_TUBE) {

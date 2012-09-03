@@ -141,6 +141,8 @@ typedef struct {
   char silodir[500];
 
 
+  int bubbles;
+
 #ifdef MPI
 
   // Ranks of neighbours
