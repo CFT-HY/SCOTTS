@@ -477,7 +477,7 @@ void fft_tensor(hydro_fields f, hydro_params p, int step, double energydensity) 
 #else // not DUMPFFT
   // calculate the power spectrum on the fly
 
-  int nbins = 200;
+  int nbins = 400;
   double mink = 0.0;
   double maxk = 2.0*M_PI;
 
