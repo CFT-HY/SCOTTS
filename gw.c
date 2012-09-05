@@ -57,7 +57,7 @@ double proj(int T, double kx, double ky, double kz) {
     fprintf(stderr,"Unknown projector element! Nonsense will ensue...\n");
 
   }
-  
+
   return 0.0;
 }
 
@@ -213,7 +213,8 @@ void gwproject(hydro_params p, int x_start, int slab,
  * you decide to calculate the power spectrum several times during the
  * simulation be prepared to pre-calculate the above.
  */
-void fft_tensor(hydro_fields f, hydro_params p, int step, double energydensity) {
+void fft_tensor(hydro_fields f, hydro_params p, int step,
+		double energydensity) {
 
   ptrdiff_t x_thickness, x_start, alloc_local;
 
@@ -348,9 +349,10 @@ void fft_tensor(hydro_fields f, hydro_params p, int step, double energydensity) 
     }
 
 
-    /*    
+    /*
     if(!i) {
-      fprintf(stderr,"total incpts %d is %6.10lf\n", p.rank, reduce_sum(total,p));
+      fprintf(stderr,"total incpts %d is %6.10lf\n", p.rank,
+	      reduce_sum(total,p));
     }
 
     if(!p.rank && !i)
@@ -369,19 +371,21 @@ void fft_tensor(hydro_fields f, hydro_params p, int step, double energydensity) 
 	    = fft_norm*out[x*p.Ly*p.Lz + y*p.Lz + z][0];
 	  outcpts[i][x*p.Ly*p.Lz + y*p.Lz + z][1]
 	    = fft_norm*out[x*p.Ly*p.Lz + y*p.Lz + z][1];
+
 	  //	  total += outcpts[i][x*p.Ly*p.Lz + y*p.Lz + z][0];
 	}
       }
     }
 
+
     /*
     if(!i) {
-      fprintf(stderr,"total outcpts %d is %6.10lf\n", p.rank, reduce_sum(total,p));
+      fprintf(stderr,"total outcpts %d is %6.10lf\n", p.rank,
+	      reduce_sum(total,p));
     }
     */
 
     // now to deal with out
-
     //    fprintf(stderr,"Done Tensor FFT %d/%d\n", i, TENSOR_CPTS);
 
   }
@@ -449,7 +453,8 @@ void fft_tensor(hydro_fields f, hydro_params p, int step, double energydensity) 
           continue;
 
 	kmode = sqrt(
-		     ((double)((x+((int)x_start))*(x+((int)x_start))))/((double)(p.Lx*p.Lx))
+		     ((double)((x+((int)x_start))
+			       *(x+((int)x_start))))/((double)(p.Lx*p.Lx))
 		     + ((double)(y*y))/((double)(p.Ly*p.Ly))
 		     + ((double)(z*z))/((double)(p.Lz*p.Lz))
 		     )*2.0*M_PI;
@@ -561,13 +566,15 @@ void fft_tensor(hydro_fields f, hydro_params p, int step, double energydensity) 
 
       // d(rhogw)/d(logk)
       // (p.H^(-3) is comoving volume; 8*4*pi is the solid angle normalisation)
-      thisdiff = (comovingk*comovingk*comovingk/(32.0*M_PI))*bins[i]/(p.Lx*p.Ly*p.Lz*p.dx*p.dx*p.dx);
+      thisdiff = (comovingk*comovingk*comovingk/(32.0*M_PI))
+	*bins[i]/(p.Lx*p.Ly*p.Lz*p.dx*p.dx*p.dx);
 
-      // omegaGW(k), as above but corrections for degrees of freedom, energy density and
-      // radiation density
+      // omegaGW(k), as above but corrections for degrees of freedom,
+      // energy density and radiation density
       thisomega = omegarad*doffrac*(1.0/energydensity)*thisdiff;
 
-      fprintf(fp, "%lf %lf %d %g %g\n", thisk, bins[i], counts[i], thisf, thisomega);
+      fprintf(fp, "%lf %lf %d %g %g\n",
+	      thisk, bins[i], counts[i], thisf, thisomega);
 
       thisk = thisk + dk;
     }
@@ -581,6 +588,7 @@ void fft_tensor(hydro_fields f, hydro_params p, int step, double energydensity) 
 #endif
 
 
+  // Tidy up
 
   free(slice);
   free(trim);
@@ -599,7 +607,8 @@ void fft_tensor(hydro_fields f, hydro_params p, int step, double energydensity) 
   double end = clock();
 
   if(!p.rank)
-    fprintf(stderr,"FFT stuff took %lf\n", ((double) (end - start)) / CLOCKS_PER_SEC);
+    fprintf(stderr,"FFT stuff took %lf\n",
+	    ((double) (end - start)) / CLOCKS_PER_SEC);
 
 }
 
