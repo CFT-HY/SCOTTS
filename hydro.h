@@ -263,7 +263,7 @@ int safe_distance(hydro_fields f, hydro_params p);
 int can_nucleate(hydro_fields f, hydro_params p, int x0, int y0, int z0);
 void nucleate_at(hydro_fields f, hydro_params p, int x0, int y0, int z0);
 void initial_3D(hydro_fields f, hydro_params p);
-
+int do_nucleate(hydro_fields f, hydro_params p);
 
 // output.c
 double get_gamma_max(hydro_fields f, hydro_params p);
@@ -287,6 +287,7 @@ void write_silo_step(hydro_fields f, hydro_params p, int step);
 
 // util.c
 double minof3(double a, double b, double c);
+int minof3_int(int a, int b, int c);
 double maxof3(double a, double b, double c);
 double minof2(double a, double b);
 
