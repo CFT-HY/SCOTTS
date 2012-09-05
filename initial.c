@@ -12,8 +12,8 @@ void initial_scalar_bubble(hydro_fields f, hydro_params p) {
     /(p.lambda*p.lambda*sqrt(p.lambda));
 
   if(!p.rank)
-    fprintf(stderr,			   \
-	    "** Initial conditions magic:\n"	\
+    fprintf(stderr,
+	    "** Initial conditions magic:\n"
 	    "** sigmlo %g\n", sigmlo);
 
   double phimin =  ( p.alpha*p.Tconst
@@ -28,8 +28,8 @@ void initial_scalar_bubble(hydro_fields f, hydro_params p) {
   double Rtenab = Rlapab;
 
   if(!p.rank)
-    fprintf(stderr,					\
-	    "** phimin %g, cstrab %g, Rtenab %g\n",	\
+    fprintf(stderr,
+	    "** phimin %g, cstrab %g, Rtenab %g\n",
 	    phimin, cstrab, Rtenab);
 
   int x, y, z;
@@ -43,14 +43,14 @@ void initial_scalar_bubble(hydro_fields f, hydro_params p) {
 
 
     
-	f.phi[x][y][z] = cstrab*exp(-1.0*
-			  p.dx*p.dx*( ((double)(p.shiftx+x-1-p.Lx/2))
+	f.phi[x][y][z] = cstrab*exp(-1.0*p.dx*p.dx
+				    *(((double)(p.shiftx+x-1-p.Lx/2))
 				      *((double)(p.shiftx+x-1-p.Lx/2))
 				      + ((double)(p.shifty+y-1-p.Ly/2))
 				      *((double)(p.shifty+y-1-p.Ly/2))
 				      + ((double)(z-p.Lz/2))
 				      *((double)(z-p.Lz/2)))
-			  /2.0/(Rtenab*Rtenab) );
+				    /2.0/(Rtenab*Rtenab) );
 	
 	f.pifull[x][y][z] = 0.0;
 	
@@ -79,15 +79,15 @@ void initial_blank(hydro_fields f, hydro_params p) {
     /(p.lambda*p.lambda*sqrt(p.lambda));
 
   if(!p.rank)
-    fprintf(stderr,			   \
-	    "** Initial conditions magic:\n"	\
+    fprintf(stderr,
+	    "** Initial conditions magic:\n"
 	    "** sigmlo %g\n", sigmlo);
 
   double phimin =  ( p.alpha*p.Tconst
 		     + sqrt((p.alpha*p.Tconst)*(p.alpha*p.Tconst)
 			    - 4*p.lambda*p.gamma
 			    *(p.Tconst*p.Tconst - p.T0*p.T0)) )/(2*p.lambda);
-
+  
   double cstrab = 1.0*phimin;
 
   double Rlapab = 2.0*sigmlo/(-1.0*Vf(p, p.Tconst, phimin));
@@ -95,8 +95,8 @@ void initial_blank(hydro_fields f, hydro_params p) {
   double Rtenab = Rlapab;
 
   if(!p.rank)
-    fprintf(stderr,					\
-	    "** phimin %g, cstrab %g, Rtenab %g\n",	\
+    fprintf(stderr,
+	    "** phimin %g, cstrab %g, Rtenab %g\n",
 	    phimin, cstrab, Rtenab);
 
   int x, y, z;
@@ -107,9 +107,9 @@ void initial_blank(hydro_fields f, hydro_params p) {
   for(x=1;x<=p.slicex;x++) {
     for(y=1;y<=p.slicey;y++) {
       for(z=0;z<p.Lz;z++) {
-
+	
 	f.phi[x][y][z] = 0.0; 
-
+	
 	/*
 	cstrab*exp(-1.0*
 		   p.dx*p.dx*( ((double)(p.shiftx+x-1-p.Lx/2))
@@ -155,20 +155,20 @@ int safe_distance(hydro_fields f, hydro_params p) {
   double cstrab = 1.0*phimin;
 
   double Rlapab = 2.0*sigmlo/(-1.0*Vf(p, p.Tconst, phimin));
-
+  
   double Rtenab = Rlapab;
 
 
   /*
   if(!p.rank)
-    fprintf(stderr,					\
-	    "** phimin %g, cstrab %g, Rtenab %g\n",	\
+    fprintf(stderr,
+	    "** phimin %g, cstrab %g, Rtenab %g\n",
 	    phimin, cstrab, Rtenab);
   */
 
   double sigma = 1.0/(sqrt(p.dx*p.dx/2.0/(Rtenab*Rtenab) ));
 
-
+  
   return (int)(round(sigma));
  	
 }
@@ -224,22 +224,22 @@ int can_nucleate(hydro_fields f, hydro_params p, int x0, int y0, int z0) {
 	  break;
 	}
       }
-
+      
       if(!is_good)
 	break;
     }
-
-      if(!is_good)
-	break;
+    
+    if(!is_good)
+      break;
   }
-
+  
   return reduce_and(is_good, p);
 }
 
 
 void nucleate_at(hydro_fields f, hydro_params p, int x0, int y0, int z0) {
-
-
+  
+  
   double sigmlo = 2.0*sqrt(2.0)/81.0*p.alpha*p.alpha*p.alpha
     /(p.lambda*p.lambda*sqrt(p.lambda));
 
@@ -249,18 +249,18 @@ void nucleate_at(hydro_fields f, hydro_params p, int x0, int y0, int z0) {
 		     + sqrt((p.alpha*p.Tconst)*(p.alpha*p.Tconst)
 			    - 4*p.lambda*p.gamma
 			    *(p.Tconst*p.Tconst - p.T0*p.T0)) )/ (2*p.lambda);
-
+  
   double cstrab = 1.0*phimin;
-
+  
   double Rlapab = 2.0*sigmlo/(-1.0*Vf(p, p.Tconst, phimin));
-
+  
   double Rtenab = Rlapab;
 
 
   /*
   if(!p.rank)
-    fprintf(stderr,					\
-	    "** phimin %g, cstrab %g, Rtenab %g\n",	\
+    fprintf(stderr,
+	    "** phimin %g, cstrab %g, Rtenab %g\n",
 	    phimin, cstrab, Rtenab);
   */
 
@@ -312,7 +312,7 @@ void nucleate_at(hydro_fields f, hydro_params p, int x0, int y0, int z0) {
       }
     }
   }
-
+  
   //  fprintf(stderr,"Done\n");
 }
 
@@ -329,14 +329,14 @@ void initial_3D(hydro_fields f, hydro_params p) {
   //  srand48(time());
 
   if(!p.rank)
-    fprintf(stderr,			   \
-	    "** Initial conditions magic:\n"	\
+    fprintf(stderr,
+	    "** Initial conditions magic:\n"
 	    "** sigmlo %g\n", sigmlo);
-  
+
   double phimin =  ( p.alpha*p.Tconst 
-		    + sqrt((p.alpha*p.Tconst)*(p.alpha*p.Tconst)
-			   - 4*p.lambda*p.gamma
-			   *(p.Tconst*p.Tconst - p.T0*p.T0)) )/ (2*p.lambda);
+		     + sqrt((p.alpha*p.Tconst)*(p.alpha*p.Tconst)
+			    - 4*p.lambda*p.gamma
+			    *(p.Tconst*p.Tconst - p.T0*p.T0)) )/ (2*p.lambda);
 
   double cstrab = 1.0*phimin;
 
