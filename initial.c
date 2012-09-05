@@ -394,3 +394,40 @@ void initial_3D(hydro_fields f, hydro_params p) {
   }
 }
 
+
+
+
+
+int do_nucleate(hydro_fields f, hydro_params p) {
+
+  fprintf(stderr, "Trying to nucleate a bubble (safe distance = %d)\n",
+	  safe_distance(f,p));
+
+  int tryx = random()%p.Lx;
+  int tryy = random()%p.Ly;
+  int tryz = random()%p.Lz;
+
+  int attempts = 0;
+
+  while(!can_nucleate(f,p,tryx,tryy,tryz) && attempts < 20) {
+    if(!p.rank)
+      fprintf(stderr, "Not allowed to nucleate at (%d,%d,%d)!\n",
+		  tryx, tryy, tryz);
+    tryx = random()%p.Lx;
+    tryy = random()%p.Ly;
+    tryz = random()%p.Lz;
+    
+    attempts++;
+  }
+
+  if(attempts == 20) {
+    fprintf(stderr, "Gave up trying to nucleate!\n");
+    return 0;
+
+  } else {
+    nucleate_at(f, p, tryx, tryy, tryz);
+    halo_field(f.phi, p);
+  }
+
+  return 1;
+}
