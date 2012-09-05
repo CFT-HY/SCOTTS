@@ -48,21 +48,19 @@ int main(int argc, char *argv[])
 #endif // HAVE_MALLOC_H
 
 
-  // Parse params from stdin
+  // Parse parameters from the filename specified on the command line
   get_parameters(argv[1], &p);
 
   // How big is the system
   p.N = p.Lx*p.Ly*p.Lz;
 
   // Calculate terms in potential
-  p.alpha = 1.0/sqrt(2.0*p.sigma*
-			      pow(p.lcorr, 5.0)/3.0);
+  p.alpha = 1.0/sqrt(2.0*p.sigma*pow(p.lcorr, 5.0)/3.0);
 
-  p.gamma = (p.Lheat 
-		      + 6.0*p.sigma/p.lcorr) 
-    / (6.0*p.sigma*p.lcorr);
+  p.gamma = (p.Lheat + 6.0*p.sigma/p.lcorr)/(6.0*p.sigma*p.lcorr);
 
   p.lambda = 1.0/(3.0*p.sigma*pow(p.lcorr,3.0));
+
 
   // What did we find?
   if(!p.rank) 
@@ -71,6 +69,7 @@ int main(int argc, char *argv[])
 	    "-- alpha %g, gamma %g, lambda %g\n",
 	    p.alpha, p.gamma, p.lambda);
 
+
   // Make these user-modifiable eventually
   p.Tconst = 0.86;
 
@@ -78,17 +77,18 @@ int main(int argc, char *argv[])
   p.a = 34.25*M_PI*M_PI/90.0;
 
   // Ugly but it's a straight conversion of the fortran
-  p.T0 = sqrt(1.0-2.0*p.alpha*p.alpha
-		       /9.0/p.gamma/p.lambda);
+  p.T0 = sqrt(1.0-2.0*p.alpha*p.alpha/9.0/p.gamma/p.lambda);
 
 
   // Set up layout for any (or no) parallelism
   layout(&p);
 
-  // Useless
+
+  // Start a counter for communications time
   init_comms_time(&p);
 
-  // time iterate
+
+  // time iterates: count steps and t
   int step;
   double t = 0.0;
 
@@ -112,12 +112,12 @@ int main(int argc, char *argv[])
 
 
 
-  // Just runs malloc on all the fields therein
+  // Just runs malloc on all the fields therein (see alloc.c)
   alloc_fields(&f, p);
 
+  // Managed to get this far, so we probably have enough memory
   if(!p.rank)
     fprintf(stderr, "- Allocated fields.\n");
-
 
   // For safety, set everything to zero
   zero_fields(f, p);
@@ -125,7 +125,9 @@ int main(int argc, char *argv[])
   if(!p.rank)
     fprintf(stderr, "- Zeroed fields.\n");
 
-  // initial conditions
+
+
+  // initial conditions -- one or more bubbles, or blank and then nucleate?
   /*  if(p.initial == INIT_BUBBLE) {
     create_gaussian_bubble(f, p);
   } else if(p.initial == INIT_SHOCK_TUBE) {
@@ -174,6 +176,8 @@ int main(int argc, char *argv[])
   // initial_step(f,p);
 
 
+
+
   // Communicate everything that neighbours need
   halo_field(f.phi, p);
   halo_field(f.pifull, p);
@@ -198,7 +202,6 @@ int main(int argc, char *argv[])
 
 #ifdef SILO
 
-
   if(p.silointerval > 0)
     silo_init(p);
 
@@ -222,6 +225,7 @@ int main(int argc, char *argv[])
 
 
 #ifdef MPI
+
   // Mostly so that the timing is remotely fair
   MPI_Barrier(MPI_COMM_WORLD);
 
@@ -247,17 +251,6 @@ int main(int argc, char *argv[])
     if((p.interval > 0) && (step % p.interval == 0)) {
 
 #ifdef FFT
-
-      /*      if(step == 100) {
-	int i;
-	for(x=0;x<p.fieldN;x++) {
-	  for(i=0; i<TENSOR_CPTS; i++) {
-	    f.uij[i][0][0][x] = 0.0;
-	    f.udotij[i][0][0][x] = 0.0;
-	  }
-	}
-
-	} */
       
       fft_tensor(f,p,step,current_energy);
     
@@ -321,14 +314,6 @@ int main(int argc, char *argv[])
     
     // Calculate EOS
     eq_of_state(f, p);
-
-    /*    
-      t00 = reduce_sum(tzerozero(f, p), p);
-      current_energy = reduce_sum(total_energy(f, p), p);
-      if(!p.rank)
-	fprintf(stderr, "Comparison: T00 seems to be: %6lf; energy %6lf\n",
-		t00, current_energy);
-    */
 
     // Do the hydro bits
     evolve_hydro(f, p);
