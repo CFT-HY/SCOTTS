@@ -142,6 +142,7 @@ typedef struct {
 
 
   int bubbles;
+  double beta;
 
 #ifdef MPI
 
@@ -216,7 +217,9 @@ int get_y(int n, hydro_params p);
 int get_z(int n, hydro_params p);
 void halo_field(double ***field, hydro_params p);
 double reduce_sum(double result, hydro_params p);
+int reduce_sum_int(int result, hydro_params p);
 double reduce_max(double result, hydro_params p);
+double reduce_min(double result, hydro_params p);
 int reduce_and(int result, hydro_params p);
 void init_comms_time(hydro_params *p);
 double get_comms_time(hydro_params *p);
@@ -264,10 +267,12 @@ int can_nucleate(hydro_fields f, hydro_params p, int x0, int y0, int z0);
 void nucleate_at(hydro_fields f, hydro_params p, int x0, int y0, int z0);
 void initial_3D(hydro_fields f, hydro_params p);
 int do_nucleate(hydro_fields f, hydro_params p);
+int should_nucleate(hydro_fields f, hydro_params p, double t);
 
 // output.c
 double get_gamma_max(hydro_fields f, hydro_params p);
 void dump(double *field, hydro_params p);
+void histo_field(double ***field, hydro_params p, int step);
 
 // papi.c
 #ifdef PAPI

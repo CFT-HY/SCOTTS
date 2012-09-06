@@ -138,8 +138,10 @@ int main(int argc, char *argv[])
   }
   */
 
-  //  initial_blank(f, p);
-  initial_scalar_bubble(f, p);
+  initial_blank(f, p);
+
+  // You get one bubble for free
+  //  initial_scalar_bubble(f, p);
 
   for(step=0;step<p.bubbles;step++) {
     still_nucleate = do_nucleate(f, p);
@@ -149,7 +151,7 @@ int main(int argc, char *argv[])
 
   }
 
-  still_nucleate = 0;
+  //  still_nucleate = 0;
   // initial_3D(f,p);
   // initial_step(f,p);
 
@@ -218,6 +220,10 @@ int main(int argc, char *argv[])
 
     if((p.silointerval > 0) && (step % p.silointerval == 0)) {
 
+      if(still_nucleate && should_nucleate(f, p, t)) {
+	still_nucleate = do_nucleate(f, p);
+      }
+
 #ifdef SILO
 
       write_silo_step(f, p, step);
@@ -227,6 +233,8 @@ int main(int argc, char *argv[])
     }
 
     if((p.interval > 0) && (step % p.interval == 0)) {
+
+      histo_field(f.phi, p, step);
 
 #ifdef FFT
       
@@ -251,13 +259,6 @@ int main(int argc, char *argv[])
 		100.0*fabs((current_energy-initial_energy)/initial_energy));
       */
 
-    }
-
-
-
-
-    if(step % 100 == 0 && still_nucleate) {
-      still_nucleate = do_nucleate(f, p);
     }
 
     // Do field step

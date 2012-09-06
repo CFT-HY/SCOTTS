@@ -345,6 +345,14 @@ double reduce_max(double result, hydro_params p) {
 
 }
 
+double reduce_min(double result, hydro_params p) {
+
+  double total = 0.0;
+  MPI_Allreduce(&result, &total, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
+  return total;
+
+}
+
 
 int reduce_and(int result, hydro_params p) {
 
