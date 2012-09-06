@@ -44,3 +44,101 @@ void dump(double *field, hydro_params p) {
   fprintf(stderr,"\n");
 }
 
+
+
+
+
+void histo_field(double ***field, hydro_params p, int step) {
+  int x, y, z;
+
+  double fmax = 0.0;
+  double fmin = 0.0;
+
+  double ftest;
+
+  double start = clock();
+
+
+  fmax = field[0][0][0];
+  fmin = field[0][0][0];
+
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+
+	ftest = field[x][y][z];
+	if(ftest > fmax) {
+	  fmax = ftest;
+	} else if (ftest < fmin) {
+	  fmin = ftest;
+	}
+
+      }
+    }
+  }
+
+  double overall_max, overall_min;
+
+  overall_max = reduce_max(fmax, p);
+  overall_min = reduce_min(fmin, p);
+
+
+  int nbins = 100;
+
+  double df = (overall_max - overall_min)/((double)nbins);
+
+  int *count = (int *)malloc(nbins*sizeof(int));
+
+  int i;
+
+  for(i=0; i<nbins; i++) {
+    count[i] = 0;
+  }
+
+
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+	count[(int)floor((field[x][y][z] - overall_min)/df)]++;
+      }
+    }
+  }
+
+  if(!p.rank) {
+    fprintf(stderr, "Doing histogram, %d bins in [%lf,%lf]\n", nbins, overall_min, overall_max);
+  }
+
+  int ntemp;
+
+  for(i=0; i<nbins; i++) {
+    ntemp = count[i];
+    count[i] = reduce_sum_int(ntemp, p);
+  }
+
+  if(!p.rank) {
+
+    FILE *fp;
+
+    char histodest[200];
+    
+    sprintf(histodest,"histo-%d.txt",step);
+    
+    fp = fopen(histodest, "w");
+
+    for(i=0; i<nbins; i++) {
+      fprintf(fp, "%lf %d\n", overall_min + df*((double)i), count[i]);
+    }
+
+    fclose(fp);
+  }
+
+  double end = clock();
+
+  if(!p.rank)
+    fprintf(stderr,"Histogram stuff took %lf\n",
+            ((double) (end - start)) / CLOCKS_PER_SEC);
+
+	       
+}
+
+
