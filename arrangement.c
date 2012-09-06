@@ -530,7 +530,18 @@ double reduce_sum(double result, hydro_params p) {
   return result;
 }
 
+int reduce_sum_int(int result, hydro_params p) {
+  // Do nothing
+  return result;
+}
+
+
 double reduce_max(double result, hydro_params p) {
+  // do nothing
+  return result;
+}
+
+double reduce_min(double result, hydro_params p) {
   // do nothing
   return result;
 }
