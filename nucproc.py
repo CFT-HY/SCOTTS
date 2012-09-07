@@ -5,7 +5,7 @@ t = 0.0
 
 dt = 0.1
 
-beta = 0.01
+beta = 0.0099
 
 duration = 10000
 
