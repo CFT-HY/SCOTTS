@@ -1,10 +1,10 @@
 #### CC ####
 
 # Everything turned on
-# CC := mpicc -DMPI -DFFT # -DEXPANSION # -DSILO # -DDUMPFFT
+CC := mpicc -DMPI -DFFT # -DEXPANSION # -DSILO # -DDUMPFFT
 
 # Example for serial profiling
-CC := gcc -O3 -DPAPI -lpapi
+# CC := gcc -O3 -DPAPI -lpapi
 
 # For generating VampirTrace logs
 # CC := vtcc -vt:mpi -DMPI
@@ -43,7 +43,7 @@ LIBS :=   -lfftw3_mpi -lfftw3 -lm -lsiloh5
 
 OBJECTS := main.o evolve.o potential.o energy.o eos.o \
 	transport.o initial.o output.o parameters.o silage.o \
-	util.o papi.o arrangement.o fft.o alloc.o gw.o
+	util.o papi.o arrangement.o fft.o alloc.o gw.o velps.o
 
 BINARY := run/hydro
 
