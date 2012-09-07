@@ -218,11 +218,12 @@ int main(int argc, char *argv[])
 
   for(step = 0; step < p.steps; step++) {
 
-    if((p.silointerval > 0) && (step % p.silointerval == 0)) {
+    if(still_nucleate && should_nucleate(f, p, t)) {
+      still_nucleate = do_nucleate(f, p);
+    }
 
-      if(still_nucleate && should_nucleate(f, p, t)) {
-	still_nucleate = do_nucleate(f, p);
-      }
+
+    if((p.silointerval > 0) && (step % p.silointerval == 0)) {
 
 #ifdef SILO
 

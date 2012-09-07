@@ -1,10 +1,10 @@
 #### CC ####
 
 # Everything turned on
-# CC := mpicc -DMPI -DFFT # -DEXPANSION # -DSILO # -DDUMPFFT
+CC := mpicc -DMPI -DFFT # -DEXPANSION # -DSILO # -DDUMPFFT
 
 # Example for serial profiling
-CC := gcc -O3 -DPAPI -lpapi
+# CC := gcc -O3 -DPAPI -lpapi
 
 # For generating VampirTrace logs
 # CC := vtcc -vt:mpi -DMPI
@@ -13,10 +13,10 @@ CC := gcc -O3 -DPAPI -lpapi
 #### CFLAGS ####
 
 # on vuori
-# CFLAGS := -O3 -L/home/u1/weir/local/lib -I/home/u1/weir/local/include
+CFLAGS := -O3 -L/home/u1/weir/local/lib -I/home/u1/weir/local/include
 
 # on pc168, need libraries
-CFLAGS := -O3 -L/home/weir/local/lib -I/home/weir/local/include
+# CFLAGS := -O3 -L/home/weir/local/lib -I/home/weir/local/include
 
 # on afo
 # CFLAGS := -O3 -I/home/weir/Installed/silo-4.8-bsd/include/ -I/home/weir/local/include/
@@ -27,10 +27,10 @@ CFLAGS := -O3 -L/home/weir/local/lib -I/home/weir/local/include
 #### LIBS ####
 
 # on vuori
-# LIBS := -lfftw3_mpi -lfftw3 -lm
+LIBS := -lfftw3_mpi -lfftw3 -lm
 
 # on pc168:
-LIBS :=   -lfftw3_mpi -lfftw3 -lm -lsiloh5
+# LIBS :=   -lfftw3_mpi -lfftw3 -lm -lsiloh5
 
 # on afo
 # LIBS := -L/home/weir/Installed/silo-4.8-bsd/lib/ -L/home/weir/local/lib/ -lsilo -lfftw3_mpi -lfftw3 -lm
