@@ -4,7 +4,7 @@
 Lx      64
 Ly	64
 Lz	64
-steps  5000
+steps  500
 
 # How big the simulation is
 dx     2.0
@@ -20,7 +20,7 @@ sigma  0.1
 lcorr  6.0
 
 # How often to write data
-interval 100
+interval 10
 silointerval -1
 
 # Initial conditions
@@ -30,4 +30,5 @@ bubbles 1
 
 silodir silage
 
-beta 1.0
+beta 0.00001
+
