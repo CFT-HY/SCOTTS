@@ -8,6 +8,61 @@
 #ifdef FFT
 
 
+/* vel_proj(int T, double kx, double ky, double kz);
+ */
+double vel_proj(int T, double kx, double ky, double kz) {
+
+  double mag = sqrt(kx*kx + ky*ky + kz*kz);
+
+  // Avoid overflow
+  if(fabs(mag) < 0.000001)
+    return 0.0;
+
+  kx = kx/mag;
+  ky = ky/mag;
+  kz = kz/mag;
+
+  double total = 0.0;
+
+  switch(T) {
+
+  case 11:
+    return 1.0 - 1.0*kx*kx;
+    break;
+  case 21:
+    return -1.0*kx*ky;
+    break;
+  case 31:
+    return -1.0*kx*kz;
+    break;
+  case 12:
+    return -1.0*kx*ky;
+    break;
+  case 13:
+    return -1.0*kx*kz;
+    break;
+  case 22:
+    return 1.0 - 1.0*ky*ky;
+    break;
+  case 32:
+    return -1.0*ky*kz;
+    break;
+  case 23:
+    return -1.0*ky*kz;
+    break;
+  case 33:
+    return 1.0 - 1.0*kz*kz;
+    break;
+
+  default:
+    fprintf(stderr,"Unknown velocity projector element! Nonsense will ensue...\n");
+
+  }
+
+  return 0.0;
+}
+
+
 void vorticity(hydro_params p, int x_start, int slab,
 	       double *product, fftw_complex **vk) {
 
@@ -34,8 +89,8 @@ void vorticity(hydro_params p, int x_start, int slab,
 	  res_i = 0.0;
 
           for(j=1; j<=3; j++) {
-	    res_r = proj(i*10 + j, kx, ky, kz)*vk[j][x*p.Ly*p.Lz + y*p.Lz + z][0];
-	    res_i = proj(i*10 + j, kx, ky, kz)*vk[j][x*p.Ly*p.Lz + y*p.Lz + z][1];
+	    res_r = vel_proj(i*10 + j, kx, ky, kz)*vk[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+	    res_i = vel_proj(i*10 + j, kx, ky, kz)*vk[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 	  }
 
 	  product[x*p.Ly*p.Lz + y*p.Lz + z] +=
@@ -302,7 +357,7 @@ void fft_vel(hydro_fields f, hydro_params p, int step) {
     for(i=0;i<nbins;i++) {
 
 
-      fprintf(fp, "%lf %lf %d\n",
+      fprintf(fp, "%lf %g %d\n",
 	      thisk, bins[i], counts[i]);
 
       thisk = thisk + dk;
