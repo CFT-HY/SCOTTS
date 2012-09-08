@@ -230,18 +230,6 @@ void fft_vel(hydro_fields f, hydro_params p, int step) {
 
 
 
-  double rhogw = 0.0;
-
-  for(x=0; x<slab; x++) {
-    for(y=0; y<p.Ly; y++) {
-      for(z=0; z<p.Lz; z++) {
-	rhogw += slice[x*p.Ly*p.Lz + y*p.Lz + z];
-	
-      }
-    }
-  }
-
-
   // The rest proceeds as in gw.c
 
   int nbins = minof3_int(p.Lx, p.Ly, p.Lz);
@@ -301,12 +289,6 @@ void fft_vel(hydro_fields f, hydro_params p, int step) {
 
 
   double thisk = dk/2.0;
-  double comovingk, thisf, thisdiff, thisomega;
-
-  // not sure (includes h^2)
-  double omegarad = 3.5e-5;
-
-  double doffrac = pow(1.0/100.0,1.0/3.0);
 
   // spokesman does the final analysis
   if(!p.rank) {
@@ -319,24 +301,9 @@ void fft_vel(hydro_fields f, hydro_params p, int step) {
 
     for(i=0;i<nbins;i++) {
 
-      // thisk = sqrt((nx/Lx)^2 + (ny/Ly)^2 + (nz/Lz)^2) 2*pi
-      // so divide by dx
-      comovingk = thisk/(p.a*p.dx);
 
-      // formula taken as a given, looks correct
-      thisf = comovingk*6.0e10; // /(p.H)
-
-      // d(rhogw)/d(logk)
-      // (p.H^(-3) is comoving volume; 8*4*pi is the solid angle normalisation)
-      thisdiff = (comovingk*comovingk*comovingk/(32.0*M_PI))
-	*bins[i]/(p.Lx*p.Ly*p.Lz*p.dx*p.dx*p.dx);
-
-      // omegaGW(k), as above but corrections for degrees of freedom,
-      // energy density and radiation density
-      thisomega = omegarad*doffrac*(1.0/energydensity)*thisdiff;
-
-      fprintf(fp, "%lf %lf %d %g %g\n",
-	      thisk, bins[i], counts[i], thisf, thisomega);
+      fprintf(fp, "%lf %lf %d\n",
+	      thisk, bins[i], counts[i]);
 
       thisk = thisk + dk;
     }
@@ -347,7 +314,7 @@ void fft_vel(hydro_fields f, hydro_params p, int step) {
 
 
 
-#endif
+
 
 
   // Tidy up

@@ -239,7 +239,8 @@ int main(int argc, char *argv[])
 
 #ifdef FFT
       
-      fft_tensor(f,p,step,current_energy);
+      fft_vel(f, p, step);
+      fft_tensor(f, p, step, current_energy);
     
 #endif // FFT
 
