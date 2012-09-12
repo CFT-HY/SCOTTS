@@ -43,7 +43,9 @@ int main(int argc, char *argv[])
   /* HACK: don't release memory by calling sbrk */
   mallopt( M_TRIM_THRESHOLD, -1 );
 
-  fprintf(stderr, "Disabled sbrk\n");
+  if(!p.rank) {
+    fprintf(stderr, "Disabled sbrk\n");
+  }
 
 #endif // HAVE_MALLOC_H
 
@@ -215,15 +217,22 @@ int main(int argc, char *argv[])
 #endif // MPI
 
 
+  if(!p.rank) {
+    fprintf(stderr, "Starting main loop.\n");
+  }
+
   start = clock();
 
   double t00;
 
   for(step = 0; step < p.steps; step++) {
 
+
+
     if(still_nucleate && should_nucleate(f, p, t)) {
       still_nucleate = do_nucleate(f, p);
     }
+
 
 
     if((p.silointerval > 0) && (step % p.silointerval == 0)) {
@@ -238,11 +247,15 @@ int main(int argc, char *argv[])
 
     if((p.interval > 0) && (step % p.interval == 0)) {
 
-      histo_field(f.phi, p, step);
+
+      
+    //      histo_field(f.phi, p, step);
+
+
 
 #ifdef FFT
       
-      fft_vel(f, p, step);
+//      fft_vel(f, p, step);
       fft_tensor(f, p, step, current_energy);
     
 #endif // FFT
