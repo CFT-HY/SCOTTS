@@ -438,9 +438,12 @@ int should_nucleate(hydro_fields f, hydro_params p, double t) {
   double prob = exp(p.beta*(t-end));
 
   if(drand48() < prob) {
-    fprintf(stderr,
-	    "Rank %d recommending nucleation at t %lf (probability=%lf)\n",
-	    p.rank, t, prob);
+    if(!p.rank) {
+      fprintf(stderr, "Recommending nucleation at t=%lf, prob=%lf\n", t, prob);
+    }
+    //    fprintf(stderr,
+    //	    "Rank %d recommending nucleation at t %lf (probability=%lf)\n",
+    //	    p.rank, t, prob);
     return 1;
   }
 
