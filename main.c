@@ -151,7 +151,12 @@ int main(int argc, char *argv[])
   //  initial_scalar_bubble(f, p);
 
   for(step=0;step<p.bubbles;step++) {
+    start = clock();
     still_nucleate = do_nucleate(f, p);
+    end = clock();
+    if(!p.rank)
+      fprintf(stderr,"Nucleation attempt took %lf\n",
+	      ((double) (end - start)) / CLOCKS_PER_SEC);
 
     bcount += still_nucleate;
 

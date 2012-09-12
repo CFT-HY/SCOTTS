@@ -1,9 +1,9 @@
 # Example input file
 
 # How long the simulation takes
-Lx      64
-Ly	64
-Lz	64
+Lx      300
+Ly	300
+Lz	300
 steps  500
 
 # How big the simulation is
@@ -26,8 +26,10 @@ silointerval 10
 # Initial conditions
 initial bubble
 
-bubbles 1 
+bubbles 100
 
 silodir silage
 
 beta 1.0
+
+scale 0.3
