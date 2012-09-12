@@ -400,8 +400,9 @@ void initial_3D(hydro_fields f, hydro_params p) {
 
 int do_nucleate(hydro_fields f, hydro_params p) {
 
-  fprintf(stderr, "Trying to nucleate a bubble (safe distance = %d)\n",
-	  safe_distance(f,p));
+  if(!p.rank)
+    fprintf(stderr, "Trying to nucleate a bubble (safe distance = %d)\n",
+	    safe_distance(f,p));
 
   int tryx = random()%p.Lx;
   int tryy = random()%p.Ly;
@@ -437,9 +438,14 @@ int should_nucleate(hydro_fields f, hydro_params p, double t) {
   double end = ((double)p.steps)*p.dt;
   double prob = exp(p.beta*(t-end));
 
-  if(drand48() < prob) {
+  srand48(1);
+
+  double randin = drand48();
+
+
+  if(randin < prob) {
     if(!p.rank) {
-      fprintf(stderr, "Recommending nucleation at t=%lf, prob=%lf\n", t, prob);
+      fprintf(stderr, "Recommending nucleation at t=%lf, prob=%lf, random=%lf\n", t, prob, randin);
     }
     //    fprintf(stderr,
     //	    "Rank %d recommending nucleation at t %lf (probability=%lf)\n",

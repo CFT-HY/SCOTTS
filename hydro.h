@@ -140,7 +140,6 @@ typedef struct {
   // Where the silo files go
   char silodir[500];
 
-
   int bubbles;
   double beta;
 

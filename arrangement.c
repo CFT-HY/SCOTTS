@@ -141,6 +141,7 @@ void layout(hydro_params *p) {
   p->rank_xPyM = ((p->myposy - 1 + ny)%ny)*nx + ((p->myposx+1+nx)%nx);
   p->rank_xPyP = ((p->myposy + 1 + ny)%ny)*nx + ((p->myposx+1+nx)%nx);
 
+  /*
   fprintf(stderr, "Node of rank %d, node position is (%d, %d)\n",
 	  p-> rank, p->myposx, p->myposy);
   fprintf(stderr,
@@ -148,7 +149,7 @@ void layout(hydro_params *p) {
 	  "|_ %d |^ %d ^| %d _| %d\n",
 	  p->rank, p->rank_xM, p->rank_xP, p->rank_yM, p->rank_yP,
 	  p->rank_xMyM, p->rank_xMyP, p->rank_xPyM, p->rank_xPyP);
-
+  */
 
 
   p->shiftx = (p->slicex)*(p->myposx);

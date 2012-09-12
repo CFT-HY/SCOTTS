@@ -3,9 +3,9 @@ import math, random, time
 
 t = 0.0
 
-dt = 0.1
+dt = 0.2
 
-beta = 0.0099
+beta = 0.007
 
 duration = 10000
 

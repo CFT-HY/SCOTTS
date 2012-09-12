@@ -93,6 +93,8 @@ int main(int argc, char *argv[])
   init_comms_time(&p);
 
 
+  int bcount = 0;
+
   // time iterates: count steps and t
   int step;
   double t = 0.0;
@@ -150,6 +152,8 @@ int main(int argc, char *argv[])
 
   for(step=0;step<p.bubbles;step++) {
     still_nucleate = do_nucleate(f, p);
+
+    bcount += still_nucleate;
 
     if(!still_nucleate)
       break;
@@ -231,6 +235,8 @@ int main(int argc, char *argv[])
 
     if(still_nucleate && should_nucleate(f, p, t)) {
       still_nucleate = do_nucleate(f, p);
+
+      bcount += still_nucleate;
     }
 
 
@@ -247,9 +253,7 @@ int main(int argc, char *argv[])
 
     if((p.interval > 0) && (step % p.interval == 0)) {
 
-
-      
-    //      histo_field(f.phi, p, step);
+      histo_field(f.phi, p, step);
 
 
 
@@ -265,11 +269,12 @@ int main(int argc, char *argv[])
       current_wmax = reduce_max(get_gamma_max(f, p), p);
       
       if(!p.rank)
-	fprintf(stderr,"%04d\t%6lf\t%6lf\t%6lf\t%6lf\n",
+	fprintf(stderr,"%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%d\n",
 		step, t,
 		current_energy,
 		current_field_energy,
-		current_wmax);
+		current_wmax,
+		bcount);
       
       /*
       if(!p.rank)
