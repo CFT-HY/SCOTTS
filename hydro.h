@@ -144,6 +144,9 @@ typedef struct {
   int bubbles;
   double beta;
 
+  // to rescale bubble size
+  double scale;
+
 #ifdef MPI
 
   // Ranks of neighbours
