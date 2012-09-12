@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
   p.N = p.Lx*p.Ly*p.Lz;
 
 
-  p.scale = 0.3;
+  //  p.scale = 0.3;
 
   // Calculate terms in potential
   p.alpha = 1.0/sqrt(2.0*p.sigma*pow(p.lcorr, 5.0)/3.0);
