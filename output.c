@@ -88,8 +88,10 @@ void histo_field(double ***field, hydro_params p, int step) {
   double df = (overall_max - overall_min)/((double)nbins);
 
   if(fabs(df) < 0.001) {
-    if(!p.rank)
+    if(!p.rank) {
+      fprintf(stderr, "Max: %lf, Min: %lf, df: %lf\n", overall_max, overall_min, df);
       fprintf(stderr, "Not doing histogram: bin width too small (overflow would occur)\n");
+    }
 
     return;
   }

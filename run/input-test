@@ -20,8 +20,8 @@ sigma  0.1
 lcorr  6.0
 
 # How often to write data
-interval 10
-silointerval 10
+interval 100
+silointerval 100
 
 # Initial conditions
 initial bubble
@@ -32,6 +32,6 @@ silodir silage
 
 beta 1.0
 
-scale 0.3
+scale 1.0
 
-nucleation list 910,1704,2324,2423,2646,2695,2765
+nucleation list 400,910,1704,2324,2423,2646,2695,2765
