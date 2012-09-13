@@ -52,6 +52,9 @@
 #define INIT_BUBBLE 2
 
 
+#define NUC_EXP 1
+#define NUC_LIST 2
+
 /*
  * For the uij's, there are six components.
  */
@@ -141,6 +144,13 @@ typedef struct {
   char silodir[500];
 
   int bubbles;
+
+  // How we nucleate
+  int nucleation;
+
+  int *nucsteps;
+  int n_nucsteps;
+
   double beta;
 
   // to rescale bubble size
@@ -269,7 +279,7 @@ int can_nucleate(hydro_fields f, hydro_params p, int x0, int y0, int z0);
 void nucleate_at(hydro_fields f, hydro_params p, int x0, int y0, int z0);
 void initial_3D(hydro_fields f, hydro_params p);
 int do_nucleate(hydro_fields f, hydro_params p);
-int should_nucleate(hydro_fields f, hydro_params p, double t);
+int should_nucleate(hydro_fields f, hydro_params p, double t, int step);
 
 // output.c
 double get_gamma_max(hydro_fields f, hydro_params p);

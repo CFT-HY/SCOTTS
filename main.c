@@ -238,7 +238,7 @@ int main(int argc, char *argv[])
 
 
 
-    if(still_nucleate && should_nucleate(f, p, t)) {
+    if(still_nucleate && should_nucleate(f, p, t, step)) {
       still_nucleate = do_nucleate(f, p);
 
       bcount += still_nucleate;

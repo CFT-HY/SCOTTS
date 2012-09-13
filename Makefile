@@ -16,10 +16,10 @@ CC := mpicc -DMPI -DFFT # -DSILO # -DEXPANSION # -DSILO # -DDUMPFFT
 # CFLAGS := -O3 -L/home/u1/weir/local/lib -I/home/u1/weir/local/include
 
 # on pc168, need libraries
-CFLAGS := -O3 -L/home/weir/local/lib -I/home/weir/local/include
+# CFLAGS := -O3 -L/home/weir/local/lib -I/home/weir/local/include
 
 # on afo
-# CFLAGS := -O3 -I/home/weir/Installed/silo-4.8-bsd/include/ -I/home/weir/local/include/
+CFLAGS := -O3 -I/home/weir/Installed/silo-4.8-bsd/include/ -I/home/weir/local/include/
 
 # on my mac
 # CFLAGS := -O0 -I/Users/weir/Installed/silo-4.8-bsd/include/
@@ -30,10 +30,10 @@ CFLAGS := -O3 -L/home/weir/local/lib -I/home/weir/local/include
 # LIBS := -lfftw3_mpi -lfftw3 -lm
 
 # on pc168:
-LIBS :=   -lfftw3_mpi -lfftw3 -lm -lsiloh5
+# LIBS :=   -lfftw3_mpi -lfftw3 -lm -lsiloh5
 
 # on afo
-# LIBS := -L/home/weir/Installed/silo-4.8-bsd/lib/ -L/home/weir/local/lib/ -lsilo -lfftw3_mpi -lfftw3 -lm
+LIBS := -L/home/weir/Installed/silo-4.8-bsd/lib/ -L/home/weir/local/lib/ -lsilo -lfftw3_mpi -lfftw3 -lm
 
 # on my mac:
 # LIBS := -L/Users/weir/Installed/silo-4.8-bsd/lib/ -lsilo -lfftw3_mpi -lfftw3 -lm
