@@ -197,7 +197,7 @@ void get_parameters(char *infile, hydro_params *p)
       } else if(!strncasecmp(value, "list", 4)) {
 	p->nucleation = NUC_LIST;
 	char *curr = option;
-	fprintf(stderr,"Curr is %s\n", curr);
+	//	fprintf(stderr,"Curr is %s\n", curr);
 	char *next = curr;
 
 	p->n_nucsteps = 1;
@@ -205,7 +205,7 @@ void get_parameters(char *infile, hydro_params *p)
 	  if( curr[i] == ',')
 	    p->n_nucsteps++;
 	}
-	fprintf(stderr,"nucsteps is %d\n", p->n_nucsteps);
+	//	fprintf(stderr,"nucsteps is %d\n", p->n_nucsteps);
 
 	i = 0;
 
@@ -213,9 +213,9 @@ void get_parameters(char *infile, hydro_params *p)
 
 	while(strlen(curr) && strlen(next)) {
 	  p->nucsteps[i] = strtol(curr,&next,10);
-	  fprintf(stderr,"bubble at step %d, next is %s\n", p->nucsteps[i],next);
+	  //	  fprintf(stderr,"bubble at step %d, next is %s\n", p->nucsteps[i],next);
 	  curr = next+sizeof(char);
-	  fprintf(stderr,"strlen next is %d and curr is %d\n", strlen(next), strlen(curr));
+	  //	  fprintf(stderr,"strlen next is %d and curr is %d\n", strlen(next), strlen(curr));
 	  i++;
 	}
 	
@@ -343,8 +343,6 @@ void get_parameters(char *infile, hydro_params *p)
     }
     
   }
-
-  exit(0);
 
   fclose(fp);
 
