@@ -52,6 +52,8 @@ void get_parameters(char *infile, hydro_params *p)
 
   int set_silodir = 0;
 
+  int set_nucleation = 0;
+
   int set_bubbles = 0;
 
   int set_beta = 0;
@@ -60,12 +62,15 @@ void get_parameters(char *infile, hydro_params *p)
 
   char key[100];
   char value[100];
-  char total[200];
+  char option[100];
+  char total[300];
 
   int ret;
   char *retptr;
 
   FILE *fp;
+
+  int i;
 
   fp = fopen(infile,"r");
 
@@ -84,7 +89,7 @@ void get_parameters(char *infile, hydro_params *p)
       continue;
     }
     
-    ret = sscanf(total,"%99s%99s",key,value);
+    ret = sscanf(total,"%99s%99s%99s",key,value,option);
 
 
     // Not of the form "<key> <value>"
@@ -94,7 +99,7 @@ void get_parameters(char *infile, hydro_params *p)
 
     // Not of the form "<key> <value>"
     // -- other reason
-    if (ret != 2) {
+    if (ret < 2) {
       // Get rid of the newline
       // -- doesn't leak memory, we're on the stack
       *(index(total, '\n')) = '\0';
@@ -186,6 +191,42 @@ void get_parameters(char *infile, hydro_params *p)
       }
       set_initial = 1;
     }
+    else if(!strcasecmp(key,"nucleation")) {
+      if(!strcasecmp(value, "exp")) {
+	p->nucleation = NUC_EXP;
+      } else if(!strncasecmp(value, "list", 4)) {
+	p->nucleation = NUC_LIST;
+	char *curr = option;
+	fprintf(stderr,"Curr is %s\n", curr);
+	char *next = curr;
+
+	p->n_nucsteps = 1;
+	for(i=0;i<strlen(curr);i++) {
+	  if( curr[i] == ',')
+	    p->n_nucsteps++;
+	}
+	fprintf(stderr,"nucsteps is %d\n", p->n_nucsteps);
+
+	i = 0;
+
+	p->nucsteps = (int *)malloc((p->n_nucsteps)*sizeof(int));
+
+	while(strlen(curr) && strlen(next)) {
+	  p->nucsteps[i] = strtol(curr,&next,10);
+	  fprintf(stderr,"bubble at step %d, next is %s\n", p->nucsteps[i],next);
+	  curr = next+sizeof(char);
+	  fprintf(stderr,"strlen next is %d and curr is %d\n", strlen(next), strlen(curr));
+	  i++;
+	}
+	
+
+      } else {
+	fprintf(stderr, "warning, unrecognised value for nucleation"
+		" (%s); defaulting to exp.\n", value);
+	p->nucleation = NUC_EXP;
+      }
+      set_nucleation = 1;
+    }
     else if(!strcasecmp(key,"silodir")) {
      
       if(strlen(value) > 500)
@@ -253,6 +294,9 @@ void get_parameters(char *infile, hydro_params *p)
   } else if(!set_initial) {
     fprintf(stderr, "Did not set parameter \'initial\'\n");
     exit(100);
+  } else if(!set_nucleation) {
+    fprintf(stderr, "Did not set parameter \'nucleation\'\n");
+    exit(100);
   } else if(!set_silodir) {
     fprintf(stderr, "Did not set parameter \'silodir\'\n");
     exit(100);
@@ -284,8 +328,23 @@ void get_parameters(char *infile, hydro_params *p)
     } else {
       fprintf(stderr, "-- warning, somehow have unknown initial conds.\n");
     }
+
+    if(p->nucleation == NUC_EXP) {
+      fprintf(stderr, "<Random nucleation>\n");
+    } else if(p->nucleation == NUC_LIST) {
+      fprintf(stderr, "<List nucleation\n");
+      fprintf(stderr, "At steps: ");
+      for(i=0;i<p->n_nucsteps;i++)
+	fprintf(stderr, "%d, ", p->nucsteps[i]);
+
+      fprintf(stderr,"bubbles will be nucleated>\n");
+    } else {
+      fprintf(stderr, "<Warning, somehow have unknown nucleation process.\n");
+    }
     
   }
+
+  exit(0);
 
   fclose(fp);
 

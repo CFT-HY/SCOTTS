@@ -434,23 +434,38 @@ int do_nucleate(hydro_fields f, hydro_params p) {
 }
 
 
-int should_nucleate(hydro_fields f, hydro_params p, double t) {
-  double end = ((double)p.steps)*p.dt;
-  double prob = exp(p.beta*(t-end));
+int should_nucleate(hydro_fields f, hydro_params p, double t, int step) {
 
-  srand48(1);
+  if(p.nucleation == NUC_EXP) {
 
-  double randin = drand48();
+    double end = ((double)p.steps)*p.dt;
+    double prob = exp(p.beta*(t-end));
+
+    srand48(1);
+
+    double randin = drand48();
 
 
-  if(randin < prob) {
-    if(!p.rank) {
-      fprintf(stderr, "Recommending nucleation at t=%lf, prob=%lf, random=%lf\n", t, prob, randin);
-    }
+    if(randin < prob) {
+      if(!p.rank) {
+	fprintf(stderr, "Recommending nucleation at t=%lf, prob=%lf, random=%lf\n", t, prob, randin);
+      }
     //    fprintf(stderr,
     //	    "Rank %d recommending nucleation at t %lf (probability=%lf)\n",
     //	    p.rank, t, prob);
-    return 1;
+      return 1;
+    }
+  } else {
+
+    int j;
+
+    for(j=0; j < p.n_nucsteps; j++) {
+      if(p.nucsteps[j] == step) {
+	fprintf(stderr,"Parameter file requires nucleation at t=%lf step=%d\n", t, step);
+	return 1;
+      }
+    }
+
   }
 
   return 0;

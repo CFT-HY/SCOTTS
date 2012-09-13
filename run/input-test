@@ -1,9 +1,9 @@
 # Example input file
 
 # How long the simulation takes
-Lx      300
-Ly	300
-Lz	300
+Lx      400
+Ly	400
+Lz	400
 steps  500
 
 # How big the simulation is
@@ -33,3 +33,5 @@ silodir silage
 beta 1.0
 
 scale 0.3
+
+nucleation asdasdl;akd asdfasdf
