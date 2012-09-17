@@ -28,6 +28,8 @@ int main(int argc, char *argv[])
 
 #endif // MPI
 
+  fprintf(stderr, "Built: %s %s\n", __DATE__, __TIME__);
+
   if(argc != 2) {
     if(!p.rank)
       fprintf(stderr,"Usage: hydro <parameter file>\n");
