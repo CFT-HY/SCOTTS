@@ -9,6 +9,7 @@
 #include <string.h>
 #include <strings.h>
 #include <time.h>
+#include <unistd.h>
 
 // Apple doesn't seem to believe in malloc.h
 #ifndef __APPLE__
@@ -156,6 +157,8 @@ typedef struct {
   // to rescale bubble size
   double scale;
 
+  int Linv;
+
 #ifdef MPI
 
   // Ranks of neighbours
@@ -182,6 +185,11 @@ typedef struct {
 
 
 typedef struct {
+
+  double *x_inv;
+  double *phi_inv;
+  double *V_inv;
+
   double ***phi;
   double ***pi;
   double ***pifull;
@@ -280,6 +288,7 @@ void nucleate_at(hydro_fields f, hydro_params p, int x0, int y0, int z0);
 void initial_3D(hydro_fields f, hydro_params p);
 int do_nucleate(hydro_fields f, hydro_params p);
 int should_nucleate(hydro_fields f, hydro_params p, double t, int step);
+void init_profile(hydro_fields *f, hydro_params *p);
 
 // output.c
 double get_gamma_max(hydro_fields f, hydro_params p);
