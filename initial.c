@@ -1,6 +1,8 @@
 /* initial.c
  *
  * Initial conditions for hydro evolution.
+ *
+ * Also, nucleation.
  */
 #include "hydro.h"
 
@@ -471,4 +473,64 @@ int should_nucleate(hydro_fields f, hydro_params p, double t, int step) {
   }
 
   return 0;
+}
+
+
+
+void init_profile(hydro_fields *f, hydro_params *p) {
+  double xdummy, phidummy, vdummy;
+
+  if(!(p->rank))
+    fprintf(stderr, "Loading invariant profile (may be slow)!\n");
+
+  if(access("profile",R_OK) != 0) {
+    if(!(p->rank)) {
+      fprintf(stderr, "Unable to access profile file, \"profile\"\n");
+    }
+    exit(100);
+  }
+
+  FILE *fp = fopen("profile","r");
+
+  int lines = 0;
+
+  while(!feof(fp) && (fscanf(fp,"%lf%lf%lf",&xdummy,&phidummy,&vdummy) == 3)) {
+    lines++;
+  }
+
+  if(!(p->rank)) {
+    fprintf(stderr, "Invariant profile file has %d usable lines\n", lines);
+  }
+
+  rewind(fp);
+
+  int j;
+
+  int i = 0;
+
+  int imax;
+
+  double dist;
+
+  p->Linv = lines;
+  f->x_inv = (double *) malloc(lines*sizeof(double));
+  f->phi_inv = (double *) malloc(lines*sizeof(double));
+  f->V_inv = (double *) malloc(lines*sizeof(double));
+
+  while(i < lines) {
+    if(fscanf(fp, "%lf%lf%lf", &(f->x_inv[i]), &(f->phi_inv[i]), &(f->V_inv[i])) != 3 && (!(p->rank))) {
+      fprintf(stderr, "File inconsistent between first and second reads: odd... giving up\n");
+      exit(100);
+    }
+    i++;
+  }
+
+  fclose(fp);
+
+  if(!(p->rank))
+    fprintf(stderr, "Done loading invariant profile\n");
+
+
+  // Not quite: we want 
+
 }
