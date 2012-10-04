@@ -267,7 +267,7 @@ void fft_field(hydro_fields f, hydro_params p) {
     }
   }
 
-  close(fp);
+  fclose(fp);
 
   fftw_destroy_plan(plan);
   

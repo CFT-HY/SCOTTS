@@ -118,7 +118,7 @@ int main(int argc, char *argv[])
 
   int still_nucleate = 1;
 
-
+  int step_start = 0;
 
 
   // Just runs malloc on all the fields therein (see alloc.c)
@@ -128,65 +128,73 @@ int main(int argc, char *argv[])
   if(!p.rank)
     fprintf(stderr, "- Allocated fields.\n");
 
-  // For safety, set everything to zero
-  zero_fields(f, p);
 
-  if(!p.rank)
-    fprintf(stderr, "- Zeroed fields.\n");
-
-
-
-  // initial conditions -- one or more bubbles, or blank and then nucleate?
-  /*  if(p.initial == INIT_BUBBLE) {
-    create_gaussian_bubble(f, p);
-  } else if(p.initial == INIT_SHOCK_TUBE) {
-    create_shock_tube(f, p);
-  } else {
-    fprintf(stderr, "Unknown initial condition parameter!\n");
-    exit(100);
-  }
-  */
-
-  initial_blank(f, p);
-
-  // You get one bubble for free
-  //  initial_scalar_bubble(f, p);
-
-  for(step=0;step<p.bubbles;step++) {
-    start = clock();
-    still_nucleate = do_nucleate(f, p);
-    end = clock();
+  if(usable_checkpoint(f, p)) {
     if(!p.rank)
-      fprintf(stderr,"Nucleation attempt took %lf\n",
-	      ((double) (end - start)) / CLOCKS_PER_SEC);
+      fprintf(stderr, "Found a usable checkpoint file\n");
 
-    bcount += still_nucleate;
+    step_start = load_checkpoint(f, p);
 
-    if(!still_nucleate)
-      break;
+  } else {
+    // For safety, set everything to zero
+    zero_fields(f, p);
 
+    if(!p.rank)
+      fprintf(stderr, "- Zeroed fields.\n");
+
+
+
+    // initial conditions -- one or more bubbles, or blank and then nucleate?
+    /*  if(p.initial == INIT_BUBBLE) {
+	create_gaussian_bubble(f, p);
+	} else if(p.initial == INIT_SHOCK_TUBE) {
+	create_shock_tube(f, p);
+	} else {
+	fprintf(stderr, "Unknown initial condition parameter!\n");
+	exit(100);
+	}
+    */
+
+    initial_blank(f, p);
+
+    // You get one bubble for free
+    //  initial_scalar_bubble(f, p);
+
+    for(step=0;step<p.bubbles;step++) {
+      start = clock();
+      still_nucleate = do_nucleate(f, p);
+      end = clock();
+      if(!p.rank)
+	fprintf(stderr,"Nucleation attempt took %lf\n",
+		((double) (end - start)) / CLOCKS_PER_SEC);
+      
+      bcount += still_nucleate;
+      
+      if(!still_nucleate)
+	break;
+
+    }
+
+    //  still_nucleate = 0;
+    // initial_3D(f,p);
+    // initial_step(f,p);
+
+
+
+
+    // Communicate everything that neighbours need
+    halo_field(f.phi, p);
+    halo_field(f.pifull, p);
+    halo_field(f.E, p);
+    halo_field(f.Z[0], p);
+    halo_field(f.Z[1], p);
+    halo_field(f.Z[2], p);
+    halo_field(f.W, p);
+
+
+    if(!p.rank)
+      fprintf(stderr, "Initial conditions done\n");
   }
-
-  //  still_nucleate = 0;
-  // initial_3D(f,p);
-  // initial_step(f,p);
-
-
-
-
-  // Communicate everything that neighbours need
-  halo_field(f.phi, p);
-  halo_field(f.pifull, p);
-  halo_field(f.E, p);
-  halo_field(f.Z[0], p);
-  halo_field(f.Z[1], p);
-  halo_field(f.Z[2], p);
-  halo_field(f.W, p);
-
-
-  if(!p.rank)
-    fprintf(stderr, "Initial conditions done\n");
-
 
   initial_energy = reduce_sum(total_energy(f, p), p);
 
@@ -236,7 +244,7 @@ int main(int argc, char *argv[])
 
   double t00;
 
-  for(step = 0; step < p.steps; step++) {
+  for(step = step_start; step < p.steps; step++) {
 
 
 
@@ -246,6 +254,10 @@ int main(int argc, char *argv[])
       bcount += still_nucleate;
     }
 
+
+    if((p.checkpointinterval > 0) && (step % p.checkpointinterval == 0)) {
+      checkpoint(f, p, step);
+    }
 
 
     if((p.silointerval > 0) && (step % p.silointerval == 0)) {

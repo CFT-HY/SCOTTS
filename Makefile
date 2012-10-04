@@ -1,7 +1,7 @@
 #### CC ####
 
 # Everything turned on
-CC := mpicc -DMPI -DFFT # -DSILO # -DEXPANSION # -DSILO # -DDUMPFFT
+CC := mpicc  -DMPI -DFFT # -DSILO # -DEXPANSION # -DSILO # -DDUMPFFT
 
 # Example for serial profiling
 # CC := gcc -O3 -DPAPI -lpapi
@@ -43,7 +43,8 @@ LIBS := -L/home/weir/Installed/silo-4.8-bsd/lib/ -L/home/weir/local/lib/ -lsilo 
 
 OBJECTS := main.o evolve.o potential.o energy.o eos.o \
 	transport.o initial.o output.o parameters.o silage.o \
-	util.o papi.o arrangement.o fft.o alloc.o gw.o velps.o
+	util.o papi.o arrangement.o fft.o alloc.o gw.o velps.o \
+	checkpoint.o
 
 BINARY := run/hydro
 

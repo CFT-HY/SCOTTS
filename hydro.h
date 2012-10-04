@@ -107,6 +107,7 @@ typedef struct {
   // How often to deal with output
   int interval;
   int silointerval;
+  int checkpointinterval;
 
   // Initial conditions type (see #defines above)
   int initial;
@@ -143,6 +144,9 @@ typedef struct {
 
   // Where the silo files go
   char silodir[500];
+
+  // Where checkpoint files go
+  char checkpointdir[500];
 
   int bubbles;
 
@@ -243,6 +247,11 @@ double reduce_min(double result, hydro_params p);
 int reduce_and(int result, hydro_params p);
 void init_comms_time(hydro_params *p);
 double get_comms_time(hydro_params *p);
+
+// checkpoint.c
+void checkpoint(hydro_fields f, hydro_params p, int step);
+int usable_checkpoint(hydro_fields f, hydro_params p);
+int load_checkpoint(hydro_fields f, hydro_params p);
 
 // evolve.c
 void evolve_backstep(hydro_fields f, hydro_params p);
