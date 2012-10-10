@@ -231,7 +231,7 @@ void get_parameters(char *infile, hydro_params *p)
 	while(!sorted) {
 	  sorted = 1;
 
-	  for(i = 0; i < p->(n_nucsteps-1); i++) {
+	  for(i = 0; i < (p->n_nucsteps-1); i++) {
 	    if(p->nucsteps[i+1] < p->nucsteps[i]) {
 	      int temp = p->nucsteps[i+1];
 	      p->nucsteps[i+1] = p->nucsteps[i];
