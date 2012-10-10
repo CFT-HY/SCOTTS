@@ -124,10 +124,12 @@ int main(int argc, char *argv[])
   printf0(p, "- Allocated fields.\n");
 
   if(p.checkpointinterval > 0  && usable_checkpoint(f, p)) {
-    if(!p.rank)
-      fprintf(stderr, "Found a usable checkpoint file\n");
+    printf0(p, "Found a usable checkpoint file\n");
 
     step_start = load_checkpoint(f, p);
+
+    printf0(p, "Checkpoint load done.\n");
+    printf0(p, "WARNING: Bubble count reset after restart!\n");
 
   } else {
     // For safety, set everything to zero
