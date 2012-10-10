@@ -142,7 +142,7 @@ int main(int argc, char *argv[])
 	create_shock_tube(f, p);
 	} else {
 	fprintf(stderr, "Unknown initial condition parameter!\n");
-	exit(100);
+	die(100);
 	}
     */
 
