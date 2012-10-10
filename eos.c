@@ -70,7 +70,7 @@ void eq_of_state(hydro_fields f, hydro_params p) {
 	   < tolE*f.W[x][y][z]*3.0*p.a*f.T[x][y][z]
 	   *f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]) {
 	  fprintf(stderr,"E getting dangerously small due to -ve V cont.\n");
-	  exit(100);
+	  die(100);
 	}
 
 	// pressure P is radiative pressure less the potential

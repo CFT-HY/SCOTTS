@@ -3,11 +3,11 @@ import math, random, time
 
 t = 0.0
 
-dt = 0.2
+dt = 0.1
 
-beta = 0.007
+beta = 0.008
 
-duration = 10000
+duration = 8000
 
 end = dt*float(duration)
 
@@ -18,6 +18,8 @@ for i in range(duration):
 	prob = math.exp(beta*(t-end))
 	t = t + dt
 	if random.uniform(0,1) < prob:
-		print t, prob, 1.0
+		print i # t  #  , prob, 1.0
 	else:
-		print t, prob, 0.0
+		pass
+
+#		print t, prob, 0.0

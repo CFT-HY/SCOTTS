@@ -130,8 +130,7 @@ void fft_vel(hydro_fields f, hydro_params p, int step) {
 
   double *trim = (double *)malloc(p.slicex*p.slicey*p.Lz*sizeof(double));
 
-  if(!p.rank)
-    fprintf(stderr, "Starting FFT stuff.\n");
+  printf0(p, "Starting FFT stuff.\n");
 
   double start = clock();
 
@@ -146,12 +145,12 @@ void fft_vel(hydro_fields f, hydro_params p, int step) {
   if(((int)x_thickness) != p.Lx/p.size) {
     fprintf(stderr,
 	    "Giving up in FFT: FFTW told me to use a silly layout!\n");
-    exit(-42);
+    die(-42);
   }
 
   if(((int)x_thickness) == 0) {
     fprintf(stderr, "Giving up in FFT: dx=0!\n");
-    exit(-43);
+    die(-43);
   }
 
 
@@ -390,9 +389,8 @@ void fft_vel(hydro_fields f, hydro_params p, int step) {
 
   double end = clock();
 
-  if(!p.rank)
-    fprintf(stderr,"FFT stuff took %lf\n",
-	    ((double) (end - start)) / CLOCKS_PER_SEC);
+  printf0(p, "FFT stuff took %lf\n",
+	  ((double) (end - start)) / CLOCKS_PER_SEC);
 
 }
 

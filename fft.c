@@ -65,12 +65,12 @@ void fft_field(hydro_fields f, hydro_params p) {
   if(((int)x_thickness) != p.Lx/p.size) {
     fprintf(stderr,
 	    "Giving up in FFT: FFTW told me to use a silly layout!\n");
-    exit(-42);
+    die(-42);
   }
 
   if(((int)x_thickness) == 0) {
     fprintf(stderr, "Giving up in FFT: dx=0!\n");
-    exit(-43);
+    die(-43);
   }
 
   fftw_complex *in = fftw_alloc_complex(alloc_local);
@@ -267,7 +267,7 @@ void fft_field(hydro_fields f, hydro_params p) {
     }
   }
 
-  close(fp);
+  fclose(fp);
 
   fftw_destroy_plan(plan);
   
