@@ -101,6 +101,18 @@ int load_checkpoint(hydro_fields f, hydro_params p)
     die(100);
   }
 
+  if(fread(f.uij[0][0][0], sizeof(double), sizex*sizey*sizez*TENSOR_CPTS, fp)
+     != sizex*sizey*sizez*TENSOR_CPTS) {
+    printf0(p, "Error reading uij\n");
+    die(100);
+  }
+
+  if(fread(f.udotij[0][0][0], sizeof(double), sizex*sizey*sizez*TENSOR_CPTS, fp)
+     != sizex*sizey*sizez*TENSOR_CPTS) {
+    printf0(p, "Error reading udotij\n");
+    die(100);
+  }
+
   char endmatter[6];
   if(fread(endmatter, sizeof(char), 5, fp) != 5) {
     printf0(p, "Did not read endmatter\n");
@@ -178,7 +190,7 @@ int usable_checkpoint(hydro_fields f, hydro_params p)
 	  printf0(p, "Looks like we can restart to step %d\n", step);
 
 	  
-	  fseek(fp, 21*sizex*sizey*sizez*sizeof(double), SEEK_CUR);
+	  fseek(fp, (21 + 2*TENSOR_CPTS)*sizex*sizey*sizez*sizeof(double), SEEK_CUR);
 	  char endmatter[6];
 	  if(fread(endmatter, sizeof(char), 5, fp) != 5) {
 	    printf0(p, "Did not read endmatter\n");
@@ -274,9 +286,8 @@ void checkpoint(hydro_fields f, hydro_params p, int step)
   fwrite(f.F[0][0][0], sizeof(double), sizex*sizey*sizez*3, fp);
   fwrite(f.Z[0][0][0], sizeof(double), sizex*sizey*sizez*3, fp);
 
-#ifdef GW
-#error not implemented yet
-#endif // GW
+  fwrite(f.uij[0][0][0], sizeof(double), sizex*sizey*sizez*TENSOR_CPTS, fp);
+  fwrite(f.udotij[0][0][0], sizeof(double), sizex*sizey*sizez*TENSOR_CPTS, fp);
 
 
   // Write end metadata (magic)
