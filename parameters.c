@@ -245,61 +245,61 @@ void get_parameters(char *infile, hydro_params *p)
   // Check parameters were set (in order)
   if(!set_dx) {
     fprintf(stderr, "Did not set parameter \'dx\'\n");
-    exit(100);
+    die(100);
   } else if(!set_dt) {
     fprintf(stderr, "Did not set parameter \'dt\'\n");
-    exit(100);
+    die(100);
   } else if(!set_Lx) {
     fprintf(stderr, "Did not set parameter \'Lx\'\n");
-    exit(100);
+    die(100);
   } else if(!set_Ly) {
     fprintf(stderr, "Did not set parameter \'Ly\'\n");
-    exit(100);
+    die(100);
   } else if(!set_Lz) {
     fprintf(stderr, "Did not set parameter \'Lz\'\n");
-    exit(100);
+    die(100);
   } else if(!set_steps) {
     fprintf(stderr, "Did not set parameter \'steps\'\n");
-    exit(100);
+    die(100);
   } else if(!set_Cav) {
     fprintf(stderr, "Did not set parameter \'Cav\'\n");
-    exit(100);
+    die(100);
   } else if(!set_C) {
     fprintf(stderr, "Did not set parameter \'C\'\n");
-    exit(100);
+    die(100);
   } else if(!set_Lheat) {
     fprintf(stderr, "Did not set parameter \'Lheat\'\n");
-    exit(100);
+    die(100);
   } else if(!set_sigma) {
     fprintf(stderr, "Did not set parameter \'sigma\'\n");
-    exit(100);
+    die(100);
   } else if(!set_lcorr) {
     fprintf(stderr, "Did not set parameter \'lcorr\'\n");
-    exit(100);
+    die(100);
   } else if(!set_interval) {
     fprintf(stderr, "Did not set parameter \'interval\'\n");
-    exit(100);
+    die(100);
   } else if(!set_silointerval) {
     fprintf(stderr, "Did not set parameter \'silointerval\'\n");
-    exit(100);
+    die(100);
   } else if(!set_bubbles) {
     fprintf(stderr, "Did not set parameter \'bubbles\'\n");
-    exit(100);
+    die(100);
   } else if(!set_beta) {
     fprintf(stderr, "Did not set parameter \'beta\'\n");
-    exit(100);
+    die(100);
   } else if(!set_scale) {
     fprintf(stderr, "Did not set parameter \'scale\'\n");
-    exit(100);
+    die(100);
   } else if(!set_initial) {
     fprintf(stderr, "Did not set parameter \'initial\'\n");
-    exit(100);
+    die(100);
   } else if(!set_nucleation) {
     fprintf(stderr, "Did not set parameter \'nucleation\'\n");
-    exit(100);
+    die(100);
   } else if(!set_silodir) {
     fprintf(stderr, "Did not set parameter \'silodir\'\n");
-    exit(100);
+    die(100);
   }
 
 

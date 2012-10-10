@@ -16,23 +16,21 @@ int main(int argc, char *argv[])
   MPI_Comm_rank(MPI_COMM_WORLD, &p.rank);
   MPI_Comm_size(MPI_COMM_WORLD, &p.size);
 
-  if(!p.rank)
-    fprintf(stderr, "3D hydro port with MPI\n");
+  printf0(p, "3D hydro port with MPI\n");
 
 #else // MPI
 
-  fprintf(stderr, "3D hydro port (serial)\n");
+  printf0(p, "3D hydro port (serial)\n");
 
   p.rank = 0;
   p.size = 1;
 
 #endif // MPI
 
-  fprintf(stderr, "Built: %s %s\n", __DATE__, __TIME__);
+  printf0(p, "Built: %s %s\n", __DATE__, __TIME__);
 
   if(argc != 2) {
-    if(!p.rank)
-      fprintf(stderr,"Usage: hydro <parameter file>\n");
+    printf0(p, "Usage: hydro <parameter file>\n");
     return 100;
   }
 
@@ -45,9 +43,8 @@ int main(int argc, char *argv[])
   /* HACK: don't release memory by calling sbrk */
   mallopt( M_TRIM_THRESHOLD, -1 );
 
-  if(!p.rank) {
-    fprintf(stderr, "Disabled sbrk\n");
-  }
+  printf0(p, "Disabled sbrk\n");
+
 
 #endif // HAVE_MALLOC_H
 
@@ -70,11 +67,10 @@ int main(int argc, char *argv[])
 
 
   // What did we find?
-  if(!p.rank) 
-    fprintf(stderr,
-	    "-- calculated potential terms\n"
-	    "-- alpha %g, gamma %g, lambda %g\n",
-	    p.alpha, p.gamma, p.lambda);
+  printf0(p,
+	  "-- calculated potential terms\n"
+	  "-- alpha %g, gamma %g, lambda %g\n",
+	  p.alpha, p.gamma, p.lambda);
 
 
   // Make these user-modifiable eventually
@@ -125,14 +121,12 @@ int main(int argc, char *argv[])
   alloc_fields(&f, p);
 
   // Managed to get this far, so we probably have enough memory
-  if(!p.rank)
-    fprintf(stderr, "- Allocated fields.\n");
+  printf0(p, "- Allocated fields.\n");
 
   // For safety, set everything to zero
   zero_fields(f, p);
 
-  if(!p.rank)
-    fprintf(stderr, "- Zeroed fields.\n");
+  printf0(p, "- Zeroed fields.\n");
 
 
 
@@ -143,7 +137,7 @@ int main(int argc, char *argv[])
     create_shock_tube(f, p);
   } else {
     fprintf(stderr, "Unknown initial condition parameter!\n");
-    exit(100);
+    die(100);
   }
   */
 
@@ -156,9 +150,8 @@ int main(int argc, char *argv[])
     start = clock();
     still_nucleate = do_nucleate(f, p);
     end = clock();
-    if(!p.rank)
-      fprintf(stderr,"Nucleation attempt took %lf\n",
-	      ((double) (end - start)) / CLOCKS_PER_SEC);
+    printf0(p, "Nucleation attempt took %lf\n",
+	    ((double) (end - start)) / CLOCKS_PER_SEC);
 
     bcount += still_nucleate;
 
@@ -184,15 +177,13 @@ int main(int argc, char *argv[])
   halo_field(f.W, p);
 
 
-  if(!p.rank)
-    fprintf(stderr, "Initial conditions done\n");
+  printf0(p, "Initial conditions done\n");
 
 
   initial_energy = reduce_sum(total_energy(f, p), p);
 
-  if(!p.rank)
-    fprintf(stderr, "Initial avg energy per site: %g\n", 
-	    initial_energy/((double)p.N));
+  printf0(p, "Initial avg energy per site: %g\n", 
+	  initial_energy/((double)p.N));
 
 
 
@@ -228,9 +219,8 @@ int main(int argc, char *argv[])
 #endif // MPI
 
 
-  if(!p.rank) {
-    fprintf(stderr, "Starting main loop.\n");
-  }
+  printf0(p, "Starting main loop.\n");
+
 
   start = clock();
 
@@ -275,17 +265,16 @@ int main(int argc, char *argv[])
       current_field_energy = reduce_sum(field_energy(f, p), p);
       current_wmax = reduce_max(get_gamma_max(f, p), p);
       
-      if(!p.rank)
-	fprintf(stderr,"%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%d\n",
-		step, t,
-		current_energy,
-		current_field_energy,
-		current_wmax,
-		bcount);
+      printf0(p, "%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%d\n",
+	      step,
+	      t,
+	      current_energy,
+	      current_field_energy,
+	      current_wmax,
+	      bcount);
       
       /*
-      if(!p.rank)
-	fprintf(stderr, "Energy violation: %lf%%\n",
+	printf0(p, "Energy violation: %lf%%\n",
 		100.0*fabs((current_energy-initial_energy)/initial_energy));
       */
 
@@ -375,9 +364,10 @@ int main(int argc, char *argv[])
 
   cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
 
-  fprintf(stderr, "CPU time in main loop was %lf, of which %lf was comms\n",
+  printf0(p, "On master node, CPU time in main loop was %lfs, "
+	  "of which %lfs was comms\n",
 	  cpu_time_used, get_comms_time(&p));
-
+  
 
   // Clean up memory
   free_fields(&f, p);

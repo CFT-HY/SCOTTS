@@ -13,11 +13,10 @@ void initial_scalar_bubble(hydro_fields f, hydro_params p) {
   double sigmlo = 2.0*sqrt(2.0)/81.0*p.alpha*p.alpha*p.alpha
     /(p.lambda*p.lambda*sqrt(p.lambda));
 
-  if(!p.rank)
-    fprintf(stderr,
-	    "** Initial conditions magic:\n"
-	    "** sigmlo %g\n", sigmlo);
-
+  printf0(p,
+	  "** Initial conditions magic:\n"
+	  "** sigmlo %g\n", sigmlo);
+  
   double phimin =  ( p.alpha*p.Tconst
 		     + sqrt((p.alpha*p.Tconst)*(p.alpha*p.Tconst)
 			    - 4*p.lambda*p.gamma
@@ -29,10 +28,9 @@ void initial_scalar_bubble(hydro_fields f, hydro_params p) {
 
   double Rtenab = p.scale*Rlapab;
 
-  if(!p.rank)
-    fprintf(stderr,
-	    "** phimin %g, cstrab %g, Rtenab %g\n",
-	    phimin, cstrab, Rtenab);
+  printf0(p,
+	  "** phimin %g, cstrab %g, Rtenab %g\n",
+	  phimin, cstrab, Rtenab);
 
   int x, y, z;
   int i;
@@ -80,10 +78,9 @@ void initial_blank(hydro_fields f, hydro_params p) {
   double sigmlo = 2.0*sqrt(2.0)/81.0*p.alpha*p.alpha*p.alpha
     /(p.lambda*p.lambda*sqrt(p.lambda));
 
-  if(!p.rank)
-    fprintf(stderr,
-	    "** Initial conditions magic:\n"
-	    "** sigmlo %g\n", sigmlo);
+  printf0(p,
+	  "** Initial conditions magic:\n"
+	  "** sigmlo %g\n", sigmlo);
 
   double phimin =  ( p.alpha*p.Tconst
 		     + sqrt((p.alpha*p.Tconst)*(p.alpha*p.Tconst)
@@ -96,10 +93,9 @@ void initial_blank(hydro_fields f, hydro_params p) {
 
   double Rtenab = p.scale*Rlapab;
 
-  if(!p.rank)
-    fprintf(stderr,
-	    "** phimin %g, cstrab %g, Rtenab %g\n",
-	    phimin, cstrab, Rtenab);
+  printf0(p,
+	  "** phimin %g, cstrab %g, Rtenab %g\n",
+	  phimin, cstrab, Rtenab);
 
   int x, y, z;
   int i;
@@ -160,12 +156,10 @@ int safe_distance(hydro_fields f, hydro_params p) {
   
   double Rtenab = p.scale*Rlapab;
 
-
   /*
-  if(!p.rank)
-    fprintf(stderr,
-	    "** phimin %g, cstrab %g, Rtenab %g\n",
-	    phimin, cstrab, Rtenab);
+  printf0(p,
+	  "** phimin %g, cstrab %g, Rtenab %g\n",
+	  phimin, cstrab, Rtenab);
   */
 
   double sigma = 1.0/(sqrt(p.dx*p.dx/2.0/(Rtenab*Rtenab) ));
@@ -260,17 +254,15 @@ void nucleate_at(hydro_fields f, hydro_params p, int x0, int y0, int z0) {
 
 
   /*
-  if(!p.rank)
-    fprintf(stderr,
-	    "** phimin %g, cstrab %g, Rtenab %g\n",
-	    phimin, cstrab, Rtenab);
+  printf0(p,
+	  "** phimin %g, cstrab %g, Rtenab %g\n",
+	  phimin, cstrab, Rtenab);
   */
 
   int x, y, z;
   int i;
 
-  if(!p.rank)
-    fprintf(stderr,"Nucleating at (%d,%d,%d)\n",x0,y0,z0);
+  printf0(p, "Nucleating at (%d,%d,%d)\n",x0,y0,z0);
 
   //  fprintf(stderr,"my shiftx is %d and shifty is %d\n", p.shiftx, p.shifty);
 
@@ -330,11 +322,10 @@ void initial_3D(hydro_fields f, hydro_params p) {
 
   //  srand48(time());
 
-  if(!p.rank)
-    fprintf(stderr,
-	    "** Initial conditions magic:\n"
-	    "** sigmlo %g\n", sigmlo);
-
+  printf0(p,
+	  "** Initial conditions magic:\n"
+	  "** sigmlo %g\n", sigmlo);
+  
   double phimin =  ( p.alpha*p.Tconst 
 		     + sqrt((p.alpha*p.Tconst)*(p.alpha*p.Tconst)
 			    - 4*p.lambda*p.gamma
@@ -346,11 +337,10 @@ void initial_3D(hydro_fields f, hydro_params p) {
 
   double Rtenab = p.scale*Rlapab;
 
-  if(!p.rank)
-    fprintf(stderr,
-	    "** phimin %g, cstrab %g, Rtenab %g\n",
-	    phimin, cstrab, Rtenab);
-
+  printf0(p,
+	  "** phimin %g, cstrab %g, Rtenab %g\n",
+	  phimin, cstrab, Rtenab);
+  
   double Er, El, rE;
 
   rE = 50.0;
@@ -402,9 +392,8 @@ void initial_3D(hydro_fields f, hydro_params p) {
 
 int do_nucleate(hydro_fields f, hydro_params p) {
 
-  if(!p.rank)
-    fprintf(stderr, "Trying to nucleate a bubble (safe distance = %d)\n",
-	    safe_distance(f,p));
+  printf0(p, "Trying to nucleate a bubble (safe distance = %d)\n",
+	  safe_distance(f,p));
 
   int tryx = random()%p.Lx;
   int tryy = random()%p.Ly;
@@ -413,9 +402,10 @@ int do_nucleate(hydro_fields f, hydro_params p) {
   int attempts = 0;
 
   while(!can_nucleate(f,p,tryx,tryy,tryz) && attempts < 20) {
-    if(!p.rank)
-      fprintf(stderr, "Not allowed to nucleate at (%d,%d,%d)!\n",
-		  tryx, tryy, tryz);
+
+    printf0(p, "Not allowed to nucleate at (%d,%d,%d)!\n",
+	    tryx, tryy, tryz);
+
     tryx = random()%p.Lx;
     tryy = random()%p.Ly;
     tryz = random()%p.Lz;
@@ -449,9 +439,8 @@ int should_nucleate(hydro_fields f, hydro_params p, double t, int step) {
 
 
     if(randin < prob) {
-      if(!p.rank) {
-	fprintf(stderr, "Recommending nucleation at t=%lf, prob=%lf, random=%lf\n", t, prob, randin);
-      }
+      printf0(p, "Recommending nucleation at t=%lf, prob=%lf, random=%lf\n", t, prob, randin);
+
     //    fprintf(stderr,
     //	    "Rank %d recommending nucleation at t %lf (probability=%lf)\n",
     //	    p.rank, t, prob);
@@ -463,9 +452,7 @@ int should_nucleate(hydro_fields f, hydro_params p, double t, int step) {
 
     for(j=0; j < p.n_nucsteps; j++) {
       if(p.nucsteps[j] == step) {
-	if(!p.rank) {
-	  fprintf(stderr,"Parameter file requires nucleation at t=%lf step=%d\n", t, step);
-	}
+	printf0(p, "Parameter file requires nucleation at t=%lf step=%d\n", t, step);
 	return 1;
       }
     }
@@ -480,14 +467,11 @@ int should_nucleate(hydro_fields f, hydro_params p, double t, int step) {
 void init_profile(hydro_fields *f, hydro_params *p) {
   double xdummy, phidummy, vdummy;
 
-  if(!(p->rank))
-    fprintf(stderr, "Loading invariant profile (may be slow)!\n");
+  printf0(*p, "Loading invariant profile (may be slow)!\n");
 
   if(access("profile",R_OK) != 0) {
-    if(!(p->rank)) {
-      fprintf(stderr, "Unable to access profile file, \"profile\"\n");
-    }
-    exit(100);
+    printf0(*p, "Unable to access profile file, \"profile\"\n");
+    die(100);
   }
 
   FILE *fp = fopen("profile","r");
@@ -498,9 +482,9 @@ void init_profile(hydro_fields *f, hydro_params *p) {
     lines++;
   }
 
-  if(!(p->rank)) {
-    fprintf(stderr, "Invariant profile file has %d usable lines\n", lines);
-  }
+
+  printf0(*p, "Invariant profile file has %d usable lines\n", lines);
+
 
   rewind(fp);
 
@@ -520,15 +504,14 @@ void init_profile(hydro_fields *f, hydro_params *p) {
   while(i < lines) {
     if(fscanf(fp, "%lf%lf%lf", &(f->x_inv[i]), &(f->phi_inv[i]), &(f->V_inv[i])) != 3 && (!(p->rank))) {
       fprintf(stderr, "File inconsistent between first and second reads: odd... giving up\n");
-      exit(100);
+      die(100);
     }
     i++;
   }
 
   fclose(fp);
 
-  if(!(p->rank))
-    fprintf(stderr, "Done loading invariant profile\n");
+  printf0(*p, "Done loading invariant profile\n");
 
 
   // Not quite: we want 

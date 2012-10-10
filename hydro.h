@@ -243,6 +243,8 @@ double reduce_min(double result, hydro_params p);
 int reduce_and(int result, hydro_params p);
 void init_comms_time(hydro_params *p);
 double get_comms_time(hydro_params *p);
+void printf0(hydro_params p, char *msg, ...);
+void die(int howbad);
 
 // evolve.c
 void evolve_backstep(hydro_fields f, hydro_params p);

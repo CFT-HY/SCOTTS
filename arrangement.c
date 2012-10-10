@@ -28,16 +28,14 @@ void layout(hydro_params *p) {
 
   int nx, ny;
 
-  if(!p->rank)
-    fprintf(stderr,"Putting %d sites on %d nodes\n", p->N, p->size);
+  printf0(*p,"Putting %d sites on %d nodes\n", p->N, p->size);
 
 
   // You gave us a very stupid number of nodes to work with
   if( (p->Lx*p->Ly % p->size) > 0 ) {
-    if(!p->rank)
-      fprintf(stderr,"Number of (%d) nodes not a factor of Lx*Ly!\n", p->size);
+    printf0(*p, "Number of (%d) nodes not a factor of Lx*Ly!\n", p->size);
 
-    exit(-99);
+    die(-99);
   }
 
   // Work out prime factors of the number of nodes
@@ -51,18 +49,19 @@ void layout(hydro_params *p) {
 
   // You gave us a stupid number of nodes to work with
   if(i != 1) {
-    if(!p->rank)
-      fprintf(stderr, "Can\'t figure out how to put %dx%d%d on %d nodes\n",
+    printf0(*p, "Can\'t figure out how to put %dx%d%d on %d nodes\n",
 	      p->Lx, p->Ly, p->Lz, p->size);
 
-    exit(-100);
+    die(-100);
   }
 
   // Show factorisation
+  /*
   if(!p->rank) {
     for(n=0;n<n_primes;n++)
       fprintf(stderr,"nfactors %d = %d\n", prime[n], nfactors[n]);
   }
+  */
 
 
   p->slicex = p->Lx;
@@ -76,25 +75,27 @@ void layout(hydro_params *p) {
       // Longest direction that we can still chop...
       if((p->slicex > p->slicey) && (p->slicex % prime[n] == 0)) {
 
+	/*
 	if(!p->rank)
 	  fprintf(stderr,"Dividing x (%d) by %d\n", p->slicex, prime[n]);
+	*/
 
 	p->slicex = p->slicex/prime[n];
       } else if(p->slicey % prime[n] == 0) {
 
+	/*
 	if(!p->rank)
 	  fprintf(stderr,"Dividing y (%d) by %d\n", p->slicey, prime[n]);
+	*/
 
 	p->slicey = p->slicey/prime[n];
       } else {
 	// Oops!
 	if(!p->rank &&  (p->slicex % prime[n] != 0)) {
 	  fprintf(stderr,"Should not get here -- still can\'t divide by x!\n");
-	  exit(100);
+	  die(100);
 	} else {
-	  if(!p->rank) {
-	    fprintf(stderr,"Dividing x direction...\n");
-	  }
+	  printf0(*p, "Dividing x direction...\n");
 	  p->slicex = p->slicex/prime[n];
 	}
 
@@ -108,19 +109,17 @@ void layout(hydro_params *p) {
   ny = p->Ly/p->slicey;
 
   // Report our findings
-  if(!p->rank) {
-    fprintf(stderr,"slicing: x=%d y=%d\n", p->slicex, p->slicey);
-    fprintf(stderr,"meaning %d nodes in x, %d nodes in y\n", nx, ny);
-  }  
+  printf0(*p, "slicing: size of x=%d y=%d\n", p->slicex, p->slicey);
+  printf0(*p, "(meaning %d nodes in x, %d nodes in y)\n", nx, ny);
+
 
 
   // sites on a node = number of sites + halos + double halos
   p->fieldN = ((p->slicex+2)*(p->slicey+2)*p->Lz);
 
-  if(!p->rank)
-    fprintf(stderr,"Each node will need %d = %d + %d entries to store halo\n",
+  printf0(*p, "Each node will need %d = %d + %d entries to store halo\n",
 	    p->fieldN,
-	    p->N,
+	    p->Lz*p->slicex*p->slicey,
 	    p->Lz*(2*(p->slicex + p->slicey) + 4));
 
 
@@ -373,6 +372,19 @@ double get_comms_time(hydro_params *p) {
 }
 
 
+void printf0(hydro_params p, char *msg, ...) {
+  va_list fmtargs;
+  va_start(fmtargs, msg);
+
+  if(!p.rank)
+    vfprintf(stderr, msg, fmtargs);
+}
+
+void die(int howbad) {
+  MPI_Finalize();
+  exit(howbad);
+}
+
 
 #else // MPI
 
@@ -563,5 +575,16 @@ double get_comms_time(hydro_params *p) {
   return comms_time;
 }
 
+
+void printf0(hydro_params p, char *msg, ...) {
+  va_list fmtargs;
+  va_start(fmtargs, msg);
+
+  vfprintf(stderr, msg, fmtargs);
+}
+
+void die(int howbad) {
+  exit(howbad);
+}
 
 #endif // MPI

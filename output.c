@@ -88,10 +88,8 @@ void histo_field(double ***field, hydro_params p, int step) {
   double df = (overall_max - overall_min)/((double)nbins);
 
   if(fabs(df) < 0.001) {
-    if(!p.rank) {
-      fprintf(stderr, "Max: %lf, Min: %lf, df: %lf\n", overall_max, overall_min, df);
-      fprintf(stderr, "Not doing histogram: bin width too small (overflow would occur)\n");
-    }
+    printf0(p, "Max: %lf, Min: %lf, df: %lf\n", overall_max, overall_min, df);
+    printf0(p, "Not doing histogram: bin width too small (overflow would occur)\n");
 
     return;
   }
@@ -113,9 +111,8 @@ void histo_field(double ***field, hydro_params p, int step) {
     }
   }
 
-  if(!p.rank) {
-    fprintf(stderr, "Doing histogram, %d bins in [%lf,%lf]\n", nbins, overall_min, overall_max);
-  }
+  printf0(p, "Doing histogram, %d bins in [%lf,%lf]\n", nbins, overall_min, overall_max);
+  
 
   int ntemp;
 
@@ -143,9 +140,8 @@ void histo_field(double ***field, hydro_params p, int step) {
 
   double end = clock();
 
-  if(!p.rank)
-    fprintf(stderr,"Histogram stuff took %lf\n",
-            ((double) (end - start)) / CLOCKS_PER_SEC);
+  printf0(p, "Histogram stuff took %lf\n",
+	  ((double) (end - start)) / CLOCKS_PER_SEC);
 
 	       
 }
