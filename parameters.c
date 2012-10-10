@@ -87,7 +87,7 @@ void get_parameters(char *infile, hydro_params *p)
 
     // Not handled gracefully
     if(index(total,'\n') == NULL) {
-      fprintf(stderr,"Line too long!\n");
+      printf0(*p,"Line too long!\n");
       continue;
     }
     
@@ -106,7 +106,7 @@ void get_parameters(char *infile, hydro_params *p)
       // -- doesn't leak memory, we're on the stack
       *(index(total, '\n')) = '\0';
 
-      fprintf(stderr,"Unable to parse input line: \"%s\"\n", total);
+      printf0(*p,"Unable to parse input line: \"%s\"\n", total);
       continue;
     }
     
@@ -191,7 +191,7 @@ void get_parameters(char *infile, hydro_params *p)
       } else if(!strcasecmp(value, "bubble")) {
 	p->initial = INIT_BUBBLE;
       } else {
-	fprintf(stderr, "warning, unrecognised value for initial"
+	printf0(*p, "warning, unrecognised value for initial"
 		" (%s); defaulting to bubble.\n", value);
 	p->initial = INIT_BUBBLE;
       }
@@ -203,7 +203,7 @@ void get_parameters(char *infile, hydro_params *p)
       } else if(!strncasecmp(value, "list", 4)) {
 	p->nucleation = NUC_LIST;
 	char *curr = option;
-	//	fprintf(stderr,"Curr is %s\n", curr);
+	//	printf0(*p,"Curr is %s\n", curr);
 	char *next = curr;
 
 	p->n_nucsteps = 1;
@@ -211,7 +211,7 @@ void get_parameters(char *infile, hydro_params *p)
 	  if( curr[i] == ',')
 	    p->n_nucsteps++;
 	}
-	//	fprintf(stderr,"nucsteps is %d\n", p->n_nucsteps);
+	//	printf0(*p,"nucsteps is %d\n", p->n_nucsteps);
 
 	i = 0;
 
@@ -219,15 +219,15 @@ void get_parameters(char *infile, hydro_params *p)
 
 	while(strlen(curr) && strlen(next)) {
 	  p->nucsteps[i] = strtol(curr,&next,10);
-	  //	  fprintf(stderr,"bubble at step %d, next is %s\n", p->nucsteps[i],next);
+	  //	  printf0(*p,"bubble at step %d, next is %s\n", p->nucsteps[i],next);
 	  curr = next+sizeof(char);
-	  //	  fprintf(stderr,"strlen next is %d and curr is %d\n", strlen(next), strlen(curr));
+	  //	  printf0(*p,"strlen next is %d and curr is %d\n", strlen(next), strlen(curr));
 	  i++;
 	}
 	
 
       } else {
-	fprintf(stderr, "warning, unrecognised value for nucleation"
+	printf0(*p, "warning, unrecognised value for nucleation"
 		" (%s); defaulting to exp.\n", value);
 	p->nucleation = NUC_EXP;
       }
@@ -236,7 +236,7 @@ void get_parameters(char *infile, hydro_params *p)
     else if(!strcasecmp(key,"silodir")) {
      
       if(strlen(value) > 500)
-	fprintf(stderr,
+	printf0(*p,
 		"Warning: silodir name \"%s\" may be too long!\n",
 		value);
 
@@ -247,7 +247,7 @@ void get_parameters(char *infile, hydro_params *p)
     else if(!strcasecmp(key,"checkpointdir")) {
      
       if(strlen(value) > 500)
-	fprintf(stderr,
+	printf0(*p,
 		"Warning: checkpointdir name \"%s\" may be too long!\n",
 		value);
 
@@ -261,67 +261,67 @@ void get_parameters(char *infile, hydro_params *p)
   
   // Check parameters were set (in order)
   if(!set_dx) {
-    fprintf(stderr, "Did not set parameter \'dx\'\n");
+    printf0(*p, "Did not set parameter \'dx\'\n");
     die(100);
   } else if(!set_dt) {
-    fprintf(stderr, "Did not set parameter \'dt\'\n");
+    printf0(*p, "Did not set parameter \'dt\'\n");
     die(100);
   } else if(!set_Lx) {
-    fprintf(stderr, "Did not set parameter \'Lx\'\n");
+    printf0(*p, "Did not set parameter \'Lx\'\n");
     die(100);
   } else if(!set_Ly) {
-    fprintf(stderr, "Did not set parameter \'Ly\'\n");
+    printf0(*p, "Did not set parameter \'Ly\'\n");
     die(100);
   } else if(!set_Lz) {
-    fprintf(stderr, "Did not set parameter \'Lz\'\n");
+    printf0(*p, "Did not set parameter \'Lz\'\n");
     die(100);
   } else if(!set_steps) {
-    fprintf(stderr, "Did not set parameter \'steps\'\n");
+    printf0(*p, "Did not set parameter \'steps\'\n");
     die(100);
   } else if(!set_Cav) {
-    fprintf(stderr, "Did not set parameter \'Cav\'\n");
+    printf0(*p, "Did not set parameter \'Cav\'\n");
     die(100);
   } else if(!set_C) {
-    fprintf(stderr, "Did not set parameter \'C\'\n");
+    printf0(*p, "Did not set parameter \'C\'\n");
     die(100);
   } else if(!set_Lheat) {
-    fprintf(stderr, "Did not set parameter \'Lheat\'\n");
+    printf0(*p, "Did not set parameter \'Lheat\'\n");
     die(100);
   } else if(!set_sigma) {
-    fprintf(stderr, "Did not set parameter \'sigma\'\n");
+    printf0(*p, "Did not set parameter \'sigma\'\n");
     die(100);
   } else if(!set_lcorr) {
-    fprintf(stderr, "Did not set parameter \'lcorr\'\n");
+    printf0(*p, "Did not set parameter \'lcorr\'\n");
     die(100);
   } else if(!set_interval) {
-    fprintf(stderr, "Did not set parameter \'interval\'\n");
+    printf0(*p, "Did not set parameter \'interval\'\n");
     die(100);
   } else if(!set_silointerval) {
-    fprintf(stderr, "Did not set parameter \'silointerval\'\n");
+    printf0(*p, "Did not set parameter \'silointerval\'\n");
     die(100);
   } else if(!set_checkpointinterval) {
-    fprintf(stderr, "Did not set parameter \'checkpointinterval\'\n");
+    printf0(*p, "Did not set parameter \'checkpointinterval\'\n");
     die(100);
   } else if(!set_bubbles) {
-    fprintf(stderr, "Did not set parameter \'bubbles\'\n");
+    printf0(*p, "Did not set parameter \'bubbles\'\n");
     die(100);
   } else if(!set_beta) {
-    fprintf(stderr, "Did not set parameter \'beta\'\n");
+    printf0(*p, "Did not set parameter \'beta\'\n");
     die(100);
   } else if(!set_scale) {
-    fprintf(stderr, "Did not set parameter \'scale\'\n");
+    printf0(*p, "Did not set parameter \'scale\'\n");
     die(100);
   } else if(!set_initial) {
-    fprintf(stderr, "Did not set parameter \'initial\'\n");
+    printf0(*p, "Did not set parameter \'initial\'\n");
     die(100);
   } else if(!set_nucleation) {
-    fprintf(stderr, "Did not set parameter \'nucleation\'\n");
+    printf0(*p, "Did not set parameter \'nucleation\'\n");
     die(100);
   } else if(!set_silodir) {
-    fprintf(stderr, "Did not set parameter \'silodir\'\n");
+    printf0(*p, "Did not set parameter \'silodir\'\n");
     die(100);
   } else if(!set_checkpointdir) {
-    fprintf(stderr, "Did not set parameter \'checkpointdir\'\n");
+    printf0(*p, "Did not set parameter \'checkpointdir\'\n");
     die(100);
   }
 
@@ -329,7 +329,7 @@ void get_parameters(char *infile, hydro_params *p)
 
   if(!p->rank) {
     // Report what we found
-    fprintf(stderr,"-- Read parameters from %s:\n"
+    printf0(*p,"-- Read parameters from %s:\n"
 	    "-- dx %g, dt %g, steps %d\n"
 	    "-- Lx %d, Ly %d, Lz %d\n"
 	    "-- Cav %g, C %g,\n"
@@ -349,24 +349,24 @@ void get_parameters(char *infile, hydro_params *p)
 	    p->checkpointdir);
     
     if(p->initial == INIT_SHOCK_TUBE) {
-      fprintf(stderr, "-- shock tube\n");
+      printf0(*p, "-- shock tube\n");
     } else if(p->initial == INIT_BUBBLE) {
-      fprintf(stderr, "-- bubble\n");
+      printf0(*p, "-- bubble\n");
     } else {
-      fprintf(stderr, "-- warning, somehow have unknown initial conds.\n");
+      printf0(*p, "-- warning, somehow have unknown initial conds.\n");
     }
 
     if(p->nucleation == NUC_EXP) {
-      fprintf(stderr, "<Random nucleation>\n");
+      printf0(*p, "<Random nucleation>\n");
     } else if(p->nucleation == NUC_LIST) {
-      fprintf(stderr, "<List nucleation\n");
-      fprintf(stderr, "At steps: ");
+      printf0(*p, "<List nucleation\n");
+      printf0(*p, "At steps: ");
       for(i=0;i<p->n_nucsteps;i++)
-	fprintf(stderr, "%d, ", p->nucsteps[i]);
+	printf0(*p, "%d, ", p->nucsteps[i]);
 
-      fprintf(stderr,"bubbles will be nucleated>\n");
+      printf0(*p,"bubbles will be nucleated>\n");
     } else {
-      fprintf(stderr, "<Warning, somehow have unknown nucleation process.\n");
+      printf0(*p, "<Warning, somehow have unknown nucleation process.\n");
     }
     
   }
