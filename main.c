@@ -345,6 +345,23 @@ int main(int argc, char *argv[])
     
   } // main loop ends here
 
+  if(p.checkpointinterval > 0) {
+    printf0(p, "Final checkpoint...\n");
+    checkpoint(f, p, step);
+  }
+  
+  current_energy = reduce_sum(total_energy(f, p), p);
+  current_field_energy = reduce_sum(field_energy(f, p), p);
+  current_wmax = reduce_max(get_gamma_max(f, p), p);
+  
+  printf0(p, "Final state:\n");
+  printf0(p, "%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%d\n",
+	  step,
+	  t,
+	  current_energy,
+	  current_field_energy,
+	  current_wmax,
+	  bcount);
 
   end = clock();
 
