@@ -224,7 +224,25 @@ void get_parameters(char *infile, hydro_params *p)
 	  //	  printf0(*p,"strlen next is %d and curr is %d\n", strlen(next), strlen(curr));
 	  i++;
 	}
-	
+
+	// Just in case, bubble sort the list
+	int sorted = 0;
+
+	while(!sorted) {
+	  sorted = 1;
+
+	  for(i = 0; i < p->(n_nucsteps-1); i++) {
+	    if(p->nucsteps[i+1] < p->nucsteps[i]) {
+	      int temp = p->nucsteps[i+1];
+	      p->nucsteps[i+1] = p->nucsteps[i];
+	      p->nucsteps[i] = temp;
+
+	      printf0(*p, "Bubble sort iteration necessary!\n");
+
+	      sorted = 0;
+	    }
+	  }
+	}
 
       } else {
 	printf0(*p, "warning, unrecognised value for nucleation"
