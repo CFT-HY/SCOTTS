@@ -47,10 +47,12 @@ void get_parameters(char *infile, hydro_params *p)
 
   int set_interval = 0;
   int set_silointerval = 0;
+  int set_checkpointinterval = 0;
 
   int set_initial = 0;
 
   int set_silodir = 0;
+  int set_checkpointdir = 0;
 
   int set_nucleation = 0;
 
@@ -167,6 +169,10 @@ void get_parameters(char *infile, hydro_params *p)
       p->silointerval = strtol(value,NULL,10);
       set_silointerval = 1;
     }
+    else if(!strcasecmp(key,"checkpointinterval")) {
+      p->checkpointinterval = strtol(value,NULL,10);
+      set_checkpointinterval = 1;
+    }
     else if(!strcasecmp(key,"bubbles")) {
       p->bubbles = strtol(value,NULL,10);
       set_bubbles = 1;
@@ -238,6 +244,17 @@ void get_parameters(char *infile, hydro_params *p)
      
       set_silodir = 1;
     }
+    else if(!strcasecmp(key,"checkpointdir")) {
+     
+      if(strlen(value) > 500)
+	fprintf(stderr,
+		"Warning: checkpointdir name \"%s\" may be too long!\n",
+		value);
+
+      strncpy(p->checkpointdir, value, 500);
+     
+      set_checkpointdir = 1;
+    }
 
 
   }
@@ -282,6 +299,9 @@ void get_parameters(char *infile, hydro_params *p)
   } else if(!set_silointerval) {
     fprintf(stderr, "Did not set parameter \'silointerval\'\n");
     die(100);
+  } else if(!set_checkpointinterval) {
+    fprintf(stderr, "Did not set parameter \'checkpointinterval\'\n");
+    die(100);
   } else if(!set_bubbles) {
     fprintf(stderr, "Did not set parameter \'bubbles\'\n");
     die(100);
@@ -300,6 +320,9 @@ void get_parameters(char *infile, hydro_params *p)
   } else if(!set_silodir) {
     fprintf(stderr, "Did not set parameter \'silodir\'\n");
     die(100);
+  } else if(!set_checkpointdir) {
+    fprintf(stderr, "Did not set parameter \'checkpointdir\'\n");
+    die(100);
   }
 
 
@@ -311,15 +334,19 @@ void get_parameters(char *infile, hydro_params *p)
 	    "-- Lx %d, Ly %d, Lz %d\n"
 	    "-- Cav %g, C %g,\n"
 	    "-- Lheat %g, sigma %g, lcorr %g\n"
-	    "-- interval %d, silointerval %d, bubbles %d, beta %g, scale %g\n"
-	    "-- silodir \"%s\"\n",
+	    "-- interval %d, silointerval %d, checkpointinterval %d\n"
+	    "-- bubbles %d, beta %g, scale %g\n"
+	    "-- silodir \"%s\"\n"
+	    "-- checkpointdir \"%s\"\n",
 	    infile,
 	    p->dx, p->dt, p->steps,
 	    p->Lx, p->Ly, p->Lz,
 	    p->Cav, p->C,
 	    p->Lheat, p->sigma, p->lcorr,
-	    p->interval, p->silointerval, p->bubbles, p->beta, p->scale,
-	    p->silodir);
+	    p->interval, p->silointerval, p->checkpointinterval,
+	    p->bubbles, p->beta, p->scale,
+	    p->silodir,
+	    p->checkpointdir);
     
     if(p->initial == INIT_SHOCK_TUBE) {
       fprintf(stderr, "-- shock tube\n");
