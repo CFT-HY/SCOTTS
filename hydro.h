@@ -10,6 +10,7 @@
 #include <strings.h>
 #include <time.h>
 #include <unistd.h>
+#include <stdarg.h>
 
 // Apple doesn't seem to believe in malloc.h
 #ifndef __APPLE__
