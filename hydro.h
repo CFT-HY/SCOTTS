@@ -57,6 +57,11 @@
 #define NUC_EXP 1
 #define NUC_LIST 2
 
+
+#define GW_BOTH 1
+#define GW_FIELD 2
+#define GW_FLUID 3
+
 /*
  * For the uij's, there are six components.
  */
@@ -163,6 +168,10 @@ typedef struct {
   double scale;
 
   int Linv;
+
+  int seed;
+
+  int gwsource;
 
 #ifdef MPI
 
