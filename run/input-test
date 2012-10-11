@@ -35,3 +35,6 @@ beta 1.0
 scale 1.0
 
 nucleation list 400,910,1704,2324,2423,2646,2695,2765
+
+checkpointdir cp/
+checkpointinterval -1

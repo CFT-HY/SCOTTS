@@ -1,10 +1,10 @@
 #### CC ####
 
 # Louhi
-CC := cc -DMPI -DFFT
+# CC := cc -DMPI -DFFT
 
 # Everything turned on
-# CC := mpicc -DMPI -DFFT # -DSILO # -DEXPANSION # -DSILO # -DDUMPFFT
+CC := mpicc -DMPI -DFFT # -DSILO # -DEXPANSION # -DSILO # -DDUMPFFT
 
 # Example for serial profiling
 # CC := gcc -O3 -DPAPI -lpapi
@@ -16,7 +16,7 @@ CC := cc -DMPI -DFFT
 #### CFLAGS ####
 
 # on louhi
-CFLAGS := -O3 -L/home/u1/weir/local/lib -I/home/u1/weir/local/include
+# CFLAGS := -O3 -L/home/u1/weir/local/lib -I/home/u1/weir/local/include
 
 # on vuori
 # CFLAGS := -O3 -L/home/u1/weir/local/lib -I/home/u1/weir/local/include
@@ -25,7 +25,7 @@ CFLAGS := -O3 -L/home/u1/weir/local/lib -I/home/u1/weir/local/include
 # CFLAGS := -O3 -L/home/weir/local/lib -I/home/weir/local/include
 
 # on afo
-# CFLAGS := -O3 -I/home/weir/Installed/silo-4.8-bsd/include/ -I/home/weir/local/include/
+CFLAGS := -O3 -I/home/weir/Installed/silo-4.8-bsd/include/ -I/home/weir/local/include/
 
 # on my mac
 # CFLAGS := -O0 -I/Users/weir/Installed/silo-4.8-bsd/include/
@@ -33,7 +33,7 @@ CFLAGS := -O3 -L/home/u1/weir/local/lib -I/home/u1/weir/local/include
 #### LIBS ####
 
 # on louhi
-LIBS := -lfftw3_mpi -lfftw3
+# LIBS := -lfftw3_mpi -lfftw3
 
 # on vuori
 # LIBS := -lfftw3_mpi -lfftw3 -lm
@@ -42,7 +42,7 @@ LIBS := -lfftw3_mpi -lfftw3
 # LIBS :=   -lfftw3_mpi -lfftw3 -lm -lsiloh5
 
 # on afo
-# LIBS := -L/home/weir/Installed/silo-4.8-bsd/lib/ -L/home/weir/local/lib/ -lsilo -lfftw3_mpi -lfftw3 -lm
+LIBS := -L/home/weir/Installed/silo-4.8-bsd/lib/ -L/home/weir/local/lib/ -lsilo -lfftw3_mpi -lfftw3 -lm
 
 # on my mac:
 # LIBS := -L/Users/weir/Installed/silo-4.8-bsd/lib/ -lsilo -lfftw3_mpi -lfftw3 -lm
