@@ -51,6 +51,8 @@ void get_parameters(char *infile, hydro_params *p)
 
   int set_initial = 0;
 
+  int set_gwsource = 0;
+
   int set_silodir = 0;
   int set_checkpointdir = 0;
 
@@ -62,10 +64,12 @@ void get_parameters(char *infile, hydro_params *p)
 
   int set_scale = 0;
 
+  int set_seed = 0;
+
   char key[100];
   char value[100];
-  char option[100];
-  char total[300];
+  char option[200];
+  char total[400];
 
   int ret;
   char *retptr;
@@ -79,7 +83,7 @@ void get_parameters(char *infile, hydro_params *p)
   while(!feof(fp)) {
 
     // gets is dodgy, fgets less so
-    retptr = fgets(total,198,fp);
+    retptr = fgets(total,397,fp);
 
     // probably EOF
     if(retptr == NULL)
@@ -197,6 +201,20 @@ void get_parameters(char *infile, hydro_params *p)
       }
       set_initial = 1;
     }
+    else if(!strcasecmp(key,"gwsource")) {
+      if(!strcasecmp(value, "both")) {
+	p->gwsource = GW_BOTH;
+      } else if(!strcasecmp(value, "field")) {
+	p->gwsource = GW_FIELD;
+      } else if(!strcasecmp(value, "fluid")) {
+	p->gwsource = GW_FLUID;
+      } else {
+	printf0(*p, "warning, unrecognised value for gwsource"
+		" (%s); defaulting to both.\n", value);
+	p->gwsource = GW_BOTH;
+      }
+      set_gwsource = 1;
+    }
     else if(!strcasecmp(key,"nucleation")) {
       if(!strcasecmp(value, "exp")) {
 	p->nucleation = NUC_EXP;
@@ -273,6 +291,12 @@ void get_parameters(char *infile, hydro_params *p)
      
       set_checkpointdir = 1;
     }
+    else if(!strcasecmp(key,"seed")) {
+      p->seed = strtol(value,NULL,10);
+      p->seed = abs(p->seed);
+
+      set_seed = 1;
+    } 
 
 
   }
@@ -332,6 +356,9 @@ void get_parameters(char *infile, hydro_params *p)
   } else if(!set_initial) {
     printf0(*p, "Did not set parameter \'initial\'\n");
     die(100);
+  } else if(!set_gwsource) {
+    printf0(*p, "Did not set parameter \'gwsource\'\n");
+    die(100);
   } else if(!set_nucleation) {
     printf0(*p, "Did not set parameter \'nucleation\'\n");
     die(100);
@@ -340,6 +367,9 @@ void get_parameters(char *infile, hydro_params *p)
     die(100);
   } else if(!set_checkpointdir) {
     printf0(*p, "Did not set parameter \'checkpointdir\'\n");
+    die(100);
+  } else if(!set_seed) {
+    printf0(*p, "Did not set parameter \'seed\'\n");
     die(100);
   }
 
@@ -355,7 +385,8 @@ void get_parameters(char *infile, hydro_params *p)
 	    "-- interval %d, silointerval %d, checkpointinterval %d\n"
 	    "-- bubbles %d, beta %g, scale %g\n"
 	    "-- silodir \"%s\"\n"
-	    "-- checkpointdir \"%s\"\n",
+	    "-- checkpointdir \"%s\"\n"
+	    "-- seed %d\n",
 	    infile,
 	    p->dx, p->dt, p->steps,
 	    p->Lx, p->Ly, p->Lz,
@@ -364,7 +395,8 @@ void get_parameters(char *infile, hydro_params *p)
 	    p->interval, p->silointerval, p->checkpointinterval,
 	    p->bubbles, p->beta, p->scale,
 	    p->silodir,
-	    p->checkpointdir);
+	    p->checkpointdir,
+	    p->seed);
     
     if(p->initial == INIT_SHOCK_TUBE) {
       printf0(*p, "-- shock tube\n");
@@ -372,6 +404,16 @@ void get_parameters(char *infile, hydro_params *p)
       printf0(*p, "-- bubble\n");
     } else {
       printf0(*p, "-- warning, somehow have unknown initial conds.\n");
+    }
+
+    if(p->gwsource == GW_FIELD) {
+      printf0(*p, "-- gws sourced by FIELD only\n");
+    } else if(p->gwsource == GW_FLUID) {
+      printf0(*p, "-- gws sourced by FLUID only\n");
+    } else if(p->gwsource == GW_BOTH) {
+      printf0(*p, "-- gws sourced by both FIELD and FLUID\n");
+    } else {
+      printf0(*p, "-- warning, somehow have unknown gwsource param\n");
     }
 
     if(p->nucleation == NUC_EXP) {

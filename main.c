@@ -52,6 +52,9 @@ int main(int argc, char *argv[])
   // Parse parameters from the filename specified on the command line
   get_parameters(argv[1], &p);
 
+  // Seed - make sure everyone gets the same one (if necessary)
+  srandom(p.seed);
+
   // How big is the system
   p.N = p.Lx*p.Ly*p.Lz;
 
