@@ -166,8 +166,9 @@ int main(int argc, char *argv[])
       
       bcount += still_nucleate;
       
-      if(!still_nucleate)
-	break;
+      // Each is an independent attempt, do not disable!
+      //      if(!still_nucleate)
+      //	break;
 
     }
 
@@ -240,8 +241,10 @@ int main(int argc, char *argv[])
   for(step = step_start; step < p.steps; step++) {
 
 
+    // Disabled: always try!
+    //     if(still_nucleate && should_nucleate(f, p, t, step)) {
 
-    if(still_nucleate && should_nucleate(f, p, t, step)) {
+    if(should_nucleate(f, p, t, step)) {
       still_nucleate = do_nucleate(f, p);
 
       bcount += still_nucleate;
