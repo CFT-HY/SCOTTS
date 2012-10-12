@@ -63,14 +63,15 @@ double vel_proj(int T, double kx, double ky, double kz) {
 }
 
 
-void vorticity(hydro_params p, int x_start, int slab,
-	       double *product, fftw_complex **vk) {
+void split_and_power(hydro_params p, int x_start, int slab,
+		     double *product, double *product_div, fftw_complex **vk) {
 
   int i, j;
   int x, y, z;
   double kx, ky, kz;
 
   double res_r, res_i;
+  double resid_r, resid_i;
 
   for(x=0; x<slab; x++) {
     for(y=0; y<p.Ly; y++) {
@@ -81,6 +82,7 @@ void vorticity(hydro_params p, int x_start, int slab,
         kz = ((double)z)*2.0*M_PI/((double)p.Lz);
 
         product[x*p.Ly*p.Lz + y*p.Lz + z] = 0.0;
+        product_div[x*p.Ly*p.Lz + y*p.Lz + z] = 0.0;
 
 
         for(i=1; i<=3; i++) {
@@ -88,13 +90,22 @@ void vorticity(hydro_params p, int x_start, int slab,
 	  res_r = 0.0;
 	  res_i = 0.0;
 
+	  resid_r = 0.0;
+	  resid_i = 0.0;
+	  
           for(j=1; j<=3; j++) {
-	    res_r = vel_proj(i*10 + j, kx, ky, kz)*vk[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-	    res_i = vel_proj(i*10 + j, kx, ky, kz)*vk[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+	    res_r += vel_proj(i*10 + j, kx, ky, kz)*vk[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+	    res_i += vel_proj(i*10 + j, kx, ky, kz)*vk[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+
+	    resid_r += (1.0 - vel_proj(i*10 + j, kx, ky, kz))*vk[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+	    resid_i += (1.0 - vel_proj(i*10 + j, kx, ky, kz))*vk[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 	  }
 
 	  product[x*p.Ly*p.Lz + y*p.Lz + z] +=
 	    res_r*res_r + res_i*res_i;
+
+	  product_div[x*p.Ly*p.Lz + y*p.Lz + z] +=
+	    resid_r*resid_r + resid_i*resid_i;
 
 	}
 
@@ -103,6 +114,98 @@ void vorticity(hydro_params p, int x_start, int slab,
   }
 
 }
+
+
+void histogram(hydro_params p, double *slice, char *filename, int slab, int x_start) {
+  // The rest proceeds as in gw.c
+
+  int i, x, y, z;
+
+  double kmode;
+
+  int nbins = minof3_int(p.Lx, p.Ly, p.Lz);
+  double mink = 0.0;
+  double maxk = 2.0*M_PI;
+
+  double dk = (maxk-mink)/((double)nbins);
+
+  double *bins = (double *)malloc(nbins*sizeof(double));
+  int *counts = (int *)malloc(nbins*sizeof(int));
+
+  for(i=0;i<nbins;i++) {
+    bins[i] = 0.0;
+    counts[i] = 0;
+  }
+
+  int whichbin;
+
+
+
+  for(x=0;x<slab;x++) {
+    for(y=0;y<p.Ly;y++) {
+      for(z=0;z<p.Lz;z++) {
+
+        if(((x+x_start)>p.Lx/2) || (y> p.Ly/2) || (z>p.Lz/2))
+          continue;
+	
+	kmode = sqrt(
+		     ((double)((x+x_start)*(x+x_start)))/((double)(p.Lx*p.Lx))
+		     + ((double)(y*y))/((double)(p.Ly*p.Ly))
+		     + ((double)(z*z))/((double)(p.Lz*p.Lz))
+		     )*2.0*M_PI;
+
+	whichbin = (int)floor(kmode/dk);
+	bins[whichbin] += slice[x*p.Ly*p.Lz + y*p.Lz + z];
+	counts[whichbin]++;
+
+	//	if(step)
+	// fprintf(stderr,"%d %lf\n",whichbin,slice[x*p.Ly*p.Lz + y*p.Lz + z]);
+
+      }
+    }
+  }
+
+
+  double red_value;
+  int red_count;
+
+  for(i=0;i<nbins;i++) {
+
+    red_value = reduce_sum(bins[i], p);
+    red_count = reduce_sum_int(counts[i], p);
+
+    bins[i] = red_value;
+    counts[i] = red_count;
+  }
+
+
+  double thisk = dk/2.0;
+
+  // spokesman does the final analysis
+  if(!p.rank) {
+
+
+  FILE *fp = fopen(filename,"w");
+
+    for(i=0;i<nbins;i++) {
+
+
+      fprintf(fp, "%lf %g %d\n",
+	      thisk, bins[i], counts[i]);
+
+      thisk = thisk + dk;
+    }
+
+  fclose(fp);
+
+  }
+
+  free(bins);
+  free(counts);
+}
+
+
+
 
 
 /* fft_vel(hydro_fields f, hydro_params p)
@@ -121,7 +224,7 @@ void fft_vel(hydro_fields f, hydro_params p, int step) {
 
   MPI_Status status;
 
-  double kmode, modsq;
+  double modsq;
 
   int x, y, z;
   int i;
@@ -164,6 +267,7 @@ void fft_vel(hydro_fields f, hydro_params p, int step) {
   }
 
   double *slice = (double *)malloc(slab*p.Ly*p.Lz*sizeof(double));
+  double *slice_div = (double *)malloc(slab*p.Ly*p.Lz*sizeof(double));
 
 
   int nx = p.Lx/p.slicex;
@@ -280,100 +384,22 @@ void fft_vel(hydro_fields f, hydro_params p, int step) {
 
   // The brains of the operation:
   // Turn the FFT'd tensor into projected power spectrum
-  vorticity(p, x_start, slab, slice, outcpts);
+  split_and_power(p, x_start, slab, slice, slice_div, outcpts);
 
 
-
-  // The rest proceeds as in gw.c
-
-  int nbins = minof3_int(p.Lx, p.Ly, p.Lz);
-  double mink = 0.0;
-  double maxk = 2.0*M_PI;
-
-  double dk = (maxk-mink)/((double)nbins);
-
-  double *bins = (double *)malloc(nbins*sizeof(double));
-  int *counts = (int *)malloc(nbins*sizeof(int));
-
-  for(i=0;i<nbins;i++) {
-    bins[i] = 0.0;
-    counts[i] = 0;
-  }
-
-  int whichbin;
-
-
-
-  for(x=0;x<slab;x++) {
-    for(y=0;y<p.Ly;y++) {
-      for(z=0;z<p.Lz;z++) {
-
-        if(((x+x_start)>p.Lx/2) || (y> p.Ly/2) || (z>p.Lz/2))
-          continue;
-	
-	kmode = sqrt(
-		     ((double)((x+x_start)*(x+x_start)))/((double)(p.Lx*p.Lx))
-		     + ((double)(y*y))/((double)(p.Ly*p.Ly))
-		     + ((double)(z*z))/((double)(p.Lz*p.Lz))
-		     )*2.0*M_PI;
-
-	whichbin = (int)floor(kmode/dk);
-	bins[whichbin] += slice[x*p.Ly*p.Lz + y*p.Lz + z];
-	counts[whichbin]++;
-
-	//	if(step)
-	// fprintf(stderr,"%d %lf\n",whichbin,slice[x*p.Ly*p.Lz + y*p.Lz + z]);
-
-      }
-    }
-  }
-
-
-  double red_value;
-  int red_count;
-
-  for(i=0;i<nbins;i++) {
-
-    red_value = reduce_sum(bins[i], p);
-    red_count = reduce_sum_int(counts[i], p);
-
-    bins[i] = red_value;
-    counts[i] = red_count;
-  }
-
-
-  double thisk = dk/2.0;
-
-  // spokesman does the final analysis
-  if(!p.rank) {
 
   char fftdest[200];
 
-  sprintf(fftdest,"vortps-step%d.txt", step);
-
-  FILE *fp = fopen(fftdest,"w");
-
-    for(i=0;i<nbins;i++) {
-
-
-      fprintf(fp, "%lf %g %d\n",
-	      thisk, bins[i], counts[i]);
-
-      thisk = thisk + dk;
-    }
-
-  fclose(fp);
-
-  }
-
-
-
-
+  sprintf(fftdest,"rot-ps-step%d.txt", step);
+  histogram(p, slice, fftdest, slab, x_start);
+  sprintf(fftdest,"div-ps-step%d.txt", step);
+  histogram(p, slice_div, fftdest, slab, x_start);
 
 
   // Tidy up
 
   free(slice);
+  free(slice_div);
   free(trim);
 
   fftw_destroy_plan(plan);
