@@ -403,21 +403,11 @@ int do_nucleate(hydro_fields f, hydro_params p) {
 
 
   // NB: number of attempts set to 1, but can always retry
-  while(!can_nucleate(f,p,tryx,tryy,tryz) && attempts < 1) {
+  if(!can_nucleate(f,p,tryx,tryy,tryz)) {
 
-    // #warning temporary replacement of fprintf in initial.c
     fprintf(stderr, "Not allowed to nucleate at (%d,%d,%d)!\n",
 	    tryx, tryy, tryz);
 
-    tryx = random()%p.Lx;
-    tryy = random()%p.Ly;
-    tryz = random()%p.Lz;
-    
-    attempts++;
-  }
-
-  if(attempts == 20) {
-    fprintf(stderr, "Gave up trying to nucleate!\n");
     return 0;
 
   } else {
