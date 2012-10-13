@@ -1,10 +1,10 @@
 #### CC ####
 
 # Louhi
-# CC := cc -DMPI -DFFT
+CC := cc -DMPI -DFFT
 
 # Everything turned on
-CC := mpicc -DMPI -DFFT # -DSILO # -DEXPANSION # -DSILO # -DDUMPFFT
+# CC := mpicc -DMPI -DFFT # -DSILO # -DEXPANSION # -DSILO # -DDUMPFFT
 
 # Example for serial profiling
 # CC := gcc -O3 -DPAPI -lpapi
@@ -16,7 +16,7 @@ CC := mpicc -DMPI -DFFT # -DSILO # -DEXPANSION # -DSILO # -DDUMPFFT
 #### CFLAGS ####
 
 # on louhi
-# CFLAGS := -O3 -L/home/u1/weir/local/lib -I/home/u1/weir/local/include
+CFLAGS := -O3 -L/home/u1/weir/local/lib -I/home/u1/weir/local/include
 
 # on vuori
 # CFLAGS := -O3 -L/home/u1/weir/local/lib -I/home/u1/weir/local/include
@@ -31,12 +31,12 @@ CC := mpicc -DMPI -DFFT # -DSILO # -DEXPANSION # -DSILO # -DDUMPFFT
 # CFLAGS := -O0 -I/Users/weir/Installed/silo-4.8-bsd/include/
 
 # on Alcyone:
-CFLAGS := -O3 -ipo -m64 -align -fno-alias -fno-fnalias -falign-functions -unroll-aggressive -fp-model fast=2 -I/home/weir/local/include/
+# CFLAGS := -O3 -ipo -m64 -align -fno-alias -fno-fnalias -falign-functions -unroll-aggressive -fp-model fast=2 -I/home/weir/local/include/
 
 #### LIBS ####
 
 # on louhi
-# LIBS := -lfftw3_mpi -lfftw3
+LIBS := -lfftw3_mpi -lfftw3
 
 # on vuori
 # LIBS := -lfftw3_mpi -lfftw3 -lm
@@ -51,7 +51,7 @@ CFLAGS := -O3 -ipo -m64 -align -fno-alias -fno-fnalias -falign-functions -unroll
 # LIBS := -L/Users/weir/Installed/silo-4.8-bsd/lib/ -lsilo -lfftw3_mpi -lfftw3 -lm
 
 # on Alcyone
-LIBS := -L/home/weir/local/lib/ -lfftw3_mpi -lfftw3
+# LIBS := -L/home/weir/local/lib/ -lfftw3_mpi -lfftw3
 
 #### No user-serviceable parts below ####
 
