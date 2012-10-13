@@ -581,7 +581,8 @@ void fft_tensor(hydro_fields f, hydro_params p, int step,
 
   }
 
-
+  free(bins);
+  free(counts);
 
 #endif
 
@@ -599,6 +600,8 @@ void fft_tensor(hydro_fields f, hydro_params p, int step,
   for(i=0;i<TENSOR_CPTS;i++)
     fftw_free(outcpts[i]);
 
+
+  free(trim);
 
   fftw_mpi_cleanup();
 
