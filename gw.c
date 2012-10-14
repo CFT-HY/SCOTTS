@@ -601,8 +601,6 @@ void fft_tensor(hydro_fields f, hydro_params p, int step,
     fftw_free(outcpts[i]);
 
 
-  free(trim);
-
   fftw_mpi_cleanup();
 
   double end = clock();
