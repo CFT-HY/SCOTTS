@@ -34,7 +34,12 @@ beta 1.0
 
 scale 1.0
 
-nucleation list 400,910,1704,2324,2423,2646,2695,2765
+nucleation list 407,913,1214,1423,1928,1939,1964,2378,2441,2468,2607,2740,2770,2897,2920,2993,3075,3077,3121,3158,3170,3199
 
 checkpointdir cp/
 checkpointinterval -1
+
+gwsource both
+
+seed 1234
+

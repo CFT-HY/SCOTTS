@@ -94,8 +94,11 @@ void get_parameters(char *infile, hydro_params *p)
       printf0(*p,"Line too long!\n");
       continue;
     }
-    
-    ret = sscanf(total,"%99s%99s%99s",key,value,option);
+
+    strcpy(key,"");
+    strcpy(value,"");
+    strcpy(option,"");
+    ret = sscanf(total,"%99s%99s%199s",key,value,option);
 
 
     // Not of the form "<key> <value>"
