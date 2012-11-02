@@ -21,6 +21,8 @@
 // Store time slice data in the Silo format
 #ifdef SILO
 #include <silo.h>
+
+#define CPMODE DB_HDF5
 #endif // SILO
 
 // Instrumentation using PAPI
