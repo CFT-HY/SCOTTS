@@ -1,6 +1,6 @@
 #include "hydro.h"
 
-const int cpmode=DB_HDF5;
+
 
 int load_checkpoint(hydro_fields f, hydro_params p)
 {
@@ -9,7 +9,7 @@ int load_checkpoint(hydro_fields f, hydro_params p)
 
   sprintf(filename, "%s/checkpoint-%06d", p.checkpointdir, p.rank);
 
-  DBfile *dbfile = DBOpen(filename, cpmode, DB_READ);
+  DBfile *dbfile = DBOpen(filename, CPMODE, DB_READ);
 
   DBquadvar *qvptr;
   
@@ -128,7 +128,7 @@ int usable_checkpoint(hydro_fields f, hydro_params p)
     sprintf(filename, "%s/checkpoint-%06d", p.checkpointdir, p.rank);
 
 
-    DBfile *dbfile = DBOpen(filename, cpmode, DB_READ);
+    DBfile *dbfile = DBOpen(filename, CPMODE, DB_READ);
 
 
     if(dbfile == NULL) {
@@ -197,7 +197,7 @@ void checkpoint(hydro_fields f, hydro_params p, int step)
   printf0(p,"Checkpointing in %s\n",p.checkpointdir);
 
 
-  DBfile *dbfile = DBCreate(filename, DB_CLOBBER, DB_LOCAL, "checkpoint", cpmode);
+  DBfile *dbfile = DBCreate(filename, DB_CLOBBER, DB_LOCAL, "checkpoint", CPMODE);
 
 
   DBoptlist *dboptlist = NULL;

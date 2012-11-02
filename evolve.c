@@ -228,6 +228,7 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
 		     + f.W[x-1][y-1][z]
 		     + f.W[x][y][((z-1+p.Lz)%p.Lz)]
 		     + f.W[x][y-1][((z+p.Lz-1)%p.Lz)]
+
 		     + f.W[x-1][y][((z+p.Lz-1)%p.Lz)]
 		     + f.W[x-1][y-1][((z+p.Lz-1)%p.Lz)]);
 	
@@ -253,11 +254,19 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
     f.Z[2][x][y][z] = f.Z[2][x][y][z] - p.dt*p.C*wnb*pinb*dxphinb2;
     
     f.Z[1][x][y][z] = f.Z[1][x][y][z] 
-      - p.dt*p.C*wnb*f.V[1][x][y][z]*dxphinb1*dxphinb1;
+      - p.dt*p.C*wnb*(f.V[1][x][y][z]*dxphinb1
+		      + f.V[0][x][y][z]*dxphinb0
+		      + f.V[2][x][y][z]*dxphinb2)*dxphinb1;
+
     f.Z[0][x][y][z] = f.Z[0][x][y][z] 
-      - p.dt*p.C*wnb*f.V[0][x][y][z]*dxphinb0*dxphinb0;    
+      - p.dt*p.C*wnb*(f.V[1][x][y][z]*dxphinb1
+		      + f.V[0][x][y][z]*dxphinb0
+		      + f.V[2][x][y][z]*dxphinb2)*dxphinb0;    
+
     f.Z[2][x][y][z] = f.Z[2][x][y][z]
-      - p.dt*p.C*wnb*f.V[2][x][y][z]*dxphinb2*dxphinb2;
+      - p.dt*p.C*wnb*(f.V[1][x][y][z]*dxphinb1
+		      + f.V[0][x][y][z]*dxphinb0
+		      + f.V[2][x][y][z]*dxphinb2)*dxphinb2;
 
     f.Z[0][x][y][z] = f.Z[0][x][y][z] - p.dt*vdnb*dxphinb0;     
     f.Z[1][x][y][z] = f.Z[1][x][y][z] - p.dt*vdnb*dxphinb1;
