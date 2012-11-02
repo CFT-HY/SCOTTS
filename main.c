@@ -252,7 +252,9 @@ int main(int argc, char *argv[])
 
 
     if((p.checkpointinterval > 0) && (step % p.checkpointinterval == 0)) {
+      int wall_start = (int)time(NULL);
       checkpoint(f, p, step);
+      printf0(p, "Checkpointing took %d seconds of walltime\n", ((int)time(NULL))-wall_start);
     }
 
 
