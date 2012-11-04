@@ -168,6 +168,7 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
+
 	
 	phiav[x][y][z] = 0.5*(f.phiold[x][y][z] + f.phi[x][y][z]);
 	
@@ -276,22 +277,18 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
 			+ 0.5*(f.V[0][x][y][z]
 			       *dxphi[0][x-1][y][z]
 			       + f.V[0][x+1][y][z]
-			       *dxphi[0][x][y][z]));
-    f.E[x][y][z] = f.E[x][y][z] + p.dt*(p.C*gpi*gpi + gpi*Vdmid[x][y][z]);
-    
-
-    gpi = f.W[x][y][z]*(f.pi[x][y][z]
+			       *dxphi[0][x][y][z])
 			+ 0.5*(f.V[1][x][y][z]
-			       *dxphi[1][x][y-1][z]
-			       + f.V[1][x][y+1][z]
-			       *dxphi[1][x][y][z]));
-    f.E[x][y][z] = f.E[x][y][z] + p.dt*(p.C*gpi*gpi + gpi*Vdmid[x][y][z]);
-
-    gpi = f.W[x][y][z]*(f.pi[x][y][z]
+                               *dxphi[1][x][y-1][z]
+                               + f.V[1][x][y+1][z]
+                               *dxphi[1][x][y][z])
 			+ 0.5*(f.V[2][x][y][z]
-			       *dxphi[2][x][y][((z-1+p.Lz)%p.Lz)]
-			       + f.V[2][x][y][((z+1)%p.Lz)]
-			       *dxphi[2][x][y][z]));
+                               *dxphi[2][x][y][((z-1+p.Lz)%p.Lz)]
+                               + f.V[2][x][y][((z+1)%p.Lz)]
+                               *dxphi[2][x][y][z]));
+      
+    f.E[x][y][z] = f.E[x][y][z] + p.dt*(p.C*gpi*gpi + gpi*Vdmid[x][y][z]);
+    f.E[x][y][z] = f.E[x][y][z] + p.dt*(p.C*gpi*gpi + gpi*Vdmid[x][y][z]);
     f.E[x][y][z] = f.E[x][y][z] + p.dt*(p.C*gpi*gpi + gpi*Vdmid[x][y][z]);
     
       }
