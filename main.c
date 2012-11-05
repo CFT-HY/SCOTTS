@@ -85,6 +85,8 @@ int main(int argc, char *argv[])
   // Ugly but it's a straight conversion of the fortran
   p.T0 = sqrt(1.0-2.0*p.alpha*p.alpha/9.0/p.gamma/p.lambda);
 
+  printf0(p,
+	  "-- T0 %g\n", p.T0);
 
   // Set up layout for any (or no) parallelism
   layout(&p);
