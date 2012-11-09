@@ -25,7 +25,7 @@ CC := mpicc -DMPI -DFFT -DSILO # -DEXPANSION # -DSILO # -DDUMPFFT
 # CFLAGS := -O3 -L/home/u1/weir/local/lib -I/home/u1/weir/local/include
 
 # on pc168, need libraries
-# CFLAGS := -O3 -L/home/weir/local/lib -I/home/weir/local/include
+CFLAGS := -O3 -L/home/weir/local/lib -I/home/weir/local/include
 
 # on afo
 CFLAGS := -O3 -I/home/weir/local/include/
