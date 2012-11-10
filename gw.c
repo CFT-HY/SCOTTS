@@ -480,7 +480,7 @@ void fft_tensor(hydro_fields f, hydro_params p, int step,
 #else // not DUMPFFT
   // calculate the power spectrum on the fly
 
-  int nbins = minof3_int(p.Lx, p.Ly, p.Lz);
+  int nbins = 2*minof3_int(p.Lx, p.Ly, p.Lz);
   double mink = 0.0;
   double maxk = 2.0*M_PI;
 
@@ -557,21 +557,24 @@ void fft_tensor(hydro_fields f, hydro_params p, int step,
 
       // thisk = sqrt((nx/Lx)^2 + (ny/Ly)^2 + (nz/Lz)^2) 2*pi
       // so divide by dx
-      comovingk = thisk/(p.a*p.dx);
+      //      comovingk = thisk/(p.a*p.dx);
+      comovingk = thisk/p.dx;
 
       // formula taken as a given, looks correct
-      thisf = comovingk*6.0e10; // /(p.H)
+      //      thisf = comovingk*6.0e10; // /(p.H)
+      thisf = comovingk;
 
       // d(rhogw)/d(logk)
       // (p.H^(-3) is comoving volume; 8*4*pi is the solid angle normalisation)
-      thisdiff = (comovingk*comovingk*comovingk/(32.0*M_PI))
-	*bins[i]/(p.Lx*p.Ly*p.Lz*p.dx*p.dx*p.dx);
+      //      thisdiff = (comovingk*comovingk*comovingk/(32.0*M_PI))
+      //	*bins[i]/(p.Lx*p.Ly*p.Lz*p.dx*p.dx*p.dx);
+      thisomega = comovingk*comovingk*comovingk*bins[i]/(p.Lx*p.Ly*p.Lz*p.dx*p.dx*p.dx);
 
       // omegaGW(k), as above but corrections for degrees of freedom,
       // energy density and radiation density
-      thisomega = omegarad*doffrac*(1.0/energydensity)*thisdiff;
+      //      thisomega = omegarad*doffrac*(1.0/energydensity)*thisdiff;
 
-      fprintf(fp, "%lf %lf %d %g %g\n",
+      fprintf(fp, "%lf %g %d %lf %g\n",
 	      thisk, bins[i], counts[i], thisf, thisomega);
 
       thisk = thisk + dk;
