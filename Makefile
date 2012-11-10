@@ -4,7 +4,7 @@
 # CC := cc -DMPI -DFFT
 
 # Everything turned on
-CC := mpicc -DMPI -DFFT -DSILO # -DEXPANSION # -DSILO # -DDUMPFFT
+# CC := mpicc -DMPI -DFFT -DSILO # -DEXPANSION # -DSILO # -DDUMPFFT
 
 # Example for serial profiling
 # CC := gcc -O3 -DPAPI -lpapi
@@ -13,7 +13,7 @@ CC := mpicc -DMPI -DFFT -DSILO # -DEXPANSION # -DSILO # -DDUMPFFT
 # CC := vtcc -vt:mpi -DMPI
 
 # Cosmos
-# CC := icc -DMPI -DFFT -DSILO
+CC := icc -DMPI -DFFT -DSILO
 
 
 #### CFLAGS ####
@@ -25,10 +25,10 @@ CC := mpicc -DMPI -DFFT -DSILO # -DEXPANSION # -DSILO # -DDUMPFFT
 # CFLAGS := -O3 -L/home/u1/weir/local/lib -I/home/u1/weir/local/include
 
 # on pc168, need libraries
-CFLAGS := -O3 -L/home/weir/local/lib -I/home/weir/local/include
+# CFLAGS := -O3 -L/home/weir/local/lib -I/home/weir/local/include
 
 # on afo
-CFLAGS := -O3 -I/home/weir/local/include/
+# CFLAGS := -O3 -I/home/weir/local/include/
 
 # on my mac
 # CFLAGS := -O0 -I/Users/weir/Installed/silo-4.8-bsd/include/
@@ -37,7 +37,7 @@ CFLAGS := -O3 -I/home/weir/local/include/
 # CFLAGS := -O3 -ipo -m64 -align -fno-alias -fno-fnalias -falign-functions -unroll-aggressive -fp-model fast=2 -I/home/weir/local/include/
 
 # on Cosmos:
-# CFLAGS := -g -O3 -xHost -align -ansi-alias -mcmodel=medium
+CFLAGS := -g -O3 -xHost -align -ansi-alias -mcmodel=medium
 
 #### LIBS ####
 
@@ -51,7 +51,7 @@ CFLAGS := -O3 -I/home/weir/local/include/
 # LIBS :=   -lfftw3_mpi -lfftw3 -lm -lsiloh5
 
 # on afo
-LIBS := -L/home/weir/local/lib/ -lstdc++ -lhdf5 -lsiloh5 -lfftw3_mpi -lfftw3 -lm
+# LIBS := -L/home/weir/local/lib/ -lstdc++ -lhdf5 -lsiloh5 -lfftw3_mpi -lfftw3 -lm
 
 # on my mac:
 # LIBS := -L/Users/weir/Installed/silo-4.8-bsd/lib/ -lsilo -lfftw3_mpi -lfftw3 -lm
@@ -60,7 +60,7 @@ LIBS := -L/home/weir/local/lib/ -lstdc++ -lhdf5 -lsiloh5 -lfftw3_mpi -lfftw3 -lm
 # LIBS := -L/home/weir/local/lib/ -lfftw3_mpi -lfftw3
 
 # on Cosmos:
-# LIBS := -lmpi -lfftw3_mpi -lfftw3 -lsiloh5
+LIBS := -lmpi -lfftw3_mpi -lfftw3 -lsiloh5
 
 #### No user-serviceable parts below ####
 
