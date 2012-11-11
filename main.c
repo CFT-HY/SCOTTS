@@ -121,6 +121,7 @@ int main(int argc, char *argv[])
 
   int step_start = 0;
 
+  double gwen;
 
   // Just runs malloc on all the fields therein (see alloc.c)
   alloc_fields(&f, p);
@@ -279,7 +280,7 @@ int main(int argc, char *argv[])
 #ifdef FFT
       
       fft_vel(f, p, step);
-      fft_tensor(f, p, step, current_energy);
+      gwen = fft_tensor(f, p, step, current_energy);
     
 #endif // FFT
 
@@ -287,13 +288,16 @@ int main(int argc, char *argv[])
       current_field_energy = reduce_sum(field_energy(f, p), p);
       current_wmax = reduce_max(get_gamma_max(f, p), p);
       
-      printf0(p, "%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%d\n",
-	      step,
-	      t,
-	      current_energy,
-	      current_field_energy,
-	      current_wmax,
-	      bcount);
+      if(!p.rank) {
+	printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\n",
+	       step,
+	       t,
+	       current_energy,
+	       current_field_energy,
+	       current_wmax,
+	       gwen,
+	       bcount);
+      }
       
       /*
 	printf0(p, "Energy violation: %lf%%\n",
@@ -366,14 +370,16 @@ int main(int argc, char *argv[])
   current_field_energy = reduce_sum(field_energy(f, p), p);
   current_wmax = reduce_max(get_gamma_max(f, p), p);
   
-  printf0(p, "Final state:\n");
-  printf0(p, "%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%d\n",
-	  step,
-	  t,
-	  current_energy,
-	  current_field_energy,
-	  current_wmax,
-	  bcount);
+  //  printf0(p, "Final state:\n");
+  if(!p.rank) {
+    printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%d\n",
+	   step,
+	   t,
+	   current_energy,
+	   current_field_energy,
+	   current_wmax,
+	   bcount);
+  }
 
   end = clock();
 
