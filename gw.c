@@ -213,7 +213,7 @@ void gwproject(hydro_params p, int x_start, int slab,
  * you decide to calculate the power spectrum several times during the
  * simulation be prepared to pre-calculate the above.
  */
-void fft_tensor(hydro_fields f, hydro_params p, int step,
+double fft_tensor(hydro_fields f, hydro_params p, int step,
 		double energydensity) {
 
   ptrdiff_t x_thickness, x_start, alloc_local;
@@ -418,7 +418,7 @@ void fft_tensor(hydro_fields f, hydro_params p, int step,
   // we take G=1.0...
 
   double gwen = reduce_sum(rhogw, p)
-    /(1.0*((double)(p.a*p.a*p.a*p.Lx*p.Ly*p.Lz*p.dx*p.dx*p.dx)));
+    /(1.0*((double)(p.Lx*p.Ly*p.Lz*p.dx*p.dx*p.dx)));
 
   // To get energy density expect to have to divide by V again
   // as it seems that keeping p.Lx*p.Ly*p.Lz*p.dx*p.dx*p.dx constant
@@ -611,6 +611,7 @@ void fft_tensor(hydro_fields f, hydro_params p, int step,
   printf0(p, "FFT stuff took %lf\n",
 	  ((double) (end - start)) / CLOCKS_PER_SEC);
 
+  return gwen;
 }
 
 

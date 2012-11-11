@@ -1,25 +1,62 @@
 # Prototype nucleation process
-import math, random, time
+import math, random, time, sys, string
 
 t = 0.0
 
 dt = 0.1
 
-beta = 0.008
+beta = 0.025
 
-duration = 8000
+duration = 10000
+
+p0 = 0.01
 
 end = dt*float(duration)
 
 random.seed(time.time())
 
-for i in range(duration):
+vol = 1024*1024*1024
 
-	prob = math.exp(beta*(t-end))
+
+bublist = []
+
+for i in range(duration):
+	sys.stderr.write('%d %d\n' % (i, len(bublist)))
+
+
+	prob = p0*math.exp(beta*(t-end))
 	t = t + dt
-	if random.uniform(0,1) < prob:
-		print i # t  #  , prob, 1.0
+
+	p_nobub = math.pow(1.0-prob,vol)
+
+
+	chance = random.uniform(0,1)
+
+	if chance > p_nobub:
+		p_onebub = vol*math.pow(1.0-prob,vol-1)*prob
+
+#		sys.stderr.write('i %d p_nobub = %lf\n' % (i, p_nobub))
+		bublist.append(`i`)
+		if len(bublist) == 50:
+			break
+
+#		sys.stderr.write('chance %g prob %g p_nobub %g p_onebub %g twoormore %g\n' % (chance,prob,p_nobub,p_onebub,1.0-(p_nobub + p_onebub)))
+
+		if chance > (p_nobub + p_onebub):
+			bublist.append(`i`)
+			if len(bublist) == 50:
+				break
+#			p_twobub = math.pow(1.0-prob,vol-2)*prob*prob
+
+#		else:
+#			print 'one bubble'	
+		
 	else:
 		pass
 
-#		print t, prob, 0.0
+
+
+#for bub in bublist:
+#	print bub
+
+print string.join(bublist,',')

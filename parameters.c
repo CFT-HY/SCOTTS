@@ -68,8 +68,8 @@ void get_parameters(char *infile, hydro_params *p)
 
   char key[100];
   char value[100];
-  char option[200];
-  char total[400];
+  char option[300];
+  char total[500];
 
   int ret;
   char *retptr;
@@ -83,7 +83,7 @@ void get_parameters(char *infile, hydro_params *p)
   while(!feof(fp)) {
 
     // gets is dodgy, fgets less so
-    retptr = fgets(total,397,fp);
+    retptr = fgets(total,497,fp);
 
     // probably EOF
     if(retptr == NULL)
@@ -98,7 +98,7 @@ void get_parameters(char *infile, hydro_params *p)
     strcpy(key,"");
     strcpy(value,"");
     strcpy(option,"");
-    ret = sscanf(total,"%99s%99s%199s",key,value,option);
+    ret = sscanf(total,"%99s%99s%299s",key,value,option);
 
 
     // Not of the form "<key> <value>"

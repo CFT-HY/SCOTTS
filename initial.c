@@ -405,7 +405,7 @@ int do_nucleate(hydro_fields f, hydro_params p) {
   // NB: number of attempts set to 1, but can always retry
   if(!can_nucleate(f,p,tryx,tryy,tryz)) {
 
-    fprintf(stderr, "Not allowed to nucleate at (%d,%d,%d)!\n",
+    printf0(p, "Not allowed to nucleate at (%d,%d,%d)!\n",
 	    tryx, tryy, tryz);
 
     return 0;

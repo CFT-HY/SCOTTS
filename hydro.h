@@ -347,7 +347,7 @@ void fft_field(hydro_fields f, hydro_params p);
 
 // gw.c
 double proj(int T, double kx, double ky, double kz);
-void fft_tensor(hydro_fields f, hydro_params p, int step, double energydensity);
+double fft_tensor(hydro_fields f, hydro_params p, int step, double energydensity);
 
 // velps.c
 void fft_vel(hydro_fields f, hydro_params p, int step);
