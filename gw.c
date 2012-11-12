@@ -480,7 +480,7 @@ double fft_tensor(hydro_fields f, hydro_params p, int step,
 #else // not DUMPFFT
   // calculate the power spectrum on the fly
 
-  int nbins = 2*minof3_int(p.Lx, p.Ly, p.Lz);
+  int nbins = minof3_int(p.Lx, p.Ly, p.Lz);
   double mink = 0.0;
   double maxk = 2.0*M_PI;
 
