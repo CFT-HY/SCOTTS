@@ -137,6 +137,9 @@ int main(int argc, char *argv[])
     printf0(p, "Checkpoint load done.\n");
     printf0(p, "WARNING: Bubble count reset after restart!\n");
 
+    // bodge: reseed badly
+    srandom(random() % step_start);
+
   } else {
     // For safety, set everything to zero
     zero_fields(f, p);
