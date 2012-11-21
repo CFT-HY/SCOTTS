@@ -1,6 +1,6 @@
 /* fft.c
  *
- * Fourier transform of a field (not currently used)
+ * Fourier transform of a field
  */
 #include "hydro.h"
 

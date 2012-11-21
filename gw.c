@@ -235,7 +235,7 @@ double fft_tensor(hydro_fields f, hydro_params p, int step,
 
   double *trim = (double *)malloc(p.slicex*p.slicey*p.Lz*sizeof(double));
 
-  printf0(p, "Starting FFT stuff.\n");
+  printf0(p, "Starting GW FFT calculation.\n");
 
   double start = clock();
 
@@ -608,7 +608,7 @@ double fft_tensor(hydro_fields f, hydro_params p, int step,
 
   double end = clock();
 
-  printf0(p, "FFT stuff took %lf\n",
+  printf0(p, "GW FFT calculation took %lf\n",
 	  ((double) (end - start)) / CLOCKS_PER_SEC);
 
   return gwen;
