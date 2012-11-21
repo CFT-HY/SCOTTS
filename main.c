@@ -283,7 +283,7 @@ int main(int argc, char *argv[])
 
 #ifdef FFT
       
-      fft_field(f, p, f.phi);
+      fft_field(f, p, f.phi, step);
       fft_vel(f, p, step);
       gwen = fft_tensor(f, p, step, current_energy);
     
