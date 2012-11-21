@@ -9,7 +9,7 @@
 
 
 
-void fft_field(hydro_fields f, hydro_params p, double ***field) {
+void fft_field(hydro_fields f, hydro_params p, double ***field, int step) {
 
   ptrdiff_t x_thickness, x_start, alloc_local;
 
@@ -195,7 +195,7 @@ void fft_field(hydro_fields f, hydro_params p, double ***field) {
 
     char fftdest[200];
 
-    sprintf(fftdest,"fft-%d.txt",p.rank);
+    sprintf(fftdest,"fft-%d.txt", step);
     
     FILE *fp = fopen(fftdest,"w");
       

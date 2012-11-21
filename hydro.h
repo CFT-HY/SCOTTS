@@ -343,7 +343,7 @@ double minof2(double a, double b);
 
 #ifdef FFT
 // fft.c
-void fft_field(hydro_fields f, hydro_params p, double ***field);
+void fft_field(hydro_fields f, hydro_params p, double ***field, int step);
 
 // gw.c
 double proj(int T, double kx, double ky, double kz);
