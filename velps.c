@@ -233,7 +233,7 @@ void fft_vel(hydro_fields f, hydro_params p, int step) {
 
   double *trim = (double *)malloc(p.slicex*p.slicey*p.Lz*sizeof(double));
 
-  printf0(p, "Starting FFT stuff.\n");
+  printf0(p, "Starting velocity power spectrum FFT calculation.\n");
 
   double start = clock();
 
@@ -415,7 +415,7 @@ void fft_vel(hydro_fields f, hydro_params p, int step) {
 
   double end = clock();
 
-  printf0(p, "FFT stuff took %lf\n",
+  printf0(p, "Velocity power spectrum FFT calculation took %lf\n",
 	  ((double) (end - start)) / CLOCKS_PER_SEC);
 
 }
