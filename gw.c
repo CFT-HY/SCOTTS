@@ -359,6 +359,14 @@ double fft_tensor(hydro_fields f, hydro_params p, int step,
     */
 
   
+    /*
+     * NB: fftw calculates the unnormalised FFT,
+     * namely:
+     * out[k] = \sum[j] in[j] exp(-2*pi*(j.k)*i/L)
+     *
+     * our fft_norm makes this sum turn into the integral
+     * when the continuum limit is taken.
+     */
     fftw_mpi_execute_dft(plan, in, out);
     
     total = 0.0;
