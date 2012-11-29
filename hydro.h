@@ -317,6 +317,7 @@ void init_profile(hydro_fields *f, hydro_params *p);
 double get_gamma_max(hydro_fields f, hydro_params p);
 void dump(double *field, hydro_params p);
 void histo_field(double ***field, hydro_params p, int step);
+void didj(double *cpts, hydro_fields f, hydro_params p);
 
 // papi.c
 #ifdef PAPI

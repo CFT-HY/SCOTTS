@@ -147,3 +147,57 @@ void histo_field(double ***field, hydro_params p, int step) {
 }
 
 
+void didj(double *cpts, hydro_fields f, hydro_params p) {
+
+  double cpts_here[TENSOR_CPTS];
+
+  int x, y, z;
+  int i;
+
+  for(i=0; i<TENSOR_CPTS; i++) {
+    cpts_here[i] = 0.0;
+  }
+
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+
+          cpts_here[CPT_11] +=
+            0.25*((f.phi[x+1][y][z] - f.phi[x-1][y][z])/p.dx)
+            *((f.phi[x+1][y][z] - f.phi[x-1][y][z])/p.dx);
+
+          cpts_here[CPT_21] +=
+            0.25*((f.phi[x+1][y][z] - f.phi[x-1][y][z])/p.dx)
+            *((f.phi[x][y+1][z] - f.phi[x][y-1][z])/p.dx);
+
+          cpts_here[CPT_31] +=
+            0.25*((f.phi[x][y][(z+1)%p.Lz]
+		   - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx)
+            *((f.phi[x+1][y][z] - f.phi[x-1][y][z])/p.dx);
+
+          cpts_here[CPT_22] +=
+            0.25*((f.phi[x][y+1][z]
+		   - f.phi[x][y-1][z])/p.dx)
+            *((f.phi[x][y+1][z] - f.phi[x][y-1][z])/p.dx);
+	  
+          cpts_here[CPT_32] +=
+            0.25*((f.phi[x][y][(z+1)%p.Lz] 
+		   - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx)
+            *((f.phi[x][y+1][z] - f.phi[x][y-1][z])/p.dx);
+
+          cpts_here[CPT_33] +=
+            0.25*((f.phi[x][y][(z+1)%p.Lz] 
+		   - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx)
+            *((f.phi[x][y][(z+1)%p.Lz] - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx);
+
+      }
+    }
+  }
+
+
+  for(i=0; i<TENSOR_CPTS; i++) {
+    cpts[i] = reduce_sum(cpts_here[i], p)/((double)(p.Lx*p.Ly*p.Lz));
+  }
+
+}
+
