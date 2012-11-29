@@ -106,6 +106,7 @@ int main(int argc, char *argv[])
   int x;
 
   double wmax;
+  double cpts[TENSOR_CPTS];
 
   hydro_fields f;
 
@@ -288,6 +289,15 @@ int main(int argc, char *argv[])
       gwen = fft_tensor(f, p, step, current_energy);
     
 #endif // FFT
+
+      didj(cpts, f, p);
+      printf0(p, "cpts: %g %g %g %g %g %g\n",
+	      cpts[CPT_11],
+	      cpts[CPT_21],
+	      cpts[CPT_31],
+	      cpts[CPT_22],
+	      cpts[CPT_32],
+	      cpts[CPT_33]);
 
       current_energy = reduce_sum(total_energy(f, p), p);
       current_field_energy = reduce_sum(field_energy(f, p), p);
