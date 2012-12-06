@@ -112,7 +112,7 @@ int main(int argc, char *argv[])
 
   double initial_energy, current_energy;
 
-  double current_field_energy, current_wmax;
+  double current_field_energy, current_wmax, current_kinetic;
 
   double cpu_time_used;
 
@@ -130,7 +130,7 @@ int main(int argc, char *argv[])
   // Managed to get this far, so we probably have enough memory
   printf0(p, "- Allocated fields.\n");
 
-  if(p.checkpointinterval > 0  && usable_checkpoint(f, p)) {
+  if(usable_checkpoint(f, p)) {
     printf0(p, "Found a usable checkpoint file\n");
 
     step_start = load_checkpoint(f, p);
@@ -300,14 +300,16 @@ int main(int argc, char *argv[])
 	      cpts[CPT_33]);
 
       current_energy = reduce_sum(total_energy(f, p), p);
+      current_kinetic = reduce_sum(kinetic_energy(f, p), p);
       current_field_energy = reduce_sum(field_energy(f, p), p);
       current_wmax = reduce_max(get_gamma_max(f, p), p);
       
       if(!p.rank) {
-	printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\n",
+	printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\n",
 	       step,
 	       t,
 	       current_energy,
+	       current_kinetic,
 	       current_field_energy,
 	       current_wmax,
 	       gwen,
@@ -382,15 +384,17 @@ int main(int argc, char *argv[])
   }
   
   current_energy = reduce_sum(total_energy(f, p), p);
+  current_kinetic = reduce_sum(kinetic_energy(f, p), p);
   current_field_energy = reduce_sum(field_energy(f, p), p);
   current_wmax = reduce_max(get_gamma_max(f, p), p);
   
   //  printf0(p, "Final state:\n");
   if(!p.rank) {
-    printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%d\n",
+    printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\n",
 	   step,
 	   t,
 	   current_energy,
+	   current_kinetic,
 	   current_field_energy,
 	   current_wmax,
 	   bcount);
