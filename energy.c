@@ -110,6 +110,46 @@ double total_energy(hydro_fields f, hydro_params p) {
 
 
 }
+
+
+
+
+
+// straight from fortran, slightly verbose way of doing it!
+double kinetic_energy(hydro_fields f, hydro_params p) {
+
+  int x, y, z;
+
+  double vol;
+
+  double Etot = 0.0;
+  double restE = 0.0;
+  double kinE = 0.0;
+  double kinphi = 0.0;
+  double grdphi = 0.0;
+
+  vol = p.dx*p.dx*p.dx;
+
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+
+	// kinetic energy
+	kinE += f.kappa[x][y][z]*(f.E[x][y][z]/f.W[x][y][z])
+	  *(f.W[x][y][z]*f.W[x][y][z]-1.0)*vol;
+
+      }
+      
+    }
+  }
+
+  Etot = kinE;
+  
+  return Etot; // /vol;
+
+
+
+}
     
 			    
 
