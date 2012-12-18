@@ -103,14 +103,19 @@ typedef struct {
   double C;
 
   // Input parameters for the potential
+  /*
   double Lheat;
   double sigma;
   double lcorr;
+  */
 
   // Calculated potential parameters
   double alpha;
   double lambda;
   double gamma;
+  // Temperature parameters
+  double Tconst;
+  double T0;
 
   // How often to deal with output
   int interval;
@@ -120,9 +125,7 @@ typedef struct {
   // Initial conditions type (see #defines above)
   int initial;
 
-  // The following parameters are preset, but changeable in main.c
-  double Tconst;
-  double T0;
+
 
   // Degrees of freedom
   double a;

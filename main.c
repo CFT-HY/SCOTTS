@@ -62,12 +62,13 @@ int main(int argc, char *argv[])
   //  p.scale = 0.3;
 
   // Calculate terms in potential
+  /*
   p.alpha = 1.0/sqrt(2.0*p.sigma*pow(p.lcorr, 5.0)/3.0);
 
   p.gamma = (p.Lheat + 6.0*p.sigma/p.lcorr)/(6.0*p.sigma*p.lcorr);
 
   p.lambda = 1.0/(3.0*p.sigma*pow(p.lcorr,3.0));
-
+  */
 
   // What did we find?
   printf0(p,
@@ -77,13 +78,13 @@ int main(int argc, char *argv[])
 
 
   // Make these user-modifiable eventually
-  p.Tconst = 0.86;
+  //  p.Tconst = 0.86;
 
   // gdeg = 34.25
   p.a = 34.25*M_PI*M_PI/90.0;
 
   // Ugly but it's a straight conversion of the fortran
-  p.T0 = sqrt(1.0-2.0*p.alpha*p.alpha/9.0/p.gamma/p.lambda);
+  // p.T0 = sqrt(1.0-2.0*p.alpha*p.alpha/9.0/p.gamma/p.lambda);
 
   printf0(p,
 	  "-- T0 %g\n", p.T0);
