@@ -41,9 +41,12 @@ void get_parameters(char *infile, hydro_params *p)
   int set_Cav = 0;
   int set_C = 0;
 
-  int set_Lheat = 0;
-  int set_sigma = 0;
-  int set_lcorr = 0;
+  int set_alpha = 0;
+  int set_gamma = 0;
+  int set_lambda = 0;
+
+  int set_T0 = 0;
+  int set_Tconst = 0;
 
   int set_interval = 0;
   int set_silointerval = 0;
@@ -156,17 +159,25 @@ void get_parameters(char *infile, hydro_params *p)
       p->C = strtod(value,NULL);
       set_C = 1;
     }
-    else if(!strcasecmp(key,"Lheat")) {
-      p->Lheat = strtod(value,NULL);
-      set_Lheat = 1;
+    else if(!strcasecmp(key,"alpha")) {
+      p->alpha = strtod(value,NULL);
+      set_alpha = 1;
     }
-    else if(!strcasecmp(key,"sigma")) {
-      p->sigma = strtod(value,NULL);
-      set_sigma = 1;
+    else if(!strcasecmp(key,"gamma")) {
+      p->gamma = strtod(value,NULL);
+      set_gamma = 1;
     }
-    else if(!strcasecmp(key,"lcorr")) {
-      p->lcorr = strtod(value,NULL);
-      set_lcorr = 1;
+    else if(!strcasecmp(key,"lambda")) {
+      p->lambda = strtod(value,NULL);
+      set_lambda = 1;
+    }
+    else if(!strcasecmp(key,"T0")) {
+      p->T0 = strtod(value,NULL);
+      set_T0 = 1;
+    }
+    else if(!strcasecmp(key,"Tconst")) {
+      p->Tconst= strtod(value,NULL);
+      set_Tconst = 1;
     }
     else if(!strcasecmp(key,"interval")) {
       p->interval = strtol(value,NULL,10);
@@ -329,14 +340,20 @@ void get_parameters(char *infile, hydro_params *p)
   } else if(!set_C) {
     printf0(*p, "Did not set parameter \'C\'\n");
     die(100);
-  } else if(!set_Lheat) {
-    printf0(*p, "Did not set parameter \'Lheat\'\n");
+  } else if(!set_alpha) {
+    printf0(*p, "Did not set parameter \'alpha\'\n");
     die(100);
-  } else if(!set_sigma) {
-    printf0(*p, "Did not set parameter \'sigma\'\n");
+  } else if(!set_gamma) {
+    printf0(*p, "Did not set parameter \'gamma\'\n");
     die(100);
-  } else if(!set_lcorr) {
-    printf0(*p, "Did not set parameter \'lcorr\'\n");
+  } else if(!set_lambda) {
+    printf0(*p, "Did not set parameter \'lambda\'\n");
+    die(100);
+  } else if(!set_T0) {
+    printf0(*p, "Did not set parameter \'T0\'\n");
+    die(100);
+  } else if(!set_T0) {
+    printf0(*p, "Did not set parameter \'Tconst\'\n");
     die(100);
   } else if(!set_interval) {
     printf0(*p, "Did not set parameter \'interval\'\n");
@@ -384,7 +401,8 @@ void get_parameters(char *infile, hydro_params *p)
 	    "-- dx %g, dt %g, steps %d\n"
 	    "-- Lx %d, Ly %d, Lz %d\n"
 	    "-- Cav %g, C %g,\n"
-	    "-- Lheat %g, sigma %g, lcorr %g\n"
+	    "-- alpha %g, gamma %g, lambda %g\n"
+	    "-- T0 %g, Tconst %g\n"
 	    "-- interval %d, silointerval %d, checkpointinterval %d\n"
 	    "-- bubbles %d, beta %g, scale %g\n"
 	    "-- silodir \"%s\"\n"
@@ -394,7 +412,8 @@ void get_parameters(char *infile, hydro_params *p)
 	    p->dx, p->dt, p->steps,
 	    p->Lx, p->Ly, p->Lz,
 	    p->Cav, p->C,
-	    p->Lheat, p->sigma, p->lcorr,
+	    p->alpha, p->gamma, p->lambda,
+	    p->T0, p->Tconst,
 	    p->interval, p->silointerval, p->checkpointinterval,
 	    p->bubbles, p->beta, p->scale,
 	    p->silodir,
