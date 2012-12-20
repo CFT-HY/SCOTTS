@@ -14,11 +14,12 @@ void silo_init(hydro_params p)
   
   //  char silodir[100];
   //  sprintf(silodir,"silage-%d",(int)getpid());
-  if(mkdir(p.silodir,07777))
+  if(mkdir(p.silodir,07777) && !p.rank)
     perror(p.silodir);
   
-  fprintf(stderr,"created directory %s, where the silo will go\n",
-	  p.silodir);
+  if(!p.rank)
+    fprintf(stderr,"created directory %s, where the silo will go\n",
+	    p.silodir);
 
   //  DBSetCompression("METHOD=GZIP");
 
