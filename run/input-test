@@ -15,9 +15,18 @@ Cav    0.0
 C      0.15
 
 # Potential parameters
-Lheat  0.1
-sigma  0.1
-lcorr  6.0
+# Lheat  0.1
+# sigma  0.1
+# lcorr  6.0
+
+# Replacements
+alpha 0.0439205
+gamma 0.0555556
+lambda 0.0154321
+
+T0 0.70710678
+Tconst 0.86
+
 
 # How often to write data
 interval 100
