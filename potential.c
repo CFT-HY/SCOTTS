@@ -9,7 +9,7 @@
 double Vf(hydro_params p, double T, double this_phi) {
   return  0.5*p.gamma*(T*T - p.T0*p.T0)*this_phi*this_phi
     - p.alpha*T*this_phi*this_phi*this_phi/3.0
-    + 0.25*p.lambda*this_phi*this_phi*this_phi*this_phi;
+    + 0.25*p.lambda*this_phi*this_phi*this_phi*this_phi + V0;
 }
 
 
