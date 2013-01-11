@@ -3,7 +3,7 @@
 # How long the simulation takes
 Lx      128
 Ly	128
-Lz	128
+Lz	1
 steps  4000
 
 # How big the simulation is
@@ -30,7 +30,7 @@ Tconst 0.86
 
 # How often to write data
 interval 100
-silointerval -1
+silointerval 100
 
 # Initial conditions
 initial bubble
@@ -43,10 +43,10 @@ beta 1.0
 
 scale 1.0
 
-nucleation list 407,913,1214,1423,1928,1939,1964,2378,2441,2468,2607,2740,2770,2897,2920,2993,3075,3077,3121,3158,3170,3199
+nucleation list 99999999
 
 checkpointdir cp/
-checkpointinterval 100
+checkpointinterval -1
 
 gwsource both
 

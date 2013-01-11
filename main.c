@@ -279,17 +279,16 @@ int main(int argc, char *argv[])
 
     if((p.interval > 0) && (step % p.interval == 0)) {
 
-      histo_field(f.phi, p, step);
 
 
 
 #ifdef FFT
+      histo_field(f.phi, p, step);
+
       
       fft_field(f, p, f.phi, step);
       fft_vel(f, p, step);
       gwen = fft_tensor(f, p, step, current_energy);
-    
-#endif // FFT
 
       didj(cpts, f, p);
       printf0(p, "cpts: %g %g %g %g %g %g\n",
@@ -298,7 +297,10 @@ int main(int argc, char *argv[])
 	      cpts[CPT_31],
 	      cpts[CPT_22],
 	      cpts[CPT_32],
-	      cpts[CPT_33]);
+	      cpts[CPT_33]);    
+#endif // FFT
+
+
 
       current_energy = reduce_sum(total_energy(f, p), p);
       current_kinetic = reduce_sum(kinetic_energy(f, p), p);

@@ -3,6 +3,8 @@
  * Header file for hydro+scalar code.
  */
 
+#define V0 100.0
+
 #include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
