@@ -29,8 +29,8 @@ double field_energy(hydro_fields f, hydro_params p) {
 	Etot += 0.5*((f.phi[x][y+1][z] - f.phi[x][y][z])/p.dx)
 	  *((f.phi[x][y+1][z] - f.phi[x][y][z])/p.dx)*vol;
 	
-	Etot += 0.5*((f.phi[x][y][(z+1)%p.Lz] - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx)
-	  *((f.phi[x][y][z] - f.phi[x][y][z])/p.dx)*vol;
+	Etot += 0.5*((f.phi[x][y][(z+1)%p.Lz] - f.phi[x][y][z])/p.dx)
+	  *((f.phi[x][y][(z+1)%p.Lz] - f.phi[x][y][z])/p.dx)*vol;
 	
 	Etot += Vf(p, f.T[x][y][z], f.phi[x][y][z])*vol;
 
