@@ -303,12 +303,10 @@ void nucleate_at(hydro_fields f, hydro_params p, int x0, int y0, int z0) {
 							 + (double)(dz*dz)))
 				     /2.0/(Rtenab*Rtenab) );
 
-	/*
 	f.E[x][y][z] = 3.0*p.a*f.T[x][y][z]*f.T[x][y][z]
 	  *f.T[x][y][z]*f.T[x][y][z]
 	  + Vf(p, f.T[x][y][z], f.phi[x][y][z])
 	  - f.T[x][y][z]*VTf(p, f.T[x][y][z], f.phi[x][y][z]);
-	*/ 	
 
       }
     }
