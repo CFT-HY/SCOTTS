@@ -352,7 +352,7 @@ void get_parameters(char *infile, hydro_params *p)
   } else if(!set_T0) {
     printf0(*p, "Did not set parameter \'T0\'\n");
     die(100);
-  } else if(!set_T0) {
+  } else if(!set_Tconst) {
     printf0(*p, "Did not set parameter \'Tconst\'\n");
     die(100);
   } else if(!set_interval) {
