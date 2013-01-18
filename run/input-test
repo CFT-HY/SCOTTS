@@ -1,10 +1,10 @@
 # Example input file
 
 # How long the simulation takes
-Lx      128
-Ly	128
-Lz	1
-steps  4000
+Lx      1
+Ly	1
+Lz	1024
+steps  1000
 
 # How big the simulation is
 dx     1.0

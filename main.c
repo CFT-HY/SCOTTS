@@ -113,7 +113,7 @@ int main(int argc, char *argv[])
 
   double initial_energy, current_energy;
 
-  double current_field_energy, current_wmax, current_kinetic;
+  double initial_field_energy, current_field_energy, current_wmax, current_kinetic;
 
   double cpu_time_used;
 
@@ -201,6 +201,7 @@ int main(int argc, char *argv[])
   }
 
   initial_energy = reduce_sum(total_energy(f, p), p);
+  initial_field_energy = reduce_sum(field_energy(f, p), p);
 
   printf0(p, "Initial avg energy per site: %g\n", 
 	  initial_energy/((double)p.N));
@@ -308,7 +309,7 @@ int main(int argc, char *argv[])
       current_wmax = reduce_max(get_gamma_max(f, p), p);
       
       if(!p.rank) {
-	printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\n",
+	printf("%04d\t%6lf\t%6.10lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\n",
 	       step,
 	       t,
 	       current_energy,
@@ -318,13 +319,12 @@ int main(int argc, char *argv[])
 	       gwen,
 	       bcount);
       }
-      
-      /*
-	printf0(p, "Energy violation: %lf%%\n",
-		100.0*fabs((current_energy-initial_energy)/initial_energy));
-      */
 
+      fprintf(stderr, "Energy violation: %.10lf%%, %lf%%\n",
+              100.0*fabs((current_energy-initial_energy)/initial_energy),
+              100.0*fabs((current_field_energy-initial_field_energy)/initial_field_energy));
     }
+
 
     // Do field step
     evolve_field(f, p);
@@ -393,7 +393,7 @@ int main(int argc, char *argv[])
   
   //  printf0(p, "Final state:\n");
   if(!p.rank) {
-    printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\n",
+    printf("%04d\t%6lf\t%6.10lf\t%6lf\t%6lf\t%6lf\t%d\n",
 	   step,
 	   t,
 	   current_energy,

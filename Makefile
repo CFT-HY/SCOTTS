@@ -48,10 +48,10 @@ CFLAGS := -O3 -I/home/weir/local/include/
 # LIBS := -lfftw3_mpi -lfftw3 -lm
 
 # on pc168:
-# LIBS :=   -lfftw3_mpi -lfftw3 -lm -lsiloh5
+LIBS :=   -lfftw3_mpi -lfftw3 -lm -lsiloh5
 
 # on afo
-LIBS := -L/home/weir/local/lib/ -lstdc++ -lhdf5 -lsiloh5 -lfftw3_mpi -lfftw3 -lm
+# LIBS := -L/home/weir/local/lib/ -lstdc++ -lhdf5 -lsiloh5 -lfftw3_mpi -lfftw3 -lm
 
 # on my mac:
 # LIBS := -L/Users/weir/Installed/silo-4.8-bsd/lib/ -lsilo -lfftw3_mpi -lfftw3 -lm
