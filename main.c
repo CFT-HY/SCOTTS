@@ -328,12 +328,15 @@ int main(int argc, char *argv[])
 
     // Do field step
     evolve_field(f, p);
-    
+
     // Calculate EOS
     eq_of_state(f, p);
 
+
     // Do the hydro bits
     evolve_hydro(f, p);
+
+
 
     // Evolve metric perturbations
     evolve_uij(f, p);

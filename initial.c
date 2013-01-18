@@ -308,6 +308,7 @@ void nucleate_at(hydro_fields f, hydro_params p, int x0, int y0, int z0) {
 	  + Vf(p, f.T[x][y][z], f.phi[x][y][z])
 	  - f.T[x][y][z]*VTf(p, f.T[x][y][z], f.phi[x][y][z]);
 
+
       }
     }
   }

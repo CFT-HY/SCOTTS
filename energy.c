@@ -21,7 +21,7 @@ double field_energy(hydro_fields f, hydro_params p) {
       for(z = 0; z < p.Lz; z++) {
 
 	
-	Etot += 0.5*f.pifull[x][y][z]*f.pifull[x][y][z]*vol;
+	//	Etot += 0.5*f.pifull[x][y][z]*f.pifull[x][y][z]*vol;
 
 	Etot += 0.5*((f.phi[x+1][y][z] - f.phi[x][y][z])/p.dx)
 	  *((f.phi[x+1][y][z] - f.phi[x][y][z])/p.dx)*vol;
