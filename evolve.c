@@ -47,7 +47,7 @@ void evolve_field(hydro_fields f, hydro_params p) {
 	
 	
 	piold = f.pi[x][y][z];
-	
+
 	// first-order viscosity term
 	s = -0.5*p.dt*p.C*f.W[x][y][z];
 	f.pi[x][y][z] = (1+s)*f.pi[x][y][z]/(1-s);
@@ -92,6 +92,7 @@ void evolve_field(hydro_fields f, hydro_params p) {
       }
     }
   }
+
   
   // Move field (leapfrog)
   for(x = 1; x <= p.slicex; x++) {
@@ -133,6 +134,7 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
   double ***Vdmid = make_field(p);
   double ***Wold = make_field(p);
   double ***phiav = make_field(p);
+  //  double ***piold = make_field(p);
 
 
   double ****dxphi = make_vector(p);
@@ -169,6 +171,8 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
     for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
 
+
+	//	piold[x][y][z] = 2.0*(1.5*f.pi[x][y][z] - f.pifull[x][y][z]);
 	
 	phiav[x][y][z] = 0.5*(f.phiold[x][y][z] + f.phi[x][y][z]);
 	
@@ -188,6 +192,7 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
     }
   }
 
+  //  halo_field(piold, p);
   halo_field(dxphi[0], p);
   halo_field(dxphi[1], p);
   halo_field(dxphi[2], p);
@@ -673,6 +678,8 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
   free_field(p, Wold);
 
   free_field(p, phiav);
+
+  //  free_field(p, piold);
 
   /*
   free_field(p, dxphi[0]);
