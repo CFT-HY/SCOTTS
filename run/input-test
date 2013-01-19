@@ -29,7 +29,7 @@ Tconst 0.86
 
 
 # How often to write data
-interval 100
+interval 1
 silointerval 100
 
 # Initial conditions
