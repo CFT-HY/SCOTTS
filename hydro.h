@@ -277,7 +277,7 @@ void evolve_hydro(hydro_fields f, hydro_params p);
 void evolve_uij(hydro_fields f, hydro_params p);
 
 // Not implemented yet
-// void artificial_viscosity(hydro_fields f, int **nb, hydro_params p);
+void artificial_viscosity(hydro_fields f, int **nb, hydro_params p);
 
 // potential.c
 double Vf(hydro_params p, double T, double this_phi);
