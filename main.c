@@ -309,7 +309,7 @@ int main(int argc, char *argv[])
       current_wmax = reduce_max(get_gamma_max(f, p), p);
       
       if(!p.rank) {
-	printf("%04d\t%6lf\t%6.10lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\n",
+	printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\n",
 	       step,
 	       t,
 	       current_energy,
@@ -320,23 +320,23 @@ int main(int argc, char *argv[])
 	       bcount);
       }
 
+      /*
       fprintf(stderr, "Energy violation: %.10lf%%, %lf%%\n",
               100.0*fabs((current_energy-initial_energy)/initial_energy),
               100.0*fabs((current_field_energy-initial_field_energy)/initial_field_energy));
+      */
     }
 
 
     // Do field step
     evolve_field(f, p);
 
+
     // Calculate EOS
     eq_of_state(f, p);
 
-
     // Do the hydro bits
     evolve_hydro(f, p);
-
-
 
     // Evolve metric perturbations
     evolve_uij(f, p);
@@ -375,7 +375,7 @@ int main(int argc, char *argv[])
     advect_Z(f, p);
 
     // Don't bother with art viscosity, yet
-    // artificial_viscosity(f, nb, p);
+    //    artificial_viscosity(f, nb, p);
 
     // Solve for T
     find_Ta(f, p);

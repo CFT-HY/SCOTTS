@@ -24,7 +24,7 @@ void initial_scalar_bubble(hydro_fields f, hydro_params p) {
 
   double cstrab = 1.0*phimin;
 
-  double Rlapab = 2.0*sigmlo/(-1.0*Vf(p, p.Tconst, phimin) + V0);
+  double Rlapab = 2.0*sigmlo/(-1.0*Vf(p, p.Tconst, phimin));
 
   double Rtenab = p.scale*Rlapab;
 
@@ -89,7 +89,7 @@ void initial_blank(hydro_fields f, hydro_params p) {
   
   double cstrab = 1.0*phimin;
 
-  double Rlapab = 2.0*sigmlo/(-1.0*Vf(p, p.Tconst, phimin) + V0);
+  double Rlapab = 2.0*sigmlo/(-1.0*Vf(p, p.Tconst, phimin));
 
   double Rtenab = p.scale*Rlapab;
 
@@ -152,7 +152,7 @@ int safe_distance(hydro_fields f, hydro_params p) {
 
   double cstrab = 1.0*phimin;
 
-  double Rlapab = 2.0*sigmlo/(-1.0*Vf(p, p.Tconst, phimin) + V0);
+  double Rlapab = 2.0*sigmlo/(-1.0*Vf(p, p.Tconst, phimin));
   
   double Rtenab = p.scale*Rlapab;
 
@@ -248,7 +248,7 @@ void nucleate_at(hydro_fields f, hydro_params p, int x0, int y0, int z0) {
   
   double cstrab = 1.0*phimin;
   
-  double Rlapab = 2.0*sigmlo/(-1.0*Vf(p, p.Tconst, phimin) + V0);
+  double Rlapab = 2.0*sigmlo/(-1.0*Vf(p, p.Tconst, phimin));
   
   double Rtenab = p.scale*Rlapab;
 
@@ -309,6 +309,7 @@ void nucleate_at(hydro_fields f, hydro_params p, int x0, int y0, int z0) {
 	  - f.T[x][y][z]*VTf(p, f.T[x][y][z], f.phi[x][y][z]);
 
 
+	//	f.E[x][y][z] = 0.0;
       }
     }
   }
@@ -339,7 +340,7 @@ void initial_3D(hydro_fields f, hydro_params p) {
 
   double cstrab = 1.0*phimin;
 
-  double Rlapab = 2.0*sigmlo/(-1.0*Vf(p, p.Tconst, phimin) + V0);
+  double Rlapab = 2.0*sigmlo/(-1.0*Vf(p, p.Tconst, phimin));
 
   double Rtenab = p.scale*Rlapab;
 
