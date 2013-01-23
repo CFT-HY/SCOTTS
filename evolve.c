@@ -47,7 +47,7 @@ void evolve_field(hydro_fields f, hydro_params p) {
 	
 	
 	piold = f.pi[x][y][z];
-	
+
 	// first-order viscosity term
 	s = -0.5*p.dt*p.C*f.W[x][y][z];
 	f.pi[x][y][z] = (1+s)*f.pi[x][y][z]/(1-s);
@@ -92,6 +92,7 @@ void evolve_field(hydro_fields f, hydro_params p) {
       }
     }
   }
+
   
   // Move field (leapfrog)
   for(x = 1; x <= p.slicex; x++) {
@@ -134,7 +135,6 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
   double ***Wold = make_field(p);
   double ***phiav = make_field(p);
 
-
   double ****dxphi = make_vector(p);
 
   /*
@@ -165,9 +165,11 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
 
   double vdnb, pinb, wnb, dxphinb0, dxphinb1, dxphinb2;
 
+
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
+
 
 	
 	phiav[x][y][z] = 0.5*(f.phiold[x][y][z] + f.phi[x][y][z]);
@@ -288,12 +290,12 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
                                *dxphi[2][x][y][z]));
       
     f.E[x][y][z] = f.E[x][y][z] + p.dt*(p.C*gpi*gpi + gpi*Vdmid[x][y][z]);
-    f.E[x][y][z] = f.E[x][y][z] + p.dt*(p.C*gpi*gpi + gpi*Vdmid[x][y][z]);
-    f.E[x][y][z] = f.E[x][y][z] + p.dt*(p.C*gpi*gpi + gpi*Vdmid[x][y][z]);
+
     
       }
     }
   }
+
 
   // halo_field(f.Z[0], p);
   // halo_field(f.Z[1], p);
@@ -660,7 +662,8 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
       }
     }      
   }
-  
+
+
 
   halo_field(f.E, p);
   
@@ -694,12 +697,18 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
 
 
 
-
+#ifdef CUTOFF
+void evolve_uij(hydro_fields f, hydro_params p, double cutoff) {
+#else
 void evolve_uij(hydro_fields f, hydro_params p) {
+
+  const double cutoff = 1.0;
+#endif
 
   int x, y, z, i;
 
   double ****Tij = make_tensor(p);
+
 
   // c = hbar = mpl = G = 1
   const double G = 1.0;
@@ -737,7 +746,7 @@ void evolve_uij(hydro_fields f, hydro_params p) {
 	  
 	  
 	  f.udotij[i][x][y][z] = f.udotij[i][x][y][z]
-	    + p.dt*16.0*M_PI*G*Tij[i][x][y][z];
+	    + p.dt*16.0*M_PI*G*Tij[i][x][y][z]*cutoff;
 
 	}
       }

@@ -113,7 +113,7 @@ int main(int argc, char *argv[])
 
   double initial_energy, current_energy;
 
-  double current_field_energy, current_wmax, current_kinetic;
+  double initial_field_energy, current_field_energy, current_wmax, current_kinetic, current_gradient_energy;
 
   double cpu_time_used;
 
@@ -201,6 +201,7 @@ int main(int argc, char *argv[])
   }
 
   initial_energy = reduce_sum(total_energy(f, p), p);
+  initial_field_energy = reduce_sum(field_energy(f, p), p);
 
   printf0(p, "Initial avg energy per site: %g\n", 
 	  initial_energy/((double)p.N));
@@ -286,17 +287,16 @@ int main(int argc, char *argv[])
 
     if((p.interval > 0) && (step % p.interval == 0)) {
 
-      histo_field(f.phi, p, step);
 
 
 
 #ifdef FFT
+      histo_field(f.phi, p, step);
+
       
       fft_field(f, p, f.phi, step);
       fft_vel(f, p, step);
       gwen = fft_tensor(f, p, step, current_energy);
-    
-#endif // FFT
 
       didj(cpts, f, p);
       printf0(p, "cpts: %g %g %g %g %g %g\n",
@@ -305,43 +305,61 @@ int main(int argc, char *argv[])
 	      cpts[CPT_31],
 	      cpts[CPT_22],
 	      cpts[CPT_32],
-	      cpts[CPT_33]);
+	      cpts[CPT_33]);    
+#endif // FFT
+
+
 
       current_energy = reduce_sum(total_energy(f, p), p);
       current_kinetic = reduce_sum(kinetic_energy(f, p), p);
       current_field_energy = reduce_sum(field_energy(f, p), p);
+      current_gradient_energy = reduce_sum(gradient_energy(f, p), p);
       current_wmax = reduce_max(get_gamma_max(f, p), p);
       
       if(!p.rank) {
-	printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\n",
+	printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\n",
 	       step,
 	       t,
 	       current_energy,
 	       current_kinetic,
 	       current_field_energy,
+	       current_gradient_energy,
 	       current_wmax,
 	       gwen,
 	       bcount);
       }
-      
-      /*
-	printf0(p, "Energy violation: %lf%%\n",
-		100.0*fabs((current_energy-initial_energy)/initial_energy));
-      */
 
+      /*
+      fprintf(stderr, "Energy violation: %.10lf%%, %lf%%\n",
+              100.0*fabs((current_energy-initial_energy)/initial_energy),
+              100.0*fabs((current_field_energy-initial_field_energy)/initial_field_energy));
+      */
     }
+
 
     // Do field step
     evolve_field(f, p);
-    
+
+
     // Calculate EOS
     eq_of_state(f, p);
 
     // Do the hydro bits
     evolve_hydro(f, p);
 
+    //    double t0 = 320.0;
+#ifdef CUTOFF
+    double cutoff = 0.5*(1.0-tanh(10.0*(t/p.tcutoff - 0.9)));
+
+    if((p.interval > 0) && (step % p.interval == 0)) {
+      printf0(p,"cutoff is %lf\n", cutoff);
+    }
+
     // Evolve metric perturbations
+    evolve_uij(f, p, cutoff);
+#else
     evolve_uij(f, p);
+#endif
 
     // Dump a whole lot of stuff (currently just use Silo for that)    
     if(step == p.steps - 1) {
@@ -377,7 +395,7 @@ int main(int argc, char *argv[])
     advect_Z(f, p);
 
     // Don't bother with art viscosity, yet
-    // artificial_viscosity(f, nb, p);
+    //    artificial_viscosity(f, nb, p);
 
     // Solve for T
     find_Ta(f, p);
@@ -398,7 +416,7 @@ int main(int argc, char *argv[])
   
   //  printf0(p, "Final state:\n");
   if(!p.rank) {
-    printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\n",
+    printf("%04d\t%6lf\t%6.10lf\t%6lf\t%6lf\t%6lf\t%d\n",
 	   step,
 	   t,
 	   current_energy,

@@ -34,7 +34,7 @@ void silo_init(hydro_params p)
 void write_silo_step(hydro_fields f, hydro_params p, int step)
 {
 
-  int x, i;
+  int x, y, z, i;
 
   DBfile *dbfile = NULL;
 
@@ -101,6 +101,55 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
   DBPutQuadvar1(dbfile, "E", "quadmesh", f.E[0][0], meshsize, 3,
 		NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
   
+  double ***temp = make_field(p);
+
+  double vol = p.dx*p.dx*p.dx;
+
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+	
+	temp[x][y][z] = 0.0;
+        
+	temp[x][y][z] += 0.5*((f.phi[x+1][y][z] - f.phi[x][y][z])/p.dx)
+	    *((f.phi[x+1][y][z] - f.phi[x][y][z])/p.dx)*vol;
+        
+	temp[x][y][z] += 0.5*((f.phi[x][y+1][z] - f.phi[x][y][z])/p.dx)
+	    *((f.phi[x][y+1][z] - f.phi[x][y][z])/p.dx)*vol;
+        
+	temp[x][y][z] += 0.5*((f.phi[x][y][(z+1)%p.Lz] - f.phi[x][y][z])/p.dx)
+	    *((f.phi[x][y][(z+1)%p.Lz] - f.phi[x][y][z])/p.dx)*vol;
+        
+      }
+    }
+  }
+
+  halo_field(temp, p);
+  
+  DBPutQuadvar1(dbfile, "gradphi", "quadmesh", temp[0][0], meshsize, 3,
+		NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
+
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+	
+	temp[x][y][z] = f.kappa[x][y][z]*(f.E[x][y][z]/f.W[x][y][z])
+          *(f.W[x][y][z]*f.W[x][y][z]-1.0)*vol;
+
+        
+      }
+    }
+  }
+  
+  halo_field(temp, p);
+
+  DBPutQuadvar1(dbfile, "kinetic", "quadmesh", temp[0][0], meshsize, 3,
+		NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
+
+
+  free_field(p, temp);
+  
+
   /*
   char *ux_name = "Ux";
   char *uy_name = "Uy";
@@ -213,6 +262,22 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
     }
 
     DBPutMultivar(dbfile, "phi", p.size, names, types, NULL);
+
+
+    for(i=0;i<p.size;i++) {
+      types[i] = DB_QUADVAR;
+      sprintf(names[i], "output-%d-%06d.silo:gradphi", i, step);
+    }
+
+    DBPutMultivar(dbfile, "gradphi", p.size, names, types, NULL);
+
+
+    for(i=0;i<p.size;i++) {
+      types[i] = DB_QUADVAR;
+      sprintf(names[i], "output-%d-%06d.silo:kinetic", i, step);
+    }
+
+    DBPutMultivar(dbfile, "kinetic", p.size, names, types, NULL);
 
 
     for(i=0;i<p.size;i++) {
