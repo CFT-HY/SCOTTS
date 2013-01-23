@@ -117,6 +117,9 @@ typedef struct {
   double Tconst;
   double T0;
 
+  // Cutoff time
+  double tcutoff;
+
   // How often to deal with output
   int interval;
   int silointerval;
@@ -274,7 +277,7 @@ int load_checkpoint(hydro_fields f, hydro_params p);
 void evolve_backstep(hydro_fields f, hydro_params p);
 void evolve_field(hydro_fields f, hydro_params p);
 void evolve_hydro(hydro_fields f, hydro_params p);
-void evolve_uij(hydro_fields f, hydro_params p);
+void evolve_uij(hydro_fields f, hydro_params p, double t);
 
 // Not implemented yet
 void artificial_viscosity(hydro_fields f, int **nb, hydro_params p);
@@ -290,6 +293,7 @@ void Vdpot(hydro_params p, double *T, double *phi, double *Vprecalc);
 
 // energy.c
 double field_energy(hydro_fields f, hydro_params p);
+double gradient_energy(hydro_fields f, hydro_params p);
 double total_energy(hydro_fields f, hydro_params p);
 double kinetic_energy(hydro_fields f, hydro_params p);
 void energy_density(hydro_fields f, hydro_params p, double ***en);

@@ -67,7 +67,7 @@ LIBS := -L/home/weir/local/lib/ -lstdc++ -lhdf5 -lsiloh5 -lfftw3_mpi -lfftw3 -lm
 OBJECTS := main.o evolve.o potential.o energy.o eos.o \
 	transport.o initial.o output.o parameters.o silage.o \
 	util.o papi.o arrangement.o fft.o alloc.o gw.o velps.o \
-	checkpoint.o artificial.o
+	checkpoint.o
 
 BINARY := run/hydro
 
