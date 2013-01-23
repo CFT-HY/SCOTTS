@@ -341,6 +341,7 @@ int main(int argc, char *argv[])
     evolve_hydro(f, p);
 
     //    double t0 = 320.0;
+#ifdef CUTOFF
     double cutoff = 0.5*(1.0-tanh(10.0*(t/p.tcutoff - 0.9)));
 
     if((p.interval > 0) && (step % p.interval == 0)) {
@@ -349,6 +350,9 @@ int main(int argc, char *argv[])
 
     // Evolve metric perturbations
     evolve_uij(f, p, cutoff);
+#else
+    evolve_uij(f, p);
+#endif
 
     // Dump a whole lot of stuff (currently just use Silo for that)    
     if(step == p.steps - 1) {

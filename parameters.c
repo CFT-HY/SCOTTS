@@ -69,7 +69,9 @@ void get_parameters(char *infile, hydro_params *p)
 
   int set_seed = 0;
 
+#ifdef CUTOFF
   int set_tcutoff = 0;
+#endif
 
   char key[100];
   char value[100];
@@ -205,10 +207,12 @@ void get_parameters(char *infile, hydro_params *p)
       p->scale = strtod(value,NULL);
       set_scale = 1;
     }
+#ifdef CUTOFF
     else if(!strcasecmp(key,"tcutoff")) {
       p->tcutoff = strtod(value,NULL);
       set_tcutoff = 1;
     }
+#endif
     else if(!strcasecmp(key,"initial")) {
       if(!strcasecmp(value, "shocktube")) {
 	p->initial = INIT_SHOCK_TUBE;
@@ -379,10 +383,14 @@ void get_parameters(char *infile, hydro_params *p)
   } else if(!set_scale) {
     printf0(*p, "Did not set parameter \'scale\'\n");
     die(100);
-  } else if(!set_tcutoff) {
+  }
+#ifdef CUTOFF
+ else if(!set_tcutoff) {
     printf0(*p, "Did not set parameter \'tcutoff\'\n");
     die(100);
-  } else if(!set_initial) {
+  }
+#endif
+ else if(!set_initial) {
     printf0(*p, "Did not set parameter \'initial\'\n");
     die(100);
   } else if(!set_gwsource) {
@@ -413,7 +421,10 @@ void get_parameters(char *infile, hydro_params *p)
 	    "-- alpha %g, gamma %g, lambda %g\n"
 	    "-- T0 %g, Tconst %g\n"
 	    "-- interval %d, silointerval %d, checkpointinterval %d\n"
-	    "-- bubbles %d, beta %g, scale %g, tcutoff %g\n"
+	    "-- bubbles %d, beta %g, scale %g\n"
+#ifdef CUTOFF
+	    "-- tcutoff %g\n"
+#endif
 	    "-- silodir \"%s\"\n"
 	    "-- checkpointdir \"%s\"\n"
 	    "-- seed %d\n",
@@ -424,7 +435,10 @@ void get_parameters(char *infile, hydro_params *p)
 	    p->alpha, p->gamma, p->lambda,
 	    p->T0, p->Tconst,
 	    p->interval, p->silointerval, p->checkpointinterval,
-	    p->bubbles, p->beta, p->scale, p->tcutoff,
+	    p->bubbles, p->beta, p->scale,
+#ifdef CUTOFF
+	    p->tcutoff,
+#endif
 	    p->silodir,
 	    p->checkpointdir,
 	    p->seed);

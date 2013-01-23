@@ -697,8 +697,13 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
 
 
 
-
+#ifdef CUTOFF
 void evolve_uij(hydro_fields f, hydro_params p, double cutoff) {
+#else
+void evolve_uij(hydro_fields f, hydro_params p) {
+
+  const double cutoff = 1.0;
+#endif
 
   int x, y, z, i;
 
