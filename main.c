@@ -113,7 +113,7 @@ int main(int argc, char *argv[])
 
   double initial_energy, current_energy;
 
-  double initial_field_energy, current_field_energy, current_wmax, current_kinetic;
+  double initial_field_energy, current_field_energy, current_wmax, current_kinetic, current_gradient_energy;
 
   double cpu_time_used;
 
@@ -306,15 +306,17 @@ int main(int argc, char *argv[])
       current_energy = reduce_sum(total_energy(f, p), p);
       current_kinetic = reduce_sum(kinetic_energy(f, p), p);
       current_field_energy = reduce_sum(field_energy(f, p), p);
+      current_gradient_energy = reduce_sum(gradient_energy(f, p), p);
       current_wmax = reduce_max(get_gamma_max(f, p), p);
       
       if(!p.rank) {
-	printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\n",
+	printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\n",
 	       step,
 	       t,
 	       current_energy,
 	       current_kinetic,
 	       current_field_energy,
+	       current_gradient_energy,
 	       current_wmax,
 	       gwen,
 	       bcount);
@@ -338,8 +340,15 @@ int main(int argc, char *argv[])
     // Do the hydro bits
     evolve_hydro(f, p);
 
+    //    double t0 = 320.0;
+    double cutoff = 0.5*(1.0-tanh(10.0*(t/p.tcutoff - 0.9)));
+
+    if((p.interval > 0) && (step % p.interval == 0)) {
+      printf0(p,"cutoff is %lf\n", cutoff);
+    }
+
     // Evolve metric perturbations
-    evolve_uij(f, p);
+    evolve_uij(f, p, cutoff);
 
     // Dump a whole lot of stuff (currently just use Silo for that)    
     if(step == p.steps - 1) {

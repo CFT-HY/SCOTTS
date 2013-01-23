@@ -698,11 +698,12 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
 
 
 
-void evolve_uij(hydro_fields f, hydro_params p) {
+void evolve_uij(hydro_fields f, hydro_params p, double cutoff) {
 
   int x, y, z, i;
 
   double ****Tij = make_tensor(p);
+
 
   // c = hbar = mpl = G = 1
   const double G = 1.0;
@@ -740,7 +741,7 @@ void evolve_uij(hydro_fields f, hydro_params p) {
 	  
 	  
 	  f.udotij[i][x][y][z] = f.udotij[i][x][y][z]
-	    + p.dt*16.0*M_PI*G*Tij[i][x][y][z];
+	    + p.dt*16.0*M_PI*G*Tij[i][x][y][z]*cutoff;
 
 	}
       }
