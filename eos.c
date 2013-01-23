@@ -69,7 +69,8 @@ void eq_of_state(hydro_fields f, hydro_params p) {
 	if(f.E[x][y][z] 
 	   < tolE*f.W[x][y][z]*3.0*p.a*f.T[x][y][z]
 	   *f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]) {
-	  fprintf(stderr,"E getting dangerously small due to -ve V cont.\n");
+	  fprintf(stderr,"(at %d,%d,%d) E getting dangerously small due to -ve V cont.\n",
+		  p.shiftx+x-1,p.shifty+y-1,z);
 	  die(100);
 	}
 

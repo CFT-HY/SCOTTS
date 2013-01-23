@@ -270,6 +270,8 @@ void nucleate_at(hydro_fields f, hydro_params p, int x0, int y0, int z0) {
   int longx, longy, longz;
   int dx, dy, dz;
 
+  double phival;
+
   for(x=1;x<=p.slicex;x++) {
     for(y=1;y<=p.slicey;y++) {
       for(z=0;z<p.Lz;z++) {
@@ -296,13 +298,25 @@ void nucleate_at(hydro_fields f, hydro_params p, int x0, int y0, int z0) {
 	  dz = shortz;
 	else
 	  dz = longz;
-    
-	f.phi[x][y][z] += cstrab*exp(-1.0*
-				     p.dx*p.dx*((double)((dx*dx) 
-							 + (double)(dy*dy)
-							 + (double)(dz*dz)))
-				     /2.0/(Rtenab*Rtenab) );
- 	
+
+
+	phival = cstrab*exp(-1.0*p.dx*p.dx*((double)((dx*dx) 
+						     + (double)(dy*dy)
+						     + (double)(dz*dz)))
+			    /2.0/(Rtenab*Rtenab) );
+	
+	f.phi[x][y][z] += phival;
+
+	if(phival > 1e-8) {
+
+	  f.E[x][y][z] = 3.0*p.a*f.T[x][y][z]*f.T[x][y][z]
+	    *f.T[x][y][z]*f.T[x][y][z]
+	    + Vf(p, f.T[x][y][z], f.phi[x][y][z])
+	    - f.T[x][y][z]*VTf(p, f.T[x][y][z], f.phi[x][y][z]);
+
+	}
+
+	//	f.E[x][y][z] = 0.0;
       }
     }
   }
