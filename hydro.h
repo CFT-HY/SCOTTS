@@ -117,8 +117,10 @@ typedef struct {
   double Tconst;
   double T0;
 
+#ifdef CUTOFF
   // Cutoff time
   double tcutoff;
+#endif
 
   // How often to deal with output
   int interval;
@@ -277,7 +279,11 @@ int load_checkpoint(hydro_fields f, hydro_params p);
 void evolve_backstep(hydro_fields f, hydro_params p);
 void evolve_field(hydro_fields f, hydro_params p);
 void evolve_hydro(hydro_fields f, hydro_params p);
-void evolve_uij(hydro_fields f, hydro_params p, double t);
+#ifdef CUTOFF
+void evolve_uij(hydro_fields f, hydro_params p, double cutoff);
+#else
+void evolve_uij(hydro_fields f, hydro_params p);
+#endif
 
 // Not implemented yet
 void artificial_viscosity(hydro_fields f, int **nb, hydro_params p);
