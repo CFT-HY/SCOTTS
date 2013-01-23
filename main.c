@@ -245,6 +245,7 @@ int main(int argc, char *argv[])
   start = clock();
 
   double t00;
+  int howmany, i;
 
   for(step = step_start; step < p.steps; step++) {
 
@@ -252,10 +253,16 @@ int main(int argc, char *argv[])
     // Disabled: always try!
     //     if(still_nucleate && should_nucleate(f, p, t, step)) {
 
-    if(should_nucleate(f, p, t, step)) {
+    
+
+    howmany = should_nucleate(f, p, t, step);
+    i = 0;
+
+    while(i < howmany) {
       still_nucleate = do_nucleate(f, p);
 
       bcount += still_nucleate;
+      i++;
     }
 
 
