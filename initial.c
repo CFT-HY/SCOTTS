@@ -443,12 +443,16 @@ int should_nucleate(hydro_fields f, hydro_params p, double t, int step) {
 
     int j;
 
+    int nuc_count = 0;
+
     for(j=0; j < p.n_nucsteps; j++) {
       if(p.nucsteps[j] == step) {
+	nuc_count++;
 	printf0(p, "Parameter file requires nucleation at t=%lf step=%d\n", t, step);
-	return 1;
       }
     }
+
+    return nuc_count;
 
   }
 
