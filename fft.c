@@ -219,11 +219,14 @@ void fft_field(hydro_fields f, hydro_params p, double ***field, int step) {
   free(bins);
   free(counts);
 
+  free(slice);
 
   fftw_destroy_plan(plan);
   
   fftw_free(in);
   fftw_free(out);
+
+  free(trim_field);
 
   fftw_mpi_cleanup();
 

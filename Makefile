@@ -1,7 +1,7 @@
 #### CC ####
 
 # Louhi
-# CC := cc -DMPI -DFFT -DSILO
+CC := cc -DMPI -DFFT -DSILO
 
 # Everything turned on
 # CC := mpicc -DMPI -DFFT   # -DSILO -DEXPANSION -DDUMPFFT
@@ -13,13 +13,13 @@
 # CC := vtcc -vt:mpi -DMPI
 
 # Cosmos
-CC := icc -DMPI -DFFT -DSILO
+# CC := icc -DMPI -DFFT -DSILO
 
 
 #### CFLAGS ####
 
 # on louhi
-# CFLAGS := -O3 -L/home/u1/weir/local/lib -I/home/u1/weir/local/include
+CFLAGS := -O3 -L/home/u1/weir/local/lib -I/home/u1/weir/local/include
 
 # on vuori
 # CFLAGS := -O3 -L/home/u1/weir/local/lib -I/home/u1/weir/local/include
@@ -37,12 +37,12 @@ CC := icc -DMPI -DFFT -DSILO
 # CFLAGS := -O3 -ipo -m64 -align -fno-alias -fno-fnalias -falign-functions -unroll-aggressive -fp-model fast=2 -I/home/weir/local/include/
 
 # on Cosmos:
-CFLAGS := -g -O3 -xHost -align -ansi-alias -mcmodel=medium
+# CFLAGS := -g -O3 -xHost -align -ansi-alias -mcmodel=medium
 
 #### LIBS ####
 
 # on louhi
-# LIBS := -lfftw3_mpi -lfftw3 -lsiloh5
+LIBS := -lfftw3_mpi -lfftw3 -lsiloh5
 
 # on vuori
 # LIBS := -lfftw3_mpi -lfftw3 -lm
@@ -60,7 +60,7 @@ CFLAGS := -g -O3 -xHost -align -ansi-alias -mcmodel=medium
 # LIBS := -L/home/weir/local/lib/ -lfftw3_mpi -lfftw3 -lstdc++ -lhdf5 -lsiloh5 -lz
 
 # on Cosmos:
-LIBS := -lmpi -lfftw3_mpi -lfftw3 -lsiloh5
+# LIBS := -lmpi -lfftw3_mpi -lfftw3 -lsiloh5
 
 #### No user-serviceable parts below ####
 
