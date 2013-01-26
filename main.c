@@ -140,7 +140,7 @@ int main(int argc, char *argv[])
     printf0(p, "WARNING: Bubble count reset after restart!\n");
 
     // bodge: reseed badly
-    srandom(random() % step_start);
+    srandom(abs(random() - step_start));
 
   } else {
     // For safety, set everything to zero
