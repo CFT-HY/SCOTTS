@@ -43,7 +43,7 @@ beta 1.0
 
 scale 1.0
 
-nucleation list 99999999
+nucleation file testing
 
 checkpointdir cp/
 checkpointinterval -1

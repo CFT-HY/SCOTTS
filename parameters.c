@@ -286,6 +286,53 @@ void get_parameters(char *infile, hydro_params *p)
 	  }
 	}
 
+      } else if(!strncasecmp(value, "file", 4)) {
+	p->nucleation = NUC_FILE;
+
+	FILE *nucfile = fopen(option,"r");
+
+	p->n_nucsteps = 0;
+	int temp_time;
+	while(!feof(nucfile)) {
+	  fscanf(nucfile,"%d",&temp_time);
+	  p->n_nucsteps++;
+	}
+
+	printf0(*p, "Looks like there are %d bubbles in %s\n", p->n_nucsteps, option);
+
+	rewind(nucfile);
+
+	p->nucsteps = (int *)malloc((p->n_nucsteps)*sizeof(int));
+
+	int i;
+
+	while(!feof(nucfile)) {
+	  fscanf(nucfile,"%d",&p->nucsteps[i]);
+	  i++;
+	}
+
+	fclose(nucfile);
+	
+
+	// Just in case, bubble sort the list
+	int sorted = 0;
+
+	while(!sorted) {
+	  sorted = 1;
+
+	  for(i = 0; i < (p->n_nucsteps-1); i++) {
+	    if(p->nucsteps[i+1] < p->nucsteps[i]) {
+	      int temp = p->nucsteps[i+1];
+	      p->nucsteps[i+1] = p->nucsteps[i];
+	      p->nucsteps[i] = temp;
+
+	      printf0(*p, "Bubble sort iteration necessary!\n");
+
+	      sorted = 0;
+	    }
+	  }
+	}
+
       } else {
 	printf0(*p, "warning, unrecognised value for nucleation"
 		" (%s); defaulting to exp.\n", value);
