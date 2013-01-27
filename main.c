@@ -140,8 +140,8 @@ int main(int argc, char *argv[])
     printf0(p, "WARNING: Bubble count reset after restart!\n");
 
     // bodge: reseed badly
-    srandom(abs(random() - step_start));
-
+    //    srandom(abs(random() - step_start));
+    
   } else {
     // For safety, set everything to zero
     zero_fields(f, p);
@@ -249,6 +249,9 @@ int main(int argc, char *argv[])
   int howmany, i;
 
   for(step = step_start; step < p.steps; step++) {
+
+    // How about this for reproducibility?
+    srandom(p.seed + step);
 
 
     // Disabled: always try!
