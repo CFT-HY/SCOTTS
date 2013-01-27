@@ -293,9 +293,12 @@ void get_parameters(char *infile, hydro_params *p)
 
 	p->n_nucsteps = 0;
 	int temp_time;
-	while(!feof(nucfile)) {
-	  fscanf(nucfile,"%d",&temp_time);
-	  p->n_nucsteps++;
+	int still_reading = 1;
+	while(!feof(nucfile) && still_reading) {
+	  still_reading = fscanf(nucfile,"%d",&temp_time);
+	  if(still_reading == 1) {
+	    p->n_nucsteps++;
+	  }
 	}
 
 	printf0(*p, "Looks like there are %d bubbles in %s\n", p->n_nucsteps, option);
@@ -306,10 +309,9 @@ void get_parameters(char *infile, hydro_params *p)
 
 	int i;
 
-	while(!feof(nucfile)) {
+	for(i=0; i<p->n_nucsteps; i++)
 	  fscanf(nucfile,"%d",&p->nucsteps[i]);
-	  i++;
-	}
+       
 
 	fclose(nucfile);
 	
@@ -510,7 +512,7 @@ void get_parameters(char *infile, hydro_params *p)
 
     if(p->nucleation == NUC_EXP) {
       printf0(*p, "<Random nucleation>\n");
-    } else if(p->nucleation == NUC_LIST) {
+    } else if((p->nucleation == NUC_LIST) || (p->nucleation == NUC_FILE)) {
       printf0(*p, "<List nucleation\n");
       printf0(*p, "At steps: ");
       for(i=0;i<p->n_nucsteps;i++)

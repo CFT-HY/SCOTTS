@@ -40,17 +40,28 @@ for i in range(duration):
 
 #		sys.stderr.write('i %d p_nobub = %lf\n' % (i, p_nobub))
 		bublist.append(`i`)
-		if len(bublist) == 1000:
+		if len(bublist) == 10000:
 			break
 
 #		sys.stderr.write('chance %g prob %g p_nobub %g p_onebub %g twoormore %g\n' % (chance,prob,p_nobub,p_onebub,1.0-(p_nobub + p_onebub)))
 
 		if chance > (p_nobub + p_onebub):
+			p_twobub = vol*math.pow(1.0-prob,vol-2)*prob*prob
+
 			if len(bublist) == 0:
 				shift = i
 			bublist.append(`i-shift`)
-			if len(bublist) == 1000:
+			if len(bublist) == 10000:
 				break
+
+
+			if chance > (p_nobub + p_onebub + p_twobub):
+				bublist.append(`i-shift`)
+				if len(bublist) == 10000:
+					break
+
+
+
 #			p_twobub = math.pow(1.0-prob,vol-2)*prob*prob
 
 #		else:
@@ -61,7 +72,7 @@ for i in range(duration):
 
 
 
-#for bub in bublist:
-#	print bub
+for bub in bublist:
+	print bub
 
-print string.join(bublist,',')
+# print string.join(bublist,',')
