@@ -514,9 +514,10 @@ void get_parameters(char *infile, hydro_params *p)
       printf0(*p, "<Random nucleation>\n");
     } else if((p->nucleation == NUC_LIST) || (p->nucleation == NUC_FILE)) {
       printf0(*p, "<List nucleation\n");
-      printf0(*p, "At steps: ");
-      for(i=0;i<p->n_nucsteps;i++)
-	printf0(*p, "%d, ", p->nucsteps[i]);
+      printf0(*p, "At steps: [%d,...%d]", p->nucsteps[0],
+	      p->nucsteps[p->n_nucsteps-1]);
+      //      for(i=0;i<p->n_nucsteps;i++)
+      //	printf0(*p, "%d, ", p->nucsteps[i]);
 
       printf0(*p,"bubbles will be nucleated>\n");
     } else {
