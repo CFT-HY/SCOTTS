@@ -233,6 +233,8 @@ typedef struct {
   double ****uij;
   double ****udotij;
 
+  double ****initial_Tij;
+
 
 } hydro_fields;
 
@@ -360,6 +362,10 @@ double minof2(double a, double b);
 #ifdef FFT
 // fft.c
 void fft_field(hydro_fields f, hydro_params p, double ***field, int step);
+
+// uetc.c
+void init_uetc(hydro_fields f, hydro_params p);
+void fft_uetc(hydro_fields f, hydro_params p, int step);
 
 // gw.c
 double proj(int T, double kx, double ky, double kz);

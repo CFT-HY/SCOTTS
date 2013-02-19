@@ -206,6 +206,7 @@ int main(int argc, char *argv[])
   printf0(p, "Initial avg energy per site: %g\n", 
 	  initial_energy/((double)p.N));
 
+  init_uetc(f, p);
 
 
 #ifdef SILO
@@ -296,6 +297,7 @@ int main(int argc, char *argv[])
 #ifdef FFT
       histo_field(f.phi, p, step);
 
+      fft_uetc(f, p, step);
       
       fft_field(f, p, f.phi, step);
       fft_vel(f, p, step);

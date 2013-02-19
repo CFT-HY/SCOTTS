@@ -247,6 +247,8 @@ void alloc_fields(hydro_fields *f, hydro_params p) {
   f->uij = make_tensor(p);
   f->udotij = make_tensor(p);
 
+  f->initial_Tij = make_tensor(p);
+
   // (calloc considered harmful)
 }
 
@@ -286,6 +288,8 @@ void zero_fields(hydro_fields f, hydro_params p) {
     for(i=0; i<TENSOR_CPTS; i++) {
       f.uij[i][0][0][x] = 0.0;
       f.udotij[i][0][0][x] = 0.0;
+
+      f.initial_Tij[i][0][0][x] = 0.0;
     }
   }
 
@@ -348,6 +352,8 @@ void free_fields(hydro_fields *f, hydro_params p) {
   free_tensor(p, f->uij);
 
   free_tensor(p, f->udotij);
+
+  free_tensor(p, f->initial_Tij);
 
  
 }
