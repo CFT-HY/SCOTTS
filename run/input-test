@@ -48,7 +48,7 @@ nucleation file testing
 checkpointdir cp/
 checkpointinterval -1
 
-gwsource both
+gwsource fluid
 
 seed 1234
 

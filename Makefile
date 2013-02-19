@@ -25,10 +25,10 @@ CC := mpicc -DMPI -DFFT -DSILO # -DEXPANSION -DDUMPFFT
 # CFLAGS := -O3 -L/home/u1/weir/local/lib -I/home/u1/weir/local/include
 
 # on pc168, need libraries
-# CFLAGS := -O3 -L/home/weir/local/lib -I/home/weir/local/include
+CFLAGS := -O3 -L/home/weir/local/lib -I/home/weir/local/include
 
 # on afo
-CFLAGS := -O3 -I/home/weir/local/include/
+# CFLAGS := -O3 -I/home/weir/local/include/
 
 # on my mac
 # CFLAGS := -O0 -I/Users/weir/Installed/silo-4.8-bsd/include/
@@ -48,10 +48,10 @@ CFLAGS := -O3 -I/home/weir/local/include/
 # LIBS := -lfftw3_mpi -lfftw3 -lm
 
 # on pc168:
-# LIBS :=   -lfftw3_mpi -lfftw3 -lm -lsiloh5
+LIBS :=   -lfftw3_mpi -lfftw3 -lm -lsiloh5
 
 # on afo
-LIBS := -L/home/weir/local/lib/ -lstdc++ -lhdf5 -lsiloh5 -lfftw3_mpi -lfftw3 -lm
+# LIBS := -L/home/weir/local/lib/ -lstdc++ -lhdf5 -lsiloh5 -lfftw3_mpi -lfftw3 -lm
 
 # on my mac:
 # LIBS := -L/Users/weir/Installed/silo-4.8-bsd/lib/ -lsilo -lfftw3_mpi -lfftw3 -lm
@@ -67,7 +67,7 @@ LIBS := -L/home/weir/local/lib/ -lstdc++ -lhdf5 -lsiloh5 -lfftw3_mpi -lfftw3 -lm
 OBJECTS := main.o evolve.o potential.o energy.o eos.o \
 	transport.o initial.o output.o parameters.o silage.o \
 	util.o papi.o arrangement.o fft.o alloc.o gw.o velps.o \
-	checkpoint.o
+	checkpoint.o uetc.o
 
 BINARY := run/hydro
 
