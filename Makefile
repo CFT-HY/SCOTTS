@@ -30,7 +30,7 @@ CFLAGS := -L/homeappl/home/weir/local/lib -I/homeappl/home/weir/local/include
 # CFLAGS := -O3 -L/home/u1/weir/local/lib -I/home/u1/weir/local/include
 
 # on pc168, need libraries
-CFLAGS := -O3 -L/home/weir/local/lib -I/home/weir/local/include
+# CFLAGS := -O3 -L/home/weir/local/lib -I/home/weir/local/include
 
 # on afo
 # CFLAGS := -O3 -I/home/weir/local/include/
@@ -56,7 +56,7 @@ LIBS := -lfftw3_mpi -lfftw3 -lsiloh5 -lhdf5 -lstdc++ -lz
 # LIBS := -lfftw3_mpi -lfftw3 -lm
 
 # on pc168:
-LIBS :=   -lfftw3_mpi -lfftw3 -lm -lsiloh5
+# LIBS :=   -lfftw3_mpi -lfftw3 -lm -lsiloh5
 
 # on afo
 # LIBS := -L/home/weir/local/lib/ -lstdc++ -lhdf5 -lsiloh5 -lfftw3_mpi -lfftw3 -lm
