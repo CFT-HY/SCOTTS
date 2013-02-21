@@ -1,7 +1,7 @@
 #### CC ####
 
 # Louhi
-# CC := cc -DMPI -DFFT -DSILO
+CC := cc -DMPI -DFFT -DSILO
 
 # Everything turned on
 # CC := mpicc -DMPI -DFFT -DSILO # -DEXPANSION -DDUMPFFT
@@ -21,7 +21,10 @@ CC := cc -DMPI -DFFT -DSILO -O3 -opt-prefetch -unroll-aggressive -no-prec-div -f
 #### CFLAGS ####
 
 # on louhi
-# CFLAGS := -O3 -L/home/u1/weir/local/lib -I/home/u1/weir/local/include
+CFLAGS := -O3 -L/home/u1/weir/local/lib -I/home/u1/weir/local/include
+
+# on sisu
+# CFLAGS := -L/homeappl/home/weir/local/lib -I/homeappl/home/weir/local/include
 
 # on sisu
 CFLAGS := -L/homeappl/home/weir/local/lib -I/homeappl/home/weir/local/include
@@ -47,7 +50,10 @@ CFLAGS := -L/homeappl/home/weir/local/lib -I/homeappl/home/weir/local/include
 #### LIBS ####
 
 # on louhi
-# LIBS := -lfftw3_mpi -lfftw3 -lsiloh5
+LIBS := -lfftw3_mpi -lfftw3 -lsiloh5
+
+# on sisu
+# LIBS := -lfftw3_mpi -lfftw3 -lsiloh5 -lhdf5 -lstdc++ -lz
 
 # on sisu
 LIBS := -lfftw3_mpi -lfftw3 -lsiloh5 -lhdf5 -lstdc++ -lz
