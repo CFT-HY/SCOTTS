@@ -47,7 +47,8 @@ void init_uetc(hydro_fields f, hydro_params p) {
 
 
 void uetc_project(hydro_params p, int x_start, int slab,
-		  double *product, fftw_complex **Tij_then, fftw_complex **Tij_now) {
+		  double *product_re, double *product_im,
+		  fftw_complex **Tij_then, fftw_complex **Tij_now) {
 
   int i, j, l, m;
   int x, y, z;
@@ -62,7 +63,8 @@ void uetc_project(hydro_params p, int x_start, int slab,
 	ky = ((double)y)*2.0*M_PI/((double)p.Ly);
 	kz = ((double)z)*2.0*M_PI/((double)p.Lz);
 	
-	product[x*p.Ly*p.Lz + y*p.Lz + z] = 0.0;
+	product_re[x*p.Ly*p.Lz + y*p.Lz + z] = 0.0;
+	product_im[x*p.Ly*p.Lz + y*p.Lz + z] = 0.0;
 
 	// Sum over indices on lambda_{ij,lm} and udot_{ij}(k)
 	for(i=1; i<=3; i++) {
@@ -70,12 +72,19 @@ void uetc_project(hydro_params p, int x_start, int slab,
 	    for(l=1; l<=3; l++) {
 	      for(m=1; m<=3; m++) {
 
-		product[x*p.Ly*p.Lz + y*p.Lz + z] +=
+		product_re[x*p.Ly*p.Lz + y*p.Lz + z] +=
 		  lambda(i, j, l, m, kx, ky, kz)
 		  *(Tij_then[indexof(i,j)][x*p.Ly*p.Lz + y*p.Lz + z][0]
 		   *Tij_now[indexof(l,m)][x*p.Ly*p.Lz + y*p.Lz + z][0]
 		    + Tij_then[indexof(i,j)][x*p.Ly*p.Lz + y*p.Lz + z][1]
 		    *Tij_now[indexof(l,m)][x*p.Ly*p.Lz + y*p.Lz + z][1]);
+
+		product_im[x*p.Ly*p.Lz + y*p.Lz + z] +=
+		  lambda(i, j, l, m, kx, ky, kz)
+		  *(-Tij_then[indexof(i,j)][x*p.Ly*p.Lz + y*p.Lz + z][0]
+		   *Tij_now[indexof(l,m)][x*p.Ly*p.Lz + y*p.Lz + z][1]
+		    + Tij_then[indexof(i,j)][x*p.Ly*p.Lz + y*p.Lz + z][1]
+		    *Tij_now[indexof(l,m)][x*p.Ly*p.Lz + y*p.Lz + z][0]);
 	      }
 	    }
 	  }
@@ -159,7 +168,8 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
   double *slice_then = (double *)malloc(slab*p.Ly*p.Lz*sizeof(double));
   double *slice_now = (double *)malloc(slab*p.Ly*p.Lz*sizeof(double));
 
-  double *slice = (double *)malloc(slab*p.Ly*p.Lz*sizeof(double));
+  double *slice_re = (double *)malloc(slab*p.Ly*p.Lz*sizeof(double));
+  double *slice_im = (double *)malloc(slab*p.Ly*p.Lz*sizeof(double));
 
 
   int nx = p.Lx/p.slicex;
@@ -298,7 +308,7 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
   }
 
 
-  uetc_project(p, x_start, slab, slice, outcpts_then, outcpts_now);
+  uetc_project(p, x_start, slab, slice_re, slice_im, outcpts_then, outcpts_now);
 
 
   int nbins = minof3_int(p.Lx, p.Ly, p.Lz);
@@ -307,11 +317,13 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
 
   double dk = (maxk-mink)/((double)nbins);
 
-  double *bins = (double *)malloc(nbins*sizeof(double));
+  double *bins_re = (double *)malloc(nbins*sizeof(double));
+  double *bins_im = (double *)malloc(nbins*sizeof(double));
   int *counts = (int *)malloc(nbins*sizeof(int));
 
   for(i=0;i<nbins;i++) {
-    bins[i] = 0.0;
+    bins_re[i] = 0.0;
+    bins_im[i] = 0.0;
     counts[i] = 0;
   }
 
@@ -333,7 +345,8 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
 		     )*2.0*M_PI;
 
 	whichbin = (int)floor(kmode/dk);
-	bins[whichbin] += slice[x*p.Ly*p.Lz + y*p.Lz + z];
+	bins_re[whichbin] += slice_re[x*p.Ly*p.Lz + y*p.Lz + z];
+	bins_im[whichbin] += slice_im[x*p.Ly*p.Lz + y*p.Lz + z];
 	counts[whichbin]++;
 
       }
@@ -346,10 +359,13 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
 
   for(i=0;i<nbins;i++) {
 
-    red_value = reduce_sum(bins[i], p);
-    red_count = reduce_sum_int(counts[i], p);
+    red_value = reduce_sum(bins_re[i], p);
+    bins_re[i] = red_value;
 
-    bins[i] = red_value;
+    red_value = reduce_sum(bins_im[i], p);
+    bins_im[i] = red_value;
+
+    red_count = reduce_sum_int(counts[i], p);
     counts[i] = red_count;
   }
 
@@ -367,8 +383,8 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
 
     for(i=0;i<nbins;i++) {
 
-      fprintf(fp, "%lf %g %d %d\n",
-	      thisk, bins[i], counts[i], step);
+      fprintf(fp, "%lf %g %g %d %d\n",
+	      thisk, bins_re[i], bins_im[i], counts[i], step);
 
       thisk = thisk + dk;
     }
@@ -377,12 +393,15 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
 
   }
 
-  free(bins);
+
+  free(bins_re);
+  free(bins_im);
   free(counts);
 
   // Tidy up
 
-  free(slice);
+  free(slice_re);
+  free(slice_im);
   free(slice_then);
   free(slice_now);
   free(trim_then);
