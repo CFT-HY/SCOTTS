@@ -113,7 +113,7 @@ int main(int argc, char *argv[])
 
   double initial_energy, current_energy;
 
-  double initial_field_energy, current_field_energy, current_wmax, current_kinetic, current_gradient_energy;
+  double initial_field_energy, current_field_energy, current_wmax, current_kinetic, current_gradient_energy, current_rest;
 
   double cpu_time_used;
 
@@ -206,7 +206,7 @@ int main(int argc, char *argv[])
   printf0(p, "Initial avg energy per site: %g\n", 
 	  initial_energy/((double)p.N));
 
-  init_uetc(f, p);
+  //  init_uetc(f, p);
 
 
 #ifdef SILO
@@ -240,6 +240,12 @@ int main(int argc, char *argv[])
 
 #endif // MPI
 
+  FILE *press;
+
+
+  if(!p.rank) {
+    press = fopen("pressure.dat","a");
+  }
 
   printf0(p, "Starting main loop.\n");
 
@@ -250,6 +256,10 @@ int main(int argc, char *argv[])
   int howmany, i;
 
   for(step = step_start; step < p.steps; step++) {
+
+    if(!p.rank) {
+      fprintf(press, "%d %g\n", step, f.p[1][1][1]);
+    }
 
     // How about this for reproducibility?
     srandom(p.seed + step);
@@ -297,7 +307,7 @@ int main(int argc, char *argv[])
 #ifdef FFT
       histo_field(f.phi, p, step);
 
-      fft_uetc(f, p, step);
+      //      fft_uetc(f, p, step);
       
       fft_field(f, p, f.phi, step);
       fft_vel(f, p, step);
@@ -317,12 +327,13 @@ int main(int argc, char *argv[])
 
       current_energy = reduce_sum(total_energy(f, p), p);
       current_kinetic = reduce_sum(kinetic_energy(f, p), p);
+      current_rest = reduce_sum(rest_energy(f, p), p);
       current_field_energy = reduce_sum(field_energy(f, p), p);
       current_gradient_energy = reduce_sum(gradient_energy(f, p), p);
-      current_wmax = reduce_max(get_gamma_max(f, p), p);
+      current_wmax = reduce_sum(get_veltot(f, p), p)/((double)(p.Lx*p.Ly*p.Lz));
       
       if(!p.rank) {
-	printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\n",
+	printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf\n",
 	       step,
 	       t,
 	       current_energy,
@@ -331,7 +342,8 @@ int main(int argc, char *argv[])
 	       current_gradient_energy,
 	       current_wmax,
 	       gwen,
-	       bcount);
+	       bcount,
+	       current_rest);
       }
 
       /*
@@ -462,7 +474,11 @@ int main(int argc, char *argv[])
   printf0(p, "On master node, CPU time in main loop was %lfs,\n"
 	  "of which %lfs was comms\n",
 	  cpu_time_used, get_comms_time(&p));
-  
+
+
+  if(!p.rank) {
+    fclose(press);
+  }
 
   // Clean up memory
   free_fields(&f, p);
