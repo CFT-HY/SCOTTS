@@ -305,6 +305,7 @@ double field_energy(hydro_fields f, hydro_params p);
 double gradient_energy(hydro_fields f, hydro_params p);
 double total_energy(hydro_fields f, hydro_params p);
 double kinetic_energy(hydro_fields f, hydro_params p);
+double rest_energy(hydro_fields f, hydro_params p);
 void energy_density(hydro_fields f, hydro_params p, double ***en);
 void stress_energy(hydro_fields f, hydro_params p, double ****Tij);
 double tzerozero(hydro_fields f, hydro_params p);
@@ -332,6 +333,7 @@ void init_profile(hydro_fields *f, hydro_params *p);
 
 // output.c
 double get_gamma_max(hydro_fields f, hydro_params p);
+double get_veltot(hydro_fields f, hydro_params p);
 void dump(double *field, hydro_params p);
 void histo_field(double ***field, hydro_params p, int step);
 void didj(double *cpts, hydro_fields f, hydro_params p);

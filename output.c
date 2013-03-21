@@ -34,6 +34,31 @@ double get_gamma_max(hydro_fields f, hydro_params p) {
 
 
 
+double get_veltot(hydro_fields f, hydro_params p) {
+
+  int x, y, z, xmax;
+
+  
+  double veltot = 0.0;
+
+  // Just search for maxmimum
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+	veltot += sqrt(f.V[0][x][y][z]*f.V[0][x][y][z]
+	  + f.V[1][x][y][z]*f.V[1][x][y][z]
+	  + f.V[2][x][y][z]*f.V[2][x][y][z]);
+
+      }
+    }
+  }
+  
+  return veltot;
+
+}
+
+
+
 void dump(double *field, hydro_params p) {
   int x;
 
