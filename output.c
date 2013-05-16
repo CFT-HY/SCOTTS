@@ -1,12 +1,16 @@
 /* output.c
  * 
- * Things that we could in principle calculate offline, but
- * that are nice to know.
+ * Simple things that we could in principle calculate offline, but
+ * that are nice to know (energy-related quantites are in energy.c).
  */
 #include "hydro.h"
 
 
-
+/* double get_gamma_max(hydro_fields f, hydro_params p)
+ *
+ * Returns the largest zone-centred gamma factor found anywhere
+ * in the simulation box.
+ */
 double get_gamma_max(hydro_fields f, hydro_params p) {
 
   int x, y, z, xmax;
@@ -33,7 +37,11 @@ double get_gamma_max(hydro_fields f, hydro_params p) {
 }
 
 
-
+/* double get_veltot(hydro_fields f, hydro_params p)
+ *
+ * The sum of the fluid (3-)velocity everywhere. A strange quantity
+ * on its own, but allows calculation of average fluid velocity.
+ */
 double get_veltot(hydro_fields f, hydro_params p) {
 
   int x, y, z, xmax;
@@ -58,7 +66,11 @@ double get_veltot(hydro_fields f, hydro_params p) {
 }
 
 
-
+/* void dump(double *field, hydro_params p) 
+ *
+ * Dumps a field to stderr. Expects field to have N entries.
+ * For debugging purposes...
+ */
 void dump(double *field, hydro_params p) {
   int x;
 
@@ -71,8 +83,11 @@ void dump(double *field, hydro_params p) {
 
 
 
-
-
+/* void histo_field(double ***field, hydro_params p, int step)
+ *
+ * Calculate a histogram of the field, and store in a file
+ * labelled by the timestep.
+ */
 void histo_field(double ***field, hydro_params p, int step) {
   int x, y, z;
 
@@ -113,8 +128,10 @@ void histo_field(double ***field, hydro_params p, int step) {
   double df = (overall_max - overall_min)/((double)nbins);
 
   if(fabs(df) < 0.001) {
-    printf0(p, "Max: %lf, Min: %lf, df: %lf\n", overall_max, overall_min, df);
-    printf0(p, "Not doing histogram: bin width too small (overflow would occur)\n");
+    printf0(p, "Max: %lf, Min: %lf, df: %lf\n",
+	    overall_max, overall_min, df);
+    printf0(p, "Not doing histogram: bin width too small "
+	    "(overflow would occur)\n");
 
     return;
   }
@@ -136,7 +153,8 @@ void histo_field(double ***field, hydro_params p, int step) {
     }
   }
 
-  printf0(p, "Doing histogram, %d bins in [%lf,%lf]\n", nbins, overall_min, overall_max);
+  printf0(p, "Doing histogram, %d bins in [%lf,%lf]\n",
+	  nbins, overall_min, overall_max);
   
 
   int ntemp;
@@ -172,6 +190,11 @@ void histo_field(double ***field, hydro_params p, int step) {
 }
 
 
+/* void didj(double *cpts, hydro_fields f, hydro_params p)
+ *
+ * *Average* components of the stress-energy tensor for the scalar
+ * field to leading order in the metric perturbation.
+ */
 void didj(double *cpts, hydro_fields f, hydro_params p) {
 
   double cpts_here[TENSOR_CPTS];
