@@ -1,7 +1,15 @@
+/* checkpoint.c
+ * 
+ * Checkpoint and restore configuration.
+ */
 #include "hydro.h"
 
 
-
+/* int load_checkpoint(hydro_fields f, hydro_params p)
+ *
+ * Restore checkpointed data to hydro_fields struct. Returns
+ * the iteration step to which the state was restored.
+ */
 int load_checkpoint(hydro_fields f, hydro_params p)
 {
 
@@ -25,28 +33,22 @@ int load_checkpoint(hydro_fields f, hydro_params p)
   memcpy(f.phi[0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(double));
   free(qvptr);
 
-  qvptr = DBGetQuadvar(dbfile, "pi");
-  memcpy(f.pi[0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(double));
-  free(qvptr);
-
   qvptr = DBGetQuadvar(dbfile, "pifull");
   memcpy(f.pifull[0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(double));
   free(qvptr);
 
-  qvptr = DBGetQuadvar(dbfile, "T");
-  memcpy(f.T[0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(double));
-  free(qvptr);
-
-  qvptr = DBGetQuadvar(dbfile, "kappa");
-  memcpy(f.kappa[0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(double));
+  qvptr = DBGetQuadvar(dbfile, "pi");
+  memcpy(f.pi[0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(double));
   free(qvptr);
 
   qvptr = DBGetQuadvar(dbfile, "phiold");
   memcpy(f.phiold[0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(double));
   free(qvptr);
 
-  qvptr = DBGetQuadvar(dbfile, "p");
-  memcpy(f.p[0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(double));
+
+
+  qvptr = DBGetQuadvar(dbfile, "T");
+  memcpy(f.T[0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(double));
   free(qvptr);
 
   qvptr = DBGetQuadvar(dbfile, "E");
@@ -57,12 +59,27 @@ int load_checkpoint(hydro_fields f, hydro_params p)
   memcpy(f.W[0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(double));
   free(qvptr);
 
+  qvptr = DBGetQuadvar(dbfile, "kappa");
+  memcpy(f.kappa[0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(double));
+  free(qvptr);
+
+  qvptr = DBGetQuadvar(dbfile, "p");
+  memcpy(f.p[0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(double));
+  free(qvptr);
+
+
+
   qvptr = DBGetQuadvar(dbfile, "V");
   memcpy(f.V[0][0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(double));
   memcpy(f.V[1][0][0], qvptr->vals[1], sizex*sizey*sizez*sizeof(double));
   memcpy(f.V[2][0][0], qvptr->vals[2], sizex*sizey*sizez*sizeof(double));
   free(qvptr);
 
+  qvptr = DBGetQuadvar(dbfile, "Z");
+  memcpy(f.Z[0][0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(double));
+  memcpy(f.Z[1][0][0], qvptr->vals[1], sizex*sizey*sizez*sizeof(double));
+  memcpy(f.Z[2][0][0], qvptr->vals[2], sizex*sizey*sizez*sizeof(double));
+  free(qvptr);
 
   qvptr = DBGetQuadvar(dbfile, "U");
   memcpy(f.U[0][0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(double));
@@ -76,11 +93,8 @@ int load_checkpoint(hydro_fields f, hydro_params p)
   memcpy(f.F[2][0][0], qvptr->vals[2], sizex*sizey*sizez*sizeof(double));
   free(qvptr);
 
-  qvptr = DBGetQuadvar(dbfile, "Z");
-  memcpy(f.Z[0][0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(double));
-  memcpy(f.Z[1][0][0], qvptr->vals[1], sizex*sizey*sizez*sizeof(double));
-  memcpy(f.Z[2][0][0], qvptr->vals[2], sizex*sizey*sizez*sizeof(double));
-  free(qvptr);
+
+
 
   qvptr = DBGetQuadvar(dbfile, "uij");
   memcpy(f.uij[0][0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(double));
@@ -99,6 +113,8 @@ int load_checkpoint(hydro_fields f, hydro_params p)
   memcpy(f.udotij[4][0][0], qvptr->vals[4], sizex*sizey*sizez*sizeof(double));
   memcpy(f.udotij[5][0][0], qvptr->vals[5], sizex*sizey*sizez*sizeof(double));
   free(qvptr);
+
+  // No checkpointing support for UETCs
  
   DBClose(dbfile);
 
@@ -108,7 +124,10 @@ int load_checkpoint(hydro_fields f, hydro_params p)
 }
 
 
-
+/* int usable_checkpoint(hydro_fields f, hydro_params p)
+ *
+ * Do we have a usable checkpoint directory? Return 1 if so, 0 otherwise.
+ */
 int usable_checkpoint(hydro_fields f, hydro_params p)
 {
   char filename[600];
@@ -144,8 +163,10 @@ int usable_checkpoint(hydro_fields f, hydro_params p)
       DBReadVar(dbfile, "sizez", &sizez);
       DBReadVar(dbfile, "step", &step);
 
-      if(! ((sizex == p.slicex+2)  && (sizey == p.slicey+2) && (sizez == p.Lz)) ) {
-	printf0(p, "Sizes do not match (%d vs %d), (%d vs %d), (%d vs %d)\n", sizex, p.slicex+2, sizey, p.slicey+2, sizez, p.Lz);
+      if(! ((sizex == p.slicex+2)  && (sizey == p.slicey+2) 
+	    && (sizez == p.Lz)) ) {
+	printf0(p, "Sizes do not match (%d vs %d), (%d vs %d), (%d vs %d)\n", 
+		sizex, p.slicex+2, sizey, p.slicey+2, sizez, p.Lz);
 	happy = 0;
       } else {
 	printf0(p, "Looks like we can restart to step %d\n", step);
@@ -157,12 +178,18 @@ int usable_checkpoint(hydro_fields f, hydro_params p)
   }
 
 
-  //  fprintf(stderr,"Happiness %d\n", happy);
-
+  // Every rank was responsible for checking its own file, are they
+  // all happy?
   return reduce_and(happy, p);
 
 }
 
+
+/* void checkpoint(hydro_fields f, hydro_params p, int step)
+ *
+ * Checkpoints the state of the system (except the initial Tij needed for
+ * UETC calculations), for given timestep step.
+ */
 void checkpoint(hydro_fields f, hydro_params p, int step)
 {
 
@@ -175,29 +202,27 @@ void checkpoint(hydro_fields f, hydro_params p, int step)
   double start = clock();
 
 
-
   if(!p.rank) {
     sprintf(filename, "%s/checkpoint-integrity", p.checkpointdir);
     printf0(p, "Removing checkpoint integrity file\n");
     if(unlink(filename) == -1) {
-      printf0(p, "Problem removing checkpoint integrity file \"%s\"!\n", filename);
+      printf0(p, "Problem removing checkpoint integrity file \"%s\"!\n",
+	      filename);
     }
   }
 
   int x, i;
 
 
-  //  char silodir[100];
-  //  sprintf(silodir,"silage-%d",(int)getpid());
-
   /* Create a unique filename for the new Silo file */
 
   sprintf(filename, "%s/checkpoint-%06d", p.checkpointdir, p.rank);  
 
-  printf0(p,"Checkpointing in %s\n",p.checkpointdir);
+  printf0(p,"Checkpointing in %s\n", p.checkpointdir);
 
 
-  DBfile *dbfile = DBCreate(filename, DB_CLOBBER, DB_LOCAL, "checkpoint", CPMODE);
+  DBfile *dbfile = DBCreate(filename, DB_CLOBBER, DB_LOCAL,
+			    "checkpoint", CPMODE);
 
 
   DBoptlist *dboptlist = NULL;
@@ -256,22 +281,18 @@ void checkpoint(hydro_fields f, hydro_params p, int step)
   DBPutQuadvar1(dbfile, "phi", "quadmesh", f.phi[0][0], meshsize, 3,
                 NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
 
-  DBPutQuadvar1(dbfile, "pi", "quadmesh", f.pi[0][0], meshsize, 3,
-                NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
-
   DBPutQuadvar1(dbfile, "pifull", "quadmesh", f.pifull[0][0], meshsize, 3,
                 NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
 
-  DBPutQuadvar1(dbfile, "T", "quadmesh", f.T[0][0], meshsize, 3,
-                NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
-
-  DBPutQuadvar1(dbfile, "kappa", "quadmesh", f.kappa[0][0], meshsize, 3,
+  DBPutQuadvar1(dbfile, "pi", "quadmesh", f.pi[0][0], meshsize, 3,
                 NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
 
   DBPutQuadvar1(dbfile, "phiold", "quadmesh", f.phiold[0][0], meshsize, 3,
                 NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
 
-  DBPutQuadvar1(dbfile, "p", "quadmesh", f.p[0][0], meshsize, 3,
+
+
+  DBPutQuadvar1(dbfile, "T", "quadmesh", f.T[0][0], meshsize, 3,
                 NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
 
   DBPutQuadvar1(dbfile, "E", "quadmesh", f.E[0][0], meshsize, 3,
@@ -279,6 +300,14 @@ void checkpoint(hydro_fields f, hydro_params p, int step)
 
   DBPutQuadvar1(dbfile, "W", "quadmesh", f.W[0][0], meshsize, 3,
                 NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
+
+  DBPutQuadvar1(dbfile, "kappa", "quadmesh", f.kappa[0][0], meshsize, 3,
+                NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
+
+  DBPutQuadvar1(dbfile, "p", "quadmesh", f.p[0][0], meshsize, 3,
+                NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
+
+
 
 
 
@@ -299,6 +328,28 @@ void checkpoint(hydro_fields f, hydro_params p, int step)
   
   DBPutQuadvar(dbfile, "V", "quadmesh", 3, v_names, Vtemp, meshsize, 3, 
 	       NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);       
+
+
+
+
+  char *zx_name = "Zx";
+  char *zy_name = "Zy";
+  char *zz_name = "Zz";
+
+  char *z_names[3];
+
+  z_names[0] = zx_name;
+  z_names[1] = zy_name;
+  z_names[2] = zz_name;
+
+  double **Ztemp = (double **)malloc(3*sizeof(double *));
+  Ztemp[0] = f.Z[0][0][0];
+  Ztemp[1] = f.Z[1][0][0];
+  Ztemp[2] = f.Z[2][0][0];
+  
+  DBPutQuadvar(dbfile, "Z", "quadmesh", 3, z_names, Ztemp, meshsize, 3, 
+	       NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);       
+
 
 
   char *ux_name = "Ux";
@@ -338,28 +389,6 @@ void checkpoint(hydro_fields f, hydro_params p, int step)
   
   DBPutQuadvar(dbfile, "F", "quadmesh", 3, f_names, Ftemp, meshsize, 3, 
 	       NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);       
-
-
-
-
-  char *zx_name = "Zx";
-  char *zy_name = "Zy";
-  char *zz_name = "Zz";
-
-  char *z_names[3];
-
-  z_names[0] = zx_name;
-  z_names[1] = zy_name;
-  z_names[2] = zz_name;
-
-  double **Ztemp = (double **)malloc(3*sizeof(double *));
-  Ztemp[0] = f.Z[0][0][0];
-  Ztemp[1] = f.Z[1][0][0];
-  Ztemp[2] = f.Z[2][0][0];
-  
-  DBPutQuadvar(dbfile, "Z", "quadmesh", 3, z_names, Ztemp, meshsize, 3, 
-	       NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);       
-
 
 
 
@@ -419,7 +448,8 @@ void checkpoint(hydro_fields f, hydro_params p, int step)
   udottemp[4] = f.udotij[4][0][0];
   udottemp[5] = f.udotij[5][0][0];
   
-  DBPutQuadvar(dbfile, "udotij", "quadmesh", 6, udot_names, udottemp, meshsize, 3, 
+  DBPutQuadvar(dbfile, "udotij", "quadmesh", 6,
+	       udot_names, udottemp, meshsize, 3, 
 	       NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);       
 
 
@@ -427,7 +457,7 @@ void checkpoint(hydro_fields f, hydro_params p, int step)
 
   MPI_Barrier(MPI_COMM_WORLD);
 
-  // write root here?
+  // write ghost overlap details?
 
   double end = clock();
 
