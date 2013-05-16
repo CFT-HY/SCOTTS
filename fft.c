@@ -1,6 +1,6 @@
 /* fft.c
  *
- * Fourier transform of a field
+ * Fourier transform (and power spectrum) of a field
  */
 #include "hydro.h"
 
@@ -8,7 +8,17 @@
 #ifdef FFT
 
 
-
+/* fft_field(hydro_fields f, hydro_params p, double ***field, int step)
+ *
+ * Carries out the FFT of the supplied field, computes the power
+ * spectrum, and stores it binned and labelled with the timestep
+ * in a file.
+ *
+ * For the fluid velocity power spectrum, see velps.c
+ * For the GW power spetrum, see gw.c
+ *
+ * Unlike velps.c and gw.c there is no normalisation done here.
+ */
 void fft_field(hydro_fields f, hydro_params p, double ***field, int step) {
 
   ptrdiff_t x_thickness, x_start, alloc_local;
@@ -71,11 +81,11 @@ void fft_field(hydro_fields f, hydro_params p, double ***field, int step) {
 
 
 
-  // Now planning
-  
+  // Now planning  
   fftw_plan plan = fftw_mpi_plan_dft_3d(p.Lx, p.Ly, p.Lz,
 					in, out, MPI_COMM_WORLD,
 					FFTW_FORWARD, FFTW_ESTIMATE);
+
   for(x=0; x<p.Lx; x++) {
 
     // Check whether we are the target node for this slab
