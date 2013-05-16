@@ -1,6 +1,9 @@
 /* gw.c
  *
- * Fourier transform and GW spectrum calculation.
+ * Fourier transform and GW power spectrum calculation.
+ *
+ * For the power specrum of a single field see fft.c
+ * For the power spectrum of the fluid, see velps.c
  *
  * Projectors and expressions are principally taken from
  * "Gravitational wave background from reheating after hybrid inflation"
@@ -242,7 +245,8 @@ double fft_tensor(hydro_fields f, hydro_params p, int step,
   fftw_mpi_init();
 
   alloc_local = fftw_mpi_local_size_3d(n0, n1, n2,
-				       MPI_COMM_WORLD, &x_thickness, &x_start);
+				       MPI_COMM_WORLD,
+				       &x_thickness, &x_start);
 
 
   slab = (int) x_thickness;
@@ -349,17 +353,6 @@ double fft_tensor(hydro_fields f, hydro_params p, int step,
 
 
     /*
-    if(!i) {
-      fprintf(stderr,"total incpts %d is %6.10lf\n", p.rank,
-	      reduce_sum(total,p));
-    }
-
-    if(!p.rank && !i)
-      fprintf(stderr,"inslice 114: %.12lf\n", in[p.Ly*p.Lz + p.Lz + 4][0]);
-    */
-
-  
-    /*
      * NB: fftw calculates the unnormalised FFT,
      * namely:
      * out[k] = \sum[j] in[j] exp(-2*pi*(j.k)*i/L)
@@ -397,11 +390,6 @@ double fft_tensor(hydro_fields f, hydro_params p, int step,
 
   }
 
-  /*
-  if(!p.rank)
-    fprintf(stderr,"slice 111: %.12lf\n", outcpts[0][p.Ly*p.Lz + p.Lz + 1][0]);
-  */
-
 
   // At this point, we should have a normed FFT
 
@@ -435,58 +423,8 @@ double fft_tensor(hydro_fields f, hydro_params p, int step,
 	  "Unnormalised GW energy [density] claimed %6.10lf\n", gwen);
 
   
-  // **** now calculate and output the power spectrum ****
 
-
-
-#ifdef DUMPFFT
-  // Temporary until we get the binning sorted out
-  char fftdest[200];
-
-  sprintf(fftdest,"fft-%d.txt",p.rank);
-
-  FILE *fp = fopen(fftdest,"w");
- 
-
-  for(x=0;x<slab;x++) {
-    for(y=0;y<p.Ly;y++) {
-      for(z=0;z<p.Lz;z++) {
-
-	//	if((x+x_start)==0 && y==0 && z==0)
-	//	  continue;
-
-        if(((x+((int)x_start))>p.Lx/2) || (y> p.Ly/2) || (z>p.Lz/2))
-          continue;
-
-	kmode = sqrt(
-		     ((double)((x+((int)x_start))
-			       *(x+((int)x_start))))/((double)(p.Lx*p.Lx))
-		     + ((double)(y*y))/((double)(p.Ly*p.Ly))
-		     + ((double)(z*z))/((double)(p.Lz*p.Lz))
-		     )*2.0*M_PI;
-
-	/*
-	modsq = out[x*p.Ly*p.Lz + y*p.Lz + z][0]
-	  *out[x*p.Ly*p.Lz + y*p.Lz + z][0]
-	  + out[x*p.Ly*p.Lz + y*p.Lz + z][1]
-	  *out[x*p.Ly*p.Lz + y*p.Lz + z][1];
-	  */
-
-	fprintf(fp, "%lf %d %d %d %lf\n", kmode,
-		x + ((int)x_start), y, z, slice[x*p.Ly*p.Lz + y*p.Lz + z]);
-
-
-      }
-
-      fflush(fp);
-
-    }
-  }
-
-  close(fp);
-
-#else // not DUMPFFT
-  // calculate the power spectrum on the fly
+  // Bin the power spectrum on the fly
 
   int nbins = minof3_int(p.Lx, p.Ly, p.Lz);
   double mink = 0.0;
@@ -522,9 +460,6 @@ double fft_tensor(hydro_fields f, hydro_params p, int step,
 	whichbin = (int)floor(kmode/dk);
 	bins[whichbin] += slice[x*p.Ly*p.Lz + y*p.Lz + z];
 	counts[whichbin]++;
-
-	//	if(step)
-	// fprintf(stderr,"%d %lf\n",whichbin,slice[x*p.Ly*p.Lz + y*p.Lz + z]);
 
       }
     }
@@ -573,10 +508,12 @@ double fft_tensor(hydro_fields f, hydro_params p, int step,
       thisf = comovingk;
 
       // d(rhogw)/d(logk)
-      // (p.H^(-3) is comoving volume; 8*4*pi is the solid angle normalisation)
+      // (p.H^(-3) is comoving volume
+      // and 8*4*pi is the solid angle normalisation)
       //      thisdiff = (comovingk*comovingk*comovingk/(32.0*M_PI))
       //	*bins[i]/(p.Lx*p.Ly*p.Lz*p.dx*p.dx*p.dx);
-      thisomega = comovingk*comovingk*comovingk*bins[i]/(p.Lx*p.Ly*p.Lz*p.dx*p.dx*p.dx);
+      thisomega = comovingk*comovingk*comovingk*bins[i]
+	/(p.Lx*p.Ly*p.Lz*p.dx*p.dx*p.dx);
 
       // omegaGW(k), as above but corrections for degrees of freedom,
       // energy density and radiation density
@@ -594,8 +531,6 @@ double fft_tensor(hydro_fields f, hydro_params p, int step,
 
   free(bins);
   free(counts);
-
-#endif
 
 
   // Tidy up
