@@ -4,7 +4,7 @@
 CC := cc -DMPI -DFFT -DSILO
 
 # Everything turned on
-# CC := mpicc -DMPI -DFFT -DSILO # -DEXPANSION -DDUMPFFT
+# CC := mpicc -DMPI -DFFT -DSILO # -DEXPANSION
 
 # Example for serial profiling
 # CC := gcc -O3 -DPAPI -lpapi
