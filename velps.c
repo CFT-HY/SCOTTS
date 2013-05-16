@@ -1,6 +1,9 @@
 /* velps.c
  *
  * Fourier transform and velocity/vorticity power spectrum.
+ *
+ * The gravitational wave power spectrum is in gw.c,
+ * and a generic field power spectrum calculation is in fft.c.
  */
 #include "hydro.h"
 
@@ -9,6 +12,9 @@
 
 
 /* vel_proj(int T, double kx, double ky, double kz);
+ *
+ * Calculate the projector for the transverse component of the
+ * velocity.
  */
 double vel_proj(int T, double kx, double ky, double kz) {
 
@@ -55,7 +61,8 @@ double vel_proj(int T, double kx, double ky, double kz) {
     break;
 
   default:
-    fprintf(stderr,"Unknown velocity projector element! Nonsense will ensue...\n");
+    fprintf(stderr,
+	    "Unknown velocity projector element! Nonsense will ensue...\n");
 
   }
 
@@ -63,8 +70,16 @@ double vel_proj(int T, double kx, double ky, double kz) {
 }
 
 
+/* void split_and_power(hydro_params p, int x_start, int slab,
+ *                    double *product, double *product_div,
+ *                    fftw_complex **vk)
+ *
+ * Split the FFT output vk into the transverse and longitudinal ('div')
+ * components.
+ */
 void split_and_power(hydro_params p, int x_start, int slab,
-		     double *product, double *product_div, fftw_complex **vk) {
+		     double *product, double *product_div,
+		     fftw_complex **vk) {
 
   int i, j;
   int x, y, z;
@@ -94,11 +109,17 @@ void split_and_power(hydro_params p, int x_start, int slab,
 	  resid_i = 0.0;
 	  
           for(j=1; j<=3; j++) {
-	    res_r += vel_proj(i*10 + j, kx, ky, kz)*vk[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-	    res_i += vel_proj(i*10 + j, kx, ky, kz)*vk[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+	    // Transverse components
+	    res_r += vel_proj(i*10 + j, kx, ky, kz)
+	      *vk[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+	    res_i += vel_proj(i*10 + j, kx, ky, kz)
+	      *vk[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 
-	    resid_r += (1.0 - vel_proj(i*10 + j, kx, ky, kz))*vk[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-	    resid_i += (1.0 - vel_proj(i*10 + j, kx, ky, kz))*vk[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+	    // And longitudinal...
+	    resid_r += (1.0 - vel_proj(i*10 + j, kx, ky, kz))
+	      *vk[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+	    resid_i += (1.0 - vel_proj(i*10 + j, kx, ky, kz))
+	      *vk[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 	  }
 
 	  product[x*p.Ly*p.Lz + y*p.Lz + z] +=
@@ -116,7 +137,15 @@ void split_and_power(hydro_params p, int x_start, int slab,
 }
 
 
-void histogram(hydro_params p, double *slice, char *filename, int slab, int x_start) {
+
+/* void histogram(hydro_params p, double *slice, char *filename,
+ *               int slab, int x_start)
+ *
+ * Combine the data from each slice (supplied separately by each
+ * rank to this function), bin, compute the histogram and output.
+ */
+void histogram(hydro_params p, double *slice, char *filename,
+	       int slab, int x_start) {
   // The rest proceeds as in gw.c
 
   int i, x, y, z;
@@ -157,9 +186,6 @@ void histogram(hydro_params p, double *slice, char *filename, int slab, int x_st
 	whichbin = (int)floor(kmode/dk);
 	bins[whichbin] += slice[x*p.Ly*p.Lz + y*p.Lz + z];
 	counts[whichbin]++;
-
-	//	if(step)
-	// fprintf(stderr,"%d %lf\n",whichbin,slice[x*p.Ly*p.Lz + y*p.Lz + z]);
 
       }
     }
@@ -210,7 +236,7 @@ void histogram(hydro_params p, double *slice, char *filename, int slab, int x_st
 
 /* fft_vel(hydro_fields f, hydro_params p)
  *
- * Calculate the velocity power spectrum.
+ * Main method. Calculate the velocity power spectrum.
  */
 void fft_vel(hydro_fields f, hydro_params p, int step) {
 
@@ -345,18 +371,6 @@ void fft_vel(hydro_fields f, hydro_params p, int step) {
 	}
       }
     }
-
-
-    /*
-    if(!i) {
-      fprintf(stderr,"total incpts %d is %6.10lf\n", p.rank,
-	      reduce_sum(total,p));
-    }
-
-    if(!p.rank && !i)
-      fprintf(stderr,"inslice 114: %.12lf\n", in[p.Ly*p.Lz + p.Lz + 4][0]);
-    */
-
   
     fftw_mpi_execute_dft(plan, in, out);
     
@@ -378,8 +392,10 @@ void fft_vel(hydro_fields f, hydro_params p, int step) {
 
   }
 
-  // At this point, we should have a normed FFT of each component in outcpts[i][k]
-
+  /*
+   * At this point, we should have a normed FFT
+   * of each component in outcpts[i][k]
+   */
 
 
   // The brains of the operation:
