@@ -5,12 +5,34 @@
  */
 #include "hydro.h"
 
-
-
+// Nasty global to track how much walltime is spent doing communications
 double comms_time;
 
+
+/* There is one copy of everything here done properly for MPI, and then
+ * (at the end of the file) a dummy version for running on a single core
+ * -- there is no provision to turn off the haloing, but on a single core
+ * that's not much of an issue.
+ */
 #ifdef MPI
 
+
+/* Some notes on variables:
+ *
+ * -- Lx, Ly, Lz are the total physical size
+ * -- slicex and slicey are the size of the physical 'pencil' each node gets
+ *    (recall that the fields and vectors have an extra 2 sites in each
+ *    direction for haloing purposes, so each one is
+ *    (slicex+2)*(slicey+2)*(Lz) in size)
+ * -- the first and the last sites in any direction are the halo
+ * -- myposx and myposy are the position of this node within the layout
+ *    (zero-based)
+ * -- shiftx and shifty are the datum of x=0, y=0 in the local node
+ *    (ie shiftx = slicex*myposx, shifty = slicey*myposy)
+ *    this means that the physical coordinate of a site would be
+ *    (p.shiftx+x-1,p.shifty+y-1,z) after taking halos into account.
+ * -- rank is this nodes unique id (rank 0 is the 'master')
+ */
 
 
 /*
@@ -31,7 +53,7 @@ void layout(hydro_params *p) {
   printf0(*p,"Putting %d sites on %d nodes\n", p->N, p->size);
 
 
-  // You gave us a very stupid number of nodes to work with
+  // You gave us a *very* stupid number of nodes to work with
   if( (p->Lx*p->Ly % p->size) > 0 ) {
     printf0(*p, "Number of (%d) nodes not a factor of Lx*Ly!\n", p->size);
 
@@ -92,7 +114,8 @@ void layout(hydro_params *p) {
       } else {
 	// Oops!
 	if(!p->rank &&  (p->slicex % prime[n] != 0)) {
-	  fprintf(stderr,"Should not get here -- still can\'t divide by x!\n");
+	  fprintf(stderr,"Should not get here "
+		  "-- still can\'t divide by x!\n");
 	  die(100);
 	} else {
 	  printf0(*p, "Dividing x direction...\n");
@@ -140,6 +163,7 @@ void layout(hydro_params *p) {
   p->rank_xPyM = ((p->myposy - 1 + ny)%ny)*nx + ((p->myposx+1+nx)%nx);
   p->rank_xPyP = ((p->myposy + 1 + ny)%ny)*nx + ((p->myposx+1+nx)%nx);
 
+  // Print exhaustive details of layout. Tedious.
   /*
   fprintf(stderr, "Node of rank %d, node position is (%d, %d)\n",
 	  p-> rank, p->myposx, p->myposy);
@@ -160,6 +184,10 @@ void layout(hydro_params *p) {
 /* void halo_field(double *field, hydro_params p)
  *
  * Do halo communication of the variable in field to neighbours.
+ *
+ * Correct functioning depends on the setup above, which
+ * means each node knows which rank is its up/down neighbour in the
+ * x/y directions and also the four corners (p.rank_[xy][MP] etc).
  */
 void halo_field(double ***field, hydro_params p) {
 
@@ -173,6 +201,7 @@ void halo_field(double ***field, hydro_params p) {
 
   start = clock();
 
+  // mpi_counter just labels the communications
   int mpi_counter = 1;
   int x, y, z;
 
@@ -181,7 +210,6 @@ void halo_field(double ***field, hydro_params p) {
    *
    * SEND LEFT
    */
-
   for(y = 1; y <= p.slicey; y++) {
 
     MPI_Sendrecv(&field[1][y][0],
@@ -199,7 +227,6 @@ void halo_field(double ***field, hydro_params p) {
    *
    * SEND RIGHT
    */
-
   for(y = 1; y <= p.slicey; y++) {
 
     MPI_Sendrecv(&field[p.slicex][y][0],
@@ -219,7 +246,6 @@ void halo_field(double ***field, hydro_params p) {
    *
    * SEND UP
    */
-
   for(x = 1; x <= p.slicex; x++) {
 
       MPI_Sendrecv(&field[x][p.slicey][0],
@@ -236,8 +262,6 @@ void halo_field(double ***field, hydro_params p) {
    *
    * SEND DOWN
    */
-
-
   for(x = 1; x <= p.slicex; x++) {
 
 
@@ -256,9 +280,6 @@ void halo_field(double ***field, hydro_params p) {
    *
    * SEND UP AND RIGHT
    */
-
-
-
   MPI_Sendrecv(&field[p.slicex][p.slicey][0],
 	       p.Lz, MPI_DOUBLE, p.rank_xPyP, mpi_counter,
 	       &field[0][0][0],
@@ -267,13 +288,11 @@ void halo_field(double ***field, hydro_params p) {
   
   mpi_counter++;
 
+
   /* [, ]
    *
    * SEND DOWN AND LEFT
    */
-
-
-
   MPI_Sendrecv(&field[1][1][0],
 	       p.Lz, MPI_DOUBLE, p.rank_xMyM, mpi_counter,
 	       &field[p.slicex+1][p.slicey+1][0],
@@ -287,9 +306,6 @@ void halo_field(double ***field, hydro_params p) {
    *
    * SEND UP AND LEFT
    */
-
-      
-
   MPI_Sendrecv(&field[1][p.slicey][0],
 	       p.Lz, MPI_DOUBLE, p.rank_xMyP, mpi_counter,
 	       &field[p.slicex+1][0][0],
@@ -303,7 +319,6 @@ void halo_field(double ***field, hydro_params p) {
    *
    * SEND DOWN AND RIGHT
    */
-
   MPI_Sendrecv(&field[p.slicex][1][0],
 	       p.Lz, MPI_DOUBLE, p.rank_xPyM, mpi_counter,
 	       &field[0][p.slicey+1][0],
@@ -315,11 +330,18 @@ void halo_field(double ***field, hydro_params p) {
 
   end = clock();
 
+
+  // Update the comms_time counter
   comms_time += ((double) (end - start)) / CLOCKS_PER_SEC;
 }
 
-    
 
+// Reduction routines, for when we want to combine things    
+
+/* double reduce_sum(double result, hydro_params p)
+ *
+ * Add together doubles from each node.
+ */
 double reduce_sum(double result, hydro_params p) {
 
   double total = 0.0;
@@ -328,6 +350,10 @@ double reduce_sum(double result, hydro_params p) {
 
 }
 
+/* int reduce_sum_int(int result, hydro_params p)
+ *
+ * Add together doubles from each node, integer version
+ */
 int reduce_sum_int(int result, hydro_params p) {
 
   int total = 0;
@@ -336,7 +362,10 @@ int reduce_sum_int(int result, hydro_params p) {
 
 }
 
-
+/* double reduce_max(double result, hydro_params p)
+ *
+ * Return the maximum of all the values submitted by each node.
+ */
 double reduce_max(double result, hydro_params p) {
 
   double total = 0.0;
@@ -345,6 +374,10 @@ double reduce_max(double result, hydro_params p) {
 
 }
 
+/* double reduce_min(double result, hydro_params p)
+ *
+ * Return the minimum of all the values submitted by each node.
+ */
 double reduce_min(double result, hydro_params p) {
 
   double total = 0.0;
@@ -353,7 +386,10 @@ double reduce_min(double result, hydro_params p) {
 
 }
 
-
+/* int reduce_and(int result, hydro_params p)
+ *
+ * Returns the integers supplied, logical and'ed together
+ */
 int reduce_and(int result, hydro_params p) {
 
   int total = 0;
@@ -363,6 +399,11 @@ int reduce_and(int result, hydro_params p) {
 }
 
 
+/* void init_comms_time(hydro_params *p)
+ * double get_comms_time(hydro_params *p)
+ *
+ * Fake getters and setters for the communications time routines.
+ */
 void init_comms_time(hydro_params *p) {
   comms_time = 0.0;
 }
@@ -372,6 +413,11 @@ double get_comms_time(hydro_params *p) {
 }
 
 
+/* void printf0(hydro_params p, char *msg, ...)
+ *
+ * Drop-in replacement for fprintf(stder,...) that only
+ * prints stuff if called by the master node, rank 0.
+ */
 void printf0(hydro_params p, char *msg, ...) {
   va_list fmtargs;
   va_start(fmtargs, msg);
@@ -380,13 +426,19 @@ void printf0(hydro_params p, char *msg, ...) {
     vfprintf(stderr, msg, fmtargs);
 }
 
+
+/* void die(int howbad)
+ *
+ * Die!!!
+ * The return value is 'howbad'
+ */
 void die(int howbad) {
   MPI_Finalize();
   exit(howbad);
 }
 
 
-#else // MPI
+#else // not MPI
 
 
 
