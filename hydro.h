@@ -209,27 +209,32 @@ typedef struct {
 
 
 
+// See alloc_fields in alloc.c for details
 typedef struct {
 
   double *x_inv;
   double *phi_inv;
   double *V_inv;
 
+  // Scalar field
   double ***phi;
-  double ***pi;
   double ***pifull;
-  double ***T;
-  double ***kappa;
+  double ***pi;
   double ***phiold;
-  double ***p;
+
+  // Fluid
+  double ***T;
   double ***E;
   double ***W;
+  double ***kappa;
+  double ***p;
 
   double ****V;
+  double ****Z;
   double ****U;
   double ****F;
-  double ****Z;
 
+  // Gravity
   double ****uij;
   double ****udotij;
 
@@ -247,6 +252,7 @@ typedef struct {
 double ***make_field(hydro_params p);
 double ****make_vector(hydro_params p);
 double ****make_tensor(hydro_params p);
+
 
 void free_field(hydro_params p, double ***field);
 void free_vector(hydro_params p, double ****vector);
@@ -371,7 +377,8 @@ void fft_uetc(hydro_fields f, hydro_params p, int step);
 
 // gw.c
 double proj(int T, double kx, double ky, double kz);
-double fft_tensor(hydro_fields f, hydro_params p, int step, double energydensity);
+double fft_tensor(hydro_fields f, hydro_params p, int step,
+		  double energydensity);
 
 // velps.c
 void fft_vel(hydro_fields f, hydro_params p, int step);
