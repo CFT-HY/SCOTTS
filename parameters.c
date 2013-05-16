@@ -5,7 +5,7 @@
 #include "hydro.h"
 
 
-/* hydro_params get_parameters()
+/* hydro_params get_parameters(char *infile, hydro_params *p)
  *
  * Mostly boilerplate code for parsing lines of the form "key value" 
  * from a file.
@@ -261,9 +261,11 @@ void get_parameters(char *infile, hydro_params *p)
 
 	while(strlen(curr) && strlen(next)) {
 	  p->nucsteps[i] = strtol(curr,&next,10);
-	  //	  printf0(*p,"bubble at step %d, next is %s\n", p->nucsteps[i],next);
+	  //	  printf0(*p,"bubble at step %d, next is %s\n", 
+	  //		  p->nucsteps[i],next);
 	  curr = next+sizeof(char);
-	  //	  printf0(*p,"strlen next is %d and curr is %d\n", strlen(next), strlen(curr));
+	  //	  printf0(*p,"strlen next is %d and curr is %d\n",
+	  //		  strlen(next), strlen(curr));
 	  i++;
 	}
 
@@ -301,7 +303,8 @@ void get_parameters(char *infile, hydro_params *p)
 	  }
 	}
 
-	printf0(*p, "Looks like there are %d bubbles in %s\n", p->n_nucsteps, option);
+	printf0(*p, "Looks like there are %d bubbles in %s\n",
+		p->n_nucsteps, option);
 
 	rewind(nucfile);
 
