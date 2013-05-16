@@ -1,21 +1,35 @@
-# Prototype nucleation process
+# nucproc.py
+#
+# Outputs a pre-computed list of timesteps at which nucleation
+# should be attempted. The number of timesteps (duration), the rate (beta),
+# a normalisation factor (p0) and the timestep size (dt) are all adjustable.
 import math, random, time, sys, string
 
+# Initial time
 t = 0.0
 
+# Timestep size
 dt = 0.1
 
+# Nucleation rate
 beta = 0.0125
 
+# Number of timesteps
 duration = 20000
 
+# Normalisation
 p0 = 0.01
 
+# End timestep
 end = dt*float(duration)
 
+# Random seed
 random.seed(time.time())
 
+# Volume (may be considered a fudge factor)
 vol = 1024*1024*1024
+
+
 
 
 
