@@ -5,7 +5,11 @@
 #include "hydro.h"
 
 
-// Straight fortran port
+/* find_Ta(hydro_fields f, hydro_params p)
+ *
+ * Find temperature by 'solving' equation of state.
+ * Directly copied from the 1+1 fortran code.
+ */
 void find_Ta(hydro_fields f, hydro_params p) {
 
   int x, y, z;
@@ -26,6 +30,7 @@ void find_Ta(hydro_fields f, hydro_params p) {
 		      - 0.5*p.gamma*p.T0*p.T0*f.phi[x][y][z]*f.phi[x][y][z]
 		      - f.E[x][y][z]/f.W[x][y][z]);
 	
+	// Tfix not used (and ruins energy conservation anyway)
 	//    if(Tfix < 0)
 	//      Tfix = 0.0;
 	
@@ -36,12 +41,17 @@ void find_Ta(hydro_fields f, hydro_params p) {
     }
   }
 
+  // Not needed...
   //  halo_field(f.T, p);
 }
 
 
 
-// Straight fortran port
+/* void eq_of_state(hydro_fields f, hydro_params p)
+ *
+ * By 'solving' the equation of state, determine first T and then
+ * pressure p and the adiabatic parameter kappa.
+ */
 void eq_of_state(hydro_fields f, hydro_params p) {
 
   int x, y, z;
@@ -69,7 +79,8 @@ void eq_of_state(hydro_fields f, hydro_params p) {
 	if(f.E[x][y][z] 
 	   < tolE*f.W[x][y][z]*3.0*p.a*f.T[x][y][z]
 	   *f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]) {
-	  fprintf(stderr,"(at %d,%d,%d) E getting dangerously small due to -ve V cont.\n",
+	  fprintf(stderr,"(at %d,%d,%d) E getting dangerously small "
+		  "due to -ve V cont.\n",
 		  p.shiftx+x-1,p.shifty+y-1,z);
 	  die(100);
 	}

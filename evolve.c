@@ -6,7 +6,11 @@
 #include "hydro.h"
 
 
-// straight from fortran
+/* void evolve_backstep(hydro_fields f, hydro_params p)
+ *
+ * Evolve the scalar field momentum back a halfstep.
+ * Taken straight from the 1+1 spherical fortran code.
+ */
 void evolve_backstep(hydro_fields f, hydro_params p) {
 
   int x, y, z;
@@ -33,7 +37,11 @@ void evolve_backstep(hydro_fields f, hydro_params p) {
 }
 
 
-// straight from fortran, except set v = 0 explicitly rather than in wrap
+/* void evolve_field(hydro_fields f, hydro_params p)
+ *
+ * Evolve the scalar field forward one timestep.
+ * Taken more or less straight from the 1+1 spherical fortran code.
+ */
 void evolve_field(hydro_fields f, hydro_params p) {
   
   int x, y, z;
@@ -115,9 +123,9 @@ void evolve_field(hydro_fields f, hydro_params p) {
 
 
 
-/* evolve_hydro(...)
+/* void evolve_hydro(hydro_fields f, hydro_params p)
  *
- * Straight from fortran. Original comment:
+ * Basically straight from fortran. Original comment:
  *
  *   --  Does hydro except transport.  E  and  Z evolved.  v  and W
  *       obtained.  Uses artificial viscosity  Q,  adjusted with  Cav.
@@ -136,13 +144,6 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
   double ***phiav = make_field(p);
 
   double ****dxphi = make_vector(p);
-
-  /*
-  double ****dxphi = (double ****) malloc(3*sizeof(double ***));
-  dxphi[0] =  make_field(p);
-  dxphi[1] =  make_field(p);
-  dxphi[2] =  make_field(p);
-  */  
 
   double ***Wfacex =  make_field(p);
   double ***Wfacey =  make_field(p);
@@ -582,17 +583,16 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
 			    + utildey*utildey 
 			    + utildez*utildez);
 	
-	
-    //	s = (f.kappa[iix(x,y,z,p)] - 1)*(f.W[iix(x,y,z,p)] - Wold[iix(x,y,z,p)])
-    //	  /(f.W[iix(x,y,z,p)] + Wold[iix(x,y,z,p)]);
-    //	f.E[iix(x,y,z,p)] = f.E[iix(x,y,z,p)]*(1-s)/(1+s);
-    // sort of E*exp(-2.0*s)
+	// sort of E*exp(-2.0*s)	
+	//	s = (f.kappa[iix(x,y,z,p)] - 1)*(f.W[iix(x,y,z,p)]
+	//					 - Wold[iix(x,y,z,p)])
+	//	  /(f.W[iix(x,y,z,p)] + Wold[iix(x,y,z,p)]);
+	//	f.E[iix(x,y,z,p)] = f.E[iix(x,y,z,p)]*(1-s)/(1+s);
     
     
-    // Top of p90 ch 3
+	// Top of p90 ch 3
 	f.E[x][y][z] = f.E[x][y][z]*pow(Wold[x][y][z]/f.W[x][y][z],
 					f.kappa[x][y][z]-1.0);
-
 
 
       }
@@ -677,26 +677,25 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
 
   free_field(p, phiav);
 
-  /*
-  free_field(p, dxphi[0]);
-  free_field(p, dxphi[1]);
-  free_field(p, dxphi[2]);
-  free(dxphi);
-  */
-
   free_vector(p, dxphi);
 
   free_field(p, Wfacex);
   free_field(p, Wfacey);
   free_field(p, Wfacez);
 
-
-
 }
 
 
 
 
+/* void evolve_uij(hydro_fields f, hydro_params p)
+ *
+ * Evolve the metric perturbations and conjugate momenta
+ * using the field+fluid system as a source. The cutoff parameter (and
+ * conditional compilation) was used to decouple the metric perturbations
+ * after a certain time and is no longer in use. Eventually it should
+ * be removed.
+ */
 #ifdef CUTOFF
 void evolve_uij(hydro_fields f, hydro_params p, double cutoff) {
 #else
