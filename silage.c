@@ -1,8 +1,13 @@
+/* silage.c
+ *
+ * Write data for the purposes of visualisation. Note that checkpointing
+ * (see checkpoint.c) also uses silo as a wrapper around hdf5 storage.
+ */
 #include "hydro.h"
 
 #ifdef SILO
 
-/* silo_init
+/* void silo_init(hydro_params p)
  *
  * set up silo data repository directory
  */
@@ -27,7 +32,7 @@ void silo_init(hydro_params p)
 }
 
 
-/* write_silo_step
+/* void write_silo_step(hydro_fields f, hydro_params p, int step)
  *
  * write fields to a silo file for use with Visit
  */
@@ -148,7 +153,9 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
 
 
   free_field(p, temp);
-  
+
+
+  // Don't store vector quantities because they are huuuuge on 1024^3...  
 
   /*
   char *ux_name = "Ux";
@@ -209,6 +216,7 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
 
   DBClose(dbfile);
 
+  // Only needed if we are recording the vector quantities.
   //  free(Vtemp);
 
   for(i=0;i<3;i++) {
@@ -224,7 +232,9 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
 
 
 
-
+  /* Write the root, which specifies where the other files
+   * may be found and what they contain.
+   */
   if(!p.rank) {
     sprintf(filename, "%s/root-%06d.silo", p.silodir, step);  
     fprintf(stderr,"Writing root to %s\n",filename);  
@@ -284,7 +294,7 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
       free(names[i]);
     }
 
-  DBClose(dbfile);
+    DBClose(dbfile);
 
     free(names);
     free(types);
