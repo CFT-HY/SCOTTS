@@ -5,7 +5,10 @@
 #include "hydro.h"
 
 
-
+/* double field_energy(hydro_fields f, hydro_params p)
+ *
+ * Total energy in the fields: kinetic, gradient and potential.
+ */
 double field_energy(hydro_fields f, hydro_params p) {
 
   int x, y, z;
@@ -39,18 +42,15 @@ double field_energy(hydro_fields f, hydro_params p) {
     }
   }
   
-
-  // Cast here
-  //  vol = (double)(f.xe[p.N-1]);
-  //  vol = ((double)(p.N))*p.dx*p.dx*p.dx;
-
   return Etot;
-
-
 }
 
 
 
+/* double gradient_energy(hydro_fields f, hydro_params p)
+ *
+ * Field gradient energy only.
+ */
 double gradient_energy(hydro_fields f, hydro_params p) {
 
   int x, y, z;
@@ -80,18 +80,17 @@ double gradient_energy(hydro_fields f, hydro_params p) {
     }
   }
   
-
-  // Cast here
-  //  vol = (double)(f.xe[p.N-1]);
-  //  vol = ((double)(p.N))*p.dx*p.dx*p.dx;
-
   return Etot;
-
-
 }
 
 
-// straight from fortran, slightly verbose way of doing it!
+
+/* double total_energy(hydro_fields f, hydro_params p)
+ *
+ * Total (field+fluid) energy. Borrowed directly from the
+ * 1+1D spherical fortran code, which might explain the strange
+ * way of performing the calculation.
+ */
 double total_energy(hydro_fields f, hydro_params p) {
 
   int x, y, z;
@@ -141,25 +140,18 @@ double total_energy(hydro_fields f, hydro_params p) {
     }
   }
 
-  // Cast here
-  //  vol = (double)(f.xe[p.N-1]);
-  //  vol = ((double)(p.Lx*p.Ly*p.Lz))*p.dx*p.dx*p.dx;
-
-  //  fprintf(stderr,"%lf/%lf/%lf/%lf\n",restE,kinE,kinphi,grdphi);
-  
   Etot = (restE+kinE+kinphi+grdphi);
   
-  return Etot; // /vol;
-
-
+  return Etot;
 
 }
 
 
 
-
-
-// straight from fortran, slightly verbose way of doing it!
+/* double kinetic_energy(hydro_fields f, hydro_params p)
+ *
+ * Fluid kinetic energy only.
+ */
 double kinetic_energy(hydro_fields f, hydro_params p) {
 
   int x, y, z;
@@ -196,7 +188,11 @@ double kinetic_energy(hydro_fields f, hydro_params p) {
 }
 
 
-// straight from fortran, slightly verbose way of doing it!
+
+/* double rest_energy(hydro_fields f, hydro_params p)
+ *
+ * Fluid rest energy only.
+ */
 double rest_energy(hydro_fields f, hydro_params p) {
 
   int x, y, z;
@@ -234,7 +230,12 @@ double rest_energy(hydro_fields f, hydro_params p) {
     
 			    
 
-// as a test (basically just a different way of calculating E, above)
+/* double tzerozero(hydro_fields f, hydro_params p)
+ *
+ * The zero-zero component of the stress energy tensor.
+ * It's basically just a different way of calculating total_energy,
+ * (see above) and therefore serves as a cross-check.
+ */
 double tzerozero(hydro_fields f, hydro_params p) {
 
   double total = 0.0;
@@ -291,7 +292,11 @@ double tzerozero(hydro_fields f, hydro_params p) {
 
 
 
-// ONLY stuff that is linear in the metric
+/* void stress_energy(hydro_fields f, hydro_params p, double ****Tij)
+ *
+ * Terms in the stress-energy tensor that are *LINEAR* in the metric,
+ * and therefore source metric perturbations.
+ */
 void stress_energy(hydro_fields f, hydro_params p, double ****Tij) {
 
   int x, y, z;
@@ -352,27 +357,33 @@ void stress_energy(hydro_fields f, hydro_params p, double ****Tij) {
 	if(p.gwsource != GW_FLUID) {
 	  // Gradient bits
 	  Tij[CPT_11][x][y][z] +=
-	    0.25*((f.phi[x+1][y][z] - f.phi[x-1][y][z])/p.dx)
+	    0.25*((f.phi[x+1][y][z]
+		   - f.phi[x-1][y][z])/p.dx)
 	    *((f.phi[x+1][y][z] - f.phi[x-1][y][z])/p.dx);
 
 	  Tij[CPT_21][x][y][z] += 
-	    0.25*((f.phi[x+1][y][z] - f.phi[x-1][y][z])/p.dx)
+	    0.25*((f.phi[x+1][y][z]
+		   - f.phi[x-1][y][z])/p.dx)
 	    *((f.phi[x][y+1][z] - f.phi[x][y-1][z])/p.dx);
 	  
 	  Tij[CPT_31][x][y][z] +=
-	    0.25*((f.phi[x][y][(z+1)%p.Lz] - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx)
+	    0.25*((f.phi[x][y][(z+1)%p.Lz]
+		   - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx)
 	    *((f.phi[x+1][y][z] - f.phi[x-1][y][z])/p.dx);
 	  
 	  Tij[CPT_22][x][y][z] += 
-	    0.25*((f.phi[x][y+1][z] - f.phi[x][y-1][z])/p.dx)
+	    0.25*((f.phi[x][y+1][z]
+		   - f.phi[x][y-1][z])/p.dx)
 	    *((f.phi[x][y+1][z] - f.phi[x][y-1][z])/p.dx);
 	  
 	  Tij[CPT_32][x][y][z] +=
-	    0.25*((f.phi[x][y][(z+1)%p.Lz] - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx)
+	    0.25*((f.phi[x][y][(z+1)%p.Lz]
+		   - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx)
 	    *((f.phi[x][y+1][z] - f.phi[x][y-1][z])/p.dx);
 	  
 	  Tij[CPT_33][x][y][z] +=
-	    0.25*((f.phi[x][y][(z+1)%p.Lz] - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx)
+	    0.25*((f.phi[x][y][(z+1)%p.Lz]
+		   - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx)
 	    *((f.phi[x][y][(z+1)%p.Lz] - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx);
 	}
 
@@ -383,7 +394,11 @@ void stress_energy(hydro_fields f, hydro_params p, double ****Tij) {
 }
 
 
-
+/* void energy_density(hydro_fields f, hydro_params p, double ***en)
+ *
+ * As for total_energy, see above, but calculated on a per-lattice-site
+ * basis and then stored in en.
+ */
 void energy_density(hydro_fields f, hydro_params p, double ***en) {
 
   int x, y, z;
