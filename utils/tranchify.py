@@ -1,3 +1,7 @@
+# tranchify.py
+#
+# Slightly jury-rigged routine to compute (eg) peak
+# of power spectrum as function of time.
 import sys, string
 
 rowent = int(sys.argv[1])
