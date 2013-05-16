@@ -1,6 +1,6 @@
 /* artificial.c
  *
- * Artificial viscosity.
+ * Artificial viscosity. Not used currently.
  */
 #include "hydro.h"
 
