@@ -1,4 +1,6 @@
 /* uetc.c
+ *
+ * Unequal time correlator calculation
  */
 #include "hydro.h"
 
@@ -8,17 +10,10 @@
 
 
 
-/* void gwproject(hydro_params p, int x_start, int slab,
- *              double *product, fftw_complex **udot); 
+/* void init_uetc(hydro_fields f, hydro_params p)
  *
- * Project from the six unique degrees of freedom in udot,
- * (obtained here in momentum space from a distributed shared memory
- * FFT) to obtain |hij|^2 in momentum space, cf eq. 30 in the
- * paper cited at the start.
- *
- * slab is the thickness in the x-direction of the local domain
- * x_start is the physical start of this region
- * y and z have the full spatial extent p.Ly and p.Lz
+ * Initialise the UETC calculation with the Tij's from the
+ * current timestep.
  */ 
 void init_uetc(hydro_fields f, hydro_params p) {
 
@@ -45,7 +40,13 @@ void init_uetc(hydro_fields f, hydro_params p) {
 }
 
 
-
+/* void uetc_project(hydro_params p, int x_start, int slab,
+ *                 double *product_re, double *product_im,
+ *                 fftw_complex **Tij_then, fftw_complex **Tij_now)
+ *
+ * Like gw_project (see gw.c), but for two separate timesteps, and takes two
+ * different tensors.
+ */
 void uetc_project(hydro_params p, int x_start, int slab,
 		  double *product_re, double *product_im,
 		  fftw_complex **Tij_then, fftw_complex **Tij_now) {
@@ -100,6 +101,8 @@ void uetc_project(hydro_params p, int x_start, int slab,
 
 /* fft_uetc(hydro_fields f, hydro_params p)
  *
+ * Actually calculate the uetc at the current timestep and
+ * store in an appropriately named file.
  */
 void fft_uetc(hydro_fields f, hydro_params p, int step) {
 
@@ -157,8 +160,10 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
   fftw_complex *in = fftw_alloc_complex(alloc_local);
   fftw_complex *out = fftw_alloc_complex(alloc_local);
 
-  fftw_complex **outcpts_then = (fftw_complex **)malloc(6*sizeof(fftw_complex *));
-  fftw_complex **outcpts_now = (fftw_complex **)malloc(6*sizeof(fftw_complex *));
+  fftw_complex **outcpts_then =
+    (fftw_complex **)malloc(6*sizeof(fftw_complex *));
+  fftw_complex **outcpts_now =
+    (fftw_complex **)malloc(6*sizeof(fftw_complex *));
   
   for(i=0;i<TENSOR_CPTS;i++) {
     outcpts_then[i] = fftw_alloc_complex(alloc_local);
@@ -189,8 +194,10 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
     for(x=1; x<=p.slicex; x++) {
       for(y=1; y<=p.slicey; y++) {
 	for(z=0; z<p.Lz; z++) {
-	  trim_then[(x-1)*p.slicey*p.Lz + (y-1)*p.Lz + z] = f.initial_Tij[i][x][y][z];
-	  trim_now[(x-1)*p.slicey*p.Lz + (y-1)*p.Lz + z] = Tij[i][x][y][z];
+	  trim_then[(x-1)*p.slicey*p.Lz + (y-1)*p.Lz + z] 
+	    = f.initial_Tij[i][x][y][z];
+	  trim_now[(x-1)*p.slicey*p.Lz + (y-1)*p.Lz + z]
+	    = Tij[i][x][y][z];
 	}
       }
     }
@@ -285,8 +292,10 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
     for(x=0;x<slab;x++) {
       for(y=0;y<p.Ly;y++) {
 	for(z=0;z<p.Lz;z++) {
-	  in[x*p.Ly*p.Lz + y*p.Lz + z][0] = slice_now[x*p.Ly*p.Lz + y*p.Lz + z];
-	  in[x*p.Ly*p.Lz + y*p.Lz + z][1] = 0.0;
+	  in[x*p.Ly*p.Lz + y*p.Lz + z][0]
+	    = slice_now[x*p.Ly*p.Lz + y*p.Lz + z];
+	  in[x*p.Ly*p.Lz + y*p.Lz + z][1]
+	    = 0.0;
 	}
       }
     }
@@ -308,7 +317,8 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
   }
 
 
-  uetc_project(p, x_start, slab, slice_re, slice_im, outcpts_then, outcpts_now);
+  uetc_project(p, x_start, slab, slice_re, slice_im,
+	       outcpts_then, outcpts_now);
 
 
   int nbins = minof3_int(p.Lx, p.Ly, p.Lz);
