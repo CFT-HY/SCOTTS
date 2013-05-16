@@ -8,7 +8,10 @@
 
 
 
-/* Donor cell advection for E in direction dir */
+/* void donor_E_dir(hydro_fields f, hydro_params p, int dir)
+ *
+ * Donor cell advection for E in direction dir
+ */
 void donor_E_dir(hydro_fields f, hydro_params p, int dir) {
 
   int x, y, z;
@@ -59,7 +62,10 @@ void donor_E_dir(hydro_fields f, hydro_params p, int dir) {
 }
 
 
-// straight from fortran
+/* void donor_Z_dir(hydro_fields f, hydro_params p, int dir)
+ *
+ * Donor cell advection for Z in direction dir
+ */
 void donor_Z_dir(hydro_fields f, hydro_params p, int dir) {
 
   double vc;
@@ -122,9 +128,12 @@ void donor_Z_dir(hydro_fields f, hydro_params p, int dir) {
       for(z = 0; z < p.Lz; z++) {
 
 
-    f.Z[dir][x][y][z] = f.Z[dir][x][y][z] - p.dt*(f.F[0][x][y][z] - f.F[0][x-1][y][z])/p.dx;
-    f.Z[dir][x][y][z] = f.Z[dir][x][y][z] - p.dt*(f.F[1][x][y][z] - f.F[1][x][y-1][z])/p.dx;
-    f.Z[dir][x][y][z] = f.Z[dir][x][y][z] - p.dt*(f.F[2][x][y][z] - f.F[2][x][y][(z-1+p.Lz)%p.Lz])/p.dx;
+	f.Z[dir][x][y][z] = f.Z[dir][x][y][z]
+	  - p.dt*(f.F[0][x][y][z] - f.F[0][x-1][y][z])/p.dx;
+	f.Z[dir][x][y][z] = f.Z[dir][x][y][z]
+	  - p.dt*(f.F[1][x][y][z] - f.F[1][x][y-1][z])/p.dx;
+	f.Z[dir][x][y][z] = f.Z[dir][x][y][z]
+	  - p.dt*(f.F[2][x][y][z] - f.F[2][x][y][(z-1+p.Lz)%p.Lz])/p.dx;
       }
     }
   }
@@ -135,6 +144,11 @@ void donor_Z_dir(hydro_fields f, hydro_params p, int dir) {
 }
 
 
+
+/* void advect_E(hydro_fields f, hydro_params p)
+ *
+ * Donor cell advection for E in all directions
+ */
 void advect_E(hydro_fields f, hydro_params p) {
 
   int order; 
@@ -148,7 +162,10 @@ void advect_E(hydro_fields f, hydro_params p) {
 
 
 
-
+/* void advect_Z(hydro_fields f, hydro_params p)
+ *
+ * Donor cell advection for Z in all directions
+ */
 void advect_Z(hydro_fields f, hydro_params p) {
 
   int order; 
