@@ -1,3 +1,10 @@
+/* util.c
+ *
+ * Utility functions, not currently used.
+ * May be used later if we introduce more sophisticated advection.
+ * They are mostly logical selection of one number from three subject
+ * to certain constraints.
+ */
 #include "hydro.h"
 
 double minof3(double a, double b, double c) {
