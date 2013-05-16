@@ -1,3 +1,7 @@
+/* papi.c
+ * 
+ * PAPI performance counter initialisation and measurement.
+ */
 #include "hydro.h"
 
 #ifdef PAPI
@@ -5,6 +9,11 @@
 // Naughty global variable!
 int EventSet = PAPI_NULL;
 
+/* void papi_init()
+ *
+ * Initialise some PAPI counters. Optimised to work on my desktop
+ * and/or afo (may need adjustement on other machines).
+ */
 void papi_init()
 {
 
@@ -65,6 +74,11 @@ void papi_init()
 
 }
 
+
+/* void papi_finalise()
+ *
+ * Read out the PAPI counters and print some important quantities.
+ */
 void papi_finalise()
 {
 
