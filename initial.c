@@ -7,8 +7,14 @@
 #include "hydro.h"
 
 
-
+/* void initial_scalar_bubble(hydro_fields f, hydro_params p)
+ *
+ * Create a single isolated scalar bubble at the
+ * centre of the box.
+ */
 void initial_scalar_bubble(hydro_fields f, hydro_params p) {
+
+  int x, y, z, i;
 
   double sigmlo = 2.0*sqrt(2.0)/81.0*p.alpha*p.alpha*p.alpha
     /(p.lambda*p.lambda*sqrt(p.lambda));
@@ -32,16 +38,10 @@ void initial_scalar_bubble(hydro_fields f, hydro_params p) {
 	  "** phimin %g, cstrab %g, Rtenab %g\n",
 	  phimin, cstrab, Rtenab);
 
-  int x, y, z;
-  int i;
-
-  //  fprintf(stderr,"my shiftx is %d and shifty is %d\n", p.shiftx, p.shifty);
 
   for(x=1;x<=p.slicex;x++) {
     for(y=1;y<=p.slicey;y++) {
       for(z=0;z<p.Lz;z++) {
-
-
     
 	f.phi[x][y][z] = cstrab*exp(-1.0*p.dx*p.dx
 				    *(((double)(p.shiftx+x-1-p.Lx/2))
@@ -72,8 +72,13 @@ void initial_scalar_bubble(hydro_fields f, hydro_params p) {
 
 
 
-
+/* void initial_blank(hydro_fields f, hydro_params p)
+ *
+ * Empty box with no bubbles.
+ */
 void initial_blank(hydro_fields f, hydro_params p) {
+
+  int x, y, z, i;
 
   double sigmlo = 2.0*sqrt(2.0)/81.0*p.alpha*p.alpha*p.alpha
     /(p.lambda*p.lambda*sqrt(p.lambda));
@@ -97,26 +102,12 @@ void initial_blank(hydro_fields f, hydro_params p) {
 	  "** phimin %g, cstrab %g, Rtenab %g\n",
 	  phimin, cstrab, Rtenab);
 
-  int x, y, z;
-  int i;
-
-  //  fprintf(stderr,"my shiftx is %d and shifty is %d\n", p.shiftx, p.shifty);
 
   for(x=1;x<=p.slicex;x++) {
     for(y=1;y<=p.slicey;y++) {
       for(z=0;z<p.Lz;z++) {
 	
 	f.phi[x][y][z] = 0.0; 
-	
-	/*
-	cstrab*exp(-1.0*
-		   p.dx*p.dx*( ((double)(p.shiftx+x-1-p.Lx/2))
-			       *((double)(p.shiftx+x-1-p.Lx/2))
-			       + ((double)(p.shifty+y-1-p.Ly/2))
-			       *((double)(p.shifty+y-1-p.Ly/2))
-			       + ((double)(z-p.Lz/2))*((double)(z-p.Lz/2)))
-		   /2.0/(Rtenab*Rtenab) );
-	*/
 	
 	f.pifull[x][y][z] = 0.0;
 	
@@ -137,13 +128,16 @@ void initial_blank(hydro_fields f, hydro_params p) {
 
 
 
+/* int safe_distance(hydro_fields f, hydro_params p)
+ *
+ * Returns the safe distance required around a newly
+ * nucleated bubble.
+ */
 int safe_distance(hydro_fields f, hydro_params p) {
 
 
   double sigmlo = 2.0*sqrt(2.0)/81.0*p.alpha*p.alpha*p.alpha
     /(p.lambda*p.lambda*sqrt(p.lambda));
-
-
 
   double phimin =  ( p.alpha*p.Tconst
 		     + sqrt((p.alpha*p.Tconst)*(p.alpha*p.Tconst)
@@ -156,22 +150,18 @@ int safe_distance(hydro_fields f, hydro_params p) {
   
   double Rtenab = p.scale*Rlapab;
 
-  /*
-  printf0(p,
-	  "** phimin %g, cstrab %g, Rtenab %g\n",
-	  phimin, cstrab, Rtenab);
-  */
-
   double sigma = 1.0/(sqrt(p.dx*p.dx/2.0/(Rtenab*Rtenab) ));
-
   
   return (int)(round(sigma));
  	
 }
 
 
-
-
+/* int can_nucleate(hydro_fields f, hydro_params p, int x0, int y0, int z0)
+ *
+ * Are the conditions suitable for nucleation at (x0, y0, z0)?
+ * Returns 1 if so.
+ */
 int can_nucleate(hydro_fields f, hydro_params p, int x0, int y0, int z0) {
 
   int safedist = safe_distance(f,p);
@@ -228,13 +218,20 @@ int can_nucleate(hydro_fields f, hydro_params p, int x0, int y0, int z0) {
     if(!is_good)
       break;
   }
-  
+
+  // Only allow nucleation if *all* the volumes look okay.  
   return reduce_and(is_good, p);
 }
 
 
+/* nucleate_at(hydro_fields f, hydro_params p, int x0, int y0, int z0)
+ *
+ * Nucleate a bubble at (x0, y0, z0). Equivalent to initial_scalar_bubble
+ * at a given point.
+ */
 void nucleate_at(hydro_fields f, hydro_params p, int x0, int y0, int z0) {
-  
+
+  int x, y, z, i;  
   
   double sigmlo = 2.0*sqrt(2.0)/81.0*p.alpha*p.alpha*p.alpha
     /(p.lambda*p.lambda*sqrt(p.lambda));
@@ -252,19 +249,7 @@ void nucleate_at(hydro_fields f, hydro_params p, int x0, int y0, int z0) {
   
   double Rtenab = p.scale*Rlapab;
 
-
-  /*
-  printf0(p,
-	  "** phimin %g, cstrab %g, Rtenab %g\n",
-	  phimin, cstrab, Rtenab);
-  */
-
-  int x, y, z;
-  int i;
-
   printf0(p, "Nucleating at (%d,%d,%d)\n",x0,y0,z0);
-
-  //  fprintf(stderr,"my shiftx is %d and shifty is %d\n", p.shiftx, p.shifty);
 
   int shortx, shorty, shortz;
   int longx, longy, longz;
@@ -316,6 +301,7 @@ void nucleate_at(hydro_fields f, hydro_params p, int x0, int y0, int z0) {
 
 	}
 
+	// Don't set up the energy density according to the Eqn of state?
 	//	f.E[x][y][z] = 0.0;
       }
     }
@@ -325,21 +311,18 @@ void nucleate_at(hydro_fields f, hydro_params p, int x0, int y0, int z0) {
 }
 
 
-
-
-
+/* void initial_3D(hydro_fields f, hydro_params p)
+ *
+ * "Shock tube"-style initial conditions for testing the fluid.
+ * No scalar field initialisation.
+ */
 void initial_3D(hydro_fields f, hydro_params p) {
-  
+ 
+  int x, y, z, i; 
 
   double sigmlo = 2.0*sqrt(2.0)/81.0*p.alpha*p.alpha*p.alpha
     /(p.lambda*p.lambda*sqrt(p.lambda));
 
-  //  srand48(time());
-
-  printf0(p,
-	  "** Initial conditions magic:\n"
-	  "** sigmlo %g\n", sigmlo);
-  
   double phimin =  ( p.alpha*p.Tconst 
 		     + sqrt((p.alpha*p.Tconst)*(p.alpha*p.Tconst)
 			    - 4*p.lambda*p.gamma
@@ -362,10 +345,6 @@ void initial_3D(hydro_fields f, hydro_params p) {
   Er = 1.0/(1.0+rE);
   El = rE*Er;
 
-
-
-  int x, y, z;
-  int i;
 
 
   for(x=1;x<=p.slicex;x++) {
@@ -402,8 +381,14 @@ void initial_3D(hydro_fields f, hydro_params p) {
 
 
 
-
-
+/* int do_nucleate(hydro_fields f, hydro_params p) 
+ *
+ * Attempt exactly one nucleation:
+ * - choose a site
+ * - check if nucleation is allowed there
+ * - if so, nucleate
+ * - if not, do nothing
+ */
 int do_nucleate(hydro_fields f, hydro_params p) {
 
   printf0(p, "Trying to nucleate a bubble (safe distance = %d)\n",
@@ -433,6 +418,17 @@ int do_nucleate(hydro_fields f, hydro_params p) {
 }
 
 
+/* int should_nucleate(hydro_fields f, hydro_params p, double t, int step)
+ *
+ * Should an attempt to nucleate be carried out at the current step?
+ *
+ * Provides for either random nucleation based on an exponentially
+ * growing nucleation rate (NUC_EXP) or else nucleation based
+ * on a list of times at which nucleation should take place
+ * (which may be more than once per timestep towards the end).
+ *
+ * Such a nucleation list can be generated by nucproc.py
+ */
 int should_nucleate(hydro_fields f, hydro_params p, double t, int step) {
 
   if(p.nucleation == NUC_EXP) {
@@ -446,7 +442,8 @@ int should_nucleate(hydro_fields f, hydro_params p, double t, int step) {
 
 
     if(randin < prob) {
-      printf0(p, "Recommending nucleation at t=%lf, prob=%lf, random=%lf\n", t, prob, randin);
+      printf0(p, "Recommending nucleation at t=%lf, prob=%lf, random=%lf\n",
+	      t, prob, randin);
 
     //    fprintf(stderr,
     //	    "Rank %d recommending nucleation at t %lf (probability=%lf)\n",
@@ -462,7 +459,8 @@ int should_nucleate(hydro_fields f, hydro_params p, double t, int step) {
     for(j=0; j < p.n_nucsteps; j++) {
       if(p.nucsteps[j] == step) {
 	nuc_count++;
-	printf0(p, "Parameter file requires nucleation at t=%lf step=%d\n", t, step);
+	printf0(p, "Parameter file requires nucleation at t=%lf step=%d\n",
+		t, step);
       }
     }
 
@@ -475,6 +473,11 @@ int should_nucleate(hydro_fields f, hydro_params p, double t, int step) {
 
 
 
+/* void init_profile(hydro_fields *f, hydro_params *p)
+ *
+ * Initialise an invariant scaling profile for new bubbles.
+ * Based on my Q-ball code. Not currently in use.
+ */
 void init_profile(hydro_fields *f, hydro_params *p) {
   double xdummy, phidummy, vdummy;
 
@@ -489,7 +492,8 @@ void init_profile(hydro_fields *f, hydro_params *p) {
 
   int lines = 0;
 
-  while(!feof(fp) && (fscanf(fp,"%lf%lf%lf",&xdummy,&phidummy,&vdummy) == 3)) {
+  while(!feof(fp)
+	&& (fscanf(fp,"%lf%lf%lf",&xdummy,&phidummy,&vdummy) == 3)) {
     lines++;
   }
 
@@ -513,8 +517,10 @@ void init_profile(hydro_fields *f, hydro_params *p) {
   f->V_inv = (double *) malloc(lines*sizeof(double));
 
   while(i < lines) {
-    if(fscanf(fp, "%lf%lf%lf", &(f->x_inv[i]), &(f->phi_inv[i]), &(f->V_inv[i])) != 3 && (!(p->rank))) {
-      fprintf(stderr, "File inconsistent between first and second reads: odd... giving up\n");
+    if(fscanf(fp, "%lf%lf%lf", &(f->x_inv[i]), &(f->phi_inv[i]),
+	      &(f->V_inv[i])) != 3 && (!(p->rank))) {
+      fprintf(stderr, "File inconsistent between first and second reads: "
+	      "odd... giving up\n");
       die(100);
     }
     i++;
@@ -525,6 +531,6 @@ void init_profile(hydro_fields *f, hydro_params *p) {
   printf0(*p, "Done loading invariant profile\n");
 
 
-  // Not quite: we want 
+  // Not quite: we want ...???
 
 }
