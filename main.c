@@ -472,10 +472,12 @@ int main(int argc, char *argv[])
 	  "of which %lfs was comms\n",
 	  cpu_time_used, get_comms_time(&p));
 
-
+  // Close pressure measurement file (not used)
+  /*
   if(!p.rank) {
     fclose(press);
   }
+  */
 
   // Clean up memory
   free_fields(&f, p);
