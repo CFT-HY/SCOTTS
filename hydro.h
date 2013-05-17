@@ -133,8 +133,11 @@ typedef struct {
 
 
 
-  // Degrees of freedom
+  // Scale factor
   double a;
+
+  // Degrees of freedom
+  double gdeg;
 
   // Number of physical sites in volume
   int N;
