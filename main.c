@@ -59,8 +59,8 @@ int main(int argc, char *argv[])
   // How big is the system
   p.N = p.Lx*p.Ly*p.Lz;
 
-
-  //  p.scale = 0.3;
+  // Scale factor (fixed to 1 for now, no expansion)
+  p.a = 1.0;
 
   // Calculate potential terms, no longer used (potential directly supplied)
   /*
@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
 
 
   // Degrees of freedom, still hardcoded
-  p.a = 34.25*M_PI*M_PI/90.0;
+  p.gdeg = 34.25*M_PI*M_PI/90.0;
 
 
   // Set up layout for any (or no) parallelism

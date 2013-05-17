@@ -25,7 +25,7 @@ void find_Ta(hydro_fields f, hydro_params p) {
 	 */
 	Tfix = 0.25*p.gamma*p.gamma*f.phi[x][y][z]*f.phi[x][y][z]
 	  *f.phi[x][y][z]*f.phi[x][y][z]
-	  - 12.0*p.a*(0.25*p.lambda*f.phi[x][y][z]*f.phi[x][y][z]
+	  - 12.0*p.gdeg*(0.25*p.lambda*f.phi[x][y][z]*f.phi[x][y][z]
 		      *f.phi[x][y][z]*f.phi[x][y][z]
 		      - 0.5*p.gamma*p.T0*p.T0*f.phi[x][y][z]*f.phi[x][y][z]
 		      - f.E[x][y][z]/f.W[x][y][z]);
@@ -34,7 +34,7 @@ void find_Ta(hydro_fields f, hydro_params p) {
 	//    if(Tfix < 0)
 	//      Tfix = 0.0;
 	
-	f.T[x][y][z] = sqrt((1.0/(6.0*p.a))
+	f.T[x][y][z] = sqrt((1.0/(6.0*p.gdeg))
 			    * (0.5*p.gamma*f.phi[x][y][z]*f.phi[x][y][z]
 			       + sqrt(Tfix)));
       }
@@ -77,7 +77,7 @@ void eq_of_state(hydro_fields f, hydro_params p) {
       for(z=0; z<p.Lz; z++) {
 
 	if(f.E[x][y][z] 
-	   < tolE*f.W[x][y][z]*3.0*p.a*f.T[x][y][z]
+	   < tolE*f.W[x][y][z]*3.0*p.gdeg*f.T[x][y][z]
 	   *f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]) {
 	  fprintf(stderr,"(at %d,%d,%d) E getting dangerously small "
 		  "due to -ve V cont.\n",
@@ -86,7 +86,7 @@ void eq_of_state(hydro_fields f, hydro_params p) {
 	}
 
 	// pressure P is radiative pressure less the potential
-	f.p[x][y][z] = p.a*f.T[x][y][z]*f.T[x][y][z]
+	f.p[x][y][z] = p.gdeg*f.T[x][y][z]*f.T[x][y][z]
 	  *f.T[x][y][z]*f.T[x][y][z] - Vnew[x][y][z];
 	f.kappa[x][y][z] = 1.0 + f.W[x][y][z]*f.p[x][y][z]/f.E[x][y][z];
 	

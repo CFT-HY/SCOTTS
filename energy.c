@@ -268,7 +268,7 @@ double tzerozero(hydro_fields f, hydro_params p) {
 
 	// radiative fluid pressure
 	// (minus sign if 00, otherwise plus)
-	total -= (p.a*f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]);
+	total -= (p.gdeg*f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]);
 	
 	// potential
 	// (minus sign if 00, otherwise plus)
@@ -276,7 +276,8 @@ double tzerozero(hydro_fields f, hydro_params p) {
 
 	// fluid energy
 	// (remember U_mu U_nu's at the end, no other sign)
-	total += (4.0*p.a*f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]
+	total += (4.0*p.gdeg
+		  *f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]
 		  - f.T[x][y][z]*VTf(p, f.T[x][y][z], f.phi[x][y][z]))
 	  *f.W[x][y][z]*f.W[x][y][z];
 	// U = (W, U1, U2, U3)
@@ -315,37 +316,37 @@ void stress_energy(hydro_fields f, hydro_params p, double ****Tij) {
 
 	if(p.gwsource != GW_FIELD) {
 	  // fluid bits
-	  Tij[CPT_11][x][y][z] += (4.0*p.a*f.T[x][y][z]
+	  Tij[CPT_11][x][y][z] += (4.0*p.gdeg*f.T[x][y][z]
 				   *f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]
 				   - f.T[x][y][z]*VTf(p, f.T[x][y][z], 
 						      f.phi[x][y][z]))
 	    *f.U[0][x][y][z]*f.U[0][x][y][z];
 	  
-	  Tij[CPT_21][x][y][z] += (4.0*p.a*f.T[x][y][z]
+	  Tij[CPT_21][x][y][z] += (4.0*p.gdeg*f.T[x][y][z]
 				   *f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]
 				   - f.T[x][y][z]*VTf(p, f.T[x][y][z],
 						      f.phi[x][y][z]))
 	    *f.U[1][x][y][z]*f.U[0][x][y][z];
 	  
-	  Tij[CPT_31][x][y][z] += (4.0*p.a*f.T[x][y][z]
+	  Tij[CPT_31][x][y][z] += (4.0*p.gdeg*f.T[x][y][z]
 				   *f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]
 				   - f.T[x][y][z]*VTf(p, f.T[x][y][z],
 						      f.phi[x][y][z]))
 	    *f.U[2][x][y][z]*f.U[0][x][y][z];
 	  
-	  Tij[CPT_22][x][y][z] += (4.0*p.a*f.T[x][y][z]
+	  Tij[CPT_22][x][y][z] += (4.0*p.gdeg*f.T[x][y][z]
 				   *f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]
 				   - f.T[x][y][z]*VTf(p, f.T[x][y][z],
 						      f.phi[x][y][z]))
 	    *f.U[1][x][y][z]*f.U[1][x][y][z];
 	  
-	  Tij[CPT_32][x][y][z] += (4.0*p.a*f.T[x][y][z]
+	  Tij[CPT_32][x][y][z] += (4.0*p.gdeg*f.T[x][y][z]
 				   *f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]
 				   - f.T[x][y][z]*VTf(p, f.T[x][y][z],
 						      f.phi[x][y][z]))
 	  *f.U[2][x][y][z]*f.U[1][x][y][z];
 	  
-	  Tij[CPT_33][x][y][z] += (4.0*p.a*f.T[x][y][z]
+	  Tij[CPT_33][x][y][z] += (4.0*p.gdeg*f.T[x][y][z]
 				*f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]
 				   - f.T[x][y][z]*VTf(p, f.T[x][y][z],
 						      f.phi[x][y][z]))
