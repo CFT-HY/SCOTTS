@@ -16,15 +16,22 @@
 # CC := icc -DMPI -DFFT -DSILO
 
 # Sisu
-CC := cc -DMPI -DFFT -DSILO -O3 -opt-prefetch -unroll-aggressive -no-prec-div -fp-model fast=2 -align -fno-alias -fno-fnalias -ipo
+# CC := cc -DMPI -DFFT -DSILO
+
+# Taito
+CC := mpicc -DMPI -DFFT -DSILO
 
 #### CFLAGS ####
 
-# on louhi
+# on Louhi
 # CFLAGS := -O3 -L/home/u1/weir/local/lib -I/home/u1/weir/local/include
 
-# on sisu
-CFLAGS := -L/homeappl/home/weir/local/lib -I/homeappl/home/weir/local/include
+# on Sisu
+# CFLAGS := -L/homeappl/home/weir/local/lib -I/homeappl/home/weir/local/include  -O3 -opt-prefetch -unroll-aggressive -no-prec-div -fp-model fast=2 -align -fno-alias -fno-fnalias -ipo
+
+# on Taito
+CFLAGS := -L/homeappl/home/weir/local/lib -I/homeappl/home/weir/local/include  -O3 -opt-prefetch -unroll-aggressive -no-prec-div -fp-model fast=2 -align -fno-alias -fno-fnalias -ipo
+
 
 # on vuori
 # CFLAGS := -O3 -L/home/u1/weir/local/lib -I/home/u1/weir/local/include
@@ -50,6 +57,9 @@ CFLAGS := -L/homeappl/home/weir/local/lib -I/homeappl/home/weir/local/include
 # LIBS := -lfftw3_mpi -lfftw3 -lsiloh5
 
 # on sisu
+# LIBS := -lfftw3_mpi -lfftw3 -lsiloh5 -lhdf5 -lstdc++ -lz
+
+# on Taito
 LIBS := -lfftw3_mpi -lfftw3 -lsiloh5 -lhdf5 -lstdc++ -lz
 
 # on vuori

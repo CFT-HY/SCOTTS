@@ -56,7 +56,7 @@ void initial_scalar_bubble(hydro_fields f, hydro_params p) {
 	
 	f.T[x][y][z] = p.Tconst;
 	
-	f.E[x][y][z] = 3.0*p.a*f.T[x][y][z]*f.T[x][y][z]
+	f.E[x][y][z] = 3.0*p.gdeg*f.T[x][y][z]*f.T[x][y][z]
 	  *f.T[x][y][z]*f.T[x][y][z]
 	  + Vf(p, f.T[x][y][z], f.phi[x][y][z])
 	  - f.T[x][y][z]*VTf(p, f.T[x][y][z], f.phi[x][y][z]);
@@ -113,7 +113,7 @@ void initial_blank(hydro_fields f, hydro_params p) {
 	
 	f.T[x][y][z] = p.Tconst;
 	
-	f.E[x][y][z] = 3.0*p.a*f.T[x][y][z]*f.T[x][y][z]
+	f.E[x][y][z] = 3.0*p.gdeg*f.T[x][y][z]*f.T[x][y][z]
 	  *f.T[x][y][z]*f.T[x][y][z]
 	  + Vf(p, f.T[x][y][z], f.phi[x][y][z])
 	  - f.T[x][y][z]*VTf(p, f.T[x][y][z], f.phi[x][y][z]);
@@ -294,7 +294,7 @@ void nucleate_at(hydro_fields f, hydro_params p, int x0, int y0, int z0) {
 
 	if(phival > 1e-8) {
 
-	  f.E[x][y][z] = 3.0*p.a*f.T[x][y][z]*f.T[x][y][z]
+	  f.E[x][y][z] = 3.0*p.gdeg*f.T[x][y][z]*f.T[x][y][z]
 	    *f.T[x][y][z]*f.T[x][y][z]
 	    + Vf(p, f.T[x][y][z], f.phi[x][y][z])
 	    - f.T[x][y][z]*VTf(p, f.T[x][y][z], f.phi[x][y][z]);
