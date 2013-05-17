@@ -27,10 +27,16 @@ CC := mpicc -DMPI -DFFT -DSILO
 # CFLAGS := -O3 -L/home/u1/weir/local/lib -I/home/u1/weir/local/include
 
 # on Sisu
-# CFLAGS := -L/homeappl/home/weir/local/lib -I/homeappl/home/weir/local/include  -O3 -opt-prefetch -unroll-aggressive -no-prec-div -fp-model fast=2 -align -fno-alias -fno-fnalias -ipo
+# CFLAGS := -L/homeappl/home/weir/local/lib \
+#	-I/homeappl/home/weir/local/include \
+#	 -O3 -opt-prefetch -unroll-aggressive -no-prec-div \
+#	-fp-model fast=2 -align -fno-alias -fno-fnalias -ipo
 
 # on Taito
-CFLAGS := -L/homeappl/home/weir/local/lib -I/homeappl/home/weir/local/include  -O3 -opt-prefetch -unroll-aggressive -no-prec-div -fp-model fast=2 -align -fno-alias -fno-fnalias -ipo
+CFLAGS := -L/homeappl/home/weir/local/lib \
+	-I/homeappl/home/weir/local/include \
+	-O3 -opt-prefetch -unroll-aggressive -no-prec-div \
+	-fp-model fast=2 -align -fno-alias -fno-fnalias -ipo
 
 
 # on vuori
@@ -46,7 +52,9 @@ CFLAGS := -L/homeappl/home/weir/local/lib -I/homeappl/home/weir/local/include  -
 # CFLAGS := -O0 -I/Users/weir/Installed/silo-4.8-bsd/include/
 
 # on Alcyone:
-# CFLAGS := -O3 -ipo -m64 -align -fno-alias -fno-fnalias -falign-functions -unroll-aggressive -fp-model fast=2 -I/home/weir/local/include/
+# CFLAGS := -O3 -ipo -m64 -align -fno-alias -fno-fnalias \
+#	-falign-functions -unroll-aggressive -fp-model fast=2 \
+#	-I/home/weir/local/include/
 
 # on Cosmos:
 # CFLAGS := -g -O3 -xHost -align -ansi-alias -mcmodel=medium
@@ -66,19 +74,23 @@ LIBS := -lfftw3_mpi -lfftw3 -lsiloh5 -lhdf5 -lstdc++ -lz
 # LIBS := -lfftw3_mpi -lfftw3 -lm
 
 # on pc168:
-# LIBS :=   -lfftw3_mpi -lfftw3 -lm -lsiloh5
+# LIBS := -lfftw3_mpi -lfftw3 -lm -lsiloh5
 
 # on afo
-# LIBS := -L/home/weir/local/lib/ -lstdc++ -lhdf5 -lsiloh5 -lfftw3_mpi -lfftw3 -lm
+# LIBS := -L/home/weir/local/lib/ \
+#	-lstdc++ -lhdf5 -lsiloh5 -lfftw3_mpi -lfftw3 -lm
 
 # on my mac:
-# LIBS := -L/Users/weir/Installed/silo-4.8-bsd/lib/ -lsilo -lfftw3_mpi -lfftw3 -lm
+# LIBS := -L/Users/weir/Installed/silo-4.8-bsd/lib/ \
+#	-lsilo -lfftw3_mpi -lfftw3 -lm
 
 # on Alcyone
-# LIBS := -L/home/weir/local/lib/ -lfftw3_mpi -lfftw3 -lstdc++ -lhdf5 -lsiloh5 -lz
+# LIBS := -L/home/weir/local/lib/ \
+#	-lfftw3_mpi -lfftw3 -lstdc++ -lhdf5 -lsiloh5 -lz
 
 # on Cosmos:
 # LIBS := -lmpi -lfftw3_mpi -lfftw3 -lsiloh5
+
 
 #### No user-serviceable parts below ####
 
