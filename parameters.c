@@ -291,6 +291,12 @@ void get_parameters(char *infile, hydro_params *p)
       } else if(!strncasecmp(value, "file", 4)) {
 	p->nucleation = NUC_FILE;
 
+	if(access(option,R_OK) != 0) {
+	  printf0(*p ,"Unable to read nucleation file \"%s\", giving up!\n",
+		  option);
+	  die(123);
+	}
+
 	FILE *nucfile = fopen(option,"r");
 
 	p->n_nucsteps = 0;
@@ -313,7 +319,7 @@ void get_parameters(char *infile, hydro_params *p)
 	int i;
 
 	for(i=0; i<p->n_nucsteps; i++)
-	  fscanf(nucfile,"%d",&p->nucsteps[i]);
+	  still_reading = fscanf(nucfile,"%d",&p->nucsteps[i]);
        
 
 	fclose(nucfile);
