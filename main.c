@@ -184,11 +184,13 @@ int main(int argc, char *argv[])
     // Communicate everything that neighbours need
     halo_field(f.phi, p);
     halo_field(f.pifull, p);
+#ifndef SCALAR
     halo_field(f.E, p);
     halo_field(f.Z[0], p);
     halo_field(f.Z[1], p);
     halo_field(f.Z[2], p);
     halo_field(f.W, p);
+#endif // SCALAR
 
     if(!p.rank)
       fprintf(stderr, "Initial conditions done\n");

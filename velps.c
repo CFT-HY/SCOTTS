@@ -240,6 +240,7 @@ void histogram(hydro_params p, double *slice, char *filename,
  */
 void fft_vel(hydro_fields f, hydro_params p, int step) {
 
+#ifndef SCALAR
   ptrdiff_t x_thickness, x_start, alloc_local;
 
   ptrdiff_t n0 = p.Lx;
@@ -435,6 +436,7 @@ void fft_vel(hydro_fields f, hydro_params p, int step) {
   printf0(p, "Velocity power spectrum FFT calculation took %lf\n",
 	  ((double) (end - start)) / CLOCKS_PER_SEC);
 
+#endif // SCALAR
 }
 
 

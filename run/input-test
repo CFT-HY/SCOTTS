@@ -1,10 +1,10 @@
 # Example input file
 
 # How long the simulation takes
-Lx      1
-Ly	1
-Lz	1024
-steps  0
+Lx      96
+Ly	96
+Lz	96
+steps  1000
 
 # How big the simulation is
 dx     1.0
@@ -29,8 +29,8 @@ Tconst 0.86
 
 
 # How often to write data
-interval 1
-silointerval 100
+interval 10
+silointerval -1
 
 # Initial conditions
 initial bubble

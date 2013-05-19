@@ -47,6 +47,7 @@ int load_checkpoint(hydro_fields f, hydro_params p)
 
 
 
+#ifndef SCALAR
   qvptr = DBGetQuadvar(dbfile, "T");
   memcpy(f.T[0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(double));
   free(qvptr);
@@ -92,7 +93,7 @@ int load_checkpoint(hydro_fields f, hydro_params p)
   memcpy(f.F[1][0][0], qvptr->vals[1], sizex*sizey*sizez*sizeof(double));
   memcpy(f.F[2][0][0], qvptr->vals[2], sizex*sizey*sizez*sizeof(double));
   free(qvptr);
-
+#endif // SCALAR
 
 
 
@@ -291,6 +292,7 @@ void checkpoint(hydro_fields f, hydro_params p, int step)
                 NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
 
 
+#ifndef SCALAR
 
   DBPutQuadvar1(dbfile, "T", "quadmesh", f.T[0][0], meshsize, 3,
                 NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
@@ -390,7 +392,7 @@ void checkpoint(hydro_fields f, hydro_params p, int step)
   DBPutQuadvar(dbfile, "F", "quadmesh", 3, f_names, Ftemp, meshsize, 3, 
 	       NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);       
 
-
+#endif // SCALAR
 
 
   char *u11_name = "U11";

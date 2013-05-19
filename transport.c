@@ -14,6 +14,7 @@
  */
 void donor_E_dir(hydro_fields f, hydro_params p, int dir) {
 
+#ifndef SCALAR
   int x, y, z;
 
   //  halo_field(f.V[dir],p);
@@ -57,7 +58,7 @@ void donor_E_dir(hydro_fields f, hydro_params p, int dir) {
   }  
 
   halo_field(f.E, p);
-
+#endif
 
 }
 
@@ -68,6 +69,7 @@ void donor_E_dir(hydro_fields f, hydro_params p, int dir) {
  */
 void donor_Z_dir(hydro_fields f, hydro_params p, int dir) {
 
+#ifndef SCALAR
   double vc;
   int x, y, z;
 
@@ -141,6 +143,7 @@ void donor_Z_dir(hydro_fields f, hydro_params p, int dir) {
 
   free_field(p, Vbody);
 
+#endif
 }
 
 

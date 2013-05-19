@@ -12,6 +12,7 @@
  * in the simulation box.
  */
 double get_gamma_max(hydro_fields f, hydro_params p) {
+#ifndef SCALAR
 
   int x, y, z, xmax;
 
@@ -34,6 +35,9 @@ double get_gamma_max(hydro_fields f, hydro_params p) {
   
   return gmax;
 
+#else
+  return 0.0;
+#endif
 }
 
 
@@ -44,6 +48,7 @@ double get_gamma_max(hydro_fields f, hydro_params p) {
  */
 double get_veltot(hydro_fields f, hydro_params p) {
 
+#ifndef SCALAR
   int x, y, z, xmax;
 
   
@@ -62,7 +67,9 @@ double get_veltot(hydro_fields f, hydro_params p) {
   }
   
   return veltot;
-
+#else
+  return 0.0;
+#endif
 }
 
 

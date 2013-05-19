@@ -186,6 +186,7 @@ void alloc_fields(hydro_fields *f, hydro_params p) {
   f->phiold = make_field(p);
 
 
+#ifndef SCALAR
   // FLUID
 
   // temperature
@@ -216,6 +217,7 @@ void alloc_fields(hydro_fields *f, hydro_params p) {
 
   // F is a temporary variable used in advection
   f->F = make_vector(p);
+#endif // SCALAR
 
 
   // GRAVITY
@@ -250,7 +252,7 @@ void zero_fields(hydro_fields f, hydro_params p) {
     f.pi[0][0][x] = 0.0000;
     f.phiold[0][0][x] = 0.0000;
 
-
+#ifndef SCALAR
     f.T[0][0][x] = 0.0000;
     f.E[0][0][x] = 0.0000;
     f.W[0][0][x] = 0.0000;
@@ -272,6 +274,7 @@ void zero_fields(hydro_fields f, hydro_params p) {
     f.F[0][0][0][x] = 0.0000;
     f.F[1][0][0][x] = 0.0000;
     f.F[2][0][0][x] = 0.0000;
+#endif // SCALAR
 
 
     for(i=0; i<TENSOR_CPTS; i++) {
@@ -296,7 +299,7 @@ void free_fields(hydro_fields *f, hydro_params p) {
   free_field(p, f->pi);
   free_field(p, f->phiold);
 
-
+#ifndef SCALAR
   free_field(p, f->T);
   free_field(p, f->E);
   free_field(p, f->W);
@@ -306,6 +309,7 @@ void free_fields(hydro_fields *f, hydro_params p) {
   free_vector(p, f->Z);
   free_vector(p, f->U);
   free_vector(p, f->F);
+#endif // SCALAR
 
   free_tensor(p, f->uij);
   free_tensor(p, f->udotij);
