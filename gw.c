@@ -234,9 +234,9 @@ double fft_tensor(hydro_fields f, hydro_params p, int step,
   int x, y, z;
   int i;
 
-  double fft_norm = p.a*p.a*p.a*p.dx*p.dx*p.dx
-    *(1.0/(((double)p.Lx)*((double)p.Ly)*((double)p.Lz)))
+  double fft_norm = (1.0/(((double)p.Lx)*((double)p.Ly)*((double)p.Lz)))
     *(1.0/sqrt(32.0*M_PI));
+  // *p.a*p.a*p.a*p.dx*p.dx*p.dx
 
   double *trim = (double *)malloc(p.slicex*p.slicey*p.Lz*sizeof(double));
 
@@ -415,8 +415,8 @@ double fft_tensor(hydro_fields f, hydro_params p, int step,
 
   // we take G=1.0...
 
-  double gwen = reduce_sum(rhogw, p)
-    /(1.0*((double)(p.Lx*p.Ly*p.Lz*p.dx*p.dx*p.dx)));
+  double gwen = reduce_sum(rhogw, p);
+  //    /(1.0*((double)(p.Lx*p.Ly*p.Lz*p.dx*p.dx*p.dx)));
 
   // To get energy density expect to have to divide by V again
   // as it seems that keeping p.Lx*p.Ly*p.Lz*p.dx*p.dx*p.dx constant
@@ -521,7 +521,7 @@ double fft_tensor(hydro_fields f, hydro_params p, int step,
       //      thisomega = omegarad*doffrac*(1.0/energydensity)*thisdiff;
 
       fprintf(fp, "%lf %g %d\n",
-	      thisk, ((double)(i+1))*bins[i], counts[i]);
+	      thisk/(p.dx*p.a), ((double)(i+1))*bins[i], counts[i]);
 
       thisk = thisk + dk;
     }

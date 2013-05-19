@@ -112,7 +112,7 @@ int main(int argc, char *argv[])
   double initial_energy, current_energy;
   double initial_field_energy, current_field_energy;
   double current_kinetic, current_gradient_energy, current_rest;
-  double wmax, current_wmax;
+  double current_veltot;
   double gwen;
 
   // Timing counters
@@ -336,7 +336,7 @@ int main(int argc, char *argv[])
       current_rest = reduce_sum(rest_energy(f, p), p);
       current_field_energy = reduce_sum(field_energy(f, p), p);
       current_gradient_energy = reduce_sum(gradient_energy(f, p), p);
-      current_wmax = reduce_sum(get_veltot(f, p), p)
+      current_veltot = reduce_sum(get_veltot(f, p), p)
 	/((double)(p.Lx*p.Ly*p.Lz));
       
       if(!p.rank) {
@@ -347,7 +347,7 @@ int main(int argc, char *argv[])
 	       current_kinetic,
 	       current_field_energy,
 	       current_gradient_energy,
-	       current_wmax,
+	       current_veltot,
 	       gwen,
 	       bcount,
 	       current_rest);
@@ -421,7 +421,7 @@ int main(int argc, char *argv[])
   current_rest = reduce_sum(rest_energy(f, p), p);
   current_field_energy = reduce_sum(field_energy(f, p), p);
   current_gradient_energy = reduce_sum(gradient_energy(f, p), p);
-  current_wmax = reduce_sum(get_veltot(f, p), p)
+  current_veltot = reduce_sum(get_veltot(f, p), p)
     /((double)(p.Lx*p.Ly*p.Lz));
       
   if(!p.rank) {
@@ -432,7 +432,7 @@ int main(int argc, char *argv[])
 	   current_kinetic,
 	   current_field_energy,
 	   current_gradient_energy,
-	   current_wmax,
+	   current_veltot,
 	   gwen,
 	   bcount,
 	   current_rest);
