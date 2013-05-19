@@ -255,7 +255,9 @@ void fft_vel(hydro_fields f, hydro_params p, int step) {
   int x, y, z;
   int i;
 
-  double fft_norm = p.a*p.a*p.a*p.dx*p.dx*p.dx/pow(2.0*M_PI,1.5);
+  double fft_norm = p.a*p.a*p.a*p.dx*p.dx*p.dx
+    *(1.0/(((double)p.Lx)*((double)p.Ly)*((double)p.Lz)));
+
 
   double *trim = (double *)malloc(p.slicex*p.slicey*p.Lz*sizeof(double));
 
