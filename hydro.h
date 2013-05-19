@@ -241,6 +241,7 @@ typedef struct {
   double ****uij;
   double ****udotij;
 
+  // (Only for UETCs)
   double ****initial_Tij;
 
 

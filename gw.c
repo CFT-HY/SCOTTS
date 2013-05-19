@@ -234,7 +234,9 @@ double fft_tensor(hydro_fields f, hydro_params p, int step,
   int x, y, z;
   int i;
 
-  double fft_norm = p.a*p.a*p.a*p.dx*p.dx*p.dx/pow(2.0*M_PI,1.5);
+  double fft_norm = p.a*p.a*p.a*p.dx*p.dx*p.dx
+    *(1.0/(((double)p.Lx)*((double)p.Ly)*((double)p.Lz)))
+    *(1.0/sqrt(32.0*M_PI));
 
   double *trim = (double *)malloc(p.slicex*p.slicey*p.Lz*sizeof(double));
 
@@ -480,12 +482,12 @@ double fft_tensor(hydro_fields f, hydro_params p, int step,
 
 
   double thisk = dk/2.0;
-  double comovingk, thisf, thisdiff, thisomega;
+  //  double comovingk, thisf, thisdiff, thisomega;
 
   // not sure (includes h^2)
-  double omegarad = 3.5e-5;
+  //  double omegarad = 3.5e-5;
 
-  double doffrac = pow(1.0/100.0,1.0/3.0);
+  //  double doffrac = pow(1.0/100.0,1.0/3.0);
 
   // spokesman does the final analysis
   if(!p.rank) {
@@ -498,29 +500,28 @@ double fft_tensor(hydro_fields f, hydro_params p, int step,
 
     for(i=0;i<nbins;i++) {
 
-      // thisk = sqrt((nx/Lx)^2 + (ny/Ly)^2 + (nz/Lz)^2) 2*pi
       // so divide by dx
       //      comovingk = thisk/(p.a*p.dx);
-      comovingk = thisk/p.dx;
+      //      comovingk = thisk/p.dx;
 
       // formula taken as a given, looks correct
       //      thisf = comovingk*6.0e10; // /(p.H)
-      thisf = comovingk;
+      //      thisf = comovingk;
 
       // d(rhogw)/d(logk)
       // (p.H^(-3) is comoving volume
       // and 8*4*pi is the solid angle normalisation)
       //      thisdiff = (comovingk*comovingk*comovingk/(32.0*M_PI))
       //	*bins[i]/(p.Lx*p.Ly*p.Lz*p.dx*p.dx*p.dx);
-      thisomega = comovingk*comovingk*comovingk*bins[i]
-	/(p.Lx*p.Ly*p.Lz*p.dx*p.dx*p.dx);
+      //      thisomega = comovingk*comovingk*comovingk*bins[i]
+      //	/(p.Lx*p.Ly*p.Lz*p.dx*p.dx*p.dx);
 
       // omegaGW(k), as above but corrections for degrees of freedom,
       // energy density and radiation density
       //      thisomega = omegarad*doffrac*(1.0/energydensity)*thisdiff;
 
-      fprintf(fp, "%lf %g %d %lf %g\n",
-	      thisk, bins[i], counts[i], thisf, thisomega);
+      fprintf(fp, "%lf %g %d\n",
+	      thisk, ((double)(i+1))*bins[i], counts[i]);
 
       thisk = thisk + dk;
     }
