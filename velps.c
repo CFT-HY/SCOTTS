@@ -217,7 +217,7 @@ void histogram(hydro_params p, double *slice, char *filename,
 
 
       fprintf(fp, "%lf %g %d\n",
-	      thisk, bins[i], counts[i]);
+	      thisk/(p.a*p.dx), bins[i], counts[i]);
 
       thisk = thisk + dk;
     }
@@ -255,9 +255,8 @@ void fft_vel(hydro_fields f, hydro_params p, int step) {
   int x, y, z;
   int i;
 
-  double fft_norm = p.a*p.a*p.a*p.dx*p.dx*p.dx
-    *(1.0/(((double)p.Lx)*((double)p.Ly)*((double)p.Lz)));
-
+  double fft_norm = (1.0/(((double)p.Lx)*((double)p.Ly)*((double)p.Lz)));
+  // *p.a*p.a*p.a*p.dx*p.dx*p.dx
 
   double *trim = (double *)malloc(p.slicex*p.slicey*p.Lz*sizeof(double));
 
