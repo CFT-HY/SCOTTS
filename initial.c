@@ -53,7 +53,8 @@ void initial_scalar_bubble(hydro_fields f, hydro_params p) {
 				    /2.0/(Rtenab*Rtenab) );
 	
 	f.pifull[x][y][z] = 0.0;
-	
+
+#ifndef SCALAR	
 	f.T[x][y][z] = p.Tconst;
 	
 	f.E[x][y][z] = 3.0*p.gdeg*f.T[x][y][z]*f.T[x][y][z]
@@ -64,6 +65,7 @@ void initial_scalar_bubble(hydro_fields f, hydro_params p) {
 	f.Z[0][x][y][z] = 0.0;
 	f.V[0][x][y][z] = 0.0;
 	f.W[x][y][z] = 1.0;
+#endif // SCALAR
       }
     }
   }
@@ -110,7 +112,8 @@ void initial_blank(hydro_fields f, hydro_params p) {
 	f.phi[x][y][z] = 0.0; 
 	
 	f.pifull[x][y][z] = 0.0;
-	
+
+#ifndef SCALAR	
 	f.T[x][y][z] = p.Tconst;
 	
 	f.E[x][y][z] = 3.0*p.gdeg*f.T[x][y][z]*f.T[x][y][z]
@@ -121,6 +124,7 @@ void initial_blank(hydro_fields f, hydro_params p) {
 	f.Z[0][x][y][z] = 0.0;
 	f.V[0][x][y][z] = 0.0;
 	f.W[x][y][z] = 1.0;
+#endif // SCALAR
       }
     }
   }
@@ -292,6 +296,8 @@ void nucleate_at(hydro_fields f, hydro_params p, int x0, int y0, int z0) {
 	
 	f.phi[x][y][z] += phival;
 
+
+#ifndef SCALAR
 	if(phival > 1e-8) {
 
 	  f.E[x][y][z] = 3.0*p.gdeg*f.T[x][y][z]*f.T[x][y][z]
@@ -303,6 +309,7 @@ void nucleate_at(hydro_fields f, hydro_params p, int x0, int y0, int z0) {
 
 	// Don't set up the energy density according to the Eqn of state?
 	//	f.E[x][y][z] = 0.0;
+#endif // SCALAR
       }
     }
   }
@@ -354,7 +361,8 @@ void initial_3D(hydro_fields f, hydro_params p) {
 	f.phi[x][y][z] = 0.0; // cstrab*(1.0 + 0.1*drand48());
 	
 	f.pifull[x][y][z] = 0.0;
-	
+
+#ifndef SCALAR	
 	f.T[x][y][z] = 0.0; // p.Tconst;
 	
 	//  sqrt((x-p.Lx/2)*(x-p.Lx/2)+(y-p.Ly/2)*(y-p.Ly/2)) < 40)
@@ -374,6 +382,7 @@ void initial_3D(hydro_fields f, hydro_params p) {
 	
 	
 	f.W[x][y][z] = 1.0;
+#endif // SCALAR
       }
     }
   }

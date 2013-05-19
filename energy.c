@@ -35,8 +35,12 @@ double field_energy(hydro_fields f, hydro_params p) {
 	
 	Etot += 0.5*((f.phi[x][y][(z+1)%p.Lz] - f.phi[x][y][z])/p.dx)
 	  *((f.phi[x][y][(z+1)%p.Lz] - f.phi[x][y][z])/p.dx)*vol;
-	
+
+#ifndef SCALAR
 	Etot += Vf(p, f.T[x][y][z], f.phi[x][y][z])*vol;
+#else
+	Etot += Vf(p, p.T0, f.phi[x][y][z])*vol;
+#endif
 
       }
     }
@@ -109,13 +113,15 @@ double total_energy(hydro_fields f, hydro_params p) {
     for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
 
-	       
+
+#ifndef SCALAR	       
 	// rest energy
 	restE += (f.E[x][y][z]/f.W[x][y][z])*vol;
 	
 	// kinetic energy
 	kinE += f.kappa[x][y][z]*(f.E[x][y][z]/f.W[x][y][z])
 	  *(f.W[x][y][z]*f.W[x][y][z]-1.0)*vol;
+#endif // SCALAR
 
 		
 	// momentum squared (scalar field kinetic energy)
@@ -170,9 +176,11 @@ double kinetic_energy(hydro_fields f, hydro_params p) {
     for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
 
+#ifndef SCALAR
 	// kinetic energy
 	kinE += f.kappa[x][y][z]*(f.E[x][y][z]/f.W[x][y][z])
 	  *(f.W[x][y][z]*f.W[x][y][z]-1.0)*vol;
+#endif // SCALAR
 
       }
       
@@ -211,9 +219,11 @@ double rest_energy(hydro_fields f, hydro_params p) {
     for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
 
+#ifndef SCALAR
 	// kinetic energy
 	kinE += f.kappa[x][y][z]*(f.E[x][y][z]/f.W[x][y][z])
 	  *vol;
+#endif // SCALAR
 
       }
       
@@ -266,6 +276,7 @@ double tzerozero(hydro_fields f, hydro_params p) {
 		  *((f.phi[x][y][(z+1)%p.Lz]
 		     - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx));
 
+#ifndef SCALAR
 	// radiative fluid pressure
 	// (minus sign if 00, otherwise plus)
 	total -= (p.gdeg*f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]);
@@ -273,7 +284,13 @@ double tzerozero(hydro_fields f, hydro_params p) {
 	// potential
 	// (minus sign if 00, otherwise plus)
 	total -= (-1.0*Vf(p, f.T[x][y][z], f.phi[x][y][z]));
+#else
+	total -= (-1.0*Vf(p, p.T0, f.phi[x][y][z]));
+#endif // SCALAR
 
+
+
+#ifndef SCALAR
 	// fluid energy
 	// (remember U_mu U_nu's at the end, no other sign)
 	total += (4.0*p.gdeg
@@ -281,6 +298,7 @@ double tzerozero(hydro_fields f, hydro_params p) {
 		  - f.T[x][y][z]*VTf(p, f.T[x][y][z], f.phi[x][y][z]))
 	  *f.W[x][y][z]*f.W[x][y][z];
 	// U = (W, U1, U2, U3)
+#endif // SCALAR
 
       }
     }
@@ -315,6 +333,7 @@ void stress_energy(hydro_fields f, hydro_params p, double ****Tij) {
 	Tij[CPT_33][x][y][z] = 0.0;
 
 	if(p.gwsource != GW_FIELD) {
+#ifndef SCALAR
 	  // fluid bits
 	  Tij[CPT_11][x][y][z] += (4.0*p.gdeg*f.T[x][y][z]
 				   *f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]
@@ -351,6 +370,7 @@ void stress_energy(hydro_fields f, hydro_params p, double ****Tij) {
 				   - f.T[x][y][z]*VTf(p, f.T[x][y][z],
 						      f.phi[x][y][z]))
 	    *f.U[2][x][y][z]*f.U[2][x][y][z];
+#endif // SCALAR
 	}
 
 
@@ -414,13 +434,16 @@ void energy_density(hydro_fields f, hydro_params p, double ***en) {
 
 	en[x][y][z] = 0.0;
 
+
+#ifndef SCALAR
 	// rest energy
 	en[x][y][z] += (f.E[x][y][z]/f.W[x][y][z])*vol;
 	
 	// kinetic energy
 	en[x][y][z] += f.kappa[x][y][z]*(f.E[x][y][z]/f.W[x][y][z])
 	  *(f.W[x][y][z]*f.W[x][y][z]-1.0)*vol;
-	
+#endif // SCALAR	
+
 	// momentum squared (scalar field kinetic energy)
 	en[x][y][z] += 0.5*f.pifull[x][y][z]*f.pifull[x][y][z]*vol;
 	

@@ -225,6 +225,7 @@ typedef struct {
   double ***pi;
   double ***phiold;
 
+#ifndef SCALAR
   // Fluid
   double ***T;
   double ***E;
@@ -236,6 +237,7 @@ typedef struct {
   double ****Z;
   double ****U;
   double ****F;
+#endif // SCALAR
 
   // Gravity
   double ****uij;

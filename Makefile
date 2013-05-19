@@ -4,7 +4,7 @@
 # CC := cc -DMPI -DFFT -DSILO
 
 # Everything turned on
-# CC := mpicc -DMPI -DFFT -DSILO # -DEXPANSION
+CC := mpicc -DMPI -DSILO -DSCALAR # -DFFT # -DEXPANSION
 
 # Example for serial profiling
 # CC := gcc -O3 -DPAPI -lpapi
@@ -19,7 +19,7 @@
 # CC := cc -DMPI -DFFT -DSILO
 
 # Taito
-CC := mpicc -DMPI -DFFT -DSILO
+# CC := mpicc -DMPI -DFFT -DSILO
 
 #### CFLAGS ####
 
@@ -33,17 +33,17 @@ CC := mpicc -DMPI -DFFT -DSILO
 #	-fp-model fast=2 -align -fno-alias -fno-fnalias -ipo
 
 # on Taito
-CFLAGS := -L/homeappl/home/weir/local/lib \
-	-I/homeappl/home/weir/local/include \
-	-O3 -opt-prefetch -unroll-aggressive -no-prec-div \
-	-fp-model fast=2 -align -fno-alias -fno-fnalias -ipo
+# CFLAGS := -L/homeappl/home/weir/local/lib \
+#	-I/homeappl/home/weir/local/include \
+#	-O3 -opt-prefetch -unroll-aggressive -no-prec-div \
+#	-fp-model fast=2 -align -fno-alias -fno-fnalias -ipo
 
 
 # on vuori
 # CFLAGS := -O3 -L/home/u1/weir/local/lib -I/home/u1/weir/local/include
 
 # on pc168, need libraries
-# CFLAGS := -O3 -L/home/weir/local/lib -I/home/weir/local/include
+CFLAGS := -O3 -L/home/weir/local/lib -I/home/weir/local/include
 
 # on afo
 # CFLAGS := -O3 -I/home/weir/local/include/
@@ -68,13 +68,13 @@ CFLAGS := -L/homeappl/home/weir/local/lib \
 # LIBS := -lfftw3_mpi -lfftw3 -lsiloh5 -lhdf5 -lstdc++ -lz
 
 # on Taito
-LIBS := -lfftw3_mpi -lfftw3 -lsiloh5 -lhdf5 -lstdc++ -lz
+# LIBS := -lfftw3_mpi -lfftw3 -lsiloh5 -lhdf5 -lstdc++ -lz
 
 # on vuori
 # LIBS := -lfftw3_mpi -lfftw3 -lm
 
 # on pc168:
-# LIBS := -lfftw3_mpi -lfftw3 -lm -lsiloh5
+LIBS := -lfftw3_mpi -lfftw3 -lm -lsiloh5
 
 # on afo
 # LIBS := -L/home/weir/local/lib/ \

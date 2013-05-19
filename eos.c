@@ -12,6 +12,8 @@
  */
 void find_Ta(hydro_fields f, hydro_params p) {
 
+#ifndef SCALAR
+
   int x, y, z;
 
   double Tfix;
@@ -23,6 +25,7 @@ void find_Ta(hydro_fields f, hydro_params p) {
 	 * NaN's happen when Tfix goes negative,
 	 * they then spread out from here.
 	 */
+
 	Tfix = 0.25*p.gamma*p.gamma*f.phi[x][y][z]*f.phi[x][y][z]
 	  *f.phi[x][y][z]*f.phi[x][y][z]
 	  - 12.0*p.gdeg*(0.25*p.lambda*f.phi[x][y][z]*f.phi[x][y][z]
@@ -37,12 +40,15 @@ void find_Ta(hydro_fields f, hydro_params p) {
 	f.T[x][y][z] = sqrt((1.0/(6.0*p.gdeg))
 			    * (0.5*p.gamma*f.phi[x][y][z]*f.phi[x][y][z]
 			       + sqrt(Tfix)));
+
       }
     }
   }
 
   // Not needed...
   //  halo_field(f.T, p);
+
+#endif // SCALAR
 }
 
 
@@ -53,6 +59,8 @@ void find_Ta(hydro_fields f, hydro_params p) {
  * pressure p and the adiabatic parameter kappa.
  */
 void eq_of_state(hydro_fields f, hydro_params p) {
+
+#ifndef SCALAR
 
   int x, y, z;
 
@@ -101,4 +109,5 @@ void eq_of_state(hydro_fields f, hydro_params p) {
   halo_field(f.kappa, p);
   // halo_field(f.T, p);
 
+#endif // SCALAR
 }

@@ -103,8 +103,10 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
   DBPutQuadvar1(dbfile, "phi", "quadmesh", f.phi[0][0], meshsize, 3,
 		NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
 
+#ifndef SCALAR
   DBPutQuadvar1(dbfile, "E", "quadmesh", f.E[0][0], meshsize, 3,
 		NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
+#endif
   
   double ***temp = make_field(p);
 
@@ -134,13 +136,15 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
   DBPutQuadvar1(dbfile, "gradphi", "quadmesh", temp[0][0], meshsize, 3,
 		NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
 
+
+#ifndef SCALAR
+
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
 	
 	temp[x][y][z] = f.kappa[x][y][z]*(f.E[x][y][z]/f.W[x][y][z])
           *(f.W[x][y][z]*f.W[x][y][z]-1.0)*vol;
-
         
       }
     }
@@ -148,8 +152,10 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
   
   halo_field(temp, p);
 
+
   DBPutQuadvar1(dbfile, "kinetic", "quadmesh", temp[0][0], meshsize, 3,
 		NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
+#endif
 
 
   free_field(p, temp);
@@ -257,14 +263,14 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
 
     DBPutMultimesh(dbfile, "quadmesh", p.size, names, types, NULL);
 
-
+#ifndef SCALAR
     for(i=0;i<p.size;i++) {
       types[i] = DB_QUADVAR;
       sprintf(names[i], "output-%d-%06d.silo:E", i, step);
     }
 
     DBPutMultivar(dbfile, "E", p.size, names, types, NULL);
-
+#endif
 
     for(i=0;i<p.size;i++) {
       types[i] = DB_QUADVAR;
@@ -282,12 +288,14 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
     DBPutMultivar(dbfile, "gradphi", p.size, names, types, NULL);
 
 
+#ifndef SCALAR
     for(i=0;i<p.size;i++) {
       types[i] = DB_QUADVAR;
       sprintf(names[i], "output-%d-%06d.silo:kinetic", i, step);
     }
 
     DBPutMultivar(dbfile, "kinetic", p.size, names, types, NULL);
+#endif
 
 
     for(i=0;i<p.size;i++) {
