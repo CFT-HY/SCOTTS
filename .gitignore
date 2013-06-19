@@ -1,1 +1,5 @@
 *.o
+*_err_*
+*_out_*
+*\~
+run/hydro
