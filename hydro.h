@@ -391,3 +391,10 @@ void fft_vel(hydro_fields f, hydro_params p, int step);
 
 #endif // FFT
 
+
+#ifdef INITPS
+
+// initps.c
+void init_ps(hydro_fields f, hydro_params p, double ***field);
+
+#endif // INITPS
