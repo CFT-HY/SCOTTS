@@ -387,6 +387,7 @@ double fft_tensor(hydro_fields f, hydro_params p, int step,
 		  double energydensity);
 
 // velps.c
+double vel_proj(int T, double kx, double ky, double kz);
 void fft_vel(hydro_fields f, hydro_params p, int step);
 
 #endif // FFT
@@ -395,6 +396,6 @@ void fft_vel(hydro_fields f, hydro_params p, int step);
 #ifdef INITPS
 
 // initps.c
-void init_ps(hydro_fields f, hydro_params p, double ***field);
+void init_ps(hydro_fields f, hydro_params p, double ****field);
 
 #endif // INITPS

@@ -154,9 +154,9 @@ int main(int argc, char *argv[])
     // Shock tube style initial conditions for fluid only (not used)
 #ifdef INITPS
     initial_3D(f,p);
-    init_ps(f, p, f.Z[0]);
-    init_ps(f, p, f.Z[1]);
-    init_ps(f, p, f.Z[2]);
+    init_ps(f, p, f.U);
+    //    init_ps(f, p, f.V);
+    //    init_ps(f, p, f.Z);
 #else // INITPS
 
 
@@ -410,6 +410,7 @@ int main(int argc, char *argv[])
     // On the last step, do some extra GW power spectra FFTs
 #ifdef FFT
     if(step == p.steps - 1) {
+      fft_vel(f, p, step);
       fft_tensor(f,p,step,current_energy);
     }
 #endif // FFT
@@ -451,7 +452,7 @@ int main(int argc, char *argv[])
 
 
 #ifdef FFT
-      
+  fft_vel(f,p,step);
   fft_tensor(f,p,step,current_energy);
     
 #endif // FFT
