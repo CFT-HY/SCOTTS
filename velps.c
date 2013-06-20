@@ -92,9 +92,14 @@ void split_and_power(hydro_params p, int x_start, int slab,
     for(y=0; y<p.Ly; y++) {
       for(z=0; z<p.Lz; z++) {
 
-        kx = ((double)(x+x_start))*2.0*M_PI/((double)p.Lx);
-        ky = ((double)y)*2.0*M_PI/((double)p.Ly);
-        kz = ((double)z)*2.0*M_PI/((double)p.Lz);
+        kx = sqrt((2.0 - 2.0*cos(((double)(x+x_start))*2.0*M_PI/(((double)p.Lx))))/(p.dx*p.dx));
+	ky = sqrt((2.0 - 2.0*cos(((double)y)*2.0*M_PI/(((double)p.Lx))))/(p.dx*p.dx));
+        kz = sqrt((2.0 - 2.0*cos(((double)z)*2.0*M_PI/(((double)p.Lx))))/(p.dx*p.dx));
+
+
+	//        kx = ((double)(x+x_start))*2.0*M_PI/((double)p.Lx);
+	//        ky = ((double)y)*2.0*M_PI/((double)p.Ly);
+	//        kz = ((double)z)*2.0*M_PI/((double)p.Lz);
 
         product[x*p.Ly*p.Lz + y*p.Lz + z] = 0.0;
         product_div[x*p.Ly*p.Lz + y*p.Lz + z] = 0.0;
@@ -116,10 +121,17 @@ void split_and_power(hydro_params p, int x_start, int slab,
 	      *vk[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 
 	    // And longitudinal...
+	    if(i == j) {
 	    resid_r += (1.0 - vel_proj(i*10 + j, kx, ky, kz))
 	      *vk[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
 	    resid_i += (1.0 - vel_proj(i*10 + j, kx, ky, kz))
 	      *vk[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+	    } else {
+	    resid_r += (-1.0*vel_proj(i*10 + j, kx, ky, kz))
+	      *vk[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+	    resid_i += (-1.0*vel_proj(i*10 + j, kx, ky, kz))
+	      *vk[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+	    }
 	  }
 
 	  product[x*p.Ly*p.Lz + y*p.Lz + z] +=
