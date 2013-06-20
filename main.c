@@ -132,7 +132,6 @@ int main(int argc, char *argv[])
   // Managed to get this far, so we probably have enough memory
   printf0(p, "- Allocated fields.\n");
 
-
   // Restore checkpoint
   if(usable_checkpoint(f, p)) {
     printf0(p, "Found a usable checkpoint file\n");
@@ -153,7 +152,12 @@ int main(int argc, char *argv[])
     // initial_scalar_bubble(f, p);
 
     // Shock tube style initial conditions for fluid only (not used)
-    // initial_3D(f,p);
+#ifdef INITPS
+    initial_3D(f,p);
+    init_ps(f, p, f.Z[0]);
+    init_ps(f, p, f.Z[1]);
+    init_ps(f, p, f.Z[2]);
+#else // INITPS
 
 
     // Instead, start off with an empty box
@@ -175,6 +179,7 @@ int main(int argc, char *argv[])
       //	break;
 
     }
+#endif // INITPS
 
     // (don't) turn off nucleation after initial stage
     //  still_nucleate = 0;

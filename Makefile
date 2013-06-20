@@ -19,7 +19,7 @@
 # CC := cc -DMPI -DFFT -DSILO
 
 # Taito
-CC := mpicc -DMPI -DFFT -DSILO
+CC := mpicc -DMPI -DFFT -DSILO -DINITPS
 
 #### CFLAGS ####
 
@@ -97,7 +97,7 @@ LIBS := -lfftw3_mpi -lfftw3 -lsiloh5 -lhdf5 -lstdc++ -lz
 OBJECTS := main.o evolve.o potential.o energy.o eos.o \
 	transport.o initial.o output.o parameters.o silage.o \
 	util.o papi.o arrangement.o fft.o alloc.o gw.o velps.o \
-	checkpoint.o uetc.o
+	checkpoint.o uetc.o initps.o
 
 BINARY := run/hydro
 
