@@ -155,6 +155,12 @@ int main(int argc, char *argv[])
 #ifdef INITPS
     initial_3D(f,p);
     init_ps(f, p, f.U);
+    memcpy(f.V[0][0][0], f.U[0][0][0], (p.slicex+2)*(p.slicey+2)
+	   *(p.Lz)*sizeof(double));
+    memcpy(f.V[1][0][0], f.U[1][0][0], (p.slicex+2)*(p.slicey+2)
+	   *(p.Lz)*sizeof(double));
+    memcpy(f.V[2][0][0], f.U[2][0][0], (p.slicex+2)*(p.slicey+2)
+	   *(p.Lz)*sizeof(double));
     //    init_ps(f, p, f.V);
     //    init_ps(f, p, f.Z);
 #else // INITPS
