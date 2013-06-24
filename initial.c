@@ -366,13 +366,16 @@ void initial_3D(hydro_fields f, hydro_params p) {
 	f.T[x][y][z] = 0.0; // p.Tconst;
 	
 	//  sqrt((x-p.Lx/2)*(x-p.Lx/2)+(y-p.Ly/2)*(y-p.Ly/2)) < 40)
+	/*
 	if( (x+p.shiftx-1 + y+p.shifty-1) < p.Lx/2
 	    || (x+p.shiftx-1 + y+p.shifty-1) > 3*p.Lx/2) 
 	  f.E[x][y][z] = El;
 	else
 	  f.E[x][y][z] = Er;
-	
-	
+	*/
+
+	f.E[x][y][z] = 6.0;
+
 	// For debugging purposes
 	// fprintf(stderr,"xc = %lf fi = %lf E = %lf\n", xc[x], phi[x],E[x]);
 	
