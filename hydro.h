@@ -118,6 +118,11 @@ typedef struct {
   double Tconst;
   double T0;
 
+#ifdef INITPS
+  // Cutoff time
+  double initps;
+#endif
+
 #ifdef CUTOFF
   // Cutoff time
   double tcutoff;

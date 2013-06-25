@@ -37,7 +37,7 @@ void spectrum(double ksq, hydro_params p, fftw_complex *res)
     (*res)[1] = 0.0;
   } else {
 
-    (*res)[0] = get_normal(0.0, 0.1*exp(-0.25*sqrt(ksq)*((double)L)));
+    (*res)[0] = get_normal(0.0, p.initps*exp(-0.25*sqrt(ksq)*((double)L)));
     //    (*res)[1] = get_normal(0.0, sqrt(0.5*hbar/sqrt(ksq + m*m)));
     // Anders said to use separate Gaussian values for each cpt
     /*
@@ -80,9 +80,6 @@ void init_ps(hydro_fields f, hydro_params p, double ****field) {
 
   int x, y, z;
   int i;
-
-  double *trim_field = (double *)malloc(p.slicex*p.slicey*p.Lz*sizeof(double));
-
 
   double start = clock();
 
@@ -448,8 +445,6 @@ void init_ps(hydro_fields f, hydro_params p, double ****field) {
 
   free(in);
   free(out);
-
-  free(trim_field);
 
   //  fftw_mpi_cleanup();
 
