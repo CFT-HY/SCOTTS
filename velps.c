@@ -250,7 +250,7 @@ void histogram(hydro_params p, double *slice, char *filename,
  *
  * Main method. Calculate the velocity power spectrum.
  */
-void fft_vel(hydro_fields f, hydro_params p, int step) {
+void fft_vel(hydro_fields f, hydro_params p, int step, double ****vectorfield) {
 
 #ifndef SCALAR
   ptrdiff_t x_thickness, x_start, alloc_local;
@@ -327,8 +327,8 @@ void fft_vel(hydro_fields f, hydro_params p, int step) {
     for(x=1; x<=p.slicex; x++) {
       for(y=1; y<=p.slicey; y++) {
 	for(z=0; z<p.Lz; z++) {
-	  check += f.V[i][x][y][z];
-	  trim[(x-1)*p.slicey*p.Lz + (y-1)*p.Lz + z] = f.V[i][x][y][z];
+	  check += vectorfield[i][x][y][z];
+	  trim[(x-1)*p.slicey*p.Lz + (y-1)*p.Lz + z] = vectorfield[i][x][y][z];
 	}
       }
     }

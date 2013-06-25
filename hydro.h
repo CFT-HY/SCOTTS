@@ -393,7 +393,7 @@ double fft_tensor(hydro_fields f, hydro_params p, int step,
 
 // velps.c
 double vel_proj(int T, double kx, double ky, double kz);
-void fft_vel(hydro_fields f, hydro_params p, int step);
+void fft_vel(hydro_fields f, hydro_params p, int step, double ****vectorfield);
 
 #endif // FFT
 
