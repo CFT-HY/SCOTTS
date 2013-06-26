@@ -37,7 +37,7 @@ void spectrum(double ksq, hydro_params p, fftw_complex *res)
     (*res)[1] = 0.0;
   } else {
 
-    (*res)[0] = get_normal(0.0, p.initps*exp(-0.25*sqrt(ksq)*((double)L)));
+    (*res)[0] = get_normal(0.0, p.initps*exp(-0.25*sqrt(ksq)*p.dx*((double)L)));
     //    (*res)[1] = get_normal(0.0, sqrt(0.5*hbar/sqrt(ksq + m*m)));
     // Anders said to use separate Gaussian values for each cpt
     /*
