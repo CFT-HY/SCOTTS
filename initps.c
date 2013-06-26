@@ -274,9 +274,20 @@ void init_ps(hydro_fields f, hydro_params p, double ****field) {
 	    double res_im = 0.0;
 
 	    for(j=1; j<=3; j++) {
-	      
+
+#ifndef DIVPS	      
 	      in_proj_re[i-1] += vel_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
 	      in_proj_im[i-1] += vel_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+#else
+#warning DIVPS enabled
+	      if(i == j) {
+		in_proj_re[i-1] += (1.0-vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+		in_proj_im[i-1] += (1.0-vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+	      } else {
+		in_proj_re[i-1] += (-1.0*vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+		in_proj_im[i-1] += (-1.0*vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+	      }
+#endif
 
 	      // if(x == 1 && y == 1 && z == 1 && !p.rank)
 	      // fprintf(stderr,"%g ",vel_proj(i*10 + j, kx, ky, kz));
