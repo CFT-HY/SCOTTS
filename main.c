@@ -112,6 +112,7 @@ int main(int argc, char *argv[])
   double initial_energy, current_energy;
   double initial_field_energy, current_field_energy;
   double current_kinetic, current_gradient_energy, current_rest;
+  double current_avgpress;
   double current_veltot;
   double gwen;
 
@@ -350,13 +351,14 @@ int main(int argc, char *argv[])
       current_energy = reduce_sum(total_energy(f, p), p);
       current_kinetic = reduce_sum(kinetic_energy(f, p), p);
       current_rest = reduce_sum(rest_energy(f, p), p);
+      current_avgpress = reduce_sum(avg_pressure(f, p), p);
       current_field_energy = reduce_sum(field_energy(f, p), p);
       current_gradient_energy = reduce_sum(gradient_energy(f, p), p);
       current_veltot = reduce_sum(get_veltot(f, p), p)
 	/((double)(p.Lx*p.Ly*p.Lz));
       
       if(!p.rank) {
-	printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf\n",
+	printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf\t%6lf\n",
 	       step,
 	       t,
 	       current_energy,
@@ -366,7 +368,8 @@ int main(int argc, char *argv[])
 	       current_veltot,
 	       gwen,
 	       bcount,
-	       current_rest);
+	       current_rest,
+	       current_avgpress);
       }
 
       // Statement of energy violation (not shown; better to use KE)
@@ -436,13 +439,14 @@ int main(int argc, char *argv[])
   current_energy = reduce_sum(total_energy(f, p), p);
   current_kinetic = reduce_sum(kinetic_energy(f, p), p);
   current_rest = reduce_sum(rest_energy(f, p), p);
+  current_avgpress = reduce_sum(avg_pressure(f, p), p);
   current_field_energy = reduce_sum(field_energy(f, p), p);
   current_gradient_energy = reduce_sum(gradient_energy(f, p), p);
   current_veltot = reduce_sum(get_veltot(f, p), p)
     /((double)(p.Lx*p.Ly*p.Lz));
       
   if(!p.rank) {
-    printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf\n",
+    printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf\t%6lf\n",
 	   step,
 	   t,
 	   current_energy,
@@ -452,7 +456,8 @@ int main(int argc, char *argv[])
 	   current_veltot,
 	   gwen,
 	   bcount,
-	   current_rest);
+	   current_rest,
+	   current_avgpress);
   }
 
   
