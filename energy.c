@@ -237,7 +237,38 @@ double rest_energy(hydro_fields f, hydro_params p) {
 
 
 }
-    
+
+ 
+double avg_pressure(hydro_fields f, hydro_params p) {
+
+  int x, y, z;
+
+  double vol;
+
+  double press;
+
+  vol = p.dx*p.dx*p.dx;
+
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+
+#ifndef SCALAR
+	// kinetic energy
+	press += f.p[x][y][z]*vol;
+#endif // SCALAR
+
+      }
+      
+    }
+  }
+
+  return press;
+
+
+
+}
+   
 			    
 
 /* double tzerozero(hydro_fields f, hydro_params p)

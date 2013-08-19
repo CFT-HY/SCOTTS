@@ -4,7 +4,7 @@
 # CC := cc -DMPI -DFFT -DSILO
 
 # Everything turned on
-CC := mpicc -DMPI -DSILO # -DSCALAR # -DFFT # -DEXPANSION
+# CC := mpicc -DMPI -DSILO # -DSCALAR # -DFFT # -DEXPANSION
 
 # Example for serial profiling
 # CC := gcc -O3 -DPAPI -lpapi
@@ -19,7 +19,7 @@ CC := mpicc -DMPI -DSILO # -DSCALAR # -DFFT # -DEXPANSION
 # CC := cc -DMPI -DFFT -DSILO
 
 # Taito
-# CC := mpicc -DMPI -DFFT -DSILO -DINITPS
+CC := mpicc -DMPI -DSILO # -DFFT # -DINITPS # -DDIVPS
 
 #### CFLAGS ####
 
@@ -33,10 +33,10 @@ CC := mpicc -DMPI -DSILO # -DSCALAR # -DFFT # -DEXPANSION
 #	-fp-model fast=2 -align -fno-alias -fno-fnalias -ipo
 
 # on Taito
-#CFLAGS := -L/homeappl/home/weir/local/lib \
-#	-I/homeappl/home/weir/local/include \
-#	-O3 -opt-prefetch -unroll-aggressive -no-prec-div \
-#	-fp-model fast=2 -align -fno-alias -fno-fnalias -ipo
+CFLAGS := -L/homeappl/home/weir/local/lib \
+	-I/homeappl/home/weir/local/include \
+	-O3 -opt-prefetch -unroll-aggressive -no-prec-div \
+	-fp-model fast=2 -align -fno-alias -fno-fnalias -ipo
 
 
 # on vuori
@@ -46,7 +46,7 @@ CC := mpicc -DMPI -DSILO # -DSCALAR # -DFFT # -DEXPANSION
 # CFLAGS := -O3 -L/home/weir/local/lib -I/home/weir/local/include
 
 # on afo
-CFLAGS := -O3 -I/home/weir/local/include/
+# CFLAGS := -O3 -I/home/weir/local/include/
 
 # on my mac
 # CFLAGS := -O0 -I/Users/weir/Installed/silo-4.8-bsd/include/
@@ -68,7 +68,7 @@ CFLAGS := -O3 -I/home/weir/local/include/
 # LIBS := -lfftw3_mpi -lfftw3 -lsiloh5 -lhdf5 -lstdc++ -lz
 
 # on Taito
-# LIBS := -lfftw3_mpi -lfftw3 -lsiloh5 -lhdf5 -lstdc++ -lz
+LIBS := -lfftw3_mpi -lfftw3 -lsiloh5 -lhdf5 -lstdc++ -lz
 
 # on vuori
 # LIBS := -lfftw3_mpi -lfftw3 -lm
@@ -77,8 +77,8 @@ CFLAGS := -O3 -I/home/weir/local/include/
 # LIBS := -lfftw3_mpi -lfftw3 -lm -lsiloh5
 
 # on afo
-LIBS := -L/home/weir/local/lib/ \
-	-lsiloh5 -lhdf5 -lfftw3_mpi -lfftw3 -lm -lstdc++
+#LIBS := -L/home/weir/local/lib/ \
+#	-lsiloh5 -lhdf5 -lfftw3_mpi -lfftw3 -lm -lstdc++
 
 # on my mac:
 # LIBS := -L/Users/weir/Installed/silo-4.8-bsd/lib/ \
@@ -99,7 +99,7 @@ OBJECTS := main.o evolve.o potential.o energy.o eos.o \
 	util.o papi.o arrangement.o fft.o alloc.o gw.o velps.o \
 	checkpoint.o uetc.o initps.o
 
-BINARY := run/hydro
+BINARY := run/hydro # run/hydro-divps
 
 FILES := $(OBJECTS) $(BINARY)
 

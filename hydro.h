@@ -325,6 +325,7 @@ double kinetic_energy(hydro_fields f, hydro_params p);
 double rest_energy(hydro_fields f, hydro_params p);
 void energy_density(hydro_fields f, hydro_params p, double ***en);
 void stress_energy(hydro_fields f, hydro_params p, double ****Tij);
+double avg_pressure(hydro_fields f, hydro_params p);
 double tzerozero(hydro_fields f, hydro_params p);
 
 // eos.c

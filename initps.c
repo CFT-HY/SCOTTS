@@ -37,7 +37,9 @@ void spectrum(double ksq, hydro_params p, fftw_complex *res)
     (*res)[1] = 0.0;
   } else {
 
+    // (*res)[0] = p.initps*exp(-0.25*sqrt(ksq)*p.dx*((double)L));
     (*res)[0] = get_normal(0.0, p.initps*exp(-0.25*sqrt(ksq)*p.dx*((double)L)));
+
     //    (*res)[1] = get_normal(0.0, sqrt(0.5*hbar/sqrt(ksq + m*m)));
     // Anders said to use separate Gaussian values for each cpt
     /*
@@ -90,44 +92,24 @@ void init_ps(hydro_fields f, hydro_params p, double ****field) {
 
 
 
-  //  alloc_local = fftw_mpi_local_size_3d(n0, n1, n2,
-  //				       MPI_COMM_WORLD, &x_thickness, &x_start);
-
-  /*
-  slab = (int) x_thickness;
-
-  if(((int)x_thickness) != p.Lx/p.size) {
-    fprintf(stderr,
-	    "Giving up in FFT: FFTW told me to use a silly layout!\n");
-    die(-42);
-  }
-  */
-
-  /*
-  if(((int)x_thickness) == 0) {
-    fprintf(stderr, "Giving up in FFT: dx=0!\n");
-    die(-43);
-  }
-  */
-
-  //  fftw_complex *in = fftw_alloc_complex(alloc_local);
-  //  fftw_complex *swap_in = fftw_alloc_complex(alloc_local);
-  //  fftw_complex *out = fftw_alloc_complex(alloc_local);
+  int sizex = 512;
+  int sizey = 512;
+  int sizez = 512;
+  double tdx = 0.5;
 
   fftw_complex **in = (fftw_complex **)malloc(3*sizeof(fftw_complex *));
   fftw_complex **out = (fftw_complex **)malloc(3*sizeof(fftw_complex *));
 
-  in[0] = fftw_alloc_complex(p.Lx*p.Ly*p.Lz);
-  out[0] = fftw_alloc_complex(p.Lx*p.Ly*p.Lz);
+  in[0] = fftw_alloc_complex(sizex*sizey*sizez);
+  out[0] = fftw_alloc_complex(sizex*sizey*sizez);
 
-  in[1] = fftw_alloc_complex(p.Lx*p.Ly*p.Lz);
-  out[1] = fftw_alloc_complex(p.Lx*p.Ly*p.Lz);
+  in[1] = fftw_alloc_complex(sizex*sizey*sizez);
+  out[1] = fftw_alloc_complex(sizex*sizey*sizez);
 
-  in[2] = fftw_alloc_complex(p.Lx*p.Ly*p.Lz);
-  out[2] = fftw_alloc_complex(p.Lx*p.Ly*p.Lz);
+  in[2] = fftw_alloc_complex(sizex*sizey*sizez);
+  out[2] = fftw_alloc_complex(sizex*sizey*sizez);
 
 
-  // double *slice = (double *)malloc(slab*p.Ly*p.Lz*sizeof(double));
 
   int nx = p.Lx/p.slicex;
   int ny = p.Ly/p.slicey;
@@ -145,76 +127,42 @@ void init_ps(hydro_fields f, hydro_params p, double ****field) {
   //  int i;
 
 
-  for(x=0;x<p.Lx;x++) {
-    for(y=0;y<p.Ly;y++) {
-      for(z=0;z<p.Lz;z++) {
-	//	true_x = x + x_start;
+  for(x=0;x<sizex;x++) {
+    for(y=0;y<sizey;y++) {
+      for(z=0;z<sizez;z++) {
 
-	ksq = (2.0 - 2.0*cos(((double)x)*2.0*M_PI/(((double)p.Lx))))/(p.dx*p.dx);
-	ksq += (2.0 - 2.0*cos(((double)y)*2.0*M_PI/(((double)p.Ly))))/(p.dx*p.dx);
-	ksq += (2.0 - 2.0*cos(((double)z)*2.0*M_PI/(((double)p.Lz))))/(p.dx*p.dx);
-
-
-
+	ksq = (2.0 - 2.0*cos(((double)x)*2.0*M_PI/(((double)sizex))))/(tdx*tdx);
+	ksq += (2.0 - 2.0*cos(((double)y)*2.0*M_PI/(((double)sizey))))/(tdx*tdx);
+	ksq += (2.0 - 2.0*cos(((double)z)*2.0*M_PI/(((double)sizez))))/(tdx*tdx);
 
 	for(i=0; i<3; i++) {
-	  spectrum(ksq, p, &(in[i][x*p.Ly*p.Lz + y*p.Lz + z]));
-	  //	  	  in[i][x*p.Ly*p.Lz + y*p.Lz + z][0] = 0.0;
-	  //	  	  in[i][x*p.Ly*p.Lz + y*p.Lz + z][1] = 0.0;
+	  spectrum(ksq, p, &(in[i][x*sizey*sizez + y*sizez + z]));
 	}
 
-	//		in[1][x*p.Ly*p.Lz + y*p.Lz + z][0] = 1.0;
       }
     }
   }
 
-  // and swap them around
-  /*
-  if(p.size - p.rank -1 == p.rank) {
-    memcpy(swap_in, in, x_thickness*p.Ly*p.Lz*sizeof(fftw_complex));
-  } else {
-
-    MPI_Send(in,
-	     2*x_thickness*p.Ly*p.Lz,
-	     MPI_DOUBLE,
-	     p.size - p.rank -1,
-	     x_start,
-	     MPI_COMM_WORLD);
-
-    MPI_Recv(swap_in,
-	     2*x_thickness*p.Ly*p.Lz,
-	     MPI_DOUBLE,
-	     p.size-p.rank-1,
-	     x_start,
-	     MPI_COMM_WORLD,
-	     &status);
-  }
-
-//  fprintf(stderr,"x_thickness is %d\n", x_thickness);
-  */
-
   // moduli will not work in parallel, also not swapped
-  for(x=0;x<p.Lx;x++) {
-    for(y=0;y<p.Ly;y++) {
-      for(z=0;z<p.Lz;z++) {
+  for(x=0;x<sizex;x++) {
+    for(y=0;y<sizey;y++) {
+      for(z=0;z<sizez;z++) {
 	for(i=0; i<3; i++) {
-	  in[i][x*p.Ly*p.Lz + y*p.Lz + z][0] = in[i][((p.Lx-x)%p.Lx)*p.Ly*p.Lz
-					       + ((p.Ly-y)%p.Ly)*p.Lz + ((p.Lz-z)%p.Lz)][0];
-	  in[i][x*p.Ly*p.Lz + y*p.Lz + z][1] = -1.0*in[i][((p.Lx-x)%p.Lx)*p.Ly*p.Lz
-						    + ((p.Ly-y)%p.Ly)*p.Lz + ((p.Lz-z)%p.Lz)][1];
+	  in[i][x*sizey*sizez + y*sizez + z][0] = in[i][((sizex-x)%sizex)*sizey*sizez
+					       + ((sizey-y)%sizey)*sizez + ((sizez-z)%sizez)][0];
+	  in[i][x*sizey*sizez + y*sizez + z][1] = -1.0*in[i][((sizex-x)%sizex)*sizey*sizez
+						    + ((sizey-y)%sizey)*sizez + ((sizez-z)%sizez)][1];
 
-	  //	true_x = x;
-	  
-	  if((x == 0 || x == p.Lx/2) && (y == 0 || y == p.Ly/2) && (z == 0 || z == p.Lz/2)) {
-	    in[i][x*p.Ly*p.Lz + y*p.Lz + z][0] = sqrt(in[i][((p.Lx-x)%p.Lx)*p.Ly*p.Lz
-						      + ((p.Ly-y)%p.Ly)*p.Lz + ((p.Lz-z)%p.Lz)][0]
-						   *in[i][((p.Lx-x)%p.Lx)*p.Ly*p.Lz
-						       + ((p.Ly-y)%p.Ly)*p.Lz + ((p.Lz-z)%p.Lz)][0]
-						   + in[i][((p.Lx-x)%p.Lx)*p.Ly*p.Lz
-							+ ((p.Ly-y)%p.Ly)*p.Lz + ((p.Lz-z)%p.Lz)][1]
-						   *in[i][((p.Lx-x)%p.Lx)*p.Ly*p.Lz
-						       + ((p.Ly-y)%p.Ly)*p.Lz + ((p.Lz-z)%p.Lz)][1]);
-	    in[i][x*p.Ly*p.Lz + y*p.Lz + z][1] = 0.0;
+	  if((x == 0 || x == sizex/2) && (y == 0 || y == sizey/2) && (z == 0 || z == sizez/2)) {
+	    in[i][x*sizey*sizez + y*sizez + z][0] = sqrt(in[i][((sizex-x)%sizex)*sizey*sizez
+						      + ((sizey-y)%sizey)*sizez + ((sizez-z)%sizez)][0]
+						   *in[i][((sizex-x)%sizex)*sizey*sizez
+						       + ((sizey-y)%sizey)*sizez + ((sizez-z)%sizez)][0]
+						   + in[i][((sizex-x)%sizex)*sizey*sizez
+							+ ((sizey-y)%sizey)*sizez + ((sizez-z)%sizez)][1]
+						   *in[i][((sizex-x)%sizex)*sizey*sizez
+						       + ((sizey-y)%sizey)*sizez + ((sizez-z)%sizez)][1]);
+	    in[i][x*sizey*sizez + y*sizez + z][1] = 0.0;
 	  }
 	}
       }
@@ -240,19 +188,16 @@ void init_ps(hydro_fields f, hydro_params p, double ****field) {
     stuff = 0.0;
     
     // Project out divergenceless bit!
-    for(x=0;x<p.Lx;x++) {
-      for(y=0;y<p.Ly;y++) {
-	for(z=0;z<p.Lz;z++) {
+    for(x=0;x<sizex;x++) {
+      for(y=0;y<sizey;y++) {
+	for(z=0;z<sizez;z++) {
 
 
 
 	  
-	  kx = sqrt((2.0 - 2.0*cos(((double)x)*2.0*M_PI/(((double)p.Lx))))/(p.dx*p.dx));
-	  // ((double)x)*2.0*M_PI/((double)p.Lx);
-	  ky = sqrt((2.0 - 2.0*cos(((double)y)*2.0*M_PI/(((double)p.Lx))))/(p.dx*p.dx));
-	  // ((double)y)*2.0*M_PI/((double)p.Ly);
-	  kz = sqrt((2.0 - 2.0*cos(((double)z)*2.0*M_PI/(((double)p.Lx))))/(p.dx*p.dx));
-	  // ((double)z)*2.0*M_PI/((double)p.Lz);
+	  kx = sqrt((2.0 - 2.0*cos(((double)x)*2.0*M_PI/(((double)sizex))))/(tdx*tdx));
+	  ky = sqrt((2.0 - 2.0*cos(((double)y)*2.0*M_PI/(((double)sizex))))/(tdx*tdx));
+	  kz = sqrt((2.0 - 2.0*cos(((double)z)*2.0*M_PI/(((double)sizex))))/(tdx*tdx));
 	  
 	  in_proj_re[0] = 0.0;
 	  in_proj_re[1] = 0.0;
@@ -262,11 +207,6 @@ void init_ps(hydro_fields f, hydro_params p, double ****field) {
 	  in_proj_im[1] = 0.0;
 	  in_proj_im[2] = 0.0;
 
-	  //	  if(x == 1 && y == 1 && z == 1 && !p.rank)
-	  //	     fprintf(stderr,"site before (%g,%g,%g)\n", in[0][x*p.Ly*p.Lz + y*p.Lz + z][0] , in[1][x*p.Ly*p.Lz + y*p.Lz + z][0], in[2][x*p.Ly*p.Lz + y*p.Lz + z][0]);
-	  
-	  //	  if(x == 1 && y == 1 && z == 1 && !p.rank)
-	  //	    fprintf(stderr,"vel proj:\n");
 	  
 	  for(i=1; i<=3; i++) {
 
@@ -276,37 +216,32 @@ void init_ps(hydro_fields f, hydro_params p, double ****field) {
 	    for(j=1; j<=3; j++) {
 
 #ifndef DIVPS	      
-	      in_proj_re[i-1] += vel_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-	      in_proj_im[i-1] += vel_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+	      in_proj_re[i-1] += vel_proj(i*10 + j, kx, ky, kz)*in[j-1][x*sizey*sizez + y*sizez + z][0];
+	      in_proj_im[i-1] += vel_proj(i*10 + j, kx, ky, kz)*in[j-1][x*sizey*sizez + y*sizez + z][1];
 #else
 #warning DIVPS enabled
 	      if(i == j) {
-		in_proj_re[i-1] += (1.0-vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-		in_proj_im[i-1] += (1.0-vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+		in_proj_re[i-1] += (1.0-vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*sizey*sizez + y*sizez + z][0];
+		in_proj_im[i-1] += (1.0-vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*sizey*sizez + y*sizez + z][1];
 	      } else {
-		in_proj_re[i-1] += (-1.0*vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-		in_proj_im[i-1] += (-1.0*vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+		in_proj_re[i-1] += (-1.0*vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*sizey*sizez + y*sizez + z][0];
+		in_proj_im[i-1] += (-1.0*vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*sizey*sizez + y*sizez + z][1];
 	      }
 #endif
 
-	      // if(x == 1 && y == 1 && z == 1 && !p.rank)
-	      // fprintf(stderr,"%g ",vel_proj(i*10 + j, kx, ky, kz));
-	      // if(x == 1 && y == 1 && z == 1 && !p.rank)
-	      // fprintf(stderr,"entry %d: %g += %g*%g\n", i, in_proj_re[i-1],
-	      // vel_proj(i*10 + j, kx, ky, kz), in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0]);
 
 
 
 	      if(i == j) {
 		res_re += (1.0-vel_proj(i*10 + j, kx, ky, kz))
-		  *in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+		  *in[j-1][x*sizey*sizez + y*sizez + z][0];
 		res_im += (1.0-vel_proj(i*10 + j, kx, ky, kz))
-		  *in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+		  *in[j-1][x*sizey*sizez + y*sizez + z][1];
 	      } else {
 		res_re += (-1.0*vel_proj(i*10 + j, kx, ky, kz))
-		  *in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+		  *in[j-1][x*sizey*sizez + y*sizez + z][0];
 		res_im += (-1.0*vel_proj(i*10 + j, kx, ky, kz))
-		  *in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+		  *in[j-1][x*sizey*sizez + y*sizez + z][1];
 	      }
 
 	      
@@ -316,22 +251,17 @@ void init_ps(hydro_fields f, hydro_params p, double ****field) {
 	      resid += res_re*res_re + res_im*res_im;
 
 
-	    //	      if(x == 1 && y == 1 && z == 1 && !p.rank)
-	    //		fprintf(stderr,"\n");
+
 	  }
 
 
-	  in[0][x*p.Ly*p.Lz + y*p.Lz + z][0] = in_proj_re[0];
-	  in[1][x*p.Ly*p.Lz + y*p.Lz + z][0] = in_proj_re[1];
-	  in[2][x*p.Ly*p.Lz + y*p.Lz + z][0] = in_proj_re[2];
+	  in[0][x*sizey*sizez + y*sizez + z][0] = in_proj_re[0];
+	  in[1][x*sizey*sizez + y*sizez + z][0] = in_proj_re[1];
+	  in[2][x*sizey*sizez + y*sizez + z][0] = in_proj_re[2];
 
-	  in[0][x*p.Ly*p.Lz + y*p.Lz + z][1] = in_proj_im[0];
-	  in[1][x*p.Ly*p.Lz + y*p.Lz + z][1] = in_proj_im[1];
-	  in[2][x*p.Ly*p.Lz + y*p.Lz + z][1] = in_proj_im[2];
-
-	  //	  if(x == 1 && y == 1 && z == 1 && !p.rank)
-	  //	     fprintf(stderr,"site now (%g,%g,%g)\n", in[0][x*p.Ly*p.Lz + y*p.Lz + z][0] , in[1][x*p.Ly*p.Lz + y*p.Lz + z][0], in[2][x*p.Ly*p.Lz + y*p.Lz + z][0]);
-
+	  in[0][x*sizey*sizez + y*sizez + z][1] = in_proj_im[0];
+	  in[1][x*sizey*sizez + y*sizez + z][1] = in_proj_im[1];
+	  in[2][x*sizey*sizez + y*sizez + z][1] = in_proj_im[2];
 
 	}
       }
@@ -342,7 +272,7 @@ void init_ps(hydro_fields f, hydro_params p, double ****field) {
   }
 
   // Now planning  
-  fftw_plan plan = fftw_plan_dft_3d(p.Lx, p.Ly, p.Lz,
+  fftw_plan plan = fftw_plan_dft_3d(sizex, sizey, sizez,
 				    in[0], out[0],
 				    FFTW_FORWARD, FFTW_ESTIMATE);
 
@@ -353,26 +283,18 @@ void init_ps(hydro_fields f, hydro_params p, double ****field) {
   fftw_execute_dft(plan, in[2], out[2]);
 
 
-  /*
-   * Now copy out stuff from slab arrays into pencils. Reverse of what we usually do.
-   */
-
 
 
   for(x=1;x<=p.slicex;x++) {
     for(y=1;y<=p.slicey;y++) {
       for(z=0;z<p.Lz;z++) {	
 	for(i=0;i<3;i++) {
-	  field[i][x][y][z] = out[i][(x+p.shiftx-1)*p.Ly*p.Lz + (y+p.shifty-1)*p.Lz + z][0];
 
-
-	/*	
-	printf("%d %d %g %g\n", p.rank,
-	       (x+p.shiftx-1)*p.Ly*p.Lz + (y+p.shifty-1)*p.Lz + z,
-	       out[(x+p.shiftx-1)*p.Ly*p.Lz + (y+p.shifty-1)*p.Lz + z][0],
-	       out[(x+p.shiftx-1)*p.Ly*p.Lz + (y+p.shifty-1)*p.Lz + z][1]);
-	*/
-	//	slice[x*p.Ly*p.Lz + y*p.Lz + z] = out[x*p.Ly*p.Lz + y*p.Lz + z][0];
+	  if(sizex > p.Lx) {
+	    field[i][x][y][z] = out[i][2*(x+p.shiftx-1)*sizey*sizez + 2*(y+p.shifty-1)*sizez + 2*z][0];
+	  } else {
+	    field[i][x][y][z] = out[i][(x+p.shiftx-1)*p.Ly*p.Lz + (y+p.shifty-1)*p.Lz + z][0];
+	  }
 
 	}
       }
@@ -383,67 +305,6 @@ void init_ps(hydro_fields f, hydro_params p, double ****field) {
   halo_field(field[1], p);
   halo_field(field[2], p);
 
-  //  fprintf(stderr,"111 = %g\n", field[1][1][1]);
-
-  //  exit(0);
-
-  /*
-  for(x=0; x<p.Lx; x++) {
-
-    // Check whether we are the target node for this slab
-    if((x >= x_start) && ( x < (x_start + x_thickness))) {
-
-      for(ry = 0; ry < ny; ry++) {
-
-	if((x/p.slicex == p.myposx) && (ry == p.myposy)) {
-
-	  memcpy(&trim_field[(x-p.shiftx)*p.slicey*p.Lz],
-		 &slice[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
-		 p.slicey*p.Lz*sizeof(double));
-	  continue;
-	}
-
-	MPI_Send(&slice[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
-		 p.slicey*p.Lz,
-		 MPI_DOUBLE,
-		 ry*nx + x/p.slicex,
-		 x*ny + ry,
-		 MPI_COMM_WORLD);
-      }
-
-    } else if((x >= p.shiftx) && (x < (p.shiftx + p.slicex))) {
-
-      MPI_Recv(&trim_field[(x-p.shiftx)*p.slicey*p.Lz],
-	       p.slicey*p.Lz,
-	       MPI_DOUBLE,
-	       x/slab,
-	       x*ny + p.myposy,
-	       MPI_COMM_WORLD,
-	       &status);
-    }
-
-    // then wait until that slice of x is sorted
-    
-  }
-  // Alloc slab array and do communication to get it into place
-
-  for(x=1; x<=p.slicex; x++) {
-    for(y=1; y<=p.slicey; y++) {
-      for(z=0; z<p.Lz; z++) {
-
-	field[x][y][z] = trim_field[(x-1)*p.slicey*p.Lz + (y-1)*p.Lz + z];
-      }
-    }
-  }  
-
-
-  */
-
-
-
-
-
-  //  free(slice);
 
   fftw_destroy_plan(plan);
   
@@ -457,7 +318,6 @@ void init_ps(hydro_fields f, hydro_params p, double ****field) {
   free(in);
   free(out);
 
-  //  fftw_mpi_cleanup();
 
 }
 
