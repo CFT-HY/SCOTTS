@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
 
 
   // Degrees of freedom, still hardcoded
-  p.gdeg = 34.25*M_PI*M_PI/90.0;
+  p.gdeg = p.gstar*M_PI*M_PI/90.0;
 
 
   // Set up layout for any (or no) parallelism

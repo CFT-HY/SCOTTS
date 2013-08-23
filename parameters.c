@@ -44,6 +44,7 @@ void get_parameters(char *infile, hydro_params *p)
   int set_alpha = 0;
   int set_gamma = 0;
   int set_lambda = 0;
+  int set_gstar = 0;
 
   int set_T0 = 0;
   int set_Tconst = 0;
@@ -178,6 +179,10 @@ void get_parameters(char *infile, hydro_params *p)
     else if(!strcasecmp(key,"lambda")) {
       p->lambda = strtod(value,NULL);
       set_lambda = 1;
+    }
+    else if(!strcasecmp(key,"gstar")) {
+      p->gstar = strtod(value,NULL);
+      set_gstar = 1;
     }
     else if(!strcasecmp(key,"T0")) {
       p->T0 = strtod(value,NULL);
@@ -427,6 +432,9 @@ void get_parameters(char *infile, hydro_params *p)
   } else if(!set_lambda) {
     printf0(*p, "Did not set parameter \'lambda\'\n");
     die(100);
+  } else if(!set_gstar) {
+    printf0(*p, "Did not set parameter \'gstar\'\n");
+    die(100);
   } else if(!set_T0) {
     printf0(*p, "Did not set parameter \'T0\'\n");
     die(100);
@@ -493,6 +501,7 @@ void get_parameters(char *infile, hydro_params *p)
 	    "-- Lx %d, Ly %d, Lz %d\n"
 	    "-- Cav %g, C %g,\n"
 	    "-- alpha %g, gamma %g, lambda %g\n"
+	    "-- gstar %g\n"
 	    "-- T0 %g, Tconst %g\n"
 	    "-- interval %d, silointerval %d, checkpointinterval %d\n"
 	    "-- bubbles %d, beta %g, scale %g\n"
@@ -510,6 +519,7 @@ void get_parameters(char *infile, hydro_params *p)
 	    p->Lx, p->Ly, p->Lz,
 	    p->Cav, p->C,
 	    p->alpha, p->gamma, p->lambda,
+	    p->gstar,
 	    p->T0, p->Tconst,
 	    p->interval, p->silointerval, p->checkpointinterval,
 	    p->bubbles, p->beta, p->scale,

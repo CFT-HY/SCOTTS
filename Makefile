@@ -16,10 +16,10 @@
 # CC := icc -DMPI -DFFT -DSILO
 
 # Sisu
-# CC := cc -DMPI -DFFT -DSILO
+CC := cc -DMPI -DSILO # -DFFT
 
 # Taito
-CC := mpicc -DMPI -DSILO # -DFFT # -DINITPS # -DDIVPS
+# CC := mpicc -DMPI -DSILO # -DFFT # -DINITPS # -DDIVPS
 
 #### CFLAGS ####
 
@@ -27,16 +27,16 @@ CC := mpicc -DMPI -DSILO # -DFFT # -DINITPS # -DDIVPS
 # CFLAGS := -O3 -L/home/u1/weir/local/lib -I/home/u1/weir/local/include
 
 # on Sisu
-# CFLAGS := -L/homeappl/home/weir/local/lib \
-#	-I/homeappl/home/weir/local/include \
-#	 -O3 -opt-prefetch -unroll-aggressive -no-prec-div \
-#	-fp-model fast=2 -align -fno-alias -fno-fnalias -ipo
-
-# on Taito
 CFLAGS := -L/homeappl/home/weir/local/lib \
 	-I/homeappl/home/weir/local/include \
-	-O3 -opt-prefetch -unroll-aggressive -no-prec-div \
+	 -O3 -opt-prefetch -unroll-aggressive -no-prec-div \
 	-fp-model fast=2 -align -fno-alias -fno-fnalias -ipo
+
+# on Taito
+# CFLAGS := -L/homeappl/home/weir/local/lib \
+#	-I/homeappl/home/weir/local/include \
+#	-O3 -opt-prefetch -unroll-aggressive -no-prec-div \
+#	-fp-model fast=2 -align -fno-alias -fno-fnalias -ipo
 
 
 # on vuori
@@ -77,7 +77,7 @@ LIBS := -lfftw3_mpi -lfftw3 -lsiloh5 -lhdf5 -lstdc++ -lz
 # LIBS := -lfftw3_mpi -lfftw3 -lm -lsiloh5
 
 # on afo
-#LIBS := -L/home/weir/local/lib/ \
+# LIBS := -L/home/weir/local/lib/ \
 #	-lsiloh5 -lhdf5 -lfftw3_mpi -lfftw3 -lm -lstdc++
 
 # on my mac:

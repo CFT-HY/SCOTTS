@@ -142,7 +142,7 @@ typedef struct {
   double a;
 
   // Degrees of freedom
-  double gdeg;
+  double gstar, gdeg;
 
   // Number of physical sites in volume
   int N;
