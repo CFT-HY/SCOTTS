@@ -17,6 +17,9 @@ double field_energy(hydro_fields f, hydro_params p) {
 
   double Etot = 0.0;
 
+  double a = 0.0;
+  double b = 0.0;
+  double c = 0.0;
 
   vol = p.dx*p.dx*p.dx;
 
@@ -25,28 +28,36 @@ double field_energy(hydro_fields f, hydro_params p) {
       for(z = 0; z < p.Lz; z++) {
 
 	
-	Etot += 0.5*f.pifull[x][y][z]*f.pifull[x][y][z]*vol;
+	a += 0.5*f.pifull[x][y][z]*f.pifull[x][y][z]*vol;
 
-	Etot += 0.5*((f.phi[x+1][y][z] - f.phi[x][y][z])/p.dx)
+	a += 0.5*((f.phi[x+1][y][z] - f.phi[x][y][z])/p.dx)
 	  *((f.phi[x+1][y][z] - f.phi[x][y][z])/p.dx)*vol;
 	
-	Etot += 0.5*((f.phi[x][y+1][z] - f.phi[x][y][z])/p.dx)
+	a += 0.5*((f.phi[x][y+1][z] - f.phi[x][y][z])/p.dx)
 	  *((f.phi[x][y+1][z] - f.phi[x][y][z])/p.dx)*vol;
 	
-	Etot += 0.5*((f.phi[x][y][(z+1)%p.Lz] - f.phi[x][y][z])/p.dx)
+	b += 0.5*((f.phi[x][y][(z+1)%p.Lz] - f.phi[x][y][z])/p.dx)
 	  *((f.phi[x][y][(z+1)%p.Lz] - f.phi[x][y][z])/p.dx)*vol;
 
 #ifndef SCALAR
-	Etot += Vf(p, f.T[x][y][z], f.phi[x][y][z])*vol;
+	c += Vf(p, f.T[x][y][z], f.phi[x][y][z])*vol;
 #else
-	Etot += Vf(p, p.T0, f.phi[x][y][z])*vol;
+	c += Vf(p, p.Tconst, f.phi[x][y][z])*vol;
 #endif
 
       }
     }
   }
   
-  return Etot;
+  double atot = reduce_sum(a, p);
+  double btot = reduce_sum(b, p);
+  double ctot = reduce_sum(c, p);
+
+#ifdef SCALAR
+  printf0(p,"Totals: momentum %g gradient %g potential %g\n", atot, btot, ctot);
+#endif // SCALAR
+
+  return a + b + c;
 }
 
 
@@ -249,6 +260,8 @@ double avg_pressure(hydro_fields f, hydro_params p) {
 
   vol = p.dx*p.dx*p.dx;
 
+  press = 0.0;
+
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
@@ -316,7 +329,7 @@ double tzerozero(hydro_fields f, hydro_params p) {
 	// (minus sign if 00, otherwise plus)
 	total -= (-1.0*Vf(p, f.T[x][y][z], f.phi[x][y][z]));
 #else
-	total -= (-1.0*Vf(p, p.T0, f.phi[x][y][z]));
+	total -= (-1.0*Vf(p, p.Tconst, f.phi[x][y][z]));
 #endif // SCALAR
 
 
