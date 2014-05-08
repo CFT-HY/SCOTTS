@@ -31,7 +31,7 @@ void evolve_backstep(hydro_fields f, hydro_params p) {
 	  + 0.5*p.dt*Vdf(p, f.T[x][y][z], f.phi[x][y][z] 
 			 - 0.25*p.dt*f.pifull[x][y][z]);
 #else
-	  + 0.5*p.dt*Vdf(p, p.T0, f.phi[x][y][z] 
+	  + 0.5*p.dt*Vdf(p, p.Tconst, f.phi[x][y][z] 
 			 - 0.25*p.dt*f.pifull[x][y][z]);
 #endif
       }
@@ -86,7 +86,7 @@ void evolve_field(hydro_fields f, hydro_params p) {
 	       + f.V[2][x][y][((z+1)%p.Lz)]*(f.phi[x][y][((z+1)%p.Lz)]
 					     - f.phi[x][y][z]))/p.dx
 	     )/(1-s);
-#endif // SCALAR
+#endif // !SCALAR
 	
 	// scalar field gradient and potential terms
 	f.pi[x][y][z] = f.pi[x][y][z]
@@ -100,12 +100,17 @@ void evolve_field(hydro_fields f, hydro_params p) {
 #ifndef SCALAR
 	    - Vdf(p, f.T[x][y][z], f.phi[x][y][z]))/(1-s);
 #else	
-	    - Vdf(p, p.T0, f.phi[x][y][z]));
-#endif // SCALAR	
+	    - Vdf(p, p.Tconst, f.phi[x][y][z]));
+#endif // !SCALAR	
 
-	// pifull is (1.5*pi - 0.5*piold), not sure why
-	f.pifull[x][y][z] = piold + 1.5*(f.pi[x][y][z] - piold);
-	
+#ifndef SCALAR
+      // pifull is (1.5*pi - 0.5*piold), not sure why
+      f.pifull[x][y][z] = piold + 1.5*(f.pi[x][y][z] - piold);
+#else
+      // more reasonable?
+      f.pifull[x][y][z] = 0.5*(piold + f.pi[x][y][z]);
+#endif // !SCALAR	
+
 	
       }
     }

@@ -16,7 +16,7 @@
 # CC := icc -DMPI -DFFT -DSILO
 
 # Sisu
-CC := cc -DMPI -DSILO # -DFFT
+CC := cc -DMPI -DSILO -DFFT # -DSCALAR
 
 # Taito
 # CC := mpicc -DMPI -DSILO # -DFFT # -DINITPS # -DDIVPS
@@ -65,10 +65,10 @@ CFLAGS := -L/homeappl/home/weir/local/lib \
 # LIBS := -lfftw3_mpi -lfftw3 -lsiloh5
 
 # on sisu
-# LIBS := -lfftw3_mpi -lfftw3 -lsiloh5 -lhdf5 -lstdc++ -lz
+LIBS := -lfftw3_mpi -lfftw3 -lsiloh5 -lhdf5 -lstdc++ -lz
 
 # on Taito
-LIBS := -lfftw3_mpi -lfftw3 -lsiloh5 -lhdf5 -lstdc++ -lz
+# LIBS := -lfftw3_mpi -lfftw3 -lsiloh5 -lhdf5 -lstdc++ -lz
 
 # on vuori
 # LIBS := -lfftw3_mpi -lfftw3 -lm
