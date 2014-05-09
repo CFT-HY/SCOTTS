@@ -1,0 +1,52 @@
+# Example input file
+
+# How long the simulation takes
+Lx      1024
+Ly	1024
+Lz	1024
+steps  20000
+
+# How big the simulation is
+dx     1.0
+dt     0.1
+ 
+# Viscosity terms
+Cav    0.0
+C      0.2
+
+# Potential parameters
+# Lheat  0.1
+# sigma  0.1
+# lcorr  6.0
+
+alpha 0.0439205
+gamma 0.0555556
+lambda 0.0154321
+
+T0 0.70710678
+Tconst 0.86
+
+# How often to write data
+interval 100
+silointerval -1
+
+# Initial conditions
+initial bubble
+
+bubbles 1
+
+silodir silage
+
+beta 1.0
+
+scale 1.0
+
+nucleation file nucleation-list
+
+checkpointinterval 2000
+checkpointdir /wrk/weir/scan1024-0.2-both2/
+
+gwsource both
+
+seed 90210
+
