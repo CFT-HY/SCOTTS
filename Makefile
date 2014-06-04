@@ -4,7 +4,7 @@
 # CC := cc -DMPI -DFFT -DSILO
 
 # Everything turned on
-# CC := mpicc -DMPI -DSILO # -DSCALAR # -DFFT # -DEXPANSION
+CC := mpicc -g -DMPI -DSILO -DFFT -DINITPS # -DSCALAR # -DFFT # -DEXPANSION
 
 # Example for serial profiling
 # CC := gcc -O3 -DPAPI -lpapi
@@ -18,8 +18,8 @@
 # Sisu
 # CC := cc -DMPI -DSILO -DFFT # -DSCALAR
 
-# Taito
-CC := mpicc -DMPI -DSILO -DFFT # -DINITPS # -DDIVPS
+#  Taito
+# CC := mpicc -DMPI -DSILO -DFFT # -DINITPS # -DDIVPS
 
 #### CFLAGS ####
 
@@ -33,10 +33,10 @@ CC := mpicc -DMPI -DSILO -DFFT # -DINITPS # -DDIVPS
 #	-fp-model fast=2 -align -fno-alias -fno-fnalias -ipo
 
 # on Taito
-CFLAGS := -L/homeappl/home/weir/local_taito/lib \
-	-I/homeappl/home/weir/local_taito/include \
-	-O3 -opt-prefetch -unroll-aggressive -no-prec-div \
-	-fp-model fast=2 -align -fno-alias -fno-fnalias -ipo
+# CFLAGS := -L/homeappl/home/weir/local_taito/lib \
+#	-I/homeappl/home/weir/local_taito/include \
+#	-O3 -opt-prefetch -unroll-aggressive -no-prec-div \
+#	-fp-model fast=2 -align -fno-alias -fno-fnalias -ipo
 
 
 # on vuori
@@ -46,7 +46,7 @@ CFLAGS := -L/homeappl/home/weir/local_taito/lib \
 # CFLAGS := -O3 -L/home/weir/local/lib -I/home/weir/local/include
 
 # on afo
-# CFLAGS := -O3 -I/home/weir/local/include/
+CFLAGS := -O3 -I/home/weir/local/include/
 
 # on my mac
 # CFLAGS := -O0 -I/Users/weir/Installed/silo-4.8-bsd/include/
@@ -68,7 +68,7 @@ CFLAGS := -L/homeappl/home/weir/local_taito/lib \
 # LIBS := -lfftw3_mpi -lfftw3 -lsiloh5 -lhdf5 -lstdc++ -lz
 
 # on Taito
-LIBS := -lfftw3_mpi -lfftw3 -lsiloh5 -lhdf5 -lstdc++ -lz
+# LIBS := -lfftw3_mpi -lfftw3 -lsiloh5 -lhdf5 -lstdc++ -lz
 
 # on vuori
 # LIBS := -lfftw3_mpi -lfftw3 -lm
@@ -77,8 +77,8 @@ LIBS := -lfftw3_mpi -lfftw3 -lsiloh5 -lhdf5 -lstdc++ -lz
 # LIBS := -lfftw3_mpi -lfftw3 -lm -lsiloh5
 
 # on afo
-# LIBS := -L/home/weir/local/lib/ \
-#	-lsiloh5 -lhdf5 -lfftw3_mpi -lfftw3 -lm -lstdc++
+LIBS := -L/home/weir/local/lib/ \
+	-lsiloh5 -lhdf5 -lfftw3_mpi -lfftw3 -lm -lstdc++
 
 # on my mac:
 # LIBS := -L/Users/weir/Installed/silo-4.8-bsd/lib/ \

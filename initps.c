@@ -7,183 +7,29 @@
 
 #ifdef INITPS
 
-/* get_normal
+/* project_down
  *
- * Lazy and inefficient way of getting gaussian
- * random number
+ * Project out rotational or divergent bits
  */
-double get_normal(double mean, double dev) {
-  double u1, u2;
-  
-  u1 = drand48();
-  u2 = drand48();
-
-  return dev*(sqrt(-2.0*log(u1))*sin(2.0*M_PI*u2)-mean);
-}
-
-/* spectrum
- * 
- */
-void spectrum(double ksq, hydro_params p, fftw_complex *res) 
-{ 
-
-  double phase;
-
-  double L = p.Lx;
-
-
-  if(fabs(ksq) < 0.000001) {
-    (*res)[0] = 0.0;
-    (*res)[1] = 0.0;
-  } else {
-
-    // (*res)[0] = p.initps*exp(-0.25*sqrt(ksq)*p.dx*((double)L));
-    (*res)[0] = get_normal(0.0, p.initps*exp(-0.25*sqrt(ksq)*p.dx*((double)L)));
-
-    //    (*res)[1] = get_normal(0.0, sqrt(0.5*hbar/sqrt(ksq + m*m)));
-    // Anders said to use separate Gaussian values for each cpt
-    /*
-    if(fabs(ksq - 0.585786) < 0.0001) {
-      printf("%g\n", (*res)[0]);
-    }
-    */
-
-    (*res)[1] = (*res)[0];
-
-    phase = drand48();
-
-    // Random phase
-    (*res)[0] = (*res)[0]*cos(2.0*M_PI*phase);
-    (*res)[1] = (*res)[1]*sin(2.0*M_PI*phase);
-
-  } 
-}
-
-
-
-/* init_ps(hydro_fields f, hydro_params p, double ***field)
- *
- * Initialises the field with a power spectrum.
- * Used to convince reluctant referees.
- */
-void init_ps(hydro_fields f, hydro_params p, double ****field) {
-
-  ptrdiff_t x_thickness, x_start, alloc_local;
-
-  ptrdiff_t n0 = p.Lx;
-  ptrdiff_t n1 = p.Ly;
-  ptrdiff_t n2 = p.Lz;
-
-  int slab;
-
-  MPI_Status status;
-
-  double kmode, modsq;
+void project_down(hydro_params p, fftw_complex **in, int sizex, int sizey, int sizez, int times) {
 
   int x, y, z;
-  int i;
-
-  double start = clock();
-
-  //  fftw_mpi_init();
-
-  double checken = 0.0;
-
-
-
-
-  int sizex = 512;
-  int sizey = 512;
-  int sizez = 512;
-  double tdx = 0.5;
-
-  fftw_complex **in = (fftw_complex **)malloc(3*sizeof(fftw_complex *));
-  fftw_complex **out = (fftw_complex **)malloc(3*sizeof(fftw_complex *));
-
-  in[0] = fftw_alloc_complex(sizex*sizey*sizez);
-  out[0] = fftw_alloc_complex(sizex*sizey*sizez);
-
-  in[1] = fftw_alloc_complex(sizex*sizey*sizez);
-  out[1] = fftw_alloc_complex(sizex*sizey*sizez);
-
-  in[2] = fftw_alloc_complex(sizex*sizey*sizez);
-  out[2] = fftw_alloc_complex(sizex*sizey*sizez);
-
-
-
-  int nx = p.Lx/p.slicex;
-  int ny = p.Ly/p.slicey;
-
-  int ry;
-
-
-  /*
-   * Set up modes with desired power spectrum...
-   */
-  int true_x;
-
-  double ksq;
-
-  //  int i;
-
-
-  for(x=0;x<sizex;x++) {
-    for(y=0;y<sizey;y++) {
-      for(z=0;z<sizez;z++) {
-
-	ksq = (2.0 - 2.0*cos(((double)x)*2.0*M_PI/(((double)sizex))))/(tdx*tdx);
-	ksq += (2.0 - 2.0*cos(((double)y)*2.0*M_PI/(((double)sizey))))/(tdx*tdx);
-	ksq += (2.0 - 2.0*cos(((double)z)*2.0*M_PI/(((double)sizez))))/(tdx*tdx);
-
-	for(i=0; i<3; i++) {
-	  spectrum(ksq, p, &(in[i][x*sizey*sizez + y*sizez + z]));
-	}
-
-      }
-    }
-  }
-
-  // moduli will not work in parallel, also not swapped
-  for(x=0;x<sizex;x++) {
-    for(y=0;y<sizey;y++) {
-      for(z=0;z<sizez;z++) {
-	for(i=0; i<3; i++) {
-	  in[i][x*sizey*sizez + y*sizez + z][0] = in[i][((sizex-x)%sizex)*sizey*sizez
-					       + ((sizey-y)%sizey)*sizez + ((sizez-z)%sizez)][0];
-	  in[i][x*sizey*sizez + y*sizez + z][1] = -1.0*in[i][((sizex-x)%sizex)*sizey*sizez
-						    + ((sizey-y)%sizey)*sizez + ((sizez-z)%sizez)][1];
-
-	  if((x == 0 || x == sizex/2) && (y == 0 || y == sizey/2) && (z == 0 || z == sizez/2)) {
-	    in[i][x*sizey*sizez + y*sizez + z][0] = sqrt(in[i][((sizex-x)%sizex)*sizey*sizez
-						      + ((sizey-y)%sizey)*sizez + ((sizez-z)%sizez)][0]
-						   *in[i][((sizex-x)%sizex)*sizey*sizez
-						       + ((sizey-y)%sizey)*sizez + ((sizez-z)%sizez)][0]
-						   + in[i][((sizex-x)%sizex)*sizey*sizez
-							+ ((sizey-y)%sizey)*sizez + ((sizez-z)%sizez)][1]
-						   *in[i][((sizex-x)%sizex)*sizey*sizez
-						       + ((sizey-y)%sizey)*sizez + ((sizez-z)%sizez)][1]);
-	    in[i][x*sizey*sizez + y*sizez + z][1] = 0.0;
-	  }
-	}
-      }
-    }
-  }
-
-
-
   double kx, ky, kz;
-  int j;
 
   double in_proj_re[3];
   double in_proj_im[3];
 
+  double res_re, res_im;
 
-  int reruns = 0;
+  int i, j;
 
   double resid, stuff;
 
+  double tdx = 0.5;
 
-  for(reruns = 0; reruns < 5; reruns++) {
+  int reruns;
+
+  for(reruns = 0; reruns < times; reruns++) {
     resid = 0.0;
     stuff = 0.0;
     
@@ -191,8 +37,6 @@ void init_ps(hydro_fields f, hydro_params p, double ****field) {
     for(x=0;x<sizex;x++) {
       for(y=0;y<sizey;y++) {
 	for(z=0;z<sizez;z++) {
-
-
 
 	  
 	  kx = sqrt((2.0 - 2.0*cos(((double)x)*2.0*M_PI/(((double)sizex))))/(tdx*tdx));
@@ -210,8 +54,8 @@ void init_ps(hydro_fields f, hydro_params p, double ****field) {
 	  
 	  for(i=1; i<=3; i++) {
 
-	    double res_re = 0.0;
-	    double res_im = 0.0;
+	    res_re = 0.0;
+	    res_im = 0.0;
 
 	    for(j=1; j<=3; j++) {
 
@@ -271,52 +115,469 @@ void init_ps(hydro_fields f, hydro_params p, double ****field) {
       fprintf(stderr,"run %d, stuff is %g, resid is now %g\n", reruns, stuff, resid);
   }
 
-  // Now planning  
-  fftw_plan plan = fftw_plan_dft_3d(sizex, sizey, sizez,
-				    in[0], out[0],
-				    FFTW_FORWARD, FFTW_ESTIMATE);
+}
 
 
+/* get_normal
+ *
+ * Lazy and inefficient way of getting gaussian
+ * random number
+ */
+double get_normal(double mean, double dev) {
+  double u1, u2;
   
-  fftw_execute_dft(plan, in[0], out[0]);
-  fftw_execute_dft(plan, in[1], out[1]);
-  fftw_execute_dft(plan, in[2], out[2]);
+  u1 = drand48();
+  u2 = drand48();
+
+  return dev*(sqrt(-2.0*log(u1))*sin(2.0*M_PI*u2)-mean);
+}
+
+/* spectrum
+ * 
+ */
+void spectrum(double ksq, hydro_params p, fftw_complex *res) 
+{ 
+
+  double phase;
+
+  double L = p.Lx;
+
+
+  if(fabs(ksq) < 0.000001) {
+    (*res)[0] = 0.0;
+    (*res)[1] = 0.0;
+  } else {
+
+
+    //  (*res)[0] = p.initps*exp(-0.25*sqrt(ksq)*p.dx*((double)L));    
+    (*res)[0] = get_normal(0.0, p.initps*exp(-0.25*sqrt(ksq)*p.dx*((double)L)));
+
+
+    (*res)[1] = (*res)[0];
+
+    phase = drand48();
+
+    // Random phase
+    (*res)[0] = (*res)[0]*cos(2.0*M_PI*phase);
+    (*res)[1] = (*res)[1]*sin(2.0*M_PI*phase);
+
+  } 
+}
 
 
 
 
-  for(x=1;x<=p.slicex;x++) {
-    for(y=1;y<=p.slicey;y++) {
-      for(z=0;z<p.Lz;z++) {	
-	for(i=0;i<3;i++) {
 
-	  if(sizex > p.Lx) {
-	    field[i][x][y][z] = out[i][2*(x+p.shiftx-1)*sizey*sizez + 2*(y+p.shifty-1)*sizez + 2*z][0];
-	  } else {
-	    field[i][x][y][z] = out[i][(x+p.shiftx-1)*p.Ly*p.Lz + (y+p.shifty-1)*p.Lz + z][0];
+
+
+
+/* init_ps(hydro_fields f, hydro_params p, double ***field)
+ *
+ * Initialises the field with a power spectrum.
+ * Used to convince reluctant referees.
+ */
+void init_ps(hydro_fields f, hydro_params p, double ****field) {
+
+
+  ptrdiff_t x_thickness, x_start, alloc_local;
+
+
+  ptrdiff_t n0 = p.Lx;
+  ptrdiff_t n1 = p.Ly;
+  ptrdiff_t n2 = p.Lz;
+
+  int slab;
+
+  MPI_Status status;
+
+  double kmode, modsq;
+
+  int x, y, z;
+  int i, j;
+
+  double *trim = (double *)malloc(p.slicex*p.slicey*p.Lz*sizeof(double));
+
+
+  fftw_mpi_init();
+
+  alloc_local = fftw_mpi_local_size_3d(n0, n1, n2,
+                                       MPI_COMM_WORLD,
+                                       &x_thickness, &x_start);
+
+
+
+  slab = (int) x_thickness;
+
+  if(((int)x_thickness) != p.Lx/p.size) {
+    fprintf(stderr,
+            "Giving up in FFT: FFTW told me to use a silly layout!\n");
+    die(-42);
+  }
+
+  if(((int)x_thickness) == 0) {
+    fprintf(stderr, "Giving up in FFT: dx=0!\n");
+    die(-43);
+  }
+
+
+  fftw_complex **in = (fftw_complex **)malloc(3*sizeof(fftw_complex *));
+  fftw_complex **swap_in = (fftw_complex **)malloc(3*sizeof(fftw_complex *));
+
+  fftw_complex **out = (fftw_complex **)malloc(3*sizeof(fftw_complex *));
+
+  in[0] = fftw_alloc_complex(x_thickness*p.Ly*p.Lz);
+  swap_in[0] = fftw_alloc_complex(x_thickness*p.Ly*p.Lz);
+
+  out[0] = fftw_alloc_complex(x_thickness*p.Ly*p.Lz);
+
+  in[1] = fftw_alloc_complex(x_thickness*p.Ly*p.Lz);
+  swap_in[1] = fftw_alloc_complex(x_thickness*p.Ly*p.Lz);
+
+  out[1] = fftw_alloc_complex(x_thickness*p.Ly*p.Lz);
+
+  in[2] = fftw_alloc_complex(x_thickness*p.Ly*p.Lz);
+  swap_in[2] = fftw_alloc_complex(x_thickness*p.Ly*p.Lz);
+
+  out[2] = fftw_alloc_complex(x_thickness*p.Ly*p.Lz);
+
+
+
+  int nx = p.Lx/p.slicex;
+  int ny = p.Ly/p.slicey;
+
+  int ry;
+
+
+  /*
+   * Set up modes with desired power spectrum...
+   */
+  int true_x;
+
+  double ksq;
+
+  //  int i;
+
+
+  for(x=x_start;x<x_start+x_thickness;x++) {
+    for(y=0;y<p.Ly;y++) {
+      for(z=0;z<p.Lz;z++) {
+
+	ksq = (2.0 - 2.0*cos(((double)x)*2.0*M_PI/(((double)p.Lx))))/(p.dx*p.dx);
+	ksq += (2.0 - 2.0*cos(((double)y)*2.0*M_PI/(((double)p.Ly))))/(p.dx*p.dx);
+	ksq += (2.0 - 2.0*cos(((double)z)*2.0*M_PI/(((double)p.Lz))))/(p.dx*p.dx);
+
+	for(i=0; i<3; i++) {
+	  spectrum(ksq, p, &(in[i][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z]));
+	}
+
+      }
+    }
+  }
+
+  /*
+  for(x=x_start; x<(x_start+x_thickness); x++) {
+    fprintf(stderr, "** node %d, x %d:\t%10.3g %10.3g\t **\n", p.rank, x, in[0][(x-x_start)*p.Ly*p.Lz][0], in[0][(x-x_start)*p.Ly*p.Lz][1]);
+  } 
+  */
+
+  printf0(p, "Local spectrum initialisation done\n");
+
+  // At this point each node knows what it ought to have, but we need to 'hermitianise' it
+  // Need to do swapping
+
+
+  // These are the minimum and maximum (INCLUSIVE) x-slice coordinates needed by this node
+  int min_needed = p.Lx-(x_start+x_thickness)+1;
+  int max_needed = p.Lx-x_start;
+
+  for(i=0; i<3; i++) {
+
+      
+    //	fprintf(stderr, "Node %d  for %d-%d needs %d-%d\n", p.rank, x_start, x_start+x_thickness-1,  min_needed, max_needed);
+
+
+	for(j=0; j<=p.Lx; j++) {
+
+	  if(j>= x_start && j < x_start+x_thickness) {
+
+
+	    //	    fprintf(stderr, "Rank %d: SEND row %02d to node %d (rank %d, size %d)", p.rank, j, ((p.Lx-j))/x_thickness % p.size, p.rank, p.size);
+
+	    if(((p.Lx-j))/x_thickness % p.size == p.rank) {
+	      // copy - done on recv side
+	      //	      fprintf(stderr, " (c)\n");
+	    } else {
+	      //	      fprintf(stderr, " (m)\n");
+	      MPI_Send(&(((double *)in[i])[((j-x_start)%p.Lx)*p.Ly*p.Lz*2]), 2*p.Ly*p.Lz, MPI_DOUBLE, ((p.Lx-j))/x_thickness % p.size, j, MPI_COMM_WORLD);
+	    }
 	  }
+
+
+	  if(j>=min_needed && j<=max_needed) {
+	    //	    fprintf(stderr, "Rank %d: RECV row %02d from node %d and becomes swap row %d", p.rank, j % p.Lx, (j % p.Lx)/x_thickness, j-min_needed);
+
+	    if((j % p.Lx)/x_thickness == p.rank) {
+	      //	      fprintf(stderr, " (c)\n");
+	      // copy - need to check
+	      //	      fprintf(stderr,"rank %d copying row %d, (local row %d) %g %g to self\n", p.rank, j, (j-x_start)%p.Lx, in[i][((j-x_start)%p.Lx)*p.Ly*p.Lz][0], in[i][((j-x_start)%p.Lx)*p.Ly*p.Lz][1]);
+	      memcpy(&(((fftw_complex *)swap_in[i])[(j-min_needed)*p.Ly*p.Lz]), &(((fftw_complex *)in[i])[((j-x_start)%p.Lx)*p.Ly*p.Lz]), p.Ly*p.Lz*sizeof(fftw_complex));
+
+	      //	      fprintf(stderr, "rank %d copy is %g %g\n", p.rank, swap_in[i][(j-min_needed)*p.Ly*p.Lz][0], swap_in[i][(j-min_needed)*p.Ly*p.Lz][1]);
+	    } else {	     
+	      //	      fprintf(stderr, " (m)\n");
+	      MPI_Recv(&(((double *)swap_in[i])[(j-min_needed)*p.Ly*p.Lz*2]), 2*p.Ly*p.Lz, MPI_DOUBLE, (j % p.Lx)/x_thickness, j, MPI_COMM_WORLD, &status);
+	    }
+	  }
+
+
+
+    }
+      
+  }
+
+  // at this point swap_in has the stuff needed to do the conjugate properly
+
+  //  MPI_Barrier(MPI_COMM_WORLD);
+
+  // Debug messages
+  //  printf0(p, "Done swap_in initialisation\n", in[0][4][0], in[0][4][1], swap_in[0][4][0], swap_in[0][4][1]);
+  //  int swap_x_start = p.Lx - x_start - x_thickness;
+  //  printf0(p, "Swap_x_start is %d, x_start is %d, x_thickness is %d\n", swap_x_start, x_start, x_thickness);
+
+
+  for(x=x_start; x < x_start+x_thickness; x++) {
+
+    /*
+    // Debug message
+    fprintf(stderr, "Rank %d: USE Row %d has dual row %d which is swap row %d\n",
+	    p.rank, x, (p.Lx-x)%p.Lx,
+	    ((((p.Lx-x)  )% x_thickness) + x_thickness - 1) % x_thickness );
+    */
+
+    // This is the row in the swap_in where one can find (p.Lx-x)
+    int swap_row = (((p.Lx-x) % x_thickness) + x_thickness - 1) % x_thickness;
+
+    for(y=0;y<p.Ly;y++) {
+      for(z=0;z<p.Lz;z++) {
+	for(i=0; i<3; i++) {
+
+	  // Conjugate the system. Treat special cases first.
+
+	  if((x == 0 || x == p.Lx/2) && (y == 0 || y == p.Ly/2) && (z == 0 || z == p.Lz/2)) {
+	    
+
+	    /* These sites need to be pure real.
+	     */	    
+	    in[i][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0] = sqrt(swap_in[i][swap_row*p.Ly*p.Lz
+						      + ((p.Ly-y)%p.Ly)*p.Lz + ((p.Lz-z)%p.Lz)][0]
+						      *swap_in[i][swap_row*p.Ly*p.Lz
+						       + ((p.Ly-y)%p.Ly)*p.Lz + ((p.Lz-z)%p.Lz)][0]
+						      + swap_in[i][swap_row*p.Ly*p.Lz
+							+ ((p.Ly-y)%p.Ly)*p.Lz + ((p.Lz-z)%p.Lz)][1]
+						      *swap_in[i][swap_row*p.Ly*p.Lz
+						      + ((p.Ly-y)%p.Ly)*p.Lz + ((p.Lz-z)%p.Lz)][1]);
+	  
+	    in[i][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] = 0.0;
+	    
+
+	     } 
+
+	  else if((x == 0 || x == p.Lx/2)) {
+
+
+
+	    /* need local mirror image on these slices, so ignore swap rows
+	     * if we used swap_in we'd not end up with something that is hermitian because otherwise
+	     * [<>          []] initially would be swapped (and conjugated) to become
+	     * [[]          <>]
+	     */
+	    in[i][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0] = in[i][(x-x_start)*p.Ly*p.Lz
+							 + ((p.Ly-y)%p.Ly)*p.Lz + ((p.Lz-z)%p.Lz)][0];
+	    in[i][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] = -1.0*in[i][(x-x_start)*p.Ly*p.Lz
+							 + ((p.Ly-y)%p.Ly)*p.Lz + ((p.Lz-z)%p.Lz)][1];
+
+
+	  } else if(x >= p.Lx/2) {
+	    /* in this case we conjugate the stuff in the lower
+	       slices, using swap_row to work out where it was put.
+	    */
+
+	    in[i][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0] = 1.0*swap_in[i][swap_row*p.Ly*p.Lz
+								      + ((p.Ly-y)%p.Ly)*p.Lz + ((p.Lz-z)%p.Lz)][0];
+	    in[i][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] = -1.0*swap_in[i][swap_row*p.Ly*p.Lz
+									   + ((p.Ly-y)%p.Ly)*p.Lz + ((p.Lz-z)%p.Lz)][1];
+
+	  } 
+	  // otherwise do nothing
+
 
 	}
       }
     }
   }
 
-  halo_field(field[0], p);
-  halo_field(field[1], p);
-  halo_field(field[2], p);
 
+
+  //  MPI_Barrier(MPI_COMM_WORLD);
+  //  printf0(p, "Done swapping\n");
+
+
+  // Now planning  
+  fftw_plan plan = fftw_mpi_plan_dft_3d(p.Lx, p.Ly, p.Lz,
+				    in[0], out[0], MPI_COMM_WORLD,
+				    FFTW_FORWARD, FFTW_ESTIMATE);
+
+
+
+  // project_down(p, in, sizex, sizey, sizez, 5);
+
+
+
+  //  MPI_Barrier(MPI_COMM_WORLD);
+  //  printf0(p, "Done planning\n");
+
+  /*
+  for(x=x_start; x<(x_start+x_thickness); x++) {
+    fprintf(stderr, "node %d, x %d:\t%10.3g %10.3g\t ->\n", p.rank, x, in[0][(x-x_start)*p.Ly*p.Lz][0], in[0][(x-x_start)*p.Ly*p.Lz][1]);
+  } 
+  */
+
+  fftw_mpi_execute_dft(plan, in[0], out[0]);
+  fftw_mpi_execute_dft(plan, in[1], out[1]);
+  fftw_mpi_execute_dft(plan, in[2], out[2]);
+
+ 
+  MPI_Barrier(MPI_COMM_WORLD);
+  //  printf0(p, "Done FFTing, example value %g %g\n", out[0][0][0], out[0][0][1]);
+
+  /*
+  for(x=x_start; x<(x_start+x_thickness); x++) {
+    fprintf(stderr, "node %d, x %d:\t->\t%10.3g %10.3g\t\n", p.rank, x, out[0][(x-x_start)*p.Ly*p.Lz][0], out[0][(x-x_start)*p.Ly*p.Lz][1]);
+  } 
+
+  */
+
+  double *slice = (double *)malloc(slab*p.Ly*p.Lz*sizeof(double));
+
+
+  double maximag = 0.0;
+
+  for(i=0; i<3; i++) {
+
+    // prepare slice
+
+    for(x=0; x<slab; x++) {
+      for(y=0; y<p.Ly; y++) {
+	for(z=0; z<p.Lz; z++) {
+	  if(fabs(out[i][x*p.Ly*p.Lz + y*p.Lz + z][1]) > fabs(maximag)) {
+	    maximag = out[i][x*p.Ly*p.Lz + y*p.Lz + z][1];
+	  }
+	  slice[x*p.Ly*p.Lz + y*p.Lz + z] = out[i][x*p.Ly*p.Lz + y*p.Lz + z][0];
+	}
+      }
+    }
+
+    //    fprintf(stderr,"maximag is %g\n", maximag);
+
+
+
+    // segfault error below here
+
+    for(x=0; x<p.Lx; x++) {
+
+      // Check whether we are the source node for this slab                                                                                                                                                                                  
+      if((x >= x_start) && ( x < (x_start + x_thickness))) {
+
+	for(ry = 0; ry < ny; ry++) {
+
+	  if((x/p.slicex == p.myposx) && (ry == p.myposy)) {
+
+
+	    memcpy(&trim[(x-p.shiftx)*p.slicey*p.Lz],
+		   &slice[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
+		   p.slicey*p.Lz*sizeof(double));
+
+	    continue;
+	  }
+
+
+	  MPI_Send(&slice[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
+		   p.slicey*p.Lz,
+		   MPI_DOUBLE,
+		   ry*nx + x/p.slicex,
+		   x*ny + ry,
+		   MPI_COMM_WORLD);
+
+	}
+
+
+      } else if((x >= p.shiftx) && (x < (p.shiftx + p.slicex))) {
+
+
+	MPI_Recv(&trim[(x-p.shiftx)*p.slicey*p.Lz],
+		 p.slicey*p.Lz,
+		 MPI_DOUBLE,
+		 x/slab,
+		 x*ny + p.myposy,
+		 MPI_COMM_WORLD,
+		 &status);
+
+      }
+    }
+
+
+    // untrim
+    
+    /*
+    for(x=1;x<=p.slicex;x++) {
+      for(y=1;y<=p.slicey;y++) {
+	for(z=0;z<p.Lz;z++) {	
+	  for(i=0;i<3;i++) {
+
+	    if(sizex > p.Lx) {
+	      field[i][x][y][z] = out[i][2*(x+p.shiftx-1)*p.Ly*p.Lz + 2*(y+p.shifty-1)*p.Lz + 2*z][0];
+	    } else {
+	      field[i][x][y][z] = out[i][(x+p.shiftx-1)*p.Ly*p.Lz + (y+p.shifty-1)*p.Lz + z][0];
+	    }
+
+	  }
+	}
+      }
+
+    */
+    
+    for(x=1; x<=p.slicex; x++) {
+      for(y=1; y<=p.slicey; y++) {
+        for(z=0; z<p.Lz; z++) {
+          field[i][x][y][z] = trim[(x-1)*p.slicey*p.Lz + (y-1)*p.Lz + z];
+        }
+      }
+    }
+    
+
+
+    halo_field(field[i], p);
+  }
+
+
+  free(slice);
+  free(trim);
 
   fftw_destroy_plan(plan);
   
   fftw_free(in[0]);
+  fftw_free(swap_in[0]);
   fftw_free(out[0]);
   fftw_free(in[1]);
+  fftw_free(swap_in[1]);
   fftw_free(out[1]);
   fftw_free(in[2]);
+  fftw_free(swap_in[2]);
   fftw_free(out[2]);
 
   free(in);
   free(out);
+
 
 
 }
