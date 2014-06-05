@@ -154,8 +154,10 @@ int main(int argc, char *argv[])
 
     // Shock tube style initial conditions for fluid only (not used)
 #ifdef INITPS
-    initial_3D(f,p);
-    init_ps(f, p, f.Z);
+    if(p.initps > 0) {
+      initial_3D(f,p);
+      init_ps(f, p, f.Z);
+    }
 
     /*
     memcpy(f.V[0][0][0], f.U[0][0][0], (p.slicex+2)*(p.slicey+2)
