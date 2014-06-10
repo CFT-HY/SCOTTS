@@ -4,7 +4,7 @@
 # CC := cc -DMPI -DFFT -DSILO
 
 # Everything turned on
-CC := mpicc -g -DMPI -DSILO -DFFT -DINITPS # -DSCALAR # -DFFT # -DEXPANSION
+# CC := mpicc -g -DMPI -DSILO -DFFT -DINITPS # -DSCALAR # -DFFT # -DEXPANSION
 
 # Example for serial profiling
 # CC := gcc -O3 -DPAPI -lpapi
@@ -16,7 +16,7 @@ CC := mpicc -g -DMPI -DSILO -DFFT -DINITPS # -DSCALAR # -DFFT # -DEXPANSION
 # CC := icc -DMPI -DFFT -DSILO
 
 # Sisu
-# CC := cc -DMPI -DSILO -DFFT # -DSCALAR
+CC := cc -DMPI -DSILO -DFFT -DINITPS # -DSCALAR
 
 #  Taito
 # CC := mpicc -DMPI -DSILO -DFFT # -DINITPS # -DDIVPS
@@ -27,10 +27,10 @@ CC := mpicc -g -DMPI -DSILO -DFFT -DINITPS # -DSCALAR # -DFFT # -DEXPANSION
 # CFLAGS := -O3 -L/home/u1/weir/local/lib -I/home/u1/weir/local/include
 
 # on Sisu
-# CFLAGS := -L/homeappl/home/weir/local_sisu/lib \
-#	-I/homeappl/home/weir/local_sisu/include \
-#	 -O3 -opt-prefetch -unroll-aggressive -no-prec-div \
-#	-fp-model fast=2 -align -fno-alias -fno-fnalias -ipo
+CFLAGS := -L/homeappl/home/weir/local_sisu/lib \
+	-I/homeappl/home/weir/local_sisu/include \
+	 -O3 -opt-prefetch -unroll-aggressive -no-prec-div \
+	-fp-model fast=2 -align -fno-alias -fno-fnalias -ipo
 
 # on Taito
 # CFLAGS := -L/homeappl/home/weir/local_taito/lib \
@@ -46,7 +46,7 @@ CC := mpicc -g -DMPI -DSILO -DFFT -DINITPS # -DSCALAR # -DFFT # -DEXPANSION
 # CFLAGS := -O3 -L/home/weir/local/lib -I/home/weir/local/include
 
 # on afo
-CFLAGS := -O3 -I/home/weir/local/include/
+# CFLAGS := -O3 -I/home/weir/local/include/
 
 # on my mac
 # CFLAGS := -O0 -I/Users/weir/Installed/silo-4.8-bsd/include/
@@ -65,7 +65,7 @@ CFLAGS := -O3 -I/home/weir/local/include/
 # LIBS := -lfftw3_mpi -lfftw3 -lsiloh5
 
 # on sisu
-# LIBS := -lfftw3_mpi -lfftw3 -lsiloh5 -lhdf5 -lstdc++ -lz
+LIBS := -lfftw3_mpi -lfftw3 -lsiloh5 -lhdf5 -lstdc++ -lz
 
 # on Taito
 # LIBS := -lfftw3_mpi -lfftw3 -lsiloh5 -lhdf5 -lstdc++ -lz
@@ -77,8 +77,8 @@ CFLAGS := -O3 -I/home/weir/local/include/
 # LIBS := -lfftw3_mpi -lfftw3 -lm -lsiloh5
 
 # on afo
-LIBS := -L/home/weir/local/lib/ \
-	-lsiloh5 -lhdf5 -lfftw3_mpi -lfftw3 -lm -lstdc++
+# LIBS := -L/home/weir/local/lib/ \
+#	-lsiloh5 -lhdf5 -lfftw3_mpi -lfftw3 -lm -lstdc++
 
 # on my mac:
 # LIBS := -L/Users/weir/Installed/silo-4.8-bsd/lib/ \

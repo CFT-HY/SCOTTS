@@ -11,7 +11,7 @@
  *
  * Project out rotational or divergent bits
  */
-void project_down(hydro_params p, fftw_complex **in, int sizex, int sizey, int sizez, int times) {
+void project_down(hydro_params p, fftw_complex **in, int shift_x, int x_thickness, int times) {
 
   int x, y, z;
   double kx, ky, kz;
@@ -34,14 +34,14 @@ void project_down(hydro_params p, fftw_complex **in, int sizex, int sizey, int s
     stuff = 0.0;
     
     // Project out divergenceless bit!
-    for(x=0;x<sizex;x++) {
-      for(y=0;y<sizey;y++) {
-	for(z=0;z<sizez;z++) {
+    for(x=0;x<x_thickness;x++) {
+      for(y=0;y<p.Ly;y++) {
+	for(z=0;z<p.Lz;z++) {
 
 	  
-	  kx = sqrt((2.0 - 2.0*cos(((double)x)*2.0*M_PI/(((double)sizex))))/(tdx*tdx));
-	  ky = sqrt((2.0 - 2.0*cos(((double)y)*2.0*M_PI/(((double)sizex))))/(tdx*tdx));
-	  kz = sqrt((2.0 - 2.0*cos(((double)z)*2.0*M_PI/(((double)sizex))))/(tdx*tdx));
+	  kx = sqrt((2.0 - 2.0*cos(((double)(x+shift_x))*2.0*M_PI/(((double)p.Lx))))/(tdx*tdx));
+	  ky = sqrt((2.0 - 2.0*cos(((double)y)*2.0*M_PI/(((double)p.Ly))))/(tdx*tdx));
+	  kz = sqrt((2.0 - 2.0*cos(((double)z)*2.0*M_PI/(((double)p.Lz))))/(tdx*tdx));
 	  
 	  in_proj_re[0] = 0.0;
 	  in_proj_re[1] = 0.0;
@@ -59,33 +59,35 @@ void project_down(hydro_params p, fftw_complex **in, int sizex, int sizey, int s
 
 	    for(j=1; j<=3; j++) {
 
-#ifndef DIVPS	      
-	      in_proj_re[i-1] += vel_proj(i*10 + j, kx, ky, kz)*in[j-1][x*sizey*sizez + y*sizez + z][0];
-	      in_proj_im[i-1] += vel_proj(i*10 + j, kx, ky, kz)*in[j-1][x*sizey*sizez + y*sizez + z][1];
-#else
-#warning DIVPS enabled
+	      // #ifndef DIVPS	      
+	      /* Rot?
+	      in_proj_re[i-1] += vel_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+	      in_proj_im[i-1] += vel_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+	      */
+	      // #else
+	      // #warning DIVPS enabled
 	      if(i == j) {
-		in_proj_re[i-1] += (1.0-vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*sizey*sizez + y*sizez + z][0];
-		in_proj_im[i-1] += (1.0-vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*sizey*sizez + y*sizez + z][1];
+		in_proj_re[i-1] += (1.0-vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+		in_proj_im[i-1] += (1.0-vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 	      } else {
-		in_proj_re[i-1] += (-1.0*vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*sizey*sizez + y*sizez + z][0];
-		in_proj_im[i-1] += (-1.0*vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*sizey*sizez + y*sizez + z][1];
+		in_proj_re[i-1] += (-1.0*vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+		in_proj_im[i-1] += (-1.0*vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 	      }
-#endif
+	      // #endif
 
 
 
 
 	      if(i == j) {
 		res_re += (1.0-vel_proj(i*10 + j, kx, ky, kz))
-		  *in[j-1][x*sizey*sizez + y*sizez + z][0];
+		  *in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
 		res_im += (1.0-vel_proj(i*10 + j, kx, ky, kz))
-		  *in[j-1][x*sizey*sizez + y*sizez + z][1];
+		  *in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 	      } else {
 		res_re += (-1.0*vel_proj(i*10 + j, kx, ky, kz))
-		  *in[j-1][x*sizey*sizez + y*sizez + z][0];
+		  *in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
 		res_im += (-1.0*vel_proj(i*10 + j, kx, ky, kz))
-		  *in[j-1][x*sizey*sizez + y*sizez + z][1];
+		  *in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 	      }
 
 	      
@@ -99,13 +101,13 @@ void project_down(hydro_params p, fftw_complex **in, int sizex, int sizey, int s
 	  }
 
 
-	  in[0][x*sizey*sizez + y*sizez + z][0] = in_proj_re[0];
-	  in[1][x*sizey*sizez + y*sizez + z][0] = in_proj_re[1];
-	  in[2][x*sizey*sizez + y*sizez + z][0] = in_proj_re[2];
+	  in[0][x*p.Ly*p.Lz + y*p.Lz + z][0] = in_proj_re[0];
+	  in[1][x*p.Ly*p.Lz + y*p.Lz + z][0] = in_proj_re[1];
+	  in[2][x*p.Ly*p.Lz + y*p.Lz + z][0] = in_proj_re[2];
 
-	  in[0][x*sizey*sizez + y*sizez + z][1] = in_proj_im[0];
-	  in[1][x*sizey*sizez + y*sizez + z][1] = in_proj_im[1];
-	  in[2][x*sizey*sizez + y*sizez + z][1] = in_proj_im[2];
+	  in[0][x*p.Ly*p.Lz + y*p.Lz + z][1] = in_proj_im[0];
+	  in[1][x*p.Ly*p.Lz + y*p.Lz + z][1] = in_proj_im[1];
+	  in[2][x*p.Ly*p.Lz + y*p.Lz + z][1] = in_proj_im[2];
 
 	}
       }
@@ -143,14 +145,15 @@ void spectrum(double ksq, hydro_params p, fftw_complex *res)
   double L = p.Lx;
 
 
-  if(fabs(ksq) < 0.000001) {
+  if(fabs(ksq) < 0.000001 || fabs(ksq) < 0.0015) {
     (*res)[0] = 0.0;
     (*res)[1] = 0.0;
   } else {
 
 
     //  (*res)[0] = p.initps*exp(-0.25*sqrt(ksq)*p.dx*((double)L));    
-    (*res)[0] = get_normal(0.0, p.initps*exp(-0.25*sqrt(ksq)*p.dx*((double)L)));
+    //    (*res)[0] = get_normal(0.0, p.initps*exp(-0.25*sqrt(ksq)*p.dx*((double)L)));
+    (*res)[0] = get_normal(0.0, p.initps*exp(-1.0*sqrt(ksq)*p.dx*25));
 
 
     (*res)[1] = (*res)[0];
@@ -273,6 +276,8 @@ void init_ps(hydro_fields f, hydro_params p, double ****field) {
       }
     }
   }
+
+  project_down(p, in, x_start, x_thickness, 5);
 
   /*
   for(x=x_start; x<(x_start+x_thickness); x++) {
@@ -429,7 +434,7 @@ void init_ps(hydro_fields f, hydro_params p, double ****field) {
 
 
 
-  // project_down(p, in, sizex, sizey, sizez, 5);
+
 
 
 
@@ -534,7 +539,7 @@ void init_ps(hydro_fields f, hydro_params p, double ****field) {
 	for(z=0;z<p.Lz;z++) {	
 	  for(i=0;i<3;i++) {
 
-	    if(sizex > p.Lx) {
+	    if(p.Lx > p.Lx) {
 	      field[i][x][y][z] = out[i][2*(x+p.shiftx-1)*p.Ly*p.Lz + 2*(y+p.shifty-1)*p.Lz + 2*z][0];
 	    } else {
 	      field[i][x][y][z] = out[i][(x+p.shiftx-1)*p.Ly*p.Lz + (y+p.shifty-1)*p.Lz + z][0];
