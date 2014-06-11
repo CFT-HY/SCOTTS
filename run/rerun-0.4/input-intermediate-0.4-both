@@ -54,7 +54,7 @@ scale 1.0
 nucleation file nucleation-list
 
 checkpointinterval 2000
-checkpointdir /wrk/weir/rerun-0.4/
+checkpointdir /wrk/weir/gc-hydro/rerun-0.4/
 
 gwsource both
 
