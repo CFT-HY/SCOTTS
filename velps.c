@@ -283,18 +283,25 @@ void fft_vel(hydro_fields f, hydro_params p, int step, double ****vectorfield) {
 				       MPI_COMM_WORLD, &x_thickness, &x_start);
 
 
+  // slab is the thickness the 'used' nodes wil FFT
+  // x_thickness is the thickness the current node will FFT
   slab = (int) x_thickness;
 
-  if(((int)x_thickness) != p.Lx/p.size) {
+  if(((int)x_thickness) == 0) {
+    /*
+    fprintf(stderr, "Rank %d nothing to do for FFT: dx=0, x_start=%d!\n",
+	    p.rank, (int)x_start);
+    */
+    slab = 1;
+  }
+  
+  if(((int)x_thickness) < p.Lx/p.size) {
     fprintf(stderr,
-	    "Giving up in FFT: FFTW told me to use a silly layout!\n");
+	    "Rank %d giving up in FFT: FFTW told me to use a silly layout!\n",
+	    p.rank);
     die(-42);
   }
 
-  if(((int)x_thickness) == 0) {
-    fprintf(stderr, "Giving up in FFT: dx=0!\n");
-    die(-43);
-  }
 
 
   fftw_complex *in = fftw_alloc_complex(alloc_local);
@@ -341,6 +348,8 @@ void fft_vel(hydro_fields f, hydro_params p, int step, double ****vectorfield) {
       if((x >= x_start) && ( x < (x_start + x_thickness))) {
 	
 	for(ry = 0; ry < ny; ry++) {
+
+	  //	  fprintf(stderr, "%d: my slice, x=%d\n", p.rank, x);
 	  
 	  if((x/p.slicex == p.myposx) && (ry == p.myposy)) {
 	    
@@ -360,9 +369,16 @@ void fft_vel(hydro_fields f, hydro_params p, int step, double ****vectorfield) {
 		   &status);
 	}
 	
+	//	fprintf(stderr, "%d: got pencil with x=%d\n", p.rank, x);
+
 	
       } else if((x >= p.shiftx) && (x < (p.shiftx + p.slicex))) {
 	
+	
+	/*
+	fprintf(stderr, "%d: my pencil, x=%d to dest %d/%d\n",
+		p.rank, x, x, slab);
+	*/
 	
       MPI_Send(&trim[(x-p.shiftx)*p.slicey*p.Lz],
 	       p.slicey*p.Lz,
@@ -376,7 +392,9 @@ void fft_vel(hydro_fields f, hydro_params p, int step, double ****vectorfield) {
 
     double total = 0.0;
 
-    for(x=0;x<slab;x++) {
+    printf0(p, "Vel FFT: Done slicing for cpt %d\n", i);
+
+    for(x=0;x<x_thickness;x++) {
       for(y=0;y<p.Ly;y++) {
 	for(z=0;z<p.Lz;z++) {
 	  in[x*p.Ly*p.Lz + y*p.Lz + z][0] = slice[x*p.Ly*p.Lz + y*p.Lz + z];
@@ -390,7 +408,7 @@ void fft_vel(hydro_fields f, hydro_params p, int step, double ****vectorfield) {
     
     total = 0.0;
     
-    for(x=0;x<slab;x++) {
+    for(x=0;x<x_thickness;x++) {
       for(y=0;y<p.Ly;y++) {
 	for(z=0;z<p.Lz;z++) {
 	  outcpts[i][x*p.Ly*p.Lz + y*p.Lz + z][0] 
@@ -414,16 +432,16 @@ void fft_vel(hydro_fields f, hydro_params p, int step, double ****vectorfield) {
 
   // The brains of the operation:
   // Turn the FFT'd tensor into projected power spectrum
-  split_and_power(p, x_start, slab, slice, slice_div, outcpts);
+  split_and_power(p, x_start, x_thickness, slice, slice_div, outcpts);
 
 
 
   char fftdest[200];
 
   sprintf(fftdest,"rot-ps-step%d.txt", step);
-  histogram(p, slice, fftdest, slab, x_start);
+  histogram(p, slice, fftdest, x_thickness, x_start);
   sprintf(fftdest,"div-ps-step%d.txt", step);
-  histogram(p, slice_div, fftdest, slab, x_start);
+  histogram(p, slice_div, fftdest, x_thickness, x_start);
 
 
   // Tidy up

@@ -36,6 +36,8 @@ void fft_field(hydro_fields f, hydro_params p, double ***field, int step) {
   int x, y, z;
   int i;
 
+  
+
   double *trim_field = (double *)malloc(p.slicex*p.slicey*p.Lz*sizeof(double));
 
   double start = clock();
@@ -56,18 +58,26 @@ void fft_field(hydro_fields f, hydro_params p, double ***field, int step) {
   alloc_local = fftw_mpi_local_size_3d(n0, n1, n2,
 				       MPI_COMM_WORLD, &x_thickness, &x_start);
 
+  // slab is the thickness the 'used' nodes will FFT
+  // x_thickness is the thickness the current node will FFT
   slab = (int) x_thickness;
 
-  if(((int)x_thickness) != p.Lx/p.size) {
+  if(((int)x_thickness) == 0) {
+    /*
+    fprintf(stderr, "Rank %d nothing to do for FFT: dx=0, x_start=%d!\n",
+	    p.rank, (int)x_start);
+    */
+    slab = 1;
+  }
+
+  if(((int)x_thickness) < p.Lx/p.size) {
     fprintf(stderr,
-	    "Giving up in FFT: FFTW told me to use a silly layout!\n");
+	    "Rank %d giving up in FFT: FFTW told me to use a silly layout!\n",
+	    p.rank);
     die(-42);
   }
 
-  if(((int)x_thickness) == 0) {
-    fprintf(stderr, "Giving up in FFT: dx=0!\n");
-    die(-43);
-  }
+
 
   fftw_complex *in = fftw_alloc_complex(alloc_local);
   fftw_complex *out = fftw_alloc_complex(alloc_local);
@@ -91,6 +101,7 @@ void fft_field(hydro_fields f, hydro_params p, double ***field, int step) {
     // Check whether we are the target node for this slab
     if((x >= x_start) && ( x < (x_start + x_thickness))) {
 
+      //      fprintf(stderr, "%d: my slice, x=%d\n", p.rank, x);
       for(ry = 0; ry < ny; ry++) {
 
 	if((x/p.slicex == p.myposx) && (ry == p.myposy)) {
@@ -108,9 +119,19 @@ void fft_field(hydro_fields f, hydro_params p, double ***field, int step) {
 		 x*ny + ry,
 		 MPI_COMM_WORLD,
 		 &status);
+
+	/*	
+	fprintf(stderr, "%d: got pencil with x=%d\n", p.rank,
+		x);
+	*/
       }
 
     } else if((x >= p.shiftx) && (x < (p.shiftx + p.slicex))) {
+
+      /*
+      fprintf(stderr, "%d: my pencil, x=%d to dest %d/%d\n",
+	      p.rank, x, x, slab);
+      */
 
       MPI_Send(&trim_field[(x-p.shiftx)*p.slicey*p.Lz],
 	       p.slicey*p.Lz,
@@ -125,10 +146,11 @@ void fft_field(hydro_fields f, hydro_params p, double ***field, int step) {
   }
   // Alloc slab array and do communication to get it into place
 
-  
+  printf0(p, "FFT: Done slicing\n");
 
 
-  for(x=0;x<slab;x++) {
+
+  for(x=0;x<x_thickness;x++) {
     for(y=0;y<p.Ly;y++) {
       for(z=0;z<p.Lz;z++) {
 	
@@ -160,7 +182,7 @@ void fft_field(hydro_fields f, hydro_params p, double ***field, int step) {
 
   int whichbin;
 
-  for(x=0;x<slab;x++) {
+  for(x=0;x<x_thickness;x++) {
     for(y=0;y<p.Ly;y++) {
       for(z=0;z<p.Lz;z++) {
         if(((x+((int)x_start))>p.Lx/2) || (y> p.Ly/2) || (z>p.Lz/2))
