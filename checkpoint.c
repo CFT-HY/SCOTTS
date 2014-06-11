@@ -485,7 +485,7 @@ void checkpoint(hydro_fields f, hydro_params p, int step)
  */
 int load_checkpoint(hydro_fields f, hydro_params p)
 {
-  printf0(p, "NB: not loading checkpoint (no silo support)");
+  printf0(p, "NB: not loading checkpoint (no silo support)\n");
 
   return -1;
 }
@@ -495,7 +495,7 @@ int load_checkpoint(hydro_fields f, hydro_params p)
  */
 int usable_checkpoint(hydro_fields f, hydro_params p)
 {
-  printf0(p, "NB: not reading checkpoint (no silo support)");
+  printf0(p, "NB: not reading checkpoint (no silo support)\n");
 
   return 0;
 }
@@ -506,7 +506,7 @@ int usable_checkpoint(hydro_fields f, hydro_params p)
 void checkpoint(hydro_fields f, hydro_params p, int step)
 {
 
-  printf0(p, "NB: not checkpointing (no silo support)");
+  printf0(p, "NB: not checkpointing (no silo support)\n");
 }  
 
 #endif
