@@ -5,6 +5,8 @@
 #include "hydro.h"
 
 
+#ifdef SILO
+
 /* int load_checkpoint(hydro_fields f, hydro_params p)
  *
  * Restore checkpointed data to hydro_fields struct. Returns
@@ -477,3 +479,34 @@ void checkpoint(hydro_fields f, hydro_params p, int step)
 }  
   
 
+#else // (not SILO)
+
+/* int load_checkpoint(hydro_fields f, hydro_params p)
+ */
+int load_checkpoint(hydro_fields f, hydro_params p)
+{
+  printf0(p, "NB: not loading checkpoint (no silo support)");
+
+  return -1;
+}
+
+
+/* int usable_checkpoint(hydro_fields f, hydro_params p)
+ */
+int usable_checkpoint(hydro_fields f, hydro_params p)
+{
+  printf0(p, "NB: not reading checkpoint (no silo support)");
+
+  return 0;
+}
+
+
+/* void checkpoint(hydro_fields f, hydro_params p, int step)
+ */
+void checkpoint(hydro_fields f, hydro_params p, int step)
+{
+
+  printf0(p, "NB: not checkpointing (no silo support)");
+}  
+
+#endif

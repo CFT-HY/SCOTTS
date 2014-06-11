@@ -1,15 +1,18 @@
 #### CC ####
 
 # afo
-CC := mpicc -g -DMPI -DSILO -DFFT
+# CC := mpicc -g -DMPI -DFFT
 
 # Sisu
-# CC := cc -DMPI -DSILO -DFFT
+# CC := cc -DMPI -DFFT
+
+# Taito
+CC := mpicc -DMPI -DFFT
 
 #### CFLAGS ####
 
 # on afo
-CFLAGS := -O3 -I/home/weir/local/include/
+# CFLAGS := -O3 -I/home/weir/local/include/
 
 # on Sisu
 # CFLAGS := -L/homeappl/home/weir/local_sisu/lib \
@@ -17,14 +20,24 @@ CFLAGS := -O3 -I/home/weir/local/include/
 #	 -O3 -opt-prefetch -unroll-aggressive -no-prec-div \
 #	-fp-model fast=2 -align -fno-alias -fno-fnalias -ipo
 
+# on Taito 
+CFLAGS := -L/homeappl/home/weir/local_taito/lib \
+        -I/homeappl/home/weir/local_taito/include \
+        -O3 -opt-prefetch -unroll-aggressive -no-prec-div \
+        -fp-model fast=2 -align -fno-alias -fno-fnalias -ipo
+
+
 #### LIBS ####
 
 # on afo
-LIBS := -L/home/weir/local/lib/ \
-	-lsiloh5 -lhdf5 -lfftw3_mpi -lfftw3 -lm -lstdc++
+# LIBS := -L/home/weir/local/lib/ \
+#	-lsiloh5 -lhdf5 -lfftw3_mpi -lfftw3 -lm -lstdc++
 
 # on sisu
 # LIBS := -lfftw3_mpi -lfftw3 -lsiloh5 -lhdf5 -lstdc++ -lz
+
+# on Taito
+LIBS := -lfftw3_mpi -lfftw3 -lsiloh5 -lhdf5 -lstdc++ -lz
 
 
 #### No user-serviceable parts below ####
