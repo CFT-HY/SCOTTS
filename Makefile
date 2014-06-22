@@ -7,7 +7,7 @@
 # CC := cc -DMPI -DFFT
 
 # Taito
-CC := mpicc -DMPI -DFFT
+CC := mpicc -DMPI -DFFT -DSILO
 
 #### CFLAGS ####
 
@@ -37,7 +37,7 @@ CFLAGS := -L/homeappl/home/weir/local_taito/lib \
 # LIBS := -lfftw3_mpi -lfftw3 -lsiloh5 -lhdf5 -lstdc++ -lz
 
 # on Taito
-LIBS := -lfftw3_mpi -lfftw3 -lsiloh5 -lhdf5 -lstdc++ -lz
+LIBS := -lfftw3_mpi -lfftw3 -lfftw3f_mpi -lfftw3f -lsiloh5 -lhdf5 -lstdc++ -lz
 
 
 #### No user-serviceable parts below ####

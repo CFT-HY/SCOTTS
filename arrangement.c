@@ -6,7 +6,7 @@
 #include "hydro.h"
 
 // Nasty global to track how much walltime is spent doing communications
-double comms_time;
+float comms_time;
 
 
 /* There is one copy of everything here done properly for MPI, and then
@@ -137,7 +137,7 @@ void layout(hydro_params *p) {
 
 
 
-  // sites on a node = number of sites + halos + double halos
+  // sites on a node = number of sites + halos + float halos
   p->fieldN = ((p->slicex+2)*(p->slicey+2)*p->Lz);
 
   printf0(*p, "Each node will need %d = %d + %d entries to store halo\n",
@@ -181,7 +181,7 @@ void layout(hydro_params *p) {
 
 
 
-/* void halo_field(double *field, hydro_params p)
+/* void halo_field(float *field, hydro_params p)
  *
  * Do halo communication of the variable in field to neighbours.
  *
@@ -189,7 +189,7 @@ void layout(hydro_params *p) {
  * means each node knows which rank is its up/down neighbour in the
  * x/y directions and also the four corners (p.rank_[xy][MP] etc).
  */
-void halo_field(double ***field, hydro_params p) {
+void halo_field(float ***field, hydro_params p) {
 
   MPI_Request request;
   MPI_Status stat;
@@ -213,9 +213,9 @@ void halo_field(double ***field, hydro_params p) {
   for(y = 1; y <= p.slicey; y++) {
 
     MPI_Sendrecv(&field[1][y][0],
-		 p.Lz, MPI_DOUBLE, p.rank_xM, mpi_counter,
+		 p.Lz, MPI_FLOAT, p.rank_xM, mpi_counter,
 		 &field[p.slicex+1][y][0],
-		 p.Lz, MPI_DOUBLE, p.rank_xP, mpi_counter,
+		 p.Lz, MPI_FLOAT, p.rank_xP, mpi_counter,
 		 MPI_COMM_WORLD, &stat);
     
     mpi_counter++;
@@ -230,9 +230,9 @@ void halo_field(double ***field, hydro_params p) {
   for(y = 1; y <= p.slicey; y++) {
 
     MPI_Sendrecv(&field[p.slicex][y][0],
-		 p.Lz, MPI_DOUBLE, p.rank_xP, mpi_counter,
+		 p.Lz, MPI_FLOAT, p.rank_xP, mpi_counter,
 		 &field[0][y][0],
-		 p.Lz, MPI_DOUBLE, p.rank_xM, mpi_counter,
+		 p.Lz, MPI_FLOAT, p.rank_xM, mpi_counter,
 		 MPI_COMM_WORLD, &stat);
     
     mpi_counter++;
@@ -249,9 +249,9 @@ void halo_field(double ***field, hydro_params p) {
   for(x = 1; x <= p.slicex; x++) {
 
       MPI_Sendrecv(&field[x][p.slicey][0],
-		   p.Lz, MPI_DOUBLE, p.rank_yP, mpi_counter,
+		   p.Lz, MPI_FLOAT, p.rank_yP, mpi_counter,
 		   &field[x][0][0],
-		   p.Lz, MPI_DOUBLE, p.rank_yM, mpi_counter,
+		   p.Lz, MPI_FLOAT, p.rank_yM, mpi_counter,
 		   MPI_COMM_WORLD, &stat);
 
       mpi_counter++;
@@ -266,9 +266,9 @@ void halo_field(double ***field, hydro_params p) {
 
 
       MPI_Sendrecv(&field[x][1][0],
-		   p.Lz, MPI_DOUBLE, p.rank_yM, mpi_counter,
+		   p.Lz, MPI_FLOAT, p.rank_yM, mpi_counter,
 		   &field[x][p.slicey+1][0],
-		   p.Lz, MPI_DOUBLE, p.rank_yP, mpi_counter,
+		   p.Lz, MPI_FLOAT, p.rank_yP, mpi_counter,
 		   MPI_COMM_WORLD, &stat);
 
 
@@ -281,9 +281,9 @@ void halo_field(double ***field, hydro_params p) {
    * SEND UP AND RIGHT
    */
   MPI_Sendrecv(&field[p.slicex][p.slicey][0],
-	       p.Lz, MPI_DOUBLE, p.rank_xPyP, mpi_counter,
+	       p.Lz, MPI_FLOAT, p.rank_xPyP, mpi_counter,
 	       &field[0][0][0],
-	       p.Lz, MPI_DOUBLE, p.rank_xMyM, mpi_counter,
+	       p.Lz, MPI_FLOAT, p.rank_xMyM, mpi_counter,
 	       MPI_COMM_WORLD, &stat);
   
   mpi_counter++;
@@ -294,9 +294,9 @@ void halo_field(double ***field, hydro_params p) {
    * SEND DOWN AND LEFT
    */
   MPI_Sendrecv(&field[1][1][0],
-	       p.Lz, MPI_DOUBLE, p.rank_xMyM, mpi_counter,
+	       p.Lz, MPI_FLOAT, p.rank_xMyM, mpi_counter,
 	       &field[p.slicex+1][p.slicey+1][0],
-	       p.Lz, MPI_DOUBLE, p.rank_xPyP, mpi_counter,
+	       p.Lz, MPI_FLOAT, p.rank_xPyP, mpi_counter,
 	       MPI_COMM_WORLD, &stat);
   
   mpi_counter++;
@@ -307,9 +307,9 @@ void halo_field(double ***field, hydro_params p) {
    * SEND UP AND LEFT
    */
   MPI_Sendrecv(&field[1][p.slicey][0],
-	       p.Lz, MPI_DOUBLE, p.rank_xMyP, mpi_counter,
+	       p.Lz, MPI_FLOAT, p.rank_xMyP, mpi_counter,
 	       &field[p.slicex+1][0][0],
-	       p.Lz, MPI_DOUBLE, p.rank_xPyM, mpi_counter,
+	       p.Lz, MPI_FLOAT, p.rank_xPyM, mpi_counter,
 	       MPI_COMM_WORLD, &stat);
   
   mpi_counter++;
@@ -320,9 +320,9 @@ void halo_field(double ***field, hydro_params p) {
    * SEND DOWN AND RIGHT
    */
   MPI_Sendrecv(&field[p.slicex][1][0],
-	       p.Lz, MPI_DOUBLE, p.rank_xPyM, mpi_counter,
+	       p.Lz, MPI_FLOAT, p.rank_xPyM, mpi_counter,
 	       &field[0][p.slicey+1][0],
-	       p.Lz, MPI_DOUBLE, p.rank_xMyP, mpi_counter,
+	       p.Lz, MPI_FLOAT, p.rank_xMyP, mpi_counter,
 	       MPI_COMM_WORLD, &stat);
   
   mpi_counter++;
@@ -332,27 +332,27 @@ void halo_field(double ***field, hydro_params p) {
 
 
   // Update the comms_time counter
-  comms_time += ((double) (end - start)) / CLOCKS_PER_SEC;
+  comms_time += ((float) (end - start)) / CLOCKS_PER_SEC;
 }
 
 
 // Reduction routines, for when we want to combine things    
 
-/* double reduce_sum(double result, hydro_params p)
+/* float reduce_sum(float result, hydro_params p)
  *
- * Add together doubles from each node.
+ * Add together floats from each node.
  */
-double reduce_sum(double result, hydro_params p) {
+float reduce_sum(float result, hydro_params p) {
 
-  double total = 0.0;
-  MPI_Allreduce(&result, &total, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+  float total = 0.0;
+  MPI_Allreduce(&result, &total, 1, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
   return total;
 
 }
 
 /* int reduce_sum_int(int result, hydro_params p)
  *
- * Add together doubles from each node, integer version
+ * Add together floats from each node, integer version
  */
 int reduce_sum_int(int result, hydro_params p) {
 
@@ -362,26 +362,26 @@ int reduce_sum_int(int result, hydro_params p) {
 
 }
 
-/* double reduce_max(double result, hydro_params p)
+/* float reduce_max(float result, hydro_params p)
  *
  * Return the maximum of all the values submitted by each node.
  */
-double reduce_max(double result, hydro_params p) {
+float reduce_max(float result, hydro_params p) {
 
-  double total = 0.0;
-  MPI_Allreduce(&result, &total, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+  float total = 0.0;
+  MPI_Allreduce(&result, &total, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD);
   return total;
 
 }
 
-/* double reduce_min(double result, hydro_params p)
+/* float reduce_min(float result, hydro_params p)
  *
  * Return the minimum of all the values submitted by each node.
  */
-double reduce_min(double result, hydro_params p) {
+float reduce_min(float result, hydro_params p) {
 
-  double total = 0.0;
-  MPI_Allreduce(&result, &total, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
+  float total = 0.0;
+  MPI_Allreduce(&result, &total, 1, MPI_FLOAT, MPI_MIN, MPI_COMM_WORLD);
   return total;
 
 }
@@ -400,7 +400,7 @@ int reduce_and(int result, hydro_params p) {
 
 
 /* void init_comms_time(hydro_params *p)
- * double get_comms_time(hydro_params *p)
+ * float get_comms_time(hydro_params *p)
  *
  * Fake getters and setters for the communications time routines.
  */
@@ -408,7 +408,7 @@ void init_comms_time(hydro_params *p) {
   comms_time = 0.0;
 }
 
-double get_comms_time(hydro_params *p) {
+float get_comms_time(hydro_params *p) {
   return comms_time;
 }
 
@@ -452,7 +452,7 @@ void layout(hydro_params *p) {
 }
 
 
-void halo_field(double ***field, hydro_params p) {
+void halo_field(float ***field, hydro_params p) {
 
 
   clock_t start, end;
@@ -586,11 +586,11 @@ void halo_field(double ***field, hydro_params p) {
 
   end = clock();
 
-  comms_time += ((double) (end - start)) / CLOCKS_PER_SEC;
+  comms_time += ((float) (end - start)) / CLOCKS_PER_SEC;
   
 }
 
-double reduce_sum(double result, hydro_params p) {
+float reduce_sum(float result, hydro_params p) {
   // do nothing
   return result;
 }
@@ -601,12 +601,12 @@ int reduce_sum_int(int result, hydro_params p) {
 }
 
 
-double reduce_max(double result, hydro_params p) {
+float reduce_max(float result, hydro_params p) {
   // do nothing
   return result;
 }
 
-double reduce_min(double result, hydro_params p) {
+float reduce_min(float result, hydro_params p) {
   // do nothing
   return result;
 }
@@ -623,7 +623,7 @@ void init_comms_time(hydro_params *p) {
   comms_time = 0.0;
 }
 
-double get_comms_time(hydro_params *p) {
+float get_comms_time(hydro_params *p) {
   return comms_time;
 }
 

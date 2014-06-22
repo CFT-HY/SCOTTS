@@ -5,55 +5,55 @@
 #include "hydro.h"
 
 
-/* double Vf(hydro_params p, double T, double this_phi)
+/* float Vf(hydro_params p, float T, float this_phi)
  *
  * Potential.
  */
-double Vf(hydro_params p, double T, double this_phi) {
+float Vf(hydro_params p, float T, float this_phi) {
   return  0.5*p.gamma*(T*T - p.T0*p.T0)*this_phi*this_phi
     - p.alpha*T*this_phi*this_phi*this_phi/3.0
     + 0.25*p.lambda*this_phi*this_phi*this_phi*this_phi;
 }
 
 
-/* double Vdf(hydro_params p, double T, double this_phi)
+/* float Vdf(hydro_params p, float T, float this_phi)
  *
  * First derivative wrt phi
  */
-double Vdf(hydro_params p, double T, double this_phi) {
+float Vdf(hydro_params p, float T, float this_phi) {
   return p.gamma*(T*T - p.T0*p.T0)*this_phi
     - p.alpha*T*this_phi*this_phi
     + p.lambda*this_phi*this_phi*this_phi;
 }
 
 
-/* double VTf(hydro_params p, double T, double this_phi)
+/* float VTf(hydro_params p, float T, float this_phi)
  *
  * First derivative wrt T
  */
-double VTf(hydro_params p, double T, double this_phi) {
+float VTf(hydro_params p, float T, float this_phi) {
   return p.gamma*T*this_phi*this_phi 
     - p.alpha*this_phi*this_phi*this_phi/3.0;
 }
 
 
-/* double VTTf(hydro_params p, double T, double this_phi)
+/* float VTTf(hydro_params p, float T, float this_phi)
  *
  * Second derivative wrt T
  */
-double VTTf(hydro_params p, double T, double this_phi) {
+float VTTf(hydro_params p, float T, float this_phi) {
   return p.gamma*this_phi*this_phi;
 }
 
 
-/* void Vpot(hydro_params p, double *T, double *phi, double *Vprecalc)
+/* void Vpot(hydro_params p, float *T, float *phi, float *Vprecalc)
  *
  * Calculate potential for all sites. Except that doing it this way
  * does not encourage the compiler to fuse the loops.
  */
 void Vpot(hydro_params p,
-	  double *T,
-	  double *phi, double *Vprecalc) {
+	  float *T,
+	  float *phi, float *Vprecalc) {
   int x;
 
   for(x=0; x<p.fieldN; x++)  {
@@ -62,13 +62,13 @@ void Vpot(hydro_params p,
 }
 
 
-/* void Vdpot(hydro_params p, double *T, double *phi, double *Vprecalc)
+/* void Vdpot(hydro_params p, float *T, float *phi, float *Vprecalc)
  *
  * Calculate first deriviative of potential wrt phi for all sites.
  */
 void Vdpot(hydro_params p,
-	    double *T,
-	    double *phi, double *Vprecalc) {
+	    float *T,
+	    float *phi, float *Vprecalc) {
   int x;
 
   for(x=0; x<p.fieldN; x++)  {

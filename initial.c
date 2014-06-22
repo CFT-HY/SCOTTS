@@ -16,23 +16,23 @@ void initial_scalar_bubble(hydro_fields f, hydro_params p) {
 
   int x, y, z, i;
 
-  double sigmlo = 2.0*sqrt(2.0)/81.0*p.alpha*p.alpha*p.alpha
+  float sigmlo = 2.0*sqrt(2.0)/81.0*p.alpha*p.alpha*p.alpha
     /(p.lambda*p.lambda*sqrt(p.lambda));
 
   printf0(p,
 	  "** Initial conditions magic:\n"
 	  "** sigmlo %g\n", sigmlo);
   
-  double phimin =  ( p.alpha*p.Tconst
+  float phimin =  ( p.alpha*p.Tconst
 		     + sqrt((p.alpha*p.Tconst)*(p.alpha*p.Tconst)
 			    - 4*p.lambda*p.gamma
 			    *(p.Tconst*p.Tconst - p.T0*p.T0)) )/(2*p.lambda);
 
-  double cstrab = 1.0*phimin;
+  float cstrab = 1.0*phimin;
 
-  double Rlapab = 2.0*sigmlo/(-1.0*Vf(p, p.Tconst, phimin));
+  float Rlapab = 2.0*sigmlo/(-1.0*Vf(p, p.Tconst, phimin));
 
-  double Rtenab = p.scale*Rlapab;
+  float Rtenab = p.scale*Rlapab;
 
   printf0(p,
 	  "** phimin %g, cstrab %g, Rtenab %g\n",
@@ -44,12 +44,12 @@ void initial_scalar_bubble(hydro_fields f, hydro_params p) {
       for(z=0;z<p.Lz;z++) {
     
 	f.phi[x][y][z] = cstrab*exp(-1.0*p.dx*p.dx
-				    *(((double)(p.shiftx+x-1-p.Lx/2))
-				      *((double)(p.shiftx+x-1-p.Lx/2))
-				      + ((double)(p.shifty+y-1-p.Ly/2))
-				      *((double)(p.shifty+y-1-p.Ly/2))
-				      + ((double)(z-p.Lz/2))
-				      *((double)(z-p.Lz/2)))
+				    *(((float)(p.shiftx+x-1-p.Lx/2))
+				      *((float)(p.shiftx+x-1-p.Lx/2))
+				      + ((float)(p.shifty+y-1-p.Ly/2))
+				      *((float)(p.shifty+y-1-p.Ly/2))
+				      + ((float)(z-p.Lz/2))
+				      *((float)(z-p.Lz/2)))
 				    /2.0/(Rtenab*Rtenab) );
 	
 	f.pifull[x][y][z] = 0.0;
@@ -82,23 +82,23 @@ void initial_blank(hydro_fields f, hydro_params p) {
 
   int x, y, z, i;
 
-  double sigmlo = 2.0*sqrt(2.0)/81.0*p.alpha*p.alpha*p.alpha
+  float sigmlo = 2.0*sqrt(2.0)/81.0*p.alpha*p.alpha*p.alpha
     /(p.lambda*p.lambda*sqrt(p.lambda));
 
   printf0(p,
 	  "** Initial conditions magic:\n"
 	  "** sigmlo %g\n", sigmlo);
 
-  double phimin =  ( p.alpha*p.Tconst
+  float phimin =  ( p.alpha*p.Tconst
 		     + sqrt((p.alpha*p.Tconst)*(p.alpha*p.Tconst)
 			    - 4*p.lambda*p.gamma
 			    *(p.Tconst*p.Tconst - p.T0*p.T0)) )/(2*p.lambda);
   
-  double cstrab = 1.0*phimin;
+  float cstrab = 1.0*phimin;
 
-  double Rlapab = 2.0*sigmlo/(-1.0*Vf(p, p.Tconst, phimin));
+  float Rlapab = 2.0*sigmlo/(-1.0*Vf(p, p.Tconst, phimin));
 
-  double Rtenab = p.scale*Rlapab;
+  float Rtenab = p.scale*Rlapab;
 
   printf0(p,
 	  "** phimin %g, cstrab %g, Rtenab %g\n",
@@ -140,21 +140,21 @@ void initial_blank(hydro_fields f, hydro_params p) {
 int safe_distance(hydro_fields f, hydro_params p) {
 
 
-  double sigmlo = 2.0*sqrt(2.0)/81.0*p.alpha*p.alpha*p.alpha
+  float sigmlo = 2.0*sqrt(2.0)/81.0*p.alpha*p.alpha*p.alpha
     /(p.lambda*p.lambda*sqrt(p.lambda));
 
-  double phimin =  ( p.alpha*p.Tconst
+  float phimin =  ( p.alpha*p.Tconst
 		     + sqrt((p.alpha*p.Tconst)*(p.alpha*p.Tconst)
 			    - 4*p.lambda*p.gamma
 			    *(p.Tconst*p.Tconst - p.T0*p.T0)) )/ (2*p.lambda);
 
-  double cstrab = 1.0*phimin;
+  float cstrab = 1.0*phimin;
 
-  double Rlapab = 2.0*sigmlo/(-1.0*Vf(p, p.Tconst, phimin));
+  float Rlapab = 2.0*sigmlo/(-1.0*Vf(p, p.Tconst, phimin));
   
-  double Rtenab = p.scale*Rlapab;
+  float Rtenab = p.scale*Rlapab;
 
-  double sigma = 1.0/(sqrt(p.dx*p.dx/2.0/(Rtenab*Rtenab) ));
+  float sigma = 1.0/(sqrt(p.dx*p.dx/2.0/(Rtenab*Rtenab) ));
   
   return (int)(round(sigma));
  	
@@ -169,7 +169,7 @@ int safe_distance(hydro_fields f, hydro_params p) {
 int can_nucleate(hydro_fields f, hydro_params p, int x0, int y0, int z0) {
 
   int safedist = safe_distance(f,p);
-  double threshphi = 0.0001;
+  float threshphi = 0.0001;
 
   int shortx, shorty, shortz;
   int longx, longy, longz;
@@ -237,21 +237,21 @@ void nucleate_at(hydro_fields f, hydro_params p, int x0, int y0, int z0) {
 
   int x, y, z, i;  
   
-  double sigmlo = 2.0*sqrt(2.0)/81.0*p.alpha*p.alpha*p.alpha
+  float sigmlo = 2.0*sqrt(2.0)/81.0*p.alpha*p.alpha*p.alpha
     /(p.lambda*p.lambda*sqrt(p.lambda));
 
 
 
-  double phimin =  ( p.alpha*p.Tconst
+  float phimin =  ( p.alpha*p.Tconst
 		     + sqrt((p.alpha*p.Tconst)*(p.alpha*p.Tconst)
 			    - 4*p.lambda*p.gamma
 			    *(p.Tconst*p.Tconst - p.T0*p.T0)) )/ (2*p.lambda);
   
-  double cstrab = 1.0*phimin;
+  float cstrab = 1.0*phimin;
   
-  double Rlapab = 2.0*sigmlo/(-1.0*Vf(p, p.Tconst, phimin));
+  float Rlapab = 2.0*sigmlo/(-1.0*Vf(p, p.Tconst, phimin));
   
-  double Rtenab = p.scale*Rlapab;
+  float Rtenab = p.scale*Rlapab;
 
   printf0(p, "Nucleating at (%d,%d,%d)\n",x0,y0,z0);
 
@@ -259,7 +259,7 @@ void nucleate_at(hydro_fields f, hydro_params p, int x0, int y0, int z0) {
   int longx, longy, longz;
   int dx, dy, dz;
 
-  double phival;
+  float phival;
 
   for(x=1;x<=p.slicex;x++) {
     for(y=1;y<=p.slicey;y++) {
@@ -289,9 +289,9 @@ void nucleate_at(hydro_fields f, hydro_params p, int x0, int y0, int z0) {
 	  dz = longz;
 
 
-	phival = cstrab*exp(-1.0*p.dx*p.dx*((double)((dx*dx) 
-						     + (double)(dy*dy)
-						     + (double)(dz*dz)))
+	phival = cstrab*exp(-1.0*p.dx*p.dx*((float)((dx*dx) 
+						     + (float)(dy*dy)
+						     + (float)(dz*dz)))
 			    /2.0/(Rtenab*Rtenab) );
 	
 	f.phi[x][y][z] += phival;
@@ -327,25 +327,25 @@ void initial_3D(hydro_fields f, hydro_params p) {
  
   int x, y, z, i; 
 
-  double sigmlo = 2.0*sqrt(2.0)/81.0*p.alpha*p.alpha*p.alpha
+  float sigmlo = 2.0*sqrt(2.0)/81.0*p.alpha*p.alpha*p.alpha
     /(p.lambda*p.lambda*sqrt(p.lambda));
 
-  double phimin =  ( p.alpha*p.Tconst 
+  float phimin =  ( p.alpha*p.Tconst 
 		     + sqrt((p.alpha*p.Tconst)*(p.alpha*p.Tconst)
 			    - 4*p.lambda*p.gamma
 			    *(p.Tconst*p.Tconst - p.T0*p.T0)) )/ (2*p.lambda);
 
-  double cstrab = 1.0*phimin;
+  float cstrab = 1.0*phimin;
 
-  double Rlapab = 2.0*sigmlo/(-1.0*Vf(p, p.Tconst, phimin));
+  float Rlapab = 2.0*sigmlo/(-1.0*Vf(p, p.Tconst, phimin));
 
-  double Rtenab = p.scale*Rlapab;
+  float Rtenab = p.scale*Rlapab;
 
   printf0(p,
 	  "** phimin %g, cstrab %g, Rtenab %g\n",
 	  phimin, cstrab, Rtenab);
   
-  double Er, El, rE;
+  float Er, El, rE;
 
   rE = 50.0;
 
@@ -430,7 +430,7 @@ int do_nucleate(hydro_fields f, hydro_params p) {
 }
 
 
-/* int should_nucleate(hydro_fields f, hydro_params p, double t, int step)
+/* int should_nucleate(hydro_fields f, hydro_params p, float t, int step)
  *
  * Should an attempt to nucleate be carried out at the current step?
  *
@@ -441,16 +441,16 @@ int do_nucleate(hydro_fields f, hydro_params p) {
  *
  * Such a nucleation list can be generated by nucproc.py
  */
-int should_nucleate(hydro_fields f, hydro_params p, double t, int step) {
+int should_nucleate(hydro_fields f, hydro_params p, float t, int step) {
 
   if(p.nucleation == NUC_EXP) {
 
-    double end = ((double)p.steps)*p.dt;
-    double prob = exp(p.beta*(t-end));
+    float end = ((float)p.steps)*p.dt;
+    float prob = exp(p.beta*(t-end));
 
     srand48(1);
 
-    double randin = drand48();
+    float randin = drand48();
 
 
     if(randin < prob) {
@@ -491,7 +491,7 @@ int should_nucleate(hydro_fields f, hydro_params p, double t, int step) {
  * Based on my Q-ball code. Not currently in use.
  */
 void init_profile(hydro_fields *f, hydro_params *p) {
-  double xdummy, phidummy, vdummy;
+  float xdummy, phidummy, vdummy;
 
   printf0(*p, "Loading invariant profile (may be slow)!\n");
 
@@ -505,7 +505,7 @@ void init_profile(hydro_fields *f, hydro_params *p) {
   int lines = 0;
 
   while(!feof(fp)
-	&& (fscanf(fp,"%lf%lf%lf",&xdummy,&phidummy,&vdummy) == 3)) {
+	&& (fscanf(fp,"%f%f%f",&xdummy,&phidummy,&vdummy) == 3)) {
     lines++;
   }
 
@@ -521,15 +521,15 @@ void init_profile(hydro_fields *f, hydro_params *p) {
 
   int imax;
 
-  double dist;
+  float dist;
 
   p->Linv = lines;
-  f->x_inv = (double *) malloc(lines*sizeof(double));
-  f->phi_inv = (double *) malloc(lines*sizeof(double));
-  f->V_inv = (double *) malloc(lines*sizeof(double));
+  f->x_inv = (float *) malloc(lines*sizeof(float));
+  f->phi_inv = (float *) malloc(lines*sizeof(float));
+  f->V_inv = (float *) malloc(lines*sizeof(float));
 
   while(i < lines) {
-    if(fscanf(fp, "%lf%lf%lf", &(f->x_inv[i]), &(f->phi_inv[i]),
+    if(fscanf(fp, "%f%f%f", &(f->x_inv[i]), &(f->phi_inv[i]),
 	      &(f->V_inv[i])) != 3 && (!(p->rank))) {
       fprintf(stderr, "File inconsistent between first and second reads: "
 	      "odd... giving up\n");

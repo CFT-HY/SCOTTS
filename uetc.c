@@ -20,7 +20,7 @@ void init_uetc(hydro_fields f, hydro_params p) {
 
   int i, x, y, z;
 
-  double ****Tij = make_tensor(p);
+  float ****Tij = make_tensor(p);
   stress_energy(f, p, Tij);
 
 
@@ -41,28 +41,28 @@ void init_uetc(hydro_fields f, hydro_params p) {
 
 
 /* void uetc_project(hydro_params p, int x_start, int slab,
- *                 double *product_re, double *product_im,
- *                 fftw_complex **Tij_then, fftw_complex **Tij_now)
+ *                 float *product_re, float *product_im,
+ *                 fftwf_complex **Tij_then, fftwf_complex **Tij_now)
  *
  * Like gw_project (see gw.c), but for two separate timesteps, and takes two
  * different tensors.
  */
 void uetc_project(hydro_params p, int x_start, int slab,
-		  double *product_re, double *product_im,
-		  fftw_complex **Tij_then, fftw_complex **Tij_now) {
+		  float *product_re, float *product_im,
+		  fftwf_complex **Tij_then, fftwf_complex **Tij_now) {
 
   int i, j, l, m;
   int x, y, z;
-  double kx, ky, kz;
+  float kx, ky, kz;
 
 
   for(x=0; x<slab; x++) {
     for(y=0; y<p.Ly; y++) {
       for(z=0; z<p.Lz; z++) {
 
-	kx = ((double)(x+x_start))*2.0*M_PI/((double)p.Lx);
-	ky = ((double)y)*2.0*M_PI/((double)p.Ly);
-	kz = ((double)z)*2.0*M_PI/((double)p.Lz);
+	kx = ((float)(x+x_start))*2.0*M_PI/((float)p.Lx);
+	ky = ((float)y)*2.0*M_PI/((float)p.Ly);
+	kz = ((float)z)*2.0*M_PI/((float)p.Lz);
 	
 	product_re[x*p.Ly*p.Lz + y*p.Lz + z] = 0.0;
 	product_im[x*p.Ly*p.Lz + y*p.Lz + z] = 0.0;
@@ -116,23 +116,23 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
 
   MPI_Status status;
 
-  double kmode, modsq;
+  float kmode, modsq;
 
   int x, y, z;
   int i;
 
-  double fft_norm = p.a*p.a*p.a*p.dx*p.dx*p.dx/pow(2.0*M_PI,1.5);
+  float fft_norm = p.a*p.a*p.a*p.dx*p.dx*p.dx/pow(2.0*M_PI,1.5);
 
-  double *trim_then = (double *)malloc(p.slicex*p.slicey*p.Lz*sizeof(double));
-  double *trim_now = (double *)malloc(p.slicex*p.slicey*p.Lz*sizeof(double));
+  float *trim_then = (float *)malloc(p.slicex*p.slicey*p.Lz*sizeof(float));
+  float *trim_now = (float *)malloc(p.slicex*p.slicey*p.Lz*sizeof(float));
 
   printf0(p, "Starting UETC calculation.\n");
 
-  double start = clock();
+  float start = clock();
 
-  fftw_mpi_init();
+  fftwf_mpi_init();
 
-  alloc_local = fftw_mpi_local_size_3d(n0, n1, n2,
+  alloc_local = fftwf_mpi_local_size_3d(n0, n1, n2,
 				       MPI_COMM_WORLD, &x_thickness, &x_start);
 
 
@@ -151,30 +151,30 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
 
   /////////////// here compute other thing to be squished ////////////////
 
-  double ****Tij = make_tensor(p);
+  float ****Tij = make_tensor(p);
   stress_energy(f, p, Tij);
 
   /////////////// done /////////////////
 
 
-  fftw_complex *in = fftw_alloc_complex(alloc_local);
-  fftw_complex *out = fftw_alloc_complex(alloc_local);
+  fftwf_complex *in = fftwf_alloc_complex(alloc_local);
+  fftwf_complex *out = fftwf_alloc_complex(alloc_local);
 
-  fftw_complex **outcpts_then =
-    (fftw_complex **)malloc(6*sizeof(fftw_complex *));
-  fftw_complex **outcpts_now =
-    (fftw_complex **)malloc(6*sizeof(fftw_complex *));
+  fftwf_complex **outcpts_then =
+    (fftwf_complex **)malloc(6*sizeof(fftwf_complex *));
+  fftwf_complex **outcpts_now =
+    (fftwf_complex **)malloc(6*sizeof(fftwf_complex *));
   
   for(i=0;i<TENSOR_CPTS;i++) {
-    outcpts_then[i] = fftw_alloc_complex(alloc_local);
-    outcpts_now[i] = fftw_alloc_complex(alloc_local);
+    outcpts_then[i] = fftwf_alloc_complex(alloc_local);
+    outcpts_now[i] = fftwf_alloc_complex(alloc_local);
   }
 
-  double *slice_then = (double *)malloc(slab*p.Ly*p.Lz*sizeof(double));
-  double *slice_now = (double *)malloc(slab*p.Ly*p.Lz*sizeof(double));
+  float *slice_then = (float *)malloc(slab*p.Ly*p.Lz*sizeof(float));
+  float *slice_now = (float *)malloc(slab*p.Ly*p.Lz*sizeof(float));
 
-  double *slice_re = (double *)malloc(slab*p.Ly*p.Lz*sizeof(double));
-  double *slice_im = (double *)malloc(slab*p.Ly*p.Lz*sizeof(double));
+  float *slice_re = (float *)malloc(slab*p.Ly*p.Lz*sizeof(float));
+  float *slice_im = (float *)malloc(slab*p.Ly*p.Lz*sizeof(float));
 
 
   int nx = p.Lx/p.slicex;
@@ -183,13 +183,13 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
   int ry;
 
   // Now planning  
-  fftw_plan plan = fftw_mpi_plan_dft_3d(p.Lx, p.Ly, p.Lz,
+  fftwf_plan plan = fftwf_mpi_plan_dft_3d(p.Lx, p.Ly, p.Lz,
 					in, out, MPI_COMM_WORLD,
 					FFTW_BACKWARD, FFTW_ESTIMATE);
 
   for(i = 0; i < TENSOR_CPTS; i++) {
 
-    double check = 0.0;    
+    float check = 0.0;    
     
     for(x=1; x<=p.slicex; x++) {
       for(y=1; y<=p.slicey; y++) {
@@ -215,18 +215,18 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
 	    
 	    memcpy(&slice_then[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
 		   &trim_then[(x-p.shiftx)*p.slicey*p.Lz],
-		   p.slicey*p.Lz*sizeof(double));
+		   p.slicey*p.Lz*sizeof(float));
 
 	    memcpy(&slice_now[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
 		   &trim_now[(x-p.shiftx)*p.slicey*p.Lz],
-		   p.slicey*p.Lz*sizeof(double));
+		   p.slicey*p.Lz*sizeof(float));
 	    continue;
 	  }
 	  
 	  
 	  MPI_Recv(&slice_then[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
 		   p.slicey*p.Lz,
-		   MPI_DOUBLE,
+		   MPI_FLOAT,
 		   ry*nx + x/p.slicex,
 		   x*ny + ry,
 		   MPI_COMM_WORLD,
@@ -234,7 +234,7 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
 
 	  MPI_Recv(&slice_now[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
 		   p.slicey*p.Lz,
-		   MPI_DOUBLE,
+		   MPI_FLOAT,
 		   ry*nx + x/p.slicex,
 		   p.Lx*ny + x*ny + ry,
 		   MPI_COMM_WORLD,
@@ -247,14 +247,14 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
 	
       MPI_Send(&trim_then[(x-p.shiftx)*p.slicey*p.Lz],
 	       p.slicey*p.Lz,
-	       MPI_DOUBLE,
+	       MPI_FLOAT,
 	       x/slab,
 	       x*ny + p.myposy,
 	       MPI_COMM_WORLD);
 
       MPI_Send(&trim_now[(x-p.shiftx)*p.slicey*p.Lz],
 	       p.slicey*p.Lz,
-	       MPI_DOUBLE,
+	       MPI_FLOAT,
 	       x/slab,
 	       p.Lx*ny + x*ny + p.myposy,
 	       MPI_COMM_WORLD);
@@ -262,7 +262,7 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
       
     }
 
-    double total = 0.0;
+    float total = 0.0;
 
     for(x=0;x<slab;x++) {
       for(y=0;y<p.Ly;y++) {
@@ -273,7 +273,7 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
       }
     }
 
-    fftw_mpi_execute_dft(plan, in, out);
+    fftwf_mpi_execute_dft(plan, in, out);
 
     for(x=0;x<slab;x++) {
       for(y=0;y<p.Ly;y++) {
@@ -300,7 +300,7 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
       }
     }
 
-    fftw_mpi_execute_dft(plan, in, out);
+    fftwf_mpi_execute_dft(plan, in, out);
 
     for(x=0;x<slab;x++) {
       for(y=0;y<p.Ly;y++) {
@@ -322,13 +322,13 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
 
 
   int nbins = minof3_int(p.Lx, p.Ly, p.Lz);
-  double mink = 0.0;
-  double maxk = 2.0*M_PI;
+  float mink = 0.0;
+  float maxk = 2.0*M_PI;
 
-  double dk = (maxk-mink)/((double)nbins);
+  float dk = (maxk-mink)/((float)nbins);
 
-  double *bins_re = (double *)malloc(nbins*sizeof(double));
-  double *bins_im = (double *)malloc(nbins*sizeof(double));
+  float *bins_re = (float *)malloc(nbins*sizeof(float));
+  float *bins_im = (float *)malloc(nbins*sizeof(float));
   int *counts = (int *)malloc(nbins*sizeof(int));
 
   for(i=0;i<nbins;i++) {
@@ -349,9 +349,9 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
           continue;
 	
 	kmode = sqrt(
-		     ((double)((x+x_start)*(x+x_start)))/((double)(p.Lx*p.Lx))
-		     + ((double)(y*y))/((double)(p.Ly*p.Ly))
-		     + ((double)(z*z))/((double)(p.Lz*p.Lz))
+		     ((float)((x+x_start)*(x+x_start)))/((float)(p.Lx*p.Lx))
+		     + ((float)(y*y))/((float)(p.Ly*p.Ly))
+		     + ((float)(z*z))/((float)(p.Lz*p.Lz))
 		     )*2.0*M_PI;
 
 	whichbin = (int)floor(kmode/dk);
@@ -364,7 +364,7 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
   }
 
 
-  double red_value;
+  float red_value;
   int red_count;
 
   for(i=0;i<nbins;i++) {
@@ -380,7 +380,7 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
   }
 
 
-  double thisk = dk/2.0;
+  float thisk = dk/2.0;
 
   // spokesman does the final analysis
   if(!p.rank) {
@@ -417,25 +417,25 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
   free(trim_then);
   free(trim_now);
 
-  fftw_destroy_plan(plan);
+  fftwf_destroy_plan(plan);
   
-  fftw_free(in);
-  fftw_free(out);
+  fftwf_free(in);
+  fftwf_free(out);
 
   for(i=0;i<TENSOR_CPTS;i++) {
-    fftw_free(outcpts_then[i]);
-    fftw_free(outcpts_now[i]);
+    fftwf_free(outcpts_then[i]);
+    fftwf_free(outcpts_now[i]);
   }
 
 
   free_tensor(p, Tij);
 
-  fftw_mpi_cleanup();
+  fftwf_mpi_cleanup();
 
-  double end = clock();
+  float end = clock();
 
   printf0(p, "UETC FFT calculation took %lf\n",
-	  ((double) (end - start)) / CLOCKS_PER_SEC);
+	  ((float) (end - start)) / CLOCKS_PER_SEC);
 
 }
 

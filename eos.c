@@ -16,7 +16,7 @@ void find_Ta(hydro_fields f, hydro_params p) {
 
   int x, y, z;
 
-  double Tfix;
+  float Tfix;
 
   for(x=1; x<=p.slicex; x++) {
     for(y=1; y<=p.slicey; y++) {
@@ -69,9 +69,9 @@ void eq_of_state(hydro_fields f, hydro_params p) {
    * Vpot call is most efficient either (cannot fuse loops between find_Ta,
    * Vpot and this function. Will get rid of both simultaneously.
    */
-  double ***Vnew = make_field(p);
+  float ***Vnew = make_field(p);
 
-  double tolE = 1e-3;
+  float tolE = 1e-3;
 
   find_Ta(f, p);
 

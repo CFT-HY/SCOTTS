@@ -5,21 +5,21 @@
 #include "hydro.h"
 
 
-/* double field_energy(hydro_fields f, hydro_params p)
+/* float field_energy(hydro_fields f, hydro_params p)
  *
  * Total energy in the fields: kinetic, gradient and potential.
  */
-double field_energy(hydro_fields f, hydro_params p) {
+float field_energy(hydro_fields f, hydro_params p) {
 
   int x, y, z;
 
-  double vol;
+  float vol;
 
-  double Etot = 0.0;
+  float Etot = 0.0;
 
-  double a = 0.0;
-  double b = 0.0;
-  double c = 0.0;
+  float a = 0.0;
+  float b = 0.0;
+  float c = 0.0;
 
   vol = p.dx*p.dx*p.dx;
 
@@ -49,9 +49,9 @@ double field_energy(hydro_fields f, hydro_params p) {
     }
   }
   
-  double atot = reduce_sum(a, p);
-  double btot = reduce_sum(b, p);
-  double ctot = reduce_sum(c, p);
+  float atot = reduce_sum(a, p);
+  float btot = reduce_sum(b, p);
+  float ctot = reduce_sum(c, p);
 
 #ifdef SCALAR
   printf0(p,"Totals: momentum %g gradient %g potential %g\n", atot, btot, ctot);
@@ -62,17 +62,17 @@ double field_energy(hydro_fields f, hydro_params p) {
 
 
 
-/* double gradient_energy(hydro_fields f, hydro_params p)
+/* float gradient_energy(hydro_fields f, hydro_params p)
  *
  * Field gradient energy only.
  */
-double gradient_energy(hydro_fields f, hydro_params p) {
+float gradient_energy(hydro_fields f, hydro_params p) {
 
   int x, y, z;
 
-  double vol;
+  float vol;
 
-  double Etot = 0.0;
+  float Etot = 0.0;
 
 
   vol = p.dx*p.dx*p.dx;
@@ -100,23 +100,23 @@ double gradient_energy(hydro_fields f, hydro_params p) {
 
 
 
-/* double total_energy(hydro_fields f, hydro_params p)
+/* float total_energy(hydro_fields f, hydro_params p)
  *
  * Total (field+fluid) energy. Borrowed directly from the
  * 1+1D spherical fortran code, which might explain the strange
  * way of performing the calculation.
  */
-double total_energy(hydro_fields f, hydro_params p) {
+float total_energy(hydro_fields f, hydro_params p) {
 
   int x, y, z;
 
-  double vol;
+  float vol;
 
-  double Etot = 0.0;
-  double restE = 0.0;
-  double kinE = 0.0;
-  double kinphi = 0.0;
-  double grdphi = 0.0;
+  float Etot = 0.0;
+  float restE = 0.0;
+  float kinE = 0.0;
+  float kinphi = 0.0;
+  float grdphi = 0.0;
 
   vol = p.dx*p.dx*p.dx;
 
@@ -165,21 +165,21 @@ double total_energy(hydro_fields f, hydro_params p) {
 
 
 
-/* double kinetic_energy(hydro_fields f, hydro_params p)
+/* float kinetic_energy(hydro_fields f, hydro_params p)
  *
  * Fluid kinetic energy only.
  */
-double kinetic_energy(hydro_fields f, hydro_params p) {
+float kinetic_energy(hydro_fields f, hydro_params p) {
 
   int x, y, z;
 
-  double vol;
+  float vol;
 
-  double Etot = 0.0;
-  double restE = 0.0;
-  double kinE = 0.0;
-  double kinphi = 0.0;
-  double grdphi = 0.0;
+  float Etot = 0.0;
+  float restE = 0.0;
+  float kinE = 0.0;
+  float kinphi = 0.0;
+  float grdphi = 0.0;
 
   vol = p.dx*p.dx*p.dx;
 
@@ -208,21 +208,21 @@ double kinetic_energy(hydro_fields f, hydro_params p) {
 
 
 
-/* double rest_energy(hydro_fields f, hydro_params p)
+/* float rest_energy(hydro_fields f, hydro_params p)
  *
  * Fluid rest energy only.
  */
-double rest_energy(hydro_fields f, hydro_params p) {
+float rest_energy(hydro_fields f, hydro_params p) {
 
   int x, y, z;
 
-  double vol;
+  float vol;
 
-  double Etot = 0.0;
-  double restE = 0.0;
-  double kinE = 0.0;
-  double kinphi = 0.0;
-  double grdphi = 0.0;
+  float Etot = 0.0;
+  float restE = 0.0;
+  float kinE = 0.0;
+  float kinphi = 0.0;
+  float grdphi = 0.0;
 
   vol = p.dx*p.dx*p.dx;
 
@@ -250,13 +250,13 @@ double rest_energy(hydro_fields f, hydro_params p) {
 }
 
  
-double avg_pressure(hydro_fields f, hydro_params p) {
+float avg_pressure(hydro_fields f, hydro_params p) {
 
   int x, y, z;
 
-  double vol;
+  float vol;
 
-  double press;
+  float press;
 
   vol = p.dx*p.dx*p.dx;
 
@@ -284,19 +284,19 @@ double avg_pressure(hydro_fields f, hydro_params p) {
    
 			    
 
-/* double tzerozero(hydro_fields f, hydro_params p)
+/* float tzerozero(hydro_fields f, hydro_params p)
  *
  * The zero-zero component of the stress energy tensor.
  * It's basically just a different way of calculating total_energy,
  * (see above) and therefore serves as a cross-check.
  */
-double tzerozero(hydro_fields f, hydro_params p) {
+float tzerozero(hydro_fields f, hydro_params p) {
 
-  double total = 0.0;
+  float total = 0.0;
 
   int x, y, z;
 
-  double vol;
+  float vol;
 
   vol = p.dx*p.dx*p.dx;
 
@@ -355,12 +355,12 @@ double tzerozero(hydro_fields f, hydro_params p) {
 
 
 
-/* void stress_energy(hydro_fields f, hydro_params p, double ****Tij)
+/* void stress_energy(hydro_fields f, hydro_params p, float ****Tij)
  *
  * Terms in the stress-energy tensor that are *LINEAR* in the metric,
  * and therefore source metric perturbations.
  */
-void stress_energy(hydro_fields f, hydro_params p, double ****Tij) {
+void stress_energy(hydro_fields f, hydro_params p, float ****Tij) {
 
   int x, y, z;
 
@@ -459,16 +459,16 @@ void stress_energy(hydro_fields f, hydro_params p, double ****Tij) {
 }
 
 
-/* void energy_density(hydro_fields f, hydro_params p, double ***en)
+/* void energy_density(hydro_fields f, hydro_params p, float ***en)
  *
  * As for total_energy, see above, but calculated on a per-lattice-site
  * basis and then stored in en.
  */
-void energy_density(hydro_fields f, hydro_params p, double ***en) {
+void energy_density(hydro_fields f, hydro_params p, float ***en) {
 
   int x, y, z;
 
-  double vol;
+  float vol;
 
   vol = p.dx*p.dx*p.dx;
 

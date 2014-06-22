@@ -101,23 +101,23 @@ int main(int argc, char *argv[])
 
   // time iterates: count steps and t separately
   int step;
-  double t = 0.0;
+  float t = 0.0;
 
   // Struct that stores the fields
   hydro_fields f;
 
   // Storage of measurements of average stress-energy tensor (not used)
-  //  double cpts[TENSOR_CPTS];
+  //  float cpts[TENSOR_CPTS];
 
-  double initial_energy, current_energy;
-  double initial_field_energy, current_field_energy;
-  double current_kinetic, current_gradient_energy, current_rest;
-  double current_avgpress;
-  double current_veltot;
-  double gwen;
+  float initial_energy, current_energy;
+  float initial_field_energy, current_field_energy;
+  float current_kinetic, current_gradient_energy, current_rest;
+  float current_avgpress;
+  float current_veltot;
+  float gwen;
 
   // Timing counters
-  double cpu_time_used;
+  float cpu_time_used;
 
   clock_t start, end;
 
@@ -161,11 +161,11 @@ int main(int argc, char *argv[])
 
     /*
     memcpy(f.V[0][0][0], f.U[0][0][0], (p.slicex+2)*(p.slicey+2)
-	   *(p.Lz)*sizeof(double));
+	   *(p.Lz)*sizeof(float));
     memcpy(f.V[1][0][0], f.U[1][0][0], (p.slicex+2)*(p.slicey+2)
-	   *(p.Lz)*sizeof(double));
+	   *(p.Lz)*sizeof(float));
     memcpy(f.V[2][0][0], f.U[2][0][0], (p.slicex+2)*(p.slicey+2)
-	   *(p.Lz)*sizeof(double));
+	   *(p.Lz)*sizeof(float));
 	   */
     // init_ps(f, p, f.V);
     //    init_ps(f, p, f.Z);
@@ -182,7 +182,7 @@ int main(int argc, char *argv[])
       end = clock();
       if(!p.rank)
 	fprintf(stderr,"Nucleation attempt took %lf\n",
-		((double) (end - start)) / CLOCKS_PER_SEC);
+		((float) (end - start)) / CLOCKS_PER_SEC);
       
       bcount += still_nucleate;
       
@@ -217,7 +217,7 @@ int main(int argc, char *argv[])
   initial_field_energy = reduce_sum(field_energy(f, p), p);
 
   printf0(p, "Initial avg energy per site: %g\n", 
-	  initial_energy/((double)p.N));
+	  initial_energy/((float)p.N));
 
   // Set up unequal time correlator stuff (not used)
   //  init_uetc(f, p);
@@ -361,7 +361,7 @@ int main(int argc, char *argv[])
       current_field_energy = reduce_sum(field_energy(f, p), p);
       current_gradient_energy = reduce_sum(gradient_energy(f, p), p);
       current_veltot = reduce_sum(get_veltot(f, p), p)
-	/((double)(p.Lx*p.Ly*p.Lz));
+	/((float)(p.Lx*p.Ly*p.Lz));
       
       if(!p.rank) {
 	printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf\t%6lf\n",
@@ -399,7 +399,7 @@ int main(int argc, char *argv[])
     evolve_hydro(f, p);
 
 #ifdef CUTOFF
-    double cutoff = 0.5*(1.0-tanh(10.0*(t/p.tcutoff - 0.9)));
+    float cutoff = 0.5*(1.0-tanh(10.0*(t/p.tcutoff - 0.9)));
 
     if((p.interval > 0) && (step % p.interval == 0)) {
       printf0(p,"cutoff is %lf\n", cutoff);
@@ -453,7 +453,7 @@ int main(int argc, char *argv[])
   current_field_energy = reduce_sum(field_energy(f, p), p);
   current_gradient_energy = reduce_sum(gradient_energy(f, p), p);
   current_veltot = reduce_sum(get_veltot(f, p), p)
-    /((double)(p.Lx*p.Ly*p.Lz));
+    /((float)(p.Lx*p.Ly*p.Lz));
       
   if(!p.rank) {
     printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf\t%6lf\n",
@@ -502,7 +502,7 @@ int main(int argc, char *argv[])
 
 
   // Time spent running
-  cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+  cpu_time_used = ((float) (end - start)) / CLOCKS_PER_SEC;
 
   printf0(p, "On master node, CPU time in main loop was %lfs,\n"
 	  "of which %lfs was comms\n",

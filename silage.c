@@ -76,41 +76,41 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
   meshsize[1] = sizey;
   meshsize[2] = sizez;
 
-  double **mesh = (double **)malloc(3*sizeof(double *));
+  float **mesh = (float **)malloc(3*sizeof(float *));
 
   
-  mesh[0] = (double *)malloc(sizex*sizeof(double));
-  mesh[1] = (double *)malloc(sizey*sizeof(double));
-  mesh[2] = (double *)malloc(sizez*sizeof(double));
+  mesh[0] = (float *)malloc(sizex*sizeof(float));
+  mesh[1] = (float *)malloc(sizey*sizeof(float));
+  mesh[2] = (float *)malloc(sizez*sizeof(float));
 
 
   for(x=0; x<sizex; x++) {
-    mesh[0][x] = p.dx*((double)(x + p.shiftx - 1));
+    mesh[0][x] = p.dx*((float)(x + p.shiftx - 1));
   }
   for(x=0; x<sizey; x++) {
-    mesh[1][x] = p.dx*((double)(x + p.shifty - 1));
+    mesh[1][x] = p.dx*((float)(x + p.shifty - 1));
   }
   for(x=0; x<sizez; x++) {
-      mesh[2][x] = p.dx*((double)x);
+      mesh[2][x] = p.dx*((float)x);
   }
 
   
 
 
   DBPutQuadmesh(dbfile, "quadmesh", NULL, mesh, meshsize, 3,
-		DB_DOUBLE, DB_COLLINEAR, NULL);
+		DB_FLOAT, DB_COLLINEAR, NULL);
 
   DBPutQuadvar1(dbfile, "phi", "quadmesh", f.phi[0][0], meshsize, 3,
-		NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
+		NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
 
 #ifndef SCALAR
   DBPutQuadvar1(dbfile, "E", "quadmesh", f.E[0][0], meshsize, 3,
-		NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
+		NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
 #endif
   
-  double ***temp = make_field(p);
+  float ***temp = make_field(p);
 
-  double vol = p.dx*p.dx*p.dx;
+  float vol = p.dx*p.dx*p.dx;
 
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
@@ -134,7 +134,7 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
   halo_field(temp, p);
   
   DBPutQuadvar1(dbfile, "gradphi", "quadmesh", temp[0][0], meshsize, 3,
-		NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
+		NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
 
 
 #ifndef SCALAR
@@ -154,7 +154,7 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
 
 
   DBPutQuadvar1(dbfile, "kinetic", "quadmesh", temp[0][0], meshsize, 3,
-		NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
+		NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
 #endif
 
 
@@ -174,7 +174,7 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
   u_names[2] = uz_name;
 
   DBPutQuadvar(dbfile, "U", "quadmesh", 3, u_names, f.U, meshsize, 3,
-	       NULL, 0, DB_DOUBLE, DB_NODECENT, NULL);
+	       NULL, 0, DB_FLOAT, DB_NODECENT, NULL);
 
   */
 
@@ -191,14 +191,14 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
   v_names[2] = vz_name;
 
 
-  double **Vtemp = (double **)malloc(3*sizeof(double *));
+  float **Vtemp = (float **)malloc(3*sizeof(float *));
   Vtemp[0] = f.V[0][0][0];
   Vtemp[1] = f.V[1][0][0];
   Vtemp[2] = f.V[2][0][0];
 
 
   DBPutQuadvar(dbfile, "V", "quadmesh", 3, v_names, Vtemp, meshsize, 3,
-  	       NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
+  	       NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
 
   */
 
@@ -215,7 +215,7 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
   z_names[2] = zz_name;
 
   DBPutQuadvar(dbfile, "Z", "quadmesh", 3, z_names, f.Z, meshsize, 3,
-	       NULL, 0, DB_DOUBLE, DB_NODECENT, NULL);
+	       NULL, 0, DB_FLOAT, DB_NODECENT, NULL);
 
   */
 

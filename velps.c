@@ -11,14 +11,14 @@
 #ifdef FFT
 
 
-/* vel_proj(int T, double kx, double ky, double kz);
+/* vel_proj(int T, float kx, float ky, float kz);
  *
  * Calculate the projector for the transverse component of the
  * velocity.
  */
-double vel_proj(int T, double kx, double ky, double kz) {
+float vel_proj(int T, float kx, float ky, float kz) {
 
-  double mag = sqrt(kx*kx + ky*ky + kz*kz);
+  float mag = sqrt(kx*kx + ky*ky + kz*kz);
 
   // Avoid overflow
   if(fabs(mag) < 0.000001)
@@ -28,7 +28,7 @@ double vel_proj(int T, double kx, double ky, double kz) {
   ky = ky/mag;
   kz = kz/mag;
 
-  double total = 0.0;
+  float total = 0.0;
 
   switch(T) {
 
@@ -71,35 +71,35 @@ double vel_proj(int T, double kx, double ky, double kz) {
 
 
 /* void split_and_power(hydro_params p, int x_start, int slab,
- *                    double *product, double *product_div,
- *                    fftw_complex **vk)
+ *                    float *product, float *product_div,
+ *                    fftwf_complex **vk)
  *
  * Split the FFT output vk into the transverse and longitudinal ('div')
  * components.
  */
 void split_and_power(hydro_params p, int x_start, int slab,
-		     double *product, double *product_div,
-		     fftw_complex **vk) {
+		     float *product, float *product_div,
+		     fftwf_complex **vk) {
 
   int i, j;
   int x, y, z;
-  double kx, ky, kz;
+  float kx, ky, kz;
 
-  double res_r, res_i;
-  double resid_r, resid_i;
+  float res_r, res_i;
+  float resid_r, resid_i;
 
   for(x=0; x<slab; x++) {
     for(y=0; y<p.Ly; y++) {
       for(z=0; z<p.Lz; z++) {
 
-        kx = sqrt((2.0 - 2.0*cos(((double)(x+x_start))*2.0*M_PI/(((double)p.Lx))))/(p.dx*p.dx));
-	ky = sqrt((2.0 - 2.0*cos(((double)y)*2.0*M_PI/(((double)p.Lx))))/(p.dx*p.dx));
-        kz = sqrt((2.0 - 2.0*cos(((double)z)*2.0*M_PI/(((double)p.Lx))))/(p.dx*p.dx));
+        kx = sqrt((2.0 - 2.0*cos(((float)(x+x_start))*2.0*M_PI/(((float)p.Lx))))/(p.dx*p.dx));
+	ky = sqrt((2.0 - 2.0*cos(((float)y)*2.0*M_PI/(((float)p.Lx))))/(p.dx*p.dx));
+        kz = sqrt((2.0 - 2.0*cos(((float)z)*2.0*M_PI/(((float)p.Lx))))/(p.dx*p.dx));
 
 
-	//        kx = ((double)(x+x_start))*2.0*M_PI/((double)p.Lx);
-	//        ky = ((double)y)*2.0*M_PI/((double)p.Ly);
-	//        kz = ((double)z)*2.0*M_PI/((double)p.Lz);
+	//        kx = ((float)(x+x_start))*2.0*M_PI/((float)p.Lx);
+	//        ky = ((float)y)*2.0*M_PI/((float)p.Ly);
+	//        kz = ((float)z)*2.0*M_PI/((float)p.Lz);
 
         product[x*p.Ly*p.Lz + y*p.Lz + z] = 0.0;
         product_div[x*p.Ly*p.Lz + y*p.Lz + z] = 0.0;
@@ -150,27 +150,27 @@ void split_and_power(hydro_params p, int x_start, int slab,
 
 
 
-/* void histogram(hydro_params p, double *slice, char *filename,
+/* void histogram(hydro_params p, float *slice, char *filename,
  *               int slab, int x_start)
  *
  * Combine the data from each slice (supplied separately by each
  * rank to this function), bin, compute the histogram and output.
  */
-void histogram(hydro_params p, double *slice, char *filename,
+void histogram(hydro_params p, float *slice, char *filename,
 	       int slab, int x_start) {
   // The rest proceeds as in gw.c
 
   int i, x, y, z;
 
-  double kmode;
+  float kmode;
 
   int nbins = minof3_int(p.Lx, p.Ly, p.Lz);
-  double mink = 0.0;
-  double maxk = 2.0*M_PI;
+  float mink = 0.0;
+  float maxk = 2.0*M_PI;
 
-  double dk = (maxk-mink)/((double)nbins);
+  float dk = (maxk-mink)/((float)nbins);
 
-  double *bins = (double *)malloc(nbins*sizeof(double));
+  float *bins = (float *)malloc(nbins*sizeof(float));
   int *counts = (int *)malloc(nbins*sizeof(int));
 
   for(i=0;i<nbins;i++) {
@@ -190,9 +190,9 @@ void histogram(hydro_params p, double *slice, char *filename,
           continue;
 	
 	kmode = sqrt(
-		     ((double)((x+x_start)*(x+x_start)))/((double)(p.Lx*p.Lx))
-		     + ((double)(y*y))/((double)(p.Ly*p.Ly))
-		     + ((double)(z*z))/((double)(p.Lz*p.Lz))
+		     ((float)((x+x_start)*(x+x_start)))/((float)(p.Lx*p.Lx))
+		     + ((float)(y*y))/((float)(p.Ly*p.Ly))
+		     + ((float)(z*z))/((float)(p.Lz*p.Lz))
 		     )*2.0*M_PI;
 
 	whichbin = (int)floor(kmode/dk);
@@ -204,7 +204,7 @@ void histogram(hydro_params p, double *slice, char *filename,
   }
 
 
-  double red_value;
+  float red_value;
   int red_count;
 
   for(i=0;i<nbins;i++) {
@@ -217,7 +217,7 @@ void histogram(hydro_params p, double *slice, char *filename,
   }
 
 
-  double thisk = dk/2.0;
+  float thisk = dk/2.0;
 
   // spokesman does the final analysis
   if(!p.rank) {
@@ -229,7 +229,7 @@ void histogram(hydro_params p, double *slice, char *filename,
 
 
       fprintf(fp, "%lf %g %d\n",
-	      thisk/(p.a*p.dx), ((double)(i+1))*bins[i], counts[i]);
+	      thisk/(p.a*p.dx), ((float)(i+1))*bins[i], counts[i]);
 
       thisk = thisk + dk;
     }
@@ -250,7 +250,7 @@ void histogram(hydro_params p, double *slice, char *filename,
  *
  * Main method. Calculate the velocity power spectrum.
  */
-void fft_vel(hydro_fields f, hydro_params p, int step, double ****vectorfield) {
+void fft_vel(hydro_fields f, hydro_params p, int step, float ****vectorfield) {
 
 #ifndef SCALAR
   ptrdiff_t x_thickness, x_start, alloc_local;
@@ -263,23 +263,23 @@ void fft_vel(hydro_fields f, hydro_params p, int step, double ****vectorfield) {
 
   MPI_Status status;
 
-  double modsq;
+  float modsq;
 
   int x, y, z;
   int i;
 
-  double fft_norm = (1.0/(((double)p.Lx)*((double)p.Ly)*((double)p.Lz)));
+  float fft_norm = (1.0/(((float)p.Lx)*((float)p.Ly)*((float)p.Lz)));
   // *p.a*p.a*p.a*p.dx*p.dx*p.dx
 
-  double *trim = (double *)malloc(p.slicex*p.slicey*p.Lz*sizeof(double));
+  float *trim = (float *)malloc(p.slicex*p.slicey*p.Lz*sizeof(float));
 
   printf0(p, "Starting velocity power spectrum FFT calculation.\n");
 
-  double start = clock();
+  float start = clock();
 
-  fftw_mpi_init();
+  fftwf_mpi_init();
 
-  alloc_local = fftw_mpi_local_size_3d(n0, n1, n2,
+  alloc_local = fftwf_mpi_local_size_3d(n0, n1, n2,
 				       MPI_COMM_WORLD, &x_thickness, &x_start);
 
 
@@ -304,17 +304,17 @@ void fft_vel(hydro_fields f, hydro_params p, int step, double ****vectorfield) {
 
 
 
-  fftw_complex *in = fftw_alloc_complex(alloc_local);
-  fftw_complex *out = fftw_alloc_complex(alloc_local);
+  fftwf_complex *in = fftwf_alloc_complex(alloc_local);
+  fftwf_complex *out = fftwf_alloc_complex(alloc_local);
 
-  fftw_complex **outcpts = (fftw_complex **)malloc(3*sizeof(fftw_complex *));
+  fftwf_complex **outcpts = (fftwf_complex **)malloc(3*sizeof(fftwf_complex *));
   
   for(i=0;i<3;i++) {
-    outcpts[i] = fftw_alloc_complex(alloc_local);
+    outcpts[i] = fftwf_alloc_complex(alloc_local);
   }
 
-  double *slice = (double *)malloc(slab*p.Ly*p.Lz*sizeof(double));
-  double *slice_div = (double *)malloc(slab*p.Ly*p.Lz*sizeof(double));
+  float *slice = (float *)malloc(slab*p.Ly*p.Lz*sizeof(float));
+  float *slice_div = (float *)malloc(slab*p.Ly*p.Lz*sizeof(float));
 
 
   int nx = p.Lx/p.slicex;
@@ -323,13 +323,13 @@ void fft_vel(hydro_fields f, hydro_params p, int step, double ****vectorfield) {
   int ry;
 
   // Now planning  
-  fftw_plan plan = fftw_mpi_plan_dft_3d(p.Lx, p.Ly, p.Lz,
+  fftwf_plan plan = fftwf_mpi_plan_dft_3d(p.Lx, p.Ly, p.Lz,
 					in, out, MPI_COMM_WORLD,
 					FFTW_BACKWARD, FFTW_ESTIMATE);
 
   for(i = 0; i < 3; i++) {
 
-    double check = 0.0;    
+    float check = 0.0;    
     
     for(x=1; x<=p.slicex; x++) {
       for(y=1; y<=p.slicey; y++) {
@@ -355,14 +355,14 @@ void fft_vel(hydro_fields f, hydro_params p, int step, double ****vectorfield) {
 	    
 	    memcpy(&slice[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
 		   &trim[(x-p.shiftx)*p.slicey*p.Lz],
-		   p.slicey*p.Lz*sizeof(double));
+		   p.slicey*p.Lz*sizeof(float));
 	    continue;
 	  }
 	  
 	  
 	  MPI_Recv(&slice[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
 		   p.slicey*p.Lz,
-		   MPI_DOUBLE,
+		   MPI_FLOAT,
 		   ry*nx + x/p.slicex,
 		   x*ny + ry,
 		   MPI_COMM_WORLD,
@@ -382,7 +382,7 @@ void fft_vel(hydro_fields f, hydro_params p, int step, double ****vectorfield) {
 	
       MPI_Send(&trim[(x-p.shiftx)*p.slicey*p.Lz],
 	       p.slicey*p.Lz,
-	       MPI_DOUBLE,
+	       MPI_FLOAT,
 	       x/slab,
 	       x*ny + p.myposy,
 	       MPI_COMM_WORLD);
@@ -390,7 +390,7 @@ void fft_vel(hydro_fields f, hydro_params p, int step, double ****vectorfield) {
       
     }
 
-    double total = 0.0;
+    float total = 0.0;
 
     printf0(p, "Vel FFT: Done slicing for cpt %d\n", i);
 
@@ -404,7 +404,7 @@ void fft_vel(hydro_fields f, hydro_params p, int step, double ****vectorfield) {
       }
     }
   
-    fftw_mpi_execute_dft(plan, in, out);
+    fftwf_mpi_execute_dft(plan, in, out);
     
     total = 0.0;
     
@@ -450,21 +450,21 @@ void fft_vel(hydro_fields f, hydro_params p, int step, double ****vectorfield) {
   free(slice_div);
   free(trim);
 
-  fftw_destroy_plan(plan);
+  fftwf_destroy_plan(plan);
   
-  fftw_free(in);
-  fftw_free(out);
+  fftwf_free(in);
+  fftwf_free(out);
 
   for(i=0;i<3;i++)
-    fftw_free(outcpts[i]);
+    fftwf_free(outcpts[i]);
 
 
-  fftw_mpi_cleanup();
+  fftwf_mpi_cleanup();
 
-  double end = clock();
+  float end = clock();
 
   printf0(p, "Velocity power spectrum FFT calculation took %lf\n",
-	  ((double) (end - start)) / CLOCKS_PER_SEC);
+	  ((float) (end - start)) / CLOCKS_PER_SEC);
 
 #endif // SCALAR
 }
