@@ -137,11 +137,11 @@ void get_parameters(char *infile, hydro_params *p)
 
     // Check for parameters (in order)
     if(!strcasecmp(key,"dx")) {
-      p->dx = strtod(value,NULL);
+      p->dx = strtof(value,NULL);
       set_dx = 1;
     }
     else if(!strcasecmp(key,"dt")) {
-      p->dt = strtod(value,NULL);
+      p->dt = strtof(value,NULL);
       set_dt = 1;
     }    
     else if(!strcasecmp(key,"Lx")) {
@@ -161,35 +161,35 @@ void get_parameters(char *infile, hydro_params *p)
       set_steps = 1;
     }
     else if(!strcasecmp(key,"Cav")) {
-      p->Cav = strtod(value,NULL);
+      p->Cav = strtof(value,NULL);
       set_Cav = 1;
     }
     else if(!strcasecmp(key,"C")) {
-      p->C = strtod(value,NULL);
+      p->C = strtof(value,NULL);
       set_C = 1;
     }
     else if(!strcasecmp(key,"alpha")) {
-      p->alpha = strtod(value,NULL);
+      p->alpha = strtof(value,NULL);
       set_alpha = 1;
     }
     else if(!strcasecmp(key,"gamma")) {
-      p->gamma = strtod(value,NULL);
+      p->gamma = strtof(value,NULL);
       set_gamma = 1;
     }
     else if(!strcasecmp(key,"lambda")) {
-      p->lambda = strtod(value,NULL);
+      p->lambda = strtof(value,NULL);
       set_lambda = 1;
     }
     else if(!strcasecmp(key,"gstar")) {
-      p->gstar = strtod(value,NULL);
+      p->gstar = strtof(value,NULL);
       set_gstar = 1;
     }
     else if(!strcasecmp(key,"T0")) {
-      p->T0 = strtod(value,NULL);
+      p->T0 = strtof(value,NULL);
       set_T0 = 1;
     }
     else if(!strcasecmp(key,"Tconst")) {
-      p->Tconst= strtod(value,NULL);
+      p->Tconst= strtof(value,NULL);
       set_Tconst = 1;
     }
     else if(!strcasecmp(key,"interval")) {
@@ -209,22 +209,22 @@ void get_parameters(char *infile, hydro_params *p)
       set_bubbles = 1;
     }
     else if(!strcasecmp(key,"beta")) {
-      p->beta = strtod(value,NULL);
+      p->beta = strtof(value,NULL);
       set_beta = 1;
     }
     else if(!strcasecmp(key,"scale")) {
-      p->scale = strtod(value,NULL);
+      p->scale = strtof(value,NULL);
       set_scale = 1;
     }
 #ifdef INITPS
     else if(!strcasecmp(key,"initps")) {
-      p->initps = strtod(value,NULL);
+      p->initps = strtof(value,NULL);
       set_initps = 1;
     }
 #endif
 #ifdef CUTOFF
     else if(!strcasecmp(key,"tcutoff")) {
-      p->tcutoff = strtod(value,NULL);
+      p->tcutoff = strtof(value,NULL);
       set_tcutoff = 1;
     }
 #endif

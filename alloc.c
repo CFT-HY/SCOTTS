@@ -5,23 +5,23 @@
 #include "hydro.h"
 
 
-/* double ***make_field(hydro_params p)
+/* float ***make_field(hydro_params p)
  * 
  * Performs a sneaky trick to return 3D array with contiguous memory.
  * Accessed as: field[x][y][z], with the x- and y-coordinates
  * having haloes at x=0 and x=p.slicex+1, y=0, y=p.slicey+1
  */
-double ***make_field(hydro_params p) {
+float ***make_field(hydro_params p) {
    
-  double *true_field = malloc((p.slicex+2)*(p.slicey+2)
-			      *(p.Lz)*sizeof(double));
+  float *true_field = malloc((p.slicex+2)*(p.slicey+2)
+			      *(p.Lz)*sizeof(float));
 
 
-  double ***field = (double ***)malloc((p.slicex+2)*sizeof(double **));
+  float ***field = (float ***)malloc((p.slicex+2)*sizeof(float **));
   int x, y;
 
   for(x=0;x<(p.slicex+2);x++) {
-    field[x] = (double **)malloc((p.slicey+2)*sizeof(double *));
+    field[x] = (float **)malloc((p.slicey+2)*sizeof(float *));
     for(y=0;y<(p.slicey+2);y++) {
       field[x][y] = &true_field[x*(p.slicey+2)*(p.Lz) + y*(p.Lz)];
     }
@@ -34,26 +34,26 @@ double ***make_field(hydro_params p) {
 
 
 
-/* double ****make_vector(hydro_params p)
+/* float ****make_vector(hydro_params p)
  * 
  * As for make_field, but for a 3-component vector
  * Accessed as: field[cpt][x][y][z], with the x- and y-coordinates
  * having haloes at x=0 and x=p.slicex+1, y=0, y=p.slicey+1
  */
-double ****make_vector(hydro_params p) {
+float ****make_vector(hydro_params p) {
    
-  double *true_field = malloc(3*(p.slicex+2)*(p.slicey+2)
-			      *(p.Lz)*sizeof(double));
+  float *true_field = malloc(3*(p.slicex+2)*(p.slicey+2)
+			      *(p.Lz)*sizeof(float));
 
   int x, y, i;
 
-  double ****vector = (double ****) malloc(3*sizeof(double***));
+  float ****vector = (float ****) malloc(3*sizeof(float***));
 
   for(i=0;i<3;i++) {
-    vector[i] = (double ***)malloc((p.slicex+2)*sizeof(double **));
+    vector[i] = (float ***)malloc((p.slicex+2)*sizeof(float **));
 
     for(x=0;x<(p.slicex+2);x++) {
-      vector[i][x] = (double **)malloc((p.slicey+2)*sizeof(double *));
+      vector[i][x] = (float **)malloc((p.slicey+2)*sizeof(float *));
       for(y=0;y<(p.slicey+2);y++) {
 	vector[i][x][y]
 	  = &true_field[i*(p.slicex+2)*(p.slicey+2)*(p.Lz) 
@@ -70,26 +70,26 @@ double ****make_vector(hydro_params p) {
 
 
 
-/* double ****make_tensor(hydro_params p)
+/* float ****make_tensor(hydro_params p)
  * 
  * As for make_vector, but for a 6-component tensor (TENSOR_CPTS=6)
  * Accessed as: field[cpt][x][y][z], with the x- and y-coordinates
  * having haloes at x=0 and x=p.slicex+1, y=0, y=p.slicey+1
  */
-double ****make_tensor(hydro_params p) {
+float ****make_tensor(hydro_params p) {
    
-  double *true_field = malloc(TENSOR_CPTS*(p.slicex+2)*(p.slicey+2)
-			      *(p.Lz)*sizeof(double));
+  float *true_field = malloc(TENSOR_CPTS*(p.slicex+2)*(p.slicey+2)
+			      *(p.Lz)*sizeof(float));
 
   int x, y, i;
 
-  double ****tensor = (double ****) malloc(TENSOR_CPTS*sizeof(double***));
+  float ****tensor = (float ****) malloc(TENSOR_CPTS*sizeof(float***));
 
   for(i=0;i<TENSOR_CPTS;i++) {
-    tensor[i] = (double ***)malloc((p.slicex+2)*sizeof(double **));
+    tensor[i] = (float ***)malloc((p.slicex+2)*sizeof(float **));
 
     for(x=0;x<(p.slicex+2);x++) {
-      tensor[i][x] = (double **)malloc((p.slicey+2)*sizeof(double *));
+      tensor[i][x] = (float **)malloc((p.slicey+2)*sizeof(float *));
       for(y=0;y<(p.slicey+2);y++) {
 	tensor[i][x][y]
 	  = &true_field[i*(p.slicex+2)*(p.slicey+2)*(p.Lz) 
@@ -106,15 +106,15 @@ double ****make_tensor(hydro_params p) {
 
 
 
-/* void free_field(hydro_params p, double ***field)
- * void free_vector(hydro_params p, double ****vector)
- * void free_tensor(hydro_params p, double ****tensor)
+/* void free_field(hydro_params p, float ***field)
+ * void free_vector(hydro_params p, float ****vector)
+ * void free_tensor(hydro_params p, float ****tensor)
  *
  * Frees the memory associated with a field allocated by make_field
  * (or make_vector or make_tensor) above: first frees the contiguous blob,
  * then the 'shortcut' arrays and finally the outermost layer.
  */
-void free_field(hydro_params p, double ***field) {
+void free_field(hydro_params p, float ***field) {
 
   int x;
   
@@ -128,7 +128,7 @@ void free_field(hydro_params p, double ***field) {
 }
 
 
-void free_vector(hydro_params p, double ****vector) {
+void free_vector(hydro_params p, float ****vector) {
 
   int x, i;
   
@@ -145,7 +145,7 @@ void free_vector(hydro_params p, double ****vector) {
 }
 
 
-void free_tensor(hydro_params p, double ****tensor) {
+void free_tensor(hydro_params p, float ****tensor) {
 
   int x, i;
   

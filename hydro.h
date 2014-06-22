@@ -90,42 +90,42 @@
 
 typedef struct {
 
-  double dx;
-  double dt;
+  float dx;
+  float dt;
 
   int Lx, Ly, Lz;
 
   int steps;
 
   // NB: artificial viscosity not implemented yet!
-  double Cav;
+  float Cav;
 
   // C aka eta, the field viscosity
-  double C;
+  float C;
 
   // Input parameters for the potential
   /*
-  double Lheat;
-  double sigma;
-  double lcorr;
+  float Lheat;
+  float sigma;
+  float lcorr;
   */
 
   // Calculated potential parameters
-  double alpha;
-  double lambda;
-  double gamma;
+  float alpha;
+  float lambda;
+  float gamma;
   // Temperature parameters
-  double Tconst;
-  double T0;
+  float Tconst;
+  float T0;
 
 #ifdef INITPS
   // Cutoff time
-  double initps;
+  float initps;
 #endif
 
 #ifdef CUTOFF
   // Cutoff time
-  double tcutoff;
+  float tcutoff;
 #endif
 
   // How often to deal with output
@@ -139,10 +139,10 @@ typedef struct {
 
 
   // Scale factor
-  double a;
+  float a;
 
   // Degrees of freedom
-  double gstar, gdeg;
+  float gstar, gdeg;
 
   // Number of physical sites in volume
   int N;
@@ -154,7 +154,7 @@ typedef struct {
   int size;
   int rank;
 
-  //  double comms_time;
+  //  float comms_time;
 
   // How many sites in each direction are unique to us
   int slicex;
@@ -181,10 +181,10 @@ typedef struct {
   int *nucsteps;
   int n_nucsteps;
 
-  double beta;
+  float beta;
 
   // to rescale bubble size
-  double scale;
+  float scale;
 
   int Linv;
 
@@ -200,7 +200,7 @@ typedef struct {
   int rank_yM;
   int rank_yP;
 
-  // Ranks of double neighbours
+  // Ranks of float neighbours
   int rank_xMyM;
   int rank_xMyP;
   int rank_xPyM;
@@ -220,36 +220,36 @@ typedef struct {
 // See alloc_fields in alloc.c for details
 typedef struct {
 
-  double *x_inv;
-  double *phi_inv;
-  double *V_inv;
+  float *x_inv;
+  float *phi_inv;
+  float *V_inv;
 
   // Scalar field
-  double ***phi;
-  double ***pifull;
-  double ***pi;
-  double ***phiold;
+  float ***phi;
+  float ***pifull;
+  float ***pi;
+  float ***phiold;
 
 #ifndef SCALAR
   // Fluid
-  double ***T;
-  double ***E;
-  double ***W;
-  double ***kappa;
-  double ***p;
+  float ***T;
+  float ***E;
+  float ***W;
+  float ***kappa;
+  float ***p;
 
-  double ****V;
-  double ****Z;
-  double ****U;
-  double ****F;
+  float ****V;
+  float ****Z;
+  float ****U;
+  float ****F;
 #endif // SCALAR
 
   // Gravity
-  double ****uij;
-  double ****udotij;
+  float ****uij;
+  float ****udotij;
 
   // (Only for UETCs)
-  double ****initial_Tij;
+  float ****initial_Tij;
 
 
 } hydro_fields;
@@ -260,14 +260,14 @@ typedef struct {
 
 
 // alloc.c
-double ***make_field(hydro_params p);
-double ****make_vector(hydro_params p);
-double ****make_tensor(hydro_params p);
+float ***make_field(hydro_params p);
+float ****make_vector(hydro_params p);
+float ****make_tensor(hydro_params p);
 
 
-void free_field(hydro_params p, double ***field);
-void free_vector(hydro_params p, double ****vector);
-void free_tensor(hydro_params p, double ****tensor);
+void free_field(hydro_params p, float ***field);
+void free_vector(hydro_params p, float ****vector);
+void free_tensor(hydro_params p, float ****tensor);
 
 void alloc_fields(hydro_fields *f, hydro_params p);
 void zero_fields(hydro_fields f, hydro_params p);
@@ -279,14 +279,14 @@ void layout(hydro_params *p);
 int get_x(int n, hydro_params p);
 int get_y(int n, hydro_params p);
 int get_z(int n, hydro_params p);
-void halo_field(double ***field, hydro_params p);
-double reduce_sum(double result, hydro_params p);
+void halo_field(float ***field, hydro_params p);
+float reduce_sum(float result, hydro_params p);
 int reduce_sum_int(int result, hydro_params p);
-double reduce_max(double result, hydro_params p);
-double reduce_min(double result, hydro_params p);
+float reduce_max(float result, hydro_params p);
+float reduce_min(float result, hydro_params p);
 int reduce_and(int result, hydro_params p);
 void init_comms_time(hydro_params *p);
-double get_comms_time(hydro_params *p);
+float get_comms_time(hydro_params *p);
 void printf0(hydro_params p, char *msg, ...);
 void die(int howbad);
 
@@ -300,7 +300,7 @@ void evolve_backstep(hydro_fields f, hydro_params p);
 void evolve_field(hydro_fields f, hydro_params p);
 void evolve_hydro(hydro_fields f, hydro_params p);
 #ifdef CUTOFF
-void evolve_uij(hydro_fields f, hydro_params p, double cutoff);
+void evolve_uij(hydro_fields f, hydro_params p, float cutoff);
 #else
 void evolve_uij(hydro_fields f, hydro_params p);
 #endif
@@ -309,24 +309,24 @@ void evolve_uij(hydro_fields f, hydro_params p);
 void artificial_viscosity(hydro_fields f, int **nb, hydro_params p);
 
 // potential.c
-double Vf(hydro_params p, double T, double this_phi);
-double Vdf(hydro_params p, double T, double this_phi);
-double VTf(hydro_params p, double T, double this_phi);
-double VTTf(hydro_params p, double T, double this_phi);
-void Vpot(hydro_params p, double *T, double *phi, double *Vprecalc);
-void Vdpot(hydro_params p, double *T, double *phi, double *Vprecalc);
+float Vf(hydro_params p, float T, float this_phi);
+float Vdf(hydro_params p, float T, float this_phi);
+float VTf(hydro_params p, float T, float this_phi);
+float VTTf(hydro_params p, float T, float this_phi);
+void Vpot(hydro_params p, float *T, float *phi, float *Vprecalc);
+void Vdpot(hydro_params p, float *T, float *phi, float *Vprecalc);
 
 
 // energy.c
-double field_energy(hydro_fields f, hydro_params p);
-double gradient_energy(hydro_fields f, hydro_params p);
-double total_energy(hydro_fields f, hydro_params p);
-double kinetic_energy(hydro_fields f, hydro_params p);
-double rest_energy(hydro_fields f, hydro_params p);
-void energy_density(hydro_fields f, hydro_params p, double ***en);
-void stress_energy(hydro_fields f, hydro_params p, double ****Tij);
-double avg_pressure(hydro_fields f, hydro_params p);
-double tzerozero(hydro_fields f, hydro_params p);
+float field_energy(hydro_fields f, hydro_params p);
+float gradient_energy(hydro_fields f, hydro_params p);
+float total_energy(hydro_fields f, hydro_params p);
+float kinetic_energy(hydro_fields f, hydro_params p);
+float rest_energy(hydro_fields f, hydro_params p);
+void energy_density(hydro_fields f, hydro_params p, float ***en);
+void stress_energy(hydro_fields f, hydro_params p, float ****Tij);
+float avg_pressure(hydro_fields f, hydro_params p);
+float tzerozero(hydro_fields f, hydro_params p);
 
 // eos.c
 
@@ -346,15 +346,15 @@ int can_nucleate(hydro_fields f, hydro_params p, int x0, int y0, int z0);
 void nucleate_at(hydro_fields f, hydro_params p, int x0, int y0, int z0);
 void initial_3D(hydro_fields f, hydro_params p);
 int do_nucleate(hydro_fields f, hydro_params p);
-int should_nucleate(hydro_fields f, hydro_params p, double t, int step);
+int should_nucleate(hydro_fields f, hydro_params p, float t, int step);
 void init_profile(hydro_fields *f, hydro_params *p);
 
 // output.c
-double get_gamma_max(hydro_fields f, hydro_params p);
-double get_veltot(hydro_fields f, hydro_params p);
-void dump(double *field, hydro_params p);
-void histo_field(double ***field, hydro_params p, int step);
-void didj(double *cpts, hydro_fields f, hydro_params p);
+float get_gamma_max(hydro_fields f, hydro_params p);
+float get_veltot(hydro_fields f, hydro_params p);
+void dump(float *field, hydro_params p);
+void histo_field(float ***field, hydro_params p, int step);
+void didj(float *cpts, hydro_fields f, hydro_params p);
 
 // papi.c
 #ifdef PAPI
@@ -373,28 +373,28 @@ void write_silo_step(hydro_fields f, hydro_params p, int step);
 
 
 // util.c
-double minof3(double a, double b, double c);
+float minof3(float a, float b, float c);
 int minof3_int(int a, int b, int c);
-double maxof3(double a, double b, double c);
-double minof2(double a, double b);
+float maxof3(float a, float b, float c);
+float minof2(float a, float b);
 
 
 #ifdef FFT
 // fft.c
-void fft_field(hydro_fields f, hydro_params p, double ***field, int step);
+void fft_field(hydro_fields f, hydro_params p, float ***field, int step);
 
 // uetc.c
 void init_uetc(hydro_fields f, hydro_params p);
 void fft_uetc(hydro_fields f, hydro_params p, int step);
 
 // gw.c
-double proj(int T, double kx, double ky, double kz);
-double fft_tensor(hydro_fields f, hydro_params p, int step,
-		  double energydensity);
+float proj(int T, float kx, float ky, float kz);
+float fft_tensor(hydro_fields f, hydro_params p, int step,
+		  float energydensity);
 
 // velps.c
-double vel_proj(int T, double kx, double ky, double kz);
-void fft_vel(hydro_fields f, hydro_params p, int step, double ****vectorfield);
+float vel_proj(int T, float kx, float ky, float kz);
+void fft_vel(hydro_fields f, hydro_params p, int step, float ****vectorfield);
 
 #endif // FFT
 
@@ -402,6 +402,6 @@ void fft_vel(hydro_fields f, hydro_params p, int step, double ****vectorfield);
 #ifdef INITPS
 
 // initps.c
-void init_ps(hydro_fields f, hydro_params p, double ****field);
+void init_ps(hydro_fields f, hydro_params p, float ****field);
 
 #endif // INITPS

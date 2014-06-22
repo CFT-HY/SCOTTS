@@ -8,7 +8,7 @@
 #ifdef FFT
 
 
-/* fft_field(hydro_fields f, hydro_params p, double ***field, int step)
+/* fft_field(hydro_fields f, hydro_params p, float ***field, int step)
  *
  * Carries out the FFT of the supplied field, computes the power
  * spectrum, and stores it binned and labelled with the timestep
@@ -19,7 +19,7 @@
  *
  * Unlike velps.c and gw.c there is no normalisation done here.
  */
-void fft_field(hydro_fields f, hydro_params p, double ***field, int step) {
+void fft_field(hydro_fields f, hydro_params p, float ***field, int step) {
 
   ptrdiff_t x_thickness, x_start, alloc_local;
 
@@ -31,20 +31,20 @@ void fft_field(hydro_fields f, hydro_params p, double ***field, int step) {
 
   MPI_Status status;
 
-  double kmode, modsq;
+  float kmode, modsq;
 
   int x, y, z;
   int i;
 
   
 
-  double *trim_field = (double *)malloc(p.slicex*p.slicey*p.Lz*sizeof(double));
+  float *trim_field = (float *)malloc(p.slicex*p.slicey*p.Lz*sizeof(float));
 
-  double start = clock();
+  float start = clock();
 
-  fftw_mpi_init();
+  fftwf_mpi_init();
 
-  double checken = 0.0;
+  float checken = 0.0;
   for(x=1; x<=p.slicex; x++) {
     for(y=1; y<=p.slicey; y++) {
       for(z=0; z<p.Lz; z++) {
@@ -55,7 +55,7 @@ void fft_field(hydro_fields f, hydro_params p, double ***field, int step) {
   }
 
 
-  alloc_local = fftw_mpi_local_size_3d(n0, n1, n2,
+  alloc_local = fftwf_mpi_local_size_3d(n0, n1, n2,
 				       MPI_COMM_WORLD, &x_thickness, &x_start);
 
   // slab is the thickness the 'used' nodes will FFT
@@ -79,10 +79,10 @@ void fft_field(hydro_fields f, hydro_params p, double ***field, int step) {
 
 
 
-  fftw_complex *in = fftw_alloc_complex(alloc_local);
-  fftw_complex *out = fftw_alloc_complex(alloc_local);
+  fftwf_complex *in = fftwf_alloc_complex(alloc_local);
+  fftwf_complex *out = fftwf_alloc_complex(alloc_local);
 
-  double *slice = (double *)malloc(slab*p.Ly*p.Lz*sizeof(double));
+  float *slice = (float *)malloc(slab*p.Ly*p.Lz*sizeof(float));
 
   int nx = p.Lx/p.slicex;
   int ny = p.Ly/p.slicey;
@@ -92,7 +92,7 @@ void fft_field(hydro_fields f, hydro_params p, double ***field, int step) {
 
 
   // Now planning  
-  fftw_plan plan = fftw_mpi_plan_dft_3d(p.Lx, p.Ly, p.Lz,
+  fftwf_plan plan = fftwf_mpi_plan_dft_3d(p.Lx, p.Ly, p.Lz,
 					in, out, MPI_COMM_WORLD,
 					FFTW_FORWARD, FFTW_ESTIMATE);
 
@@ -108,13 +108,13 @@ void fft_field(hydro_fields f, hydro_params p, double ***field, int step) {
 
 	  memcpy(&slice[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
 		 &trim_field[(x-p.shiftx)*p.slicey*p.Lz],
-		 p.slicey*p.Lz*sizeof(double));
+		 p.slicey*p.Lz*sizeof(float));
 	  continue;
 	}
 
 	MPI_Recv(&slice[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
 		 p.slicey*p.Lz,
-		 MPI_DOUBLE,
+		 MPI_FLOAT,
 		 ry*nx + x/p.slicex,
 		 x*ny + ry,
 		 MPI_COMM_WORLD,
@@ -135,7 +135,7 @@ void fft_field(hydro_fields f, hydro_params p, double ***field, int step) {
 
       MPI_Send(&trim_field[(x-p.shiftx)*p.slicey*p.Lz],
 	       p.slicey*p.Lz,
-	       MPI_DOUBLE,
+	       MPI_FLOAT,
 	       x/slab,
 	       x*ny + p.myposy,
 	       MPI_COMM_WORLD);
@@ -163,16 +163,16 @@ void fft_field(hydro_fields f, hydro_params p, double ***field, int step) {
 
 
   
-  fftw_mpi_execute_dft(plan, in, out);
+  fftwf_mpi_execute_dft(plan, in, out);
 
 
   int nbins = minof3_int(p.Lx, p.Ly, p.Lz);
-  double mink = 0.0;
-  double maxk = 2.0*M_PI;
+  float mink = 0.0;
+  float maxk = 2.0*M_PI;
 
-  double dk = (maxk-mink)/((double)nbins);
+  float dk = (maxk-mink)/((float)nbins);
 
-  double *bins = (double *)malloc(nbins*sizeof(double));
+  float *bins = (float *)malloc(nbins*sizeof(float));
   int *counts = (int *)malloc(nbins*sizeof(int));
 
   for(i=0;i<nbins;i++) {
@@ -189,9 +189,9 @@ void fft_field(hydro_fields f, hydro_params p, double ***field, int step) {
           continue;
 
 	kmode = sqrt(
-		     ((double)((x+x_start)*(x+x_start)))/((double)(p.Lx*p.Lx))
-		     + ((double)(y*y))/((double)(p.Ly*p.Ly))
-		     + ((double)(z*z))/((double)(p.Lz*p.Lz))
+		     ((float)((x+x_start)*(x+x_start)))/((float)(p.Lx*p.Lx))
+		     + ((float)(y*y))/((float)(p.Ly*p.Ly))
+		     + ((float)(z*z))/((float)(p.Lz*p.Lz))
 		     )*2.0*M_PI;
 
 	modsq = out[x*p.Ly*p.Lz + y*p.Lz + z][0]
@@ -208,7 +208,7 @@ void fft_field(hydro_fields f, hydro_params p, double ***field, int step) {
   }
 
 
-  double red_value;
+  float red_value;
   int red_count;
 
   for(i=0;i<nbins;i++) {
@@ -221,7 +221,7 @@ void fft_field(hydro_fields f, hydro_params p, double ***field, int step) {
   }
 
 
-  double thisk = dk/2.0;
+  float thisk = dk/2.0;
 
   if(!p.rank) {
 
@@ -253,14 +253,14 @@ void fft_field(hydro_fields f, hydro_params p, double ***field, int step) {
 
   free(slice);
 
-  fftw_destroy_plan(plan);
+  fftwf_destroy_plan(plan);
   
-  fftw_free(in);
-  fftw_free(out);
+  fftwf_free(in);
+  fftwf_free(out);
 
   free(trim_field);
 
-  fftw_mpi_cleanup();
+  fftwf_mpi_cleanup();
 
 }
 

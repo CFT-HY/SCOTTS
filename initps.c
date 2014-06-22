@@ -11,21 +11,21 @@
  *
  * Project out rotational or divergent bits
  */
-void project_down(hydro_params p, fftw_complex **in, int shift_x, int x_thickness, int times) {
+void project_down(hydro_params p, fftwf_complex **in, int shift_x, int x_thickness, int times) {
 
   int x, y, z;
-  double kx, ky, kz;
+  float kx, ky, kz;
 
-  double in_proj_re[3];
-  double in_proj_im[3];
+  float in_proj_re[3];
+  float in_proj_im[3];
 
-  double res_re, res_im;
+  float res_re, res_im;
 
   int i, j;
 
-  double resid, stuff;
+  float resid, stuff;
 
-  double tdx = 0.5;
+  float tdx = 0.5;
 
   int reruns;
 
@@ -39,9 +39,9 @@ void project_down(hydro_params p, fftw_complex **in, int shift_x, int x_thicknes
 	for(z=0;z<p.Lz;z++) {
 
 	  
-	  kx = sqrt((2.0 - 2.0*cos(((double)(x+shift_x))*2.0*M_PI/(((double)p.Lx))))/(tdx*tdx));
-	  ky = sqrt((2.0 - 2.0*cos(((double)y)*2.0*M_PI/(((double)p.Ly))))/(tdx*tdx));
-	  kz = sqrt((2.0 - 2.0*cos(((double)z)*2.0*M_PI/(((double)p.Lz))))/(tdx*tdx));
+	  kx = sqrt((2.0 - 2.0*cos(((float)(x+shift_x))*2.0*M_PI/(((float)p.Lx))))/(tdx*tdx));
+	  ky = sqrt((2.0 - 2.0*cos(((float)y)*2.0*M_PI/(((float)p.Ly))))/(tdx*tdx));
+	  kz = sqrt((2.0 - 2.0*cos(((float)z)*2.0*M_PI/(((float)p.Lz))))/(tdx*tdx));
 	  
 	  in_proj_re[0] = 0.0;
 	  in_proj_re[1] = 0.0;
@@ -125,8 +125,8 @@ void project_down(hydro_params p, fftw_complex **in, int shift_x, int x_thicknes
  * Lazy and inefficient way of getting gaussian
  * random number
  */
-double get_normal(double mean, double dev) {
-  double u1, u2;
+float get_normal(float mean, float dev) {
+  float u1, u2;
   
   u1 = drand48();
   u2 = drand48();
@@ -137,12 +137,12 @@ double get_normal(double mean, double dev) {
 /* spectrum
  * 
  */
-void spectrum(double ksq, hydro_params p, fftw_complex *res) 
+void spectrum(float ksq, hydro_params p, fftwf_complex *res) 
 { 
 
-  double phase;
+  float phase;
 
-  double L = p.Lx;
+  float L = p.Lx;
 
 
   if(fabs(ksq) < 0.000001 || fabs(ksq) < 0.0015) {
@@ -151,8 +151,8 @@ void spectrum(double ksq, hydro_params p, fftw_complex *res)
   } else {
 
 
-    //  (*res)[0] = p.initps*exp(-0.25*sqrt(ksq)*p.dx*((double)L));    
-    //    (*res)[0] = get_normal(0.0, p.initps*exp(-0.25*sqrt(ksq)*p.dx*((double)L)));
+    //  (*res)[0] = p.initps*exp(-0.25*sqrt(ksq)*p.dx*((float)L));    
+    //    (*res)[0] = get_normal(0.0, p.initps*exp(-0.25*sqrt(ksq)*p.dx*((float)L)));
     (*res)[0] = get_normal(0.0, p.initps*exp(-1.0*sqrt(ksq)*p.dx*25));
 
 
@@ -174,12 +174,12 @@ void spectrum(double ksq, hydro_params p, fftw_complex *res)
 
 
 
-/* init_ps(hydro_fields f, hydro_params p, double ***field)
+/* init_ps(hydro_fields f, hydro_params p, float ***field)
  *
  * Initialises the field with a power spectrum.
  * Used to convince reluctant referees.
  */
-void init_ps(hydro_fields f, hydro_params p, double ****field) {
+void init_ps(hydro_fields f, hydro_params p, float ****field) {
 
 
   ptrdiff_t x_thickness, x_start, alloc_local;
@@ -193,17 +193,17 @@ void init_ps(hydro_fields f, hydro_params p, double ****field) {
 
   MPI_Status status;
 
-  double kmode, modsq;
+  float kmode, modsq;
 
   int x, y, z;
   int i, j;
 
-  double *trim = (double *)malloc(p.slicex*p.slicey*p.Lz*sizeof(double));
+  float *trim = (float *)malloc(p.slicex*p.slicey*p.Lz*sizeof(float));
 
 
-  fftw_mpi_init();
+  fftwf_mpi_init();
 
-  alloc_local = fftw_mpi_local_size_3d(n0, n1, n2,
+  alloc_local = fftwf_mpi_local_size_3d(n0, n1, n2,
                                        MPI_COMM_WORLD,
                                        &x_thickness, &x_start);
 
@@ -223,25 +223,25 @@ void init_ps(hydro_fields f, hydro_params p, double ****field) {
   }
 
 
-  fftw_complex **in = (fftw_complex **)malloc(3*sizeof(fftw_complex *));
-  fftw_complex **swap_in = (fftw_complex **)malloc(3*sizeof(fftw_complex *));
+  fftwf_complex **in = (fftwf_complex **)malloc(3*sizeof(fftwf_complex *));
+  fftwf_complex **swap_in = (fftwf_complex **)malloc(3*sizeof(fftwf_complex *));
 
-  fftw_complex **out = (fftw_complex **)malloc(3*sizeof(fftw_complex *));
+  fftwf_complex **out = (fftwf_complex **)malloc(3*sizeof(fftwf_complex *));
 
-  in[0] = fftw_alloc_complex(x_thickness*p.Ly*p.Lz);
-  swap_in[0] = fftw_alloc_complex(x_thickness*p.Ly*p.Lz);
+  in[0] = fftwf_alloc_complex(x_thickness*p.Ly*p.Lz);
+  swap_in[0] = fftwf_alloc_complex(x_thickness*p.Ly*p.Lz);
 
-  out[0] = fftw_alloc_complex(x_thickness*p.Ly*p.Lz);
+  out[0] = fftwf_alloc_complex(x_thickness*p.Ly*p.Lz);
 
-  in[1] = fftw_alloc_complex(x_thickness*p.Ly*p.Lz);
-  swap_in[1] = fftw_alloc_complex(x_thickness*p.Ly*p.Lz);
+  in[1] = fftwf_alloc_complex(x_thickness*p.Ly*p.Lz);
+  swap_in[1] = fftwf_alloc_complex(x_thickness*p.Ly*p.Lz);
 
-  out[1] = fftw_alloc_complex(x_thickness*p.Ly*p.Lz);
+  out[1] = fftwf_alloc_complex(x_thickness*p.Ly*p.Lz);
 
-  in[2] = fftw_alloc_complex(x_thickness*p.Ly*p.Lz);
-  swap_in[2] = fftw_alloc_complex(x_thickness*p.Ly*p.Lz);
+  in[2] = fftwf_alloc_complex(x_thickness*p.Ly*p.Lz);
+  swap_in[2] = fftwf_alloc_complex(x_thickness*p.Ly*p.Lz);
 
-  out[2] = fftw_alloc_complex(x_thickness*p.Ly*p.Lz);
+  out[2] = fftwf_alloc_complex(x_thickness*p.Ly*p.Lz);
 
 
 
@@ -256,7 +256,7 @@ void init_ps(hydro_fields f, hydro_params p, double ****field) {
    */
   int true_x;
 
-  double ksq;
+  float ksq;
 
   //  int i;
 
@@ -265,9 +265,9 @@ void init_ps(hydro_fields f, hydro_params p, double ****field) {
     for(y=0;y<p.Ly;y++) {
       for(z=0;z<p.Lz;z++) {
 
-	ksq = (2.0 - 2.0*cos(((double)x)*2.0*M_PI/(((double)p.Lx))))/(p.dx*p.dx);
-	ksq += (2.0 - 2.0*cos(((double)y)*2.0*M_PI/(((double)p.Ly))))/(p.dx*p.dx);
-	ksq += (2.0 - 2.0*cos(((double)z)*2.0*M_PI/(((double)p.Lz))))/(p.dx*p.dx);
+	ksq = (2.0 - 2.0*cos(((float)x)*2.0*M_PI/(((float)p.Lx))))/(p.dx*p.dx);
+	ksq += (2.0 - 2.0*cos(((float)y)*2.0*M_PI/(((float)p.Ly))))/(p.dx*p.dx);
+	ksq += (2.0 - 2.0*cos(((float)z)*2.0*M_PI/(((float)p.Lz))))/(p.dx*p.dx);
 
 	for(i=0; i<3; i++) {
 	  spectrum(ksq, p, &(in[i][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z]));
@@ -313,7 +313,7 @@ void init_ps(hydro_fields f, hydro_params p, double ****field) {
 	      //	      fprintf(stderr, " (c)\n");
 	    } else {
 	      //	      fprintf(stderr, " (m)\n");
-	      MPI_Send(&(((double *)in[i])[((j-x_start)%p.Lx)*p.Ly*p.Lz*2]), 2*p.Ly*p.Lz, MPI_DOUBLE, ((p.Lx-j))/x_thickness % p.size, j, MPI_COMM_WORLD);
+	      MPI_Send(&(((float *)in[i])[((j-x_start)%p.Lx)*p.Ly*p.Lz*2]), 2*p.Ly*p.Lz, MPI_FLOAT, ((p.Lx-j))/x_thickness % p.size, j, MPI_COMM_WORLD);
 	    }
 	  }
 
@@ -325,12 +325,12 @@ void init_ps(hydro_fields f, hydro_params p, double ****field) {
 	      //	      fprintf(stderr, " (c)\n");
 	      // copy - need to check
 	      //	      fprintf(stderr,"rank %d copying row %d, (local row %d) %g %g to self\n", p.rank, j, (j-x_start)%p.Lx, in[i][((j-x_start)%p.Lx)*p.Ly*p.Lz][0], in[i][((j-x_start)%p.Lx)*p.Ly*p.Lz][1]);
-	      memcpy(&(((fftw_complex *)swap_in[i])[(j-min_needed)*p.Ly*p.Lz]), &(((fftw_complex *)in[i])[((j-x_start)%p.Lx)*p.Ly*p.Lz]), p.Ly*p.Lz*sizeof(fftw_complex));
+	      memcpy(&(((fftwf_complex *)swap_in[i])[(j-min_needed)*p.Ly*p.Lz]), &(((fftwf_complex *)in[i])[((j-x_start)%p.Lx)*p.Ly*p.Lz]), p.Ly*p.Lz*sizeof(fftwf_complex));
 
 	      //	      fprintf(stderr, "rank %d copy is %g %g\n", p.rank, swap_in[i][(j-min_needed)*p.Ly*p.Lz][0], swap_in[i][(j-min_needed)*p.Ly*p.Lz][1]);
 	    } else {	     
 	      //	      fprintf(stderr, " (m)\n");
-	      MPI_Recv(&(((double *)swap_in[i])[(j-min_needed)*p.Ly*p.Lz*2]), 2*p.Ly*p.Lz, MPI_DOUBLE, (j % p.Lx)/x_thickness, j, MPI_COMM_WORLD, &status);
+	      MPI_Recv(&(((float *)swap_in[i])[(j-min_needed)*p.Ly*p.Lz*2]), 2*p.Ly*p.Lz, MPI_FLOAT, (j % p.Lx)/x_thickness, j, MPI_COMM_WORLD, &status);
 	    }
 	  }
 
@@ -428,7 +428,7 @@ void init_ps(hydro_fields f, hydro_params p, double ****field) {
 
 
   // Now planning  
-  fftw_plan plan = fftw_mpi_plan_dft_3d(p.Lx, p.Ly, p.Lz,
+  fftwf_plan plan = fftwf_mpi_plan_dft_3d(p.Lx, p.Ly, p.Lz,
 				    in[0], out[0], MPI_COMM_WORLD,
 				    FFTW_FORWARD, FFTW_ESTIMATE);
 
@@ -447,9 +447,9 @@ void init_ps(hydro_fields f, hydro_params p, double ****field) {
   } 
   */
 
-  fftw_mpi_execute_dft(plan, in[0], out[0]);
-  fftw_mpi_execute_dft(plan, in[1], out[1]);
-  fftw_mpi_execute_dft(plan, in[2], out[2]);
+  fftwf_mpi_execute_dft(plan, in[0], out[0]);
+  fftwf_mpi_execute_dft(plan, in[1], out[1]);
+  fftwf_mpi_execute_dft(plan, in[2], out[2]);
 
  
   MPI_Barrier(MPI_COMM_WORLD);
@@ -462,10 +462,10 @@ void init_ps(hydro_fields f, hydro_params p, double ****field) {
 
   */
 
-  double *slice = (double *)malloc(slab*p.Ly*p.Lz*sizeof(double));
+  float *slice = (float *)malloc(slab*p.Ly*p.Lz*sizeof(float));
 
 
-  double maximag = 0.0;
+  float maximag = 0.0;
 
   for(i=0; i<3; i++) {
 
@@ -500,7 +500,7 @@ void init_ps(hydro_fields f, hydro_params p, double ****field) {
 
 	    memcpy(&trim[(x-p.shiftx)*p.slicey*p.Lz],
 		   &slice[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
-		   p.slicey*p.Lz*sizeof(double));
+		   p.slicey*p.Lz*sizeof(float));
 
 	    continue;
 	  }
@@ -508,7 +508,7 @@ void init_ps(hydro_fields f, hydro_params p, double ****field) {
 
 	  MPI_Send(&slice[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
 		   p.slicey*p.Lz,
-		   MPI_DOUBLE,
+		   MPI_FLOAT,
 		   ry*nx + x/p.slicex,
 		   x*ny + ry,
 		   MPI_COMM_WORLD);
@@ -521,7 +521,7 @@ void init_ps(hydro_fields f, hydro_params p, double ****field) {
 
 	MPI_Recv(&trim[(x-p.shiftx)*p.slicey*p.Lz],
 		 p.slicey*p.Lz,
-		 MPI_DOUBLE,
+		 MPI_FLOAT,
 		 x/slab,
 		 x*ny + p.myposy,
 		 MPI_COMM_WORLD,
@@ -568,17 +568,17 @@ void init_ps(hydro_fields f, hydro_params p, double ****field) {
   free(slice);
   free(trim);
 
-  fftw_destroy_plan(plan);
+  fftwf_destroy_plan(plan);
   
-  fftw_free(in[0]);
-  fftw_free(swap_in[0]);
-  fftw_free(out[0]);
-  fftw_free(in[1]);
-  fftw_free(swap_in[1]);
-  fftw_free(out[1]);
-  fftw_free(in[2]);
-  fftw_free(swap_in[2]);
-  fftw_free(out[2]);
+  fftwf_free(in[0]);
+  fftwf_free(swap_in[0]);
+  fftwf_free(out[0]);
+  fftwf_free(in[1]);
+  fftwf_free(swap_in[1]);
+  fftwf_free(out[1]);
+  fftwf_free(in[2]);
+  fftwf_free(swap_in[2]);
+  fftwf_free(out[2]);
 
   free(in);
   free(out);
