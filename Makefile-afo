@@ -9,7 +9,7 @@ CFLAGS := -O3 -I/home/weir/local/include/
 #### LIBS ####
 
 LIBS := -L/home/weir/local/lib/ \
-	-lsiloh5 -lhdf5 -lfftw3_mpi -lfftw3 -lm -lstdc++
+	-lsiloh5 -lhdf5 -lfftw3f_mpi -lfftw3f -lm -lstdc++
 
 #### No user-serviceable parts below ####
 
