@@ -50,7 +50,7 @@ scale 1.0
 
 nucleation file nucleation-list
 
-checkpointinterval 2000
+checkpointinterval -1
 checkpointdir /wrk/weir/gc-hydro/gc-test2/
 
 gwsource both

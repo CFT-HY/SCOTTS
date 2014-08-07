@@ -563,6 +563,7 @@ float fft_tensor(hydro_fields f, hydro_params p, int step,
   for(i=0;i<TENSOR_CPTS;i++)
     fftwf_free(outcpts[i]);
 
+  free(outcpts);
 
   fftwf_mpi_cleanup();
 

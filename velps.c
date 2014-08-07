@@ -457,7 +457,7 @@ void fft_vel(hydro_fields f, hydro_params p, int step, float ****vectorfield) {
 
   for(i=0;i<3;i++)
     fftwf_free(outcpts[i]);
-
+  free(outcpts);
 
   fftwf_mpi_cleanup();
 
