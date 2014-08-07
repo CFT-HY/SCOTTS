@@ -193,7 +193,8 @@ void histo_field(float ***field, hydro_params p, int step) {
   printf0(p, "Histogram stuff took %lf\n",
 	  ((float) (end - start)) / CLOCKS_PER_SEC);
 
-	       
+
+  free(count);
 }
 
 
