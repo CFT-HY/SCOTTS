@@ -192,6 +192,7 @@ void gwproject(hydro_params p, int x_start, int slab,
 		   *udot[indexof(l,m)][x*p.Ly*p.Lz + y*p.Lz + z][0]
 		    + udot[indexof(i,j)][x*p.Ly*p.Lz + y*p.Lz + z][1]
 		    *udot[indexof(l,m)][x*p.Ly*p.Lz + y*p.Lz + z][1]);
+
 	      }
 	    }
 	  }
@@ -370,6 +371,7 @@ float fft_tensor(hydro_fields f, hydro_params p, int step,
     }
 
 
+    printf0(p, "Executing GW FFT, cpt %d\n", i);
     /*
      * NB: fftw calculates the unnormalised FFT,
      * namely:
@@ -409,13 +411,15 @@ float fft_tensor(hydro_fields f, hydro_params p, int step,
   }
 
 
+  printf0(p, "GW projection...\n");
   // At this point, we should have a normed FFT
 
   // The brains of the operation:
   // Turn the FFT'd tensor into projected power spectrum
-  gwproject(p, x_start, slab, slice, outcpts);
+  gwproject(p, x_start, x_thickness, slice, outcpts);
 
 
+  printf0(p, "Calculating total energy\n");
 
   float rhogw = 0.0;
 

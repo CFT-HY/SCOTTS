@@ -318,11 +318,11 @@ int main(int argc, char *argv[])
 #endif // SILO
 
 
-    // Measurements
-    if((p.interval > 0) && (step % p.interval == 0)) {
 
 
 #ifdef FFT
+    if((p.fftinterval > 0) && (step % p.fftinterval == 0)) {
+
       histo_field(f.phi, p, step);
 
       // Calculate UETCs (not in use)
@@ -337,7 +337,7 @@ int main(int argc, char *argv[])
 #endif // !SCALAR
 
       // Gravitational wave power spectrum (returns GW energy)
-      gwen = fft_tensor(f, p, step, current_energy);
+      gwen = fft_tensor(f, p, step, 0.0);
 
       // Average size of stress-energy tensor components (not used)
       /*
@@ -350,9 +350,12 @@ int main(int argc, char *argv[])
 	      cpts[CPT_32],
 	      cpts[CPT_33]);
       */
+    }
 #endif // FFT
 
 
+    // Measurements
+    if((p.interval > 0) && (step % p.interval == 0)) {
 
       current_energy = reduce_sum(total_energy(f, p), p);
       current_kinetic = reduce_sum(kinetic_energy(f, p), p);

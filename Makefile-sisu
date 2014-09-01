@@ -9,6 +9,21 @@ CFLAGS := -L/homeappl/home/weir/local_sisu/lib \
 	 -O3 -opt-prefetch -unroll-aggressive -no-prec-div \
 	-fp-model fast=2 -align -fno-alias -fno-fnalias -ipo
 
+# csc gnu:
+#	-march=haswell -mtune=haswell -mavx2 -mfma \
+#	-Ofast -funroll-all-loops
+
+# csc intel:
+# 	-O3 -unroll-aggressive -fp-model fast=2
+
+# my intel:
+#	 -O3 -opt-prefetch -unroll-aggressive -no-prec-div \
+#	-fp-model fast=2 -align -fno-alias -fno-fnalias -ipo
+
+# cray:
+#	-O3 -hfp3
+
+
 #### LIBS ####
 
 LIBS := -lfftw3_mpi -lfftw3 -lsiloh5 -lhdf5 -lstdc++ -lz
