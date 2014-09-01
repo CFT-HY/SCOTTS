@@ -130,6 +130,7 @@ typedef struct {
 
   // How often to deal with output
   int interval;
+  int fftinterval;
   int silointerval;
   int checkpointinterval;
 
@@ -391,6 +392,8 @@ void fft_uetc(hydro_fields f, hydro_params p, int step);
 float proj(int T, float kx, float ky, float kz);
 float fft_tensor(hydro_fields f, hydro_params p, int step,
 		  float energydensity);
+int indexof(int i, int j);
+float lambda(int i, int j, int l, int m, float kx, float ky, float kz);
 
 // velps.c
 float vel_proj(int T, float kx, float ky, float kz);
