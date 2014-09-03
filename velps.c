@@ -132,13 +132,10 @@ void split_and_power(hydro_params p, int x_start, int slab,
 	  resid_r = 0.0;
 	  resid_i = 0.0;
 
-	  tot_r = 0.0;
-	  tot_i = 0.0;
-	  
-          for(j=1; j<=3; j++) {
+	  tot_r = vk[i-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+	  tot_i = vk[i-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 
-	    tot_r += vk[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-	    tot_i += vk[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+          for(j=1; j<=3; j++) {
 
 	    // Transverse components
 	    res_r += vel_proj(i*10 + j, kx, ky, kz)
