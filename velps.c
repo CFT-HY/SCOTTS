@@ -122,6 +122,7 @@ void split_and_power(hydro_params p, int x_start, int slab,
 
         product[x*p.Ly*p.Lz + y*p.Lz + z] = 0.0;
         product_div[x*p.Ly*p.Lz + y*p.Lz + z] = 0.0;
+        product_tot[x*p.Ly*p.Lz + y*p.Lz + z] = 0.0;
 
 
         for(i=1; i<=3; i++) {
