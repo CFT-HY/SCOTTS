@@ -78,7 +78,7 @@ float vel_proj(int T, float kx, float ky, float kz) {
  * components.
  */
 void split_and_power(hydro_params p, int x_start, int slab,
-		     float *product, float *product_div,
+		     float *product, float *product_div, float *product_tot,
 		     fftwf_complex **vk) {
 
   int i, j;
@@ -87,6 +87,7 @@ void split_and_power(hydro_params p, int x_start, int slab,
 
   float res_r, res_i;
   float resid_r, resid_i;
+  float tot_r, tot_i;
 
   int true_x, true_y, true_z;
 
@@ -95,24 +96,24 @@ void split_and_power(hydro_params p, int x_start, int slab,
       for(z=0; z<p.Lz; z++) {
 
         if(x+x_start > p.Lx/2)
-          true_x = p.Lx - (x+x_start);
+          true_x = -(p.Lx - (x+x_start));
         else
           true_x = x+x_start;
 
         if(y > p.Ly/2)
-          true_y = p.Ly - y;
+          true_y = -(p.Ly - y);
         else
           true_y = y;
 
         if(z > p.Lz/2)
-          true_z = p.Lz - z;
+          true_z = -(p.Lz - z);
 	else
           true_z = z;
 
 
         kx = sqrt((2.0 - 2.0*cos(((float)(true_x))*2.0*M_PI/(((float)p.Lx))))/(p.dx*p.dx));
-	ky = sqrt((2.0 - 2.0*cos(((float)(true_y))*2.0*M_PI/(((float)p.Lx))))/(p.dx*p.dx));
-        kz = sqrt((2.0 - 2.0*cos(((float)(true_z))*2.0*M_PI/(((float)p.Lx))))/(p.dx*p.dx));
+	ky = sqrt((2.0 - 2.0*cos(((float)(true_y))*2.0*M_PI/(((float)p.Ly))))/(p.dx*p.dx));
+        kz = sqrt((2.0 - 2.0*cos(((float)(true_z))*2.0*M_PI/(((float)p.Lz))))/(p.dx*p.dx));
 
 
 	//        kx = ((float)(x+x_start))*2.0*M_PI/((float)p.Lx);
@@ -130,8 +131,15 @@ void split_and_power(hydro_params p, int x_start, int slab,
 
 	  resid_r = 0.0;
 	  resid_i = 0.0;
+
+	  tot_r = 0.0;
+	  tot_i = 0.0;
 	  
           for(j=1; j<=3; j++) {
+
+	    tot_r += vk[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+	    tot_i += vk[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+
 	    // Transverse components
 	    res_r += vel_proj(i*10 + j, kx, ky, kz)
 	      *vk[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
@@ -157,6 +165,9 @@ void split_and_power(hydro_params p, int x_start, int slab,
 
 	  product_div[x*p.Ly*p.Lz + y*p.Lz + z] +=
 	    resid_r*resid_r + resid_i*resid_i;
+
+	  product_tot[x*p.Ly*p.Lz + y*p.Lz + z] +=
+	    tot_r*tot_r + tot_i*tot_i;
 
 	}
 
@@ -351,6 +362,7 @@ void fft_vel(hydro_fields f, hydro_params p, int step, float ****vectorfield) {
 
   float *slice = (float *)malloc(slab*p.Ly*p.Lz*sizeof(float));
   float *slice_div = (float *)malloc(slab*p.Ly*p.Lz*sizeof(float));
+  float *slice_tot = (float *)malloc(slab*p.Ly*p.Lz*sizeof(float));
 
 
   int nx = p.Lx/p.slicex;
@@ -468,7 +480,7 @@ void fft_vel(hydro_fields f, hydro_params p, int step, float ****vectorfield) {
 
   // The brains of the operation:
   // Turn the FFT'd tensor into projected power spectrum
-  split_and_power(p, x_start, x_thickness, slice, slice_div, outcpts);
+  split_and_power(p, x_start, x_thickness, slice, slice_div, slice_tot, outcpts);
 
 
 
@@ -478,12 +490,15 @@ void fft_vel(hydro_fields f, hydro_params p, int step, float ****vectorfield) {
   histogram(p, slice, fftdest, x_thickness, x_start);
   sprintf(fftdest,"div-ps-step%d.txt", step);
   histogram(p, slice_div, fftdest, x_thickness, x_start);
+  sprintf(fftdest,"tot-ps-step%d.txt", step);
+  histogram(p, slice_tot, fftdest, x_thickness, x_start);
 
 
   // Tidy up
 
   free(slice);
   free(slice_div);
+  free(slice_tot);
   free(trim);
 
   fftwf_destroy_plan(plan);
