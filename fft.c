@@ -182,17 +182,38 @@ void fft_field(hydro_fields f, hydro_params p, float ***field, int step) {
 
   int whichbin;
 
+  int true_x, true_y, true_z;
+
   for(x=0;x<x_thickness;x++) {
     for(y=0;y<p.Ly;y++) {
       for(z=0;z<p.Lz;z++) {
+
+	/*
         if(((x+((int)x_start))>p.Lx/2) || (y> p.Ly/2) || (z>p.Lz/2))
           continue;
+	*/
 
-	kmode = sqrt(
-		     ((float)((x+x_start)*(x+x_start)))/((float)(p.Lx*p.Lx))
-		     + ((float)(y*y))/((float)(p.Ly*p.Ly))
-		     + ((float)(z*z))/((float)(p.Lz*p.Lz))
-		     )*2.0*M_PI;
+
+        if(x+x_start > p.Lx/2)
+          true_x = p.Lx - (x+x_start);
+        else
+          true_x = x+x_start;
+
+        if(y > p.Ly/2)
+          true_y = p.Ly - y;
+        else
+          true_y = y;
+
+        if(z > p.Lz/2)
+          true_z = p.Lz - z;
+	else
+          true_z = z;
+
+        kmode = sqrt(
+                     ((float)(true_x*true_x))/((float)(p.Lx*p.Lx))
+                     + ((float)(true_y*true_y))/((float)(p.Ly*p.Ly))
+                     + ((float)(true_z*true_z))/((float)(p.Lz*p.Lz))
+                     )*2.0*M_PI;
 
 	modsq = out[x*p.Ly*p.Lz + y*p.Lz + z][0]
 	  *out[x*p.Ly*p.Lz + y*p.Lz + z][0]
