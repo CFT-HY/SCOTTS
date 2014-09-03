@@ -88,13 +88,31 @@ void split_and_power(hydro_params p, int x_start, int slab,
   float res_r, res_i;
   float resid_r, resid_i;
 
+  int true_x, true_y, true_z;
+
   for(x=0; x<slab; x++) {
     for(y=0; y<p.Ly; y++) {
       for(z=0; z<p.Lz; z++) {
 
-        kx = sqrt((2.0 - 2.0*cos(((float)(x+x_start))*2.0*M_PI/(((float)p.Lx))))/(p.dx*p.dx));
-	ky = sqrt((2.0 - 2.0*cos(((float)y)*2.0*M_PI/(((float)p.Lx))))/(p.dx*p.dx));
-        kz = sqrt((2.0 - 2.0*cos(((float)z)*2.0*M_PI/(((float)p.Lx))))/(p.dx*p.dx));
+        if(x+x_start > p.Lx/2)
+          true_x = p.Lx - (x+x_start);
+        else
+          true_x = x+x_start;
+
+        if(y > p.Ly/2)
+          true_y = p.Ly - y;
+        else
+          true_y = y;
+
+        if(z > p.Lz/2)
+          true_z = p.Lz - z;
+	else
+          true_z = z;
+
+
+        kx = sqrt((2.0 - 2.0*cos(((float)(true_x))*2.0*M_PI/(((float)p.Lx))))/(p.dx*p.dx));
+	ky = sqrt((2.0 - 2.0*cos(((float)(true_y))*2.0*M_PI/(((float)p.Lx))))/(p.dx*p.dx));
+        kz = sqrt((2.0 - 2.0*cos(((float)(true_z))*2.0*M_PI/(((float)p.Lx))))/(p.dx*p.dx));
 
 
 	//        kx = ((float)(x+x_start))*2.0*M_PI/((float)p.Lx);
@@ -180,19 +198,37 @@ void histogram(hydro_params p, float *slice, char *filename,
 
   int whichbin;
 
+  int true_x, true_y, true_z;
 
 
   for(x=0;x<slab;x++) {
     for(y=0;y<p.Ly;y++) {
       for(z=0;z<p.Lz;z++) {
 
+	/*
         if(((x+x_start)>p.Lx/2) || (y> p.Ly/2) || (z>p.Lz/2))
           continue;
-	
+	*/	
+
+        if(x+x_start > p.Lx/2)
+          true_x = p.Lx - (x+x_start);
+        else
+          true_x = x+x_start;
+
+        if(y > p.Ly/2)
+          true_y = p.Ly - y;
+        else
+          true_y = y;
+
+        if(z > p.Lz/2)
+          true_z = p.Lz - z;
+	else
+          true_z = z;
+
 	kmode = sqrt(
-		     ((float)((x+x_start)*(x+x_start)))/((float)(p.Lx*p.Lx))
-		     + ((float)(y*y))/((float)(p.Ly*p.Ly))
-		     + ((float)(z*z))/((float)(p.Lz*p.Lz))
+		     ((float)(true_x*true_x))/((float)(p.Lx*p.Lx))
+		      + ((float)(true_y*true_y))/((float)(p.Ly*p.Ly))
+		      + ((float)(true_z*true_z))/((float)(p.Lz*p.Lz))
 		     )*2.0*M_PI;
 
 	whichbin = (int)floor(kmode/dk);
