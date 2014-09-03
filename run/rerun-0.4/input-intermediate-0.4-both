@@ -1,13 +1,10 @@
 # Example input file
 
 # How long the simulation takes
-Lx      32
-# 1024
-Ly	32
-# 1024
-Lz	32
-# 1024
-steps  2000
+Lx      1024
+Ly	1024
+Lz	1024
+steps  20000
 
 # How big the simulation is
 dx     1.0
@@ -53,7 +50,7 @@ scale 1.0
 
 nucleation file nucleation-list
 
-checkpointinterval 2000
+checkpointinterval -1
 checkpointdir /wrk/weir/gc-hydro/rerun-0.4/
 
 gwsource both
@@ -61,3 +58,5 @@ gwsource both
 seed 90210
 
 gstar 34.25
+
+fftinterval 100
