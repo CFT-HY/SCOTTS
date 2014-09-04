@@ -1,9 +1,9 @@
 # Example input file
 
 # How long the simulation takes
-Lx      1020
-Ly	1020
-Lz	1020
+Lx      1024
+Ly	1024
+Lz	1024
 steps  20000
 
 # How big the simulation is
