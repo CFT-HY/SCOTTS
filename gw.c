@@ -170,13 +170,53 @@ void gwproject(hydro_params p, int x_start, int slab,
   float kx, ky, kz;
 
 
+  int true_x, true_y, true_z;
+
+  float s_x, s_y, s_z;
+
   for(x=0; x<slab; x++) {
     for(y=0; y<p.Ly; y++) {
       for(z=0; z<p.Lz; z++) {
 
+        s_x = 1.0;
+	s_y = 1.0;
+	s_z = 1.0;
+
+        if(x+x_start > p.Lx/2) {
+          true_x = -(p.Lx - (x+x_start));
+          s_x = -1.0;
+	} else {
+          true_x = x+x_start;
+	  s_x = 1.0;
+        }
+
+        if(y > p.Ly/2) {
+          true_y = -(p.Ly - y);
+          s_y = -1.0;
+	} else {
+          true_y = y;
+          s_y = 1.0;
+        }
+
+        if(z > p.Lz/2) {
+          true_z = -(p.Lz - z);
+          s_z = -1.0;
+	} else {
+          true_z = z;
+          s_z = 1.0;
+	}
+
+	/*
 	kx = ((float)(x+x_start))*2.0*M_PI/((float)p.Lx);
 	ky = ((float)y)*2.0*M_PI/((float)p.Ly);
 	kz = ((float)z)*2.0*M_PI/((float)p.Lz);
+	*/
+
+	kx = s_x*sqrt((2.0 - 2.0*cos(((float)(true_x))*2.0*M_PI/(((float)p.Lx))))/(p.dx*p.dx));
+	ky = s_y*sqrt((2.0 - 2.0*cos(((float)(true_y))*2.0*M_PI/(((float)p.Ly))))/(p.dx*p.dx));
+	kz = s_z*sqrt((2.0 - 2.0*cos(((float)(true_z))*2.0*M_PI/(((float)p.Lz))))/(p.dx*p.dx));
+
+
 	
 	product[x*p.Ly*p.Lz + y*p.Lz + z] = 0.0;
 
