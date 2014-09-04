@@ -58,3 +58,5 @@ gwsource both
 seed 90210
 
 gstar 34.25
+
+fftinterval 100
