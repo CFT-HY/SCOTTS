@@ -91,34 +91,51 @@ void split_and_power(hydro_params p, int x_start, int slab,
 
   int true_x, true_y, true_z;
 
+  float s_x, s_y, s_z;
+
   for(x=0; x<slab; x++) {
     for(y=0; y<p.Ly; y++) {
       for(z=0; z<p.Lz; z++) {
 
-        if(x+x_start > p.Lx/2)
+	s_x = 1.0;
+	s_y = 1.0;
+	s_z = 1.0;
+
+        if(x+x_start > p.Lx/2) {
           true_x = -(p.Lx - (x+x_start));
-        else
+	  s_x = -1.0;
+        } else {
           true_x = x+x_start;
+	  s_x = 1.0;
+	}
 
-        if(y > p.Ly/2)
+        if(y > p.Ly/2) {
           true_y = -(p.Ly - y);
-        else
+	  s_y = -1.0;
+	} else {
           true_y = y;
+	  s_y = 1.0;
+	}
 
-        if(z > p.Lz/2)
+        if(z > p.Lz/2) {
           true_z = -(p.Lz - z);
-	else
+	  s_z = -1.0;
+	} else {
           true_z = z;
+	  s_z = 1.0;
+	}
 
 
-        kx = sqrt((2.0 - 2.0*cos(((float)(true_x))*2.0*M_PI/(((float)p.Lx))))/(p.dx*p.dx));
-	ky = sqrt((2.0 - 2.0*cos(((float)(true_y))*2.0*M_PI/(((float)p.Ly))))/(p.dx*p.dx));
-        kz = sqrt((2.0 - 2.0*cos(((float)(true_z))*2.0*M_PI/(((float)p.Lz))))/(p.dx*p.dx));
+        kx = s_x*sqrt((2.0 - 2.0*cos(((float)(true_x))*2.0*M_PI/(((float)p.Lx))))/(p.dx*p.dx));
+	ky = s_y*sqrt((2.0 - 2.0*cos(((float)(true_y))*2.0*M_PI/(((float)p.Ly))))/(p.dx*p.dx));
+        kz = s_z*sqrt((2.0 - 2.0*cos(((float)(true_z))*2.0*M_PI/(((float)p.Lz))))/(p.dx*p.dx));
 
 
-	//        kx = ((float)(x+x_start))*2.0*M_PI/((float)p.Lx);
-	//        ky = ((float)y)*2.0*M_PI/((float)p.Ly);
-	//        kz = ((float)z)*2.0*M_PI/((float)p.Lz);
+	/*
+	kx = ((float)true_x)*2.0*M_PI/((float)p.Lx);
+	ky = ((float)true_y)*2.0*M_PI/((float)p.Ly);
+	kz = ((float)true_z)*2.0*M_PI/((float)p.Lz);
+	*/
 
         product[x*p.Ly*p.Lz + y*p.Lz + z] = 0.0;
         product_div[x*p.Ly*p.Lz + y*p.Lz + z] = 0.0;
