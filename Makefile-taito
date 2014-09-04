@@ -1,6 +1,6 @@
 #### CC ####
 
-CC := mpicc -DMPI -DFFT -DSILO
+CC := mpicc -DMPI -DFFT -DSILO -DINITPS
 
 #### CFLAGS ####
 

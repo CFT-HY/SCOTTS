@@ -29,6 +29,10 @@ void project_down(hydro_params p, fftwf_complex **in, int shift_x, int x_thickne
 
   int reruns;
 
+  int true_x, true_y, true_z;
+
+  float s_x, s_y, s_z;
+
   for(reruns = 0; reruns < times; reruns++) {
     resid = 0.0;
     stuff = 0.0;
@@ -38,10 +42,44 @@ void project_down(hydro_params p, fftwf_complex **in, int shift_x, int x_thickne
       for(y=0;y<p.Ly;y++) {
 	for(z=0;z<p.Lz;z++) {
 
-	  
+	  s_x = 1.0;
+	  s_y = 1.0;
+	  s_z = 1.0;
+
+	  if(x+shift_x > p.Lx/2) {
+	    true_x = -(p.Lx - (x+shift_x));
+	    s_x = -1.0;
+	  } else {
+	    true_x = x+shift_x;
+	    s_x = 1.0;
+	  }
+
+	  if(y > p.Ly/2) {
+	    true_y = -(p.Ly - y);
+	    s_y = -1.0;
+	  } else {
+	    true_y = y;
+	    s_y = 1.0;
+	  }
+
+	  if(z > p.Lz/2) {
+	    true_z = -(p.Lz - z);
+	    s_z = -1.0;
+	  } else {
+	    true_z = z;
+	    s_z = 1.0;
+	  }
+
+
+	  /*	  
 	  kx = sqrt((2.0 - 2.0*cos(((float)(x+shift_x))*2.0*M_PI/(((float)p.Lx))))/(tdx*tdx));
 	  ky = sqrt((2.0 - 2.0*cos(((float)y)*2.0*M_PI/(((float)p.Ly))))/(tdx*tdx));
 	  kz = sqrt((2.0 - 2.0*cos(((float)z)*2.0*M_PI/(((float)p.Lz))))/(tdx*tdx));
+	  */
+
+	  kx = s_x*sqrt((2.0 - 2.0*cos(((float)(true_x))*2.0*M_PI/(((float)p.Lx))))/(p.dx*p.dx));
+	  ky = s_y*sqrt((2.0 - 2.0*cos(((float)(true_y))*2.0*M_PI/(((float)p.Ly))))/(p.dx*p.dx));
+	  kz = s_z*sqrt((2.0 - 2.0*cos(((float)(true_z))*2.0*M_PI/(((float)p.Lz))))/(p.dx*p.dx));
 	  
 	  in_proj_re[0] = 0.0;
 	  in_proj_re[1] = 0.0;
