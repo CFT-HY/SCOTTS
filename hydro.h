@@ -121,6 +121,9 @@ typedef struct {
 #ifdef INITPS
   // Cutoff time
   float initps;
+
+  float initcutoff;
+  float initlength;
 #endif
 
 #ifdef CUTOFF
