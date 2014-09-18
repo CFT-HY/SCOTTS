@@ -73,6 +73,8 @@ void get_parameters(char *infile, hydro_params *p)
 
 #ifdef INITPS
   int set_initps = 0;
+  int set_initcutoff = 0;
+  int set_initlength = 0;
 #endif
 
 #ifdef CUTOFF
@@ -225,6 +227,12 @@ void get_parameters(char *infile, hydro_params *p)
     else if(!strcasecmp(key,"initps")) {
       p->initps = strtof(value,NULL);
       set_initps = 1;
+    } else if(!strcasecmp(key,"initcutoff")) {
+      p->initcutoff = strtod(value,NULL);
+      set_initcutoff = 1;
+    } else if(!strcasecmp(key,"initlength")) {
+      p->initlength = strtod(value,NULL);
+      set_initlength = 1;
     }
 #endif
 #ifdef CUTOFF
@@ -472,7 +480,13 @@ void get_parameters(char *infile, hydro_params *p)
  else if(!set_initps) {
     printf0(*p, "Did not set parameter \'initps\'\n");
     die(100);
-  }
+ } else if(!set_initcutoff) {
+   printf0(*p, "Did not set parameter \'initcutoff\'\n");
+   die(100);
+ } else if(!set_initlength) {
+   printf0(*p, "Did not set parameter \'initlength\'\n");
+   die(100);
+ }
 #endif
 #ifdef CUTOFF
  else if(!set_tcutoff) {
@@ -516,6 +530,8 @@ void get_parameters(char *infile, hydro_params *p)
 	    "-- bubbles %d, beta %g, scale %g\n"
 #ifdef INITPS
 	    "-- initps %g\n"
+            "-- initcutoff %g\n"
+            "-- initlength %g\n"
 #endif
 #ifdef CUTOFF
 	    "-- tcutoff %g\n"
@@ -535,6 +551,8 @@ void get_parameters(char *infile, hydro_params *p)
 	    p->bubbles, p->beta, p->scale,
 #ifdef INITPS
 	    p->initps,
+            p->initcutoff,
+            p->initlength,
 #endif
 #ifdef CUTOFF
 	    p->tcutoff,

@@ -7,6 +7,48 @@
 
 #ifdef INITPS
 
+
+float get_momtot(hydro_fields f, hydro_params p) {
+
+  int x, y, z, xmax;
+
+
+  float momtot = 0.0;
+
+  // Just search for maxmimum
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+        momtot += sqrt(f.Z[0][x][y][z]*f.Z[0][x][y][z]
+          + f.Z[1][x][y][z]*f.Z[1][x][y][z]
+                       + f.Z[2][x][y][z]*f.Z[2][x][y][z]);
+
+      }
+    }
+  }
+
+  return momtot;
+}
+
+void norm_power(hydro_fields f, hydro_params p, float ****field) {
+
+  int i, x, y, z;
+  // should be normalised to volume, this makes it okay
+  float momtot = reduce_sum(get_momtot(f, p),p)/((float)p.Lx*p.Ly*p.Lz);
+
+  printf0(p, "momtot per site is %g\n", momtot);
+  for(i=0; i<3; i++) {
+    for(x=1; x<=p.slicex; x++) {
+      for(y=1; y<=p.slicey; y++) {
+        for(z=0; z<p.Lz; z++) {
+          field[i][x][y][z] = p.initps*field[i][x][y][z]/momtot;
+        }
+      }
+    }
+    halo_field(field[i], p);
+  }
+}
+
 /* project_down
  *
  * Project out rotational or divergent bits
@@ -183,7 +225,7 @@ void spectrum(float ksq, hydro_params p, fftwf_complex *res)
   float L = p.Lx;
 
 
-  if(fabs(ksq) < 0.000001 || fabs(ksq) < 0.0015) {
+  if(fabs(ksq) < 0.000001 || fabs(ksq) < p.initcutoff) {
     (*res)[0] = 0.0;
     (*res)[1] = 0.0;
   } else {
@@ -191,7 +233,7 @@ void spectrum(float ksq, hydro_params p, fftwf_complex *res)
 
     //  (*res)[0] = p.initps*exp(-0.25*sqrt(ksq)*p.dx*((float)L));    
     //    (*res)[0] = get_normal(0.0, p.initps*exp(-0.25*sqrt(ksq)*p.dx*((float)L)));
-    (*res)[0] = get_normal(0.0, p.initps*exp(-1.0*sqrt(ksq)*p.dx*25));
+    (*res)[0] = get_normal(0.0, exp(-1.0*sqrt(ksq)*p.dx*p.initlength));
 
 
     (*res)[1] = (*res)[0];
@@ -292,20 +334,39 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
   /*
    * Set up modes with desired power spectrum...
    */
-  int true_x;
 
   float ksq;
 
   //  int i;
+
+  int true_x, true_y, true_z;
 
 
   for(x=x_start;x<x_start+x_thickness;x++) {
     for(y=0;y<p.Ly;y++) {
       for(z=0;z<p.Lz;z++) {
 
-	ksq = (2.0 - 2.0*cos(((float)x)*2.0*M_PI/(((float)p.Lx))))/(p.dx*p.dx);
-	ksq += (2.0 - 2.0*cos(((float)y)*2.0*M_PI/(((float)p.Ly))))/(p.dx*p.dx);
-	ksq += (2.0 - 2.0*cos(((float)z)*2.0*M_PI/(((float)p.Lz))))/(p.dx*p.dx);
+	if(x > p.Lx/2) {
+	  true_x = -(p.Lx - x);
+	} else {
+	  true_x = x;
+	}
+
+	if(y > p.Ly/2) {
+	  true_y = -(p.Ly - y);
+	} else {
+	  true_y = y;
+	}
+
+	if(z > p.Lz/2) {
+	  true_z = -(p.Lz - z);
+	} else {
+	  true_z = z;
+	}
+
+	ksq = (2.0 - 2.0*cos(((float)true_x)*2.0*M_PI/(((float)p.Lx))))/(p.dx*p.dx);
+	ksq += (2.0 - 2.0*cos(((float)true_y)*2.0*M_PI/(((float)p.Ly))))/(p.dx*p.dx);
+	ksq += (2.0 - 2.0*cos(((float)true_z)*2.0*M_PI/(((float)p.Lz))))/(p.dx*p.dx);
 
 	for(i=0; i<3; i++) {
 	  spectrum(ksq, p, &(in[i][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z]));
