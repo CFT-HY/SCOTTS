@@ -287,6 +287,7 @@ void halo_field(float ***field, hydro_params p);
 float reduce_sum(float result, hydro_params p);
 int reduce_sum_int(int result, hydro_params p);
 float reduce_max(float result, hydro_params p);
+int reduce_max_int(int result, hydro_params p);
 float reduce_min(float result, hydro_params p);
 int reduce_and(int result, hydro_params p);
 void init_comms_time(hydro_params *p);

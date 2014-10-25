@@ -374,6 +374,18 @@ float reduce_max(float result, hydro_params p) {
 
 }
 
+/* float reduce_max(float result, hydro_params p)
+ *
+ * Return the maximum of all the values submitted by each node.
+ */
+int reduce_max_int(int result, hydro_params p) {
+
+  int total = 0;
+  MPI_Allreduce(&result, &total, 1, MPI_INTEGER, MPI_MAX, MPI_COMM_WORLD);
+  return total;
+
+}
+
 /* float reduce_min(float result, hydro_params p)
  *
  * Return the minimum of all the values submitted by each node.

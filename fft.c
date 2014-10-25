@@ -27,7 +27,7 @@ void fft_field(hydro_fields f, hydro_params p, float ***field, int step) {
   ptrdiff_t n1 = p.Ly;
   ptrdiff_t n2 = p.Lz;
 
-  int slab;
+  //  int slab;
 
   MPI_Status status;
 
@@ -58,31 +58,74 @@ void fft_field(hydro_fields f, hydro_params p, float ***field, int step) {
   alloc_local = fftwf_mpi_local_size_3d(n0, n1, n2,
 				       MPI_COMM_WORLD, &x_thickness, &x_start);
 
+  int *thicknesses = malloc(p.size*sizeof(int));
+  int *starts = malloc(p.size*sizeof(int));
+  int *map = malloc(p.Lx*sizeof(int));
+			    
+
+  if(p.rank) {
+    MPI_Send(&x_thickness, 1, MPI_INTEGER, 0, p.rank, MPI_COMM_WORLD);
+    MPI_Send(&x_start, 1, MPI_INTEGER, 0, p.rank, MPI_COMM_WORLD);
+
+  } else {
+    thicknesses[0] = x_thickness;
+    starts[0] = x_start;
+
+    for(i=1; i<p.size; i++) {
+      MPI_Recv(&thicknesses[i], 1, MPI_INTEGER, i, i, MPI_COMM_WORLD, &status);
+      MPI_Recv(&starts[i], 1, MPI_INTEGER, i, i, MPI_COMM_WORLD, &status);
+
+      //      fprintf(stderr,"rank %d, thickness %d, start %d\n", i, thicknesses[i], starts[i]);
+    }
+
+
+    for(x=0; x<p.Lx; x++) {
+      map[x] = -1;
+      for(i=0; i<p.size; i++) {
+	if(starts[i] <= x && (starts[i] + thicknesses[i]) > x) {
+	  map[x] = i;
+	  //	  fprintf(stderr, "therefore node %d is responsible for x=%d\n", i, x);
+	  break;
+	}
+      }
+      if(map[x] == -1) {
+	fprintf(stderr,"cannot find a node responsible for x=%d!\n", x);
+	die(-99);
+      }
+
+    }
+  }
+    
+  printf0(p,"broadcasting our results\n");
+  MPI_Bcast(map, p.Lx, MPI_INTEGER, 0, MPI_COMM_WORLD);
+  printf0(p,"now to layout\n");
+
+  /*
   // slab is the thickness the 'used' nodes will FFT
   // x_thickness is the thickness the current node will FFT
   slab = (int) x_thickness;
 
-  if(((int)x_thickness) == 0) {
-    /*
-    fprintf(stderr, "Rank %d nothing to do for FFT: dx=0, x_start=%d!\n",
-	    p.rank, (int)x_start);
-    */
-    slab = 1;
-  }
+  int maxslab = reduce_max(slab, p);
 
-  if(((int)x_thickness) < p.Lx/p.size) {
+  if(((int)x_thickness) == 0) {
+    fprintf(stderr, "Rank %d nothing to do for FFT: dx=0, x_start=%d! maxslab=%d\n",
+	    p.rank, (int)x_start, maxslab);
+    slab = maxslab;
+  }
+  /* else if(((int)x_thickness) < p.Lx/p.size) {
     fprintf(stderr,
 	    "Rank %d giving up in FFT: FFTW told me to use a silly layout!\n",
 	    p.rank);
     die(-42);
   }
+  */
 
 
 
   fftwf_complex *in = fftwf_alloc_complex(alloc_local);
   fftwf_complex *out = fftwf_alloc_complex(alloc_local);
 
-  float *slice = (float *)malloc(slab*p.Ly*p.Lz*sizeof(float));
+  float *slice = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
 
   int nx = p.Lx/p.slicex;
   int ny = p.Ly/p.slicey;
@@ -99,13 +142,12 @@ void fft_field(hydro_fields f, hydro_params p, float ***field, int step) {
   for(x=0; x<p.Lx; x++) {
 
     // Check whether we are the target node for this slab
-    if((x >= x_start) && ( x < (x_start + x_thickness))) {
+    if(map[x] == p.rank) {
 
       //      fprintf(stderr, "%d: my slice, x=%d\n", p.rank, x);
       for(ry = 0; ry < ny; ry++) {
 
 	if((x/p.slicex == p.myposx) && (ry == p.myposy)) {
-
 	  memcpy(&slice[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
 		 &trim_field[(x-p.shiftx)*p.slicey*p.Lz],
 		 p.slicey*p.Lz*sizeof(float));
@@ -120,23 +162,24 @@ void fft_field(hydro_fields f, hydro_params p, float ***field, int step) {
 		 MPI_COMM_WORLD,
 		 &status);
 
-	/*	
+	/*
 	fprintf(stderr, "%d: got pencil with x=%d\n", p.rank,
 		x);
 	*/
+
       }
 
     } else if((x >= p.shiftx) && (x < (p.shiftx + p.slicex))) {
 
       /*
       fprintf(stderr, "%d: my pencil, x=%d to dest %d/%d\n",
-	      p.rank, x, x, slab);
+	      p.rank, x, x, map[x]);
       */
 
       MPI_Send(&trim_field[(x-p.shiftx)*p.slicey*p.Lz],
 	       p.slicey*p.Lz,
 	       MPI_FLOAT,
-	       x/slab,
+	       map[x],
 	       x*ny + p.myposy,
 	       MPI_COMM_WORLD);
     }
@@ -268,6 +311,8 @@ void fft_field(hydro_fields f, hydro_params p, float ***field, int step) {
 
     fclose(fp);
   }
+
+  printf0(p, "Basic FFT done\n");
       
   free(bins);
   free(counts);

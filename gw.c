@@ -266,7 +266,7 @@ float fft_tensor(hydro_fields f, hydro_params p, int step,
   ptrdiff_t n1 = p.Ly;
   ptrdiff_t n2 = p.Lz;
 
-  int slab;
+  //  int slab;
 
   MPI_Status status;
 
@@ -292,24 +292,67 @@ float fft_tensor(hydro_fields f, hydro_params p, int step,
 				       &x_thickness, &x_start);
 
 
+
+
+  int *thicknesses = malloc(p.size*sizeof(int));
+  int *starts = malloc(p.size*sizeof(int));
+  int *map = malloc(p.Lx*sizeof(int));
+
+
+  if(p.rank) {
+    MPI_Send(&x_thickness, 1, MPI_INTEGER, 0, p.rank, MPI_COMM_WORLD);
+    MPI_Send(&x_start, 1, MPI_INTEGER, 0, p.rank, MPI_COMM_WORLD);
+
+  } else {
+    thicknesses[0] = x_thickness;
+    starts[0] = x_start;
+
+    for(i=1; i<p.size; i++) {
+      MPI_Recv(&thicknesses[i], 1, MPI_INTEGER, i, i, MPI_COMM_WORLD, &status);
+      MPI_Recv(&starts[i], 1, MPI_INTEGER, i, i, MPI_COMM_WORLD, &status);
+
+      //      fprintf(stderr,"rank %d, thickness %d, start %d\n", i, thicknesses[i], starts[i]);
+    }
+
+
+    for(x=0; x<p.Lx; x++) {
+      map[x] = -1;
+      for(i=0; i<p.size; i++) {
+	if(starts[i] <= x && (starts[i] + thicknesses[i]) > x) {
+	  map[x] = i;
+	  //	  fprintf(stderr, "therefore node %d is responsible for x=%d\n", i, x);
+	  break;
+	}
+      }
+      if(map[x] == -1) {
+	fprintf(stderr,"cannot find a node responsible for x=%d!\n", x);
+	die(-99);
+      }
+
+    }
+  }
+
+  printf0(p,"broadcasting our results\n");
+  MPI_Bcast(map, p.Lx, MPI_INTEGER, 0, MPI_COMM_WORLD);
+  printf0(p,"now to layout\n");
+
+  /*
   // slab is the thickness the 'used' nodes wil FFT
   // x_thickness is the thickness the current node will FFT
   slab = (int) x_thickness;
 
   if(((int)x_thickness) == 0) {
-    /*
     fprintf(stderr, "Rank %d nothing to do for FFT: dx=0, x_start=%d!\n",
 	    p.rank, (int)x_start);
-    */
     slab = 1;
   }
-
-  if(((int)x_thickness) < p.Lx/p.size) {
+  /* else if(((int)x_thickness) < p.Lx/p.size) {
     fprintf(stderr,
 	    "Rank %d giving up in FFT: FFTW told me to use a silly layout!\n",
 	    p.rank);
     die(-42);
   }
+  */
 
 
   fftwf_complex *in = fftwf_alloc_complex(alloc_local);
@@ -321,7 +364,7 @@ float fft_tensor(hydro_fields f, hydro_params p, int step,
     outcpts[i] = fftwf_alloc_complex(alloc_local);
   }
 
-  float *slice = (float *)malloc(slab*p.Ly*p.Lz*sizeof(float));
+  float *slice = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
 
 
   int nx = p.Lx/p.slicex;
@@ -352,7 +395,7 @@ float fft_tensor(hydro_fields f, hydro_params p, int step,
     for(x=0; x<p.Lx; x++) {
       
       // Check whether we are the target node for this slab
-      if((x >= x_start) && ( x < (x_start + x_thickness))) {
+      if(map[x] == p.rank) {
 	
 	for(ry = 0; ry < ny; ry++) {
 	  
@@ -389,7 +432,7 @@ float fft_tensor(hydro_fields f, hydro_params p, int step,
 	MPI_Send(&trim[(x-p.shiftx)*p.slicey*p.Lz],
 		 p.slicey*p.Lz,
 		 MPI_FLOAT,
-		 x/slab,
+		 map[x],
 		 x*ny + p.myposy,
 		 MPI_COMM_WORLD);
       }
