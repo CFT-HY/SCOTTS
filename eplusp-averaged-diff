@@ -1,0 +1,81 @@
+diff --git a/energy.c b/energy.c
+index b1b9f56..2a5c025 100644
+--- a/energy.c
++++ b/energy.c
+@@ -364,6 +364,25 @@ void stress_energy(hydro_fields f, hydro_params p, float ****Tij) {
+ 
+   int x, y, z;
+ 
++  float thisT = 0.0;
++  float thisV = 0.0;
++  float avgT, avgV;
++
++  float eplusp;
++
++  for(x = 1; x <= p.slicex; x++) {
++    for(y = 1; y <= p.slicey; y++) {
++      for(z = 0; z < p.Lz; z++) {
++	thisT += f.T[x][y][z];
++	thisV += VTf(p, f.T[x][y][z],
++		    f.phi[x][y][z]);
++      }
++    }
++  }
++
++  avgV = reduce_sum(thisV, p)/(((float)p.Lx)*((float)p.Ly)*((float)p.Lz));
++  avgT = reduce_sum(thisT, p)/(((float)p.Lx)*((float)p.Ly)*((float)p.Lz));
++
+   for(x = 1; x <= p.slicex; x++) {
+     for(y = 1; y <= p.slicey; y++) {
+       for(z = 0; z < p.Lz; z++) {
+@@ -378,42 +397,20 @@ void stress_energy(hydro_fields f, hydro_params p, float ****Tij) {
+ 
+ 	if(p.gwsource != GW_FIELD) {
+ #ifndef SCALAR
++
++	  eplusp = (4.0*p.gdeg*avgT*avgT*avgT*avgT - avgT*avgV);
+ 	  // fluid bits
+-	  Tij[CPT_11][x][y][z] += (4.0*p.gdeg*f.T[x][y][z]
+-				   *f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]
+-				   - f.T[x][y][z]*VTf(p, f.T[x][y][z], 
+-						      f.phi[x][y][z]))
+-	    *f.U[0][x][y][z]*f.U[0][x][y][z];
++	  Tij[CPT_11][x][y][z] += eplusp*f.U[0][x][y][z]*f.U[0][x][y][z];
+ 	  
+-	  Tij[CPT_21][x][y][z] += (4.0*p.gdeg*f.T[x][y][z]
+-				   *f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]
+-				   - f.T[x][y][z]*VTf(p, f.T[x][y][z],
+-						      f.phi[x][y][z]))
+-	    *f.U[1][x][y][z]*f.U[0][x][y][z];
++	  Tij[CPT_21][x][y][z] += eplusp*f.U[1][x][y][z]*f.U[0][x][y][z];
+ 	  
+-	  Tij[CPT_31][x][y][z] += (4.0*p.gdeg*f.T[x][y][z]
+-				   *f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]
+-				   - f.T[x][y][z]*VTf(p, f.T[x][y][z],
+-						      f.phi[x][y][z]))
+-	    *f.U[2][x][y][z]*f.U[0][x][y][z];
++	  Tij[CPT_31][x][y][z] += eplusp*f.U[2][x][y][z]*f.U[0][x][y][z];
+ 	  
+-	  Tij[CPT_22][x][y][z] += (4.0*p.gdeg*f.T[x][y][z]
+-				   *f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]
+-				   - f.T[x][y][z]*VTf(p, f.T[x][y][z],
+-						      f.phi[x][y][z]))
+-	    *f.U[1][x][y][z]*f.U[1][x][y][z];
++	  Tij[CPT_22][x][y][z] += eplusp*f.U[1][x][y][z]*f.U[1][x][y][z];
+ 	  
+-	  Tij[CPT_32][x][y][z] += (4.0*p.gdeg*f.T[x][y][z]
+-				   *f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]
+-				   - f.T[x][y][z]*VTf(p, f.T[x][y][z],
+-						      f.phi[x][y][z]))
+-	  *f.U[2][x][y][z]*f.U[1][x][y][z];
++	  Tij[CPT_32][x][y][z] += eplusp*f.U[2][x][y][z]*f.U[1][x][y][z];
+ 	  
+-	  Tij[CPT_33][x][y][z] += (4.0*p.gdeg*f.T[x][y][z]
+-				*f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]
+-				   - f.T[x][y][z]*VTf(p, f.T[x][y][z],
+-						      f.phi[x][y][z]))
+-	    *f.U[2][x][y][z]*f.U[2][x][y][z];
++	  Tij[CPT_33][x][y][z] += eplusp*f.U[2][x][y][z]*f.U[2][x][y][z];
+ #endif // SCALAR
+ 	}
+ 

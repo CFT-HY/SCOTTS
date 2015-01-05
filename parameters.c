@@ -93,6 +93,11 @@ void get_parameters(char *infile, hydro_params *p)
 
   int i;
 
+  if(access(infile, R_OK) != 0) {
+    printf0(*p, "Cannot read parameter file: %s\n", infile);
+    die(-1);
+  }
+
   fp = fopen(infile,"r");
 
   while(!feof(fp)) {
