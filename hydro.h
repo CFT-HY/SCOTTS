@@ -374,6 +374,8 @@ void get_parameters(char *filename, hydro_params *p);
 #ifdef SILO
 void silo_init(hydro_params p);
 void write_silo_step(hydro_fields f, hydro_params p, int step);
+
+void write_silo_slice_step(hydro_fields f, hydro_params p, int step);
 #endif // SILO
 
 

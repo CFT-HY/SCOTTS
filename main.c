@@ -312,7 +312,8 @@ int main(int argc, char *argv[])
 #ifdef SILO
     // Write visualisation stuff if necessary
     if((p.silointerval > 0) && (step % p.silointerval == 0)) {
-      write_silo_step(f, p, step);
+      write_silo_slice_step(f, p, step);
+      //      write_silo_step(f, p, step);
     }
 #endif // SILO
 
