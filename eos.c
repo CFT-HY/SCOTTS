@@ -45,8 +45,8 @@ void find_Ta(hydro_fields f, hydro_params p) {
     }
   }
 
-  // Not needed...
-  //  halo_field(f.T, p);
+  // Not needed... except for phi^2/T damping
+  halo_field(f.T, p);
 
 #endif // SCALAR
 }
