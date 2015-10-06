@@ -148,10 +148,6 @@ int main(int argc, char *argv[])
 
     printf0(p, "- Zeroed fields.\n");
 
-
-    // One bubble only (not used)
-    // initial_scalar_bubble(f, p);
-
     // Shock tube style initial conditions for fluid only (not used)
 #ifdef INITPS
     initial_3D(f,p);
@@ -171,25 +167,33 @@ int main(int argc, char *argv[])
 #else // INITPS
 
 
-    // Instead, start off with an empty box
-    initial_blank(f, p);
+    // do random nucleation process
+    if(p.bubbles > 1) {
+      // Instead, start off with an empty box
+      initial_blank(f, p);
 
-    // p.bubbles is how many bubbles to make at the start (usually 1)
-    for(step=0;step<p.bubbles;step++) {
-      start = clock();
-      still_nucleate = do_nucleate(f, p);
-      end = clock();
-      if(!p.rank)
-	fprintf(stderr,"Nucleation attempt took %lf\n",
-		((float) (end - start)) / CLOCKS_PER_SEC);
+      // p.bubbles is how many bubbles to make at the start (usually 1)
+      for(step=0;step<p.bubbles;step++) {
+	start = clock();
+	still_nucleate = do_nucleate(f, p);
+	end = clock();
+	if(!p.rank)
+	  fprintf(stderr,"Nucleation attempt took %lf\n",
+		  ((float) (end - start)) / CLOCKS_PER_SEC);
       
-      bcount += still_nucleate;
+	bcount += still_nucleate;
       
-      // Each is an independent attempt, do not disable!
-      //      if(!still_nucleate)
-      //	break;
+	// Each is an independent attempt, do not disable!
+	//      if(!still_nucleate)
+	//	break;
 
+      }
+    } else {
+      // One bubble only (not normally used)
+      printf0(p, "Nucleating just one bubble\n");
+      initial_scalar_bubble(f, p);
     }
+
 #endif // INITPS
 
     // (don't) turn off nucleation after initial stage
@@ -313,7 +317,7 @@ int main(int argc, char *argv[])
     // Write visualisation stuff if necessary
     if((p.silointerval > 0) && (step % p.silointerval == 0)) {
       write_silo_slice_step(f, p, step);
-      //      write_silo_step(f, p, step);
+      // write_silo_step(f, p, step);
     }
 #endif // SILO
 
