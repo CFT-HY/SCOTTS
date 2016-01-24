@@ -44,7 +44,7 @@ void init_uetc(hydro_fields f, hydro_params p) {
  *                 float *product_re, float *product_im,
  *                 fftwf_complex **Tij_then, fftwf_complex **Tij_now)
  *
- * Like gw_project (see gw.c), but for two separate timesteps, and takes two
+ * Like gwproject (see gw.c), but for two separate timesteps, and takes two
  * different tensors.
  */
 void uetc_project(hydro_params p, int x_start, int slab,
@@ -55,15 +55,53 @@ void uetc_project(hydro_params p, int x_start, int slab,
   int x, y, z;
   float kx, ky, kz;
 
+  int true_x, true_y, true_z;
+
+  float s_x, s_y, s_z;
 
   for(x=0; x<slab; x++) {
     for(y=0; y<p.Ly; y++) {
       for(z=0; z<p.Lz; z++) {
 
+        s_x = 1.0;
+        s_y = 1.0;
+        s_z = 1.0;
+
+        if(x+x_start > p.Lx/2) {
+          true_x = -(p.Lx - (x+x_start));
+          s_x = -1.0;
+        } else {
+          true_x = x+x_start;
+          s_x = 1.0;
+        }
+
+        if(y > p.Ly/2) {
+          true_y = -(p.Ly - y);
+          s_y = -1.0;
+        } else {
+          true_y = y;
+          s_y = 1.0;
+        }
+
+        if(z > p.Lz/2) {
+          true_z = -(p.Lz - z);
+          s_z = -1.0;
+        } else {
+          true_z = z;
+          s_z = 1.0;
+        }
+
+	/*
 	kx = ((float)(x+x_start))*2.0*M_PI/((float)p.Lx);
 	ky = ((float)y)*2.0*M_PI/((float)p.Ly);
 	kz = ((float)z)*2.0*M_PI/((float)p.Lz);
+	*/
 	
+
+        kx = s_x*sqrt((2.0 - 2.0*cos(((float)(true_x))*2.0*M_PI/(((float)p.Lx))))/(p.dx*p.dx));
+	ky = s_y*sqrt((2.0 - 2.0*cos(((float)(true_y))*2.0*M_PI/(((float)p.Ly))))/(p.dx*p.dx));
+	kz = s_z*sqrt((2.0 - 2.0*cos(((float)(true_z))*2.0*M_PI/(((float)p.Lz))))/(p.dx*p.dx));
+
 	product_re[x*p.Ly*p.Lz + y*p.Lz + z] = 0.0;
 	product_im[x*p.Ly*p.Lz + y*p.Lz + z] = 0.0;
 
@@ -112,7 +150,7 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
   ptrdiff_t n1 = p.Ly;
   ptrdiff_t n2 = p.Lz;
 
-  int slab;
+  //  int slab;
 
   MPI_Status status;
 
@@ -121,7 +159,9 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
   int x, y, z;
   int i;
 
-  float fft_norm = p.a*p.a*p.a*p.dx*p.dx*p.dx/pow(2.0*M_PI,1.5);
+  float fft_norm = (1.0/(((float)p.Lx)*((float)p.Ly)*((float)p.Lz)))
+    *(1.0/sqrt(32.0*M_PI));
+  // *p.a*p.a*p.a*p.dx*p.dx*p.dx
 
   float *trim_then = (float *)malloc(p.slicex*p.slicey*p.Lz*sizeof(float));
   float *trim_now = (float *)malloc(p.slicex*p.slicey*p.Lz*sizeof(float));
@@ -136,6 +176,49 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
 				       MPI_COMM_WORLD, &x_thickness, &x_start);
 
 
+  int *thicknesses = malloc(p.size*sizeof(int));
+  int *starts = malloc(p.size*sizeof(int));
+  int *map = malloc(p.Lx*sizeof(int));
+
+
+  if(p.rank) {
+    MPI_Send(&x_thickness, 1, MPI_INTEGER, 0, p.rank, MPI_COMM_WORLD);
+    MPI_Send(&x_start, 1, MPI_INTEGER, 0, p.rank, MPI_COMM_WORLD);
+
+  } else {
+    thicknesses[0] = x_thickness;
+    starts[0] = x_start;
+
+    for(i=1; i<p.size; i++) {
+      MPI_Recv(&thicknesses[i], 1, MPI_INTEGER, i, i, MPI_COMM_WORLD, &status);
+      MPI_Recv(&starts[i], 1, MPI_INTEGER, i, i, MPI_COMM_WORLD, &status);
+
+      //      fprintf(stderr,"rank %d, thickness %d, start %d\n", i, thicknesses[i], starts[i]);
+    }
+
+
+    for(x=0; x<p.Lx; x++) {
+      map[x] = -1;
+      for(i=0; i<p.size; i++) {
+        if(starts[i] <= x && (starts[i] + thicknesses[i]) > x) {
+          map[x] = i;
+          //      fprintf(stderr, "therefore node %d is responsible for x=%d\n", i, x);
+          break;
+        }
+      }
+      if(map[x] == -1) {
+	fprintf(stderr,"cannot find a node responsible for x=%d!\n", x);
+        die(-99);
+      }
+
+    }
+  }
+
+  printf0(p,"broadcasting our results\n");
+  MPI_Bcast(map, p.Lx, MPI_INTEGER, 0, MPI_COMM_WORLD);
+  printf0(p,"now to layout\n");
+
+  /*
   slab = (int) x_thickness;
 
   if(((int)x_thickness) != p.Lx/p.size) {
@@ -148,6 +231,7 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
     fprintf(stderr, "Giving up in FFT: dx=0!\n");
     die(-43);
   }
+  */
 
   /////////////// here compute other thing to be squished ////////////////
 
@@ -170,11 +254,11 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
     outcpts_now[i] = fftwf_alloc_complex(alloc_local);
   }
 
-  float *slice_then = (float *)malloc(slab*p.Ly*p.Lz*sizeof(float));
-  float *slice_now = (float *)malloc(slab*p.Ly*p.Lz*sizeof(float));
+  float *slice_then = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
+  float *slice_now = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
 
-  float *slice_re = (float *)malloc(slab*p.Ly*p.Lz*sizeof(float));
-  float *slice_im = (float *)malloc(slab*p.Ly*p.Lz*sizeof(float));
+  float *slice_re = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
+  float *slice_im = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
 
 
   int nx = p.Lx/p.slicex;
@@ -207,7 +291,7 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
     for(x=0; x<p.Lx; x++) {
       
       // Check whether we are the target node for this slab
-      if((x >= x_start) && ( x < (x_start + x_thickness))) {
+      if(map[x] == p.rank) {
 	
 	for(ry = 0; ry < ny; ry++) {
 	  
@@ -248,14 +332,14 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
       MPI_Send(&trim_then[(x-p.shiftx)*p.slicey*p.Lz],
 	       p.slicey*p.Lz,
 	       MPI_FLOAT,
-	       x/slab,
+	       map[x],
 	       x*ny + p.myposy,
 	       MPI_COMM_WORLD);
 
       MPI_Send(&trim_now[(x-p.shiftx)*p.slicey*p.Lz],
 	       p.slicey*p.Lz,
 	       MPI_FLOAT,
-	       x/slab,
+	       map[x],
 	       p.Lx*ny + x*ny + p.myposy,
 	       MPI_COMM_WORLD);
       }
@@ -264,7 +348,7 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
 
     float total = 0.0;
 
-    for(x=0;x<slab;x++) {
+    for(x=0;x<x_thickness;x++) {
       for(y=0;y<p.Ly;y++) {
 	for(z=0;z<p.Lz;z++) {
 	  in[x*p.Ly*p.Lz + y*p.Lz + z][0] = slice_then[x*p.Ly*p.Lz + y*p.Lz + z];
@@ -275,7 +359,7 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
 
     fftwf_mpi_execute_dft(plan, in, out);
 
-    for(x=0;x<slab;x++) {
+    for(x=0;x<x_thickness;x++) {
       for(y=0;y<p.Ly;y++) {
 	for(z=0;z<p.Lz;z++) {
 	  outcpts_then[i][x*p.Ly*p.Lz + y*p.Lz + z][0] 
@@ -289,7 +373,7 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
 
 
 
-    for(x=0;x<slab;x++) {
+    for(x=0;x<x_thickness;x++) {
       for(y=0;y<p.Ly;y++) {
 	for(z=0;z<p.Lz;z++) {
 	  in[x*p.Ly*p.Lz + y*p.Lz + z][0]
@@ -302,7 +386,7 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
 
     fftwf_mpi_execute_dft(plan, in, out);
 
-    for(x=0;x<slab;x++) {
+    for(x=0;x<x_thickness;x++) {
       for(y=0;y<p.Ly;y++) {
 	for(z=0;z<p.Lz;z++) {
 	  outcpts_now[i][x*p.Ly*p.Lz + y*p.Lz + z][0] 
@@ -317,7 +401,7 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
   }
 
 
-  uetc_project(p, x_start, slab, slice_re, slice_im,
+  uetc_project(p, x_start, x_thickness, slice_re, slice_im,
 	       outcpts_then, outcpts_now);
 
 
@@ -339,15 +423,32 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
 
   int whichbin;
 
+  int true_x, true_y, true_z;
 
-
-  for(x=0;x<slab;x++) {
+  for(x=0;x<x_thickness;x++) {
     for(y=0;y<p.Ly;y++) {
       for(z=0;z<p.Lz;z++) {
 
+	/*
         if(((x+x_start)>p.Lx/2) || (y> p.Ly/2) || (z>p.Lz/2))
           continue;
+	*/
+        if(x+x_start > p.Lx/2)
+          true_x = p.Lx - (x+x_start);
+        else
+          true_x = x+x_start;
+
+        if(y > p.Ly/2)
+          true_y = p.Ly - y;
+        else
+          true_y = y;
+
+        if(z > p.Lz/2)
+          true_z = p.Lz - z;
+        else
+          true_z = z;
 	
+
 	kmode = sqrt(
 		     ((float)((x+x_start)*(x+x_start)))/((float)(p.Lx*p.Lx))
 		     + ((float)(y*y))/((float)(p.Ly*p.Ly))
