@@ -137,6 +137,8 @@ typedef struct {
   int silointerval;
   int checkpointinterval;
 
+  int uetcstart;
+
   // Initial conditions type (see #defines above)
   int initial;
 
