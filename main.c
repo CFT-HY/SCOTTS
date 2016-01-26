@@ -222,8 +222,6 @@ int main(int argc, char *argv[])
   printf0(p, "Initial avg energy per site: %g\n", 
 	  initial_energy/((float)p.N));
 
-  // Set up unequal time correlator stuff (not used)
-  //  init_uetc(f, p);
 
 #ifdef SILO
 
@@ -277,6 +275,8 @@ int main(int argc, char *argv[])
 
   for(step = step_start; step < p.steps; step++) {
 
+
+
     /*
     if(!p.rank) {
       fprintf(press, "%d %g\n", step, f.p[1][1][1]);
@@ -329,9 +329,16 @@ int main(int argc, char *argv[])
 
       histo_field(f.phi, p, step);
 
-      // Calculate UETCs (not in use)
-      // fft_uetc(f, p, step);
-      
+
+      if(p.uetcstart >= 0 && step >= p.uetcstart) {
+	if(step == p.uetcstart) {
+	  init_uetc(f, p);
+	}
+
+	// Calculate UETCs (not in use)
+	fft_uetc(f, p, step);
+      }      
+
       // Power spectrum of scalar field
       fft_field(f, p, f.phi, step);
 

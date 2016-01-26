@@ -238,6 +238,8 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
   float ****Tij = make_tensor(p);
   stress_energy(f, p, Tij);
 
+  printf0(p,"generated stress-energy\n");
+
   /////////////// done /////////////////
 
 
@@ -357,6 +359,8 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
       }
     }
 
+    printf0(p, "executing FFT for early tensor, cpt %d/%d\n", i, TENSOR_CPTS);
+
     fftwf_mpi_execute_dft(plan, in, out);
 
     for(x=0;x<x_thickness;x++) {
@@ -384,6 +388,8 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
       }
     }
 
+    printf0(p, "executing FFT for late tensor, cpt %d/%d\n", i, TENSOR_CPTS);
+
     fftwf_mpi_execute_dft(plan, in, out);
 
     for(x=0;x<x_thickness;x++) {
@@ -401,9 +407,13 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
   }
 
 
+  printf0(p,"projecting\n");
+
   uetc_project(p, x_start, x_thickness, slice_re, slice_im,
 	       outcpts_then, outcpts_now);
 
+
+  printf0(p,"binning\n");
 
   int nbins = minof3_int(p.Lx, p.Ly, p.Lz);
   float mink = 0.0;
@@ -449,11 +459,11 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
           true_z = z;
 	
 
-	kmode = sqrt(
-		     ((float)((x+x_start)*(x+x_start)))/((float)(p.Lx*p.Lx))
-		     + ((float)(y*y))/((float)(p.Ly*p.Ly))
-		     + ((float)(z*z))/((float)(p.Lz*p.Lz))
-		     )*2.0*M_PI;
+        kmode = sqrt(
+                     ((float)(true_x*true_x))/((float)(p.Lx*p.Lx))
+                     + ((float)(true_y*true_y))/((float)(p.Ly*p.Ly))
+                     + ((float)(true_z*true_z))/((float)(p.Lz*p.Lz))
+                     )*2.0*M_PI;
 
 	whichbin = (int)floor(kmode/dk);
 	bins_re[whichbin] += slice_re[x*p.Ly*p.Lz + y*p.Lz + z];
