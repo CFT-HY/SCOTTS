@@ -406,118 +406,236 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
 
   }
 
+  // could make strictly > because equal time is just shear stress
+  if(step >= p.uetcstart) {
 
-  printf0(p,"projecting\n");
+    printf0(p,"projecting\n");
 
-  uetc_project(p, x_start, x_thickness, slice_re, slice_im,
-	       outcpts_then, outcpts_now);
+    uetc_project(p, x_start, x_thickness, slice_re, slice_im,
+		 outcpts_then, outcpts_now);
 
 
-  printf0(p,"binning\n");
+    printf0(p,"binning\n");
 
-  int nbins = minof3_int(p.Lx, p.Ly, p.Lz);
-  float mink = 0.0;
-  float maxk = 2.0*M_PI;
+    int nbins = minof3_int(p.Lx, p.Ly, p.Lz);
+    float mink = 0.0;
+    float maxk = 2.0*M_PI;
 
-  float dk = (maxk-mink)/((float)nbins);
+    float dk = (maxk-mink)/((float)nbins);
 
-  float *bins_re = (float *)malloc(nbins*sizeof(float));
-  float *bins_im = (float *)malloc(nbins*sizeof(float));
-  int *counts = (int *)malloc(nbins*sizeof(int));
+    float *bins_re = (float *)malloc(nbins*sizeof(float));
+    float *bins_im = (float *)malloc(nbins*sizeof(float));
+    int *counts = (int *)malloc(nbins*sizeof(int));
 
-  for(i=0;i<nbins;i++) {
-    bins_re[i] = 0.0;
-    bins_im[i] = 0.0;
-    counts[i] = 0;
-  }
+    for(i=0;i<nbins;i++) {
+      bins_re[i] = 0.0;
+      bins_im[i] = 0.0;
+      counts[i] = 0;
+    }
 
-  int whichbin;
+    int whichbin;
 
-  int true_x, true_y, true_z;
+    int true_x, true_y, true_z;
 
-  for(x=0;x<x_thickness;x++) {
-    for(y=0;y<p.Ly;y++) {
-      for(z=0;z<p.Lz;z++) {
+    for(x=0;x<x_thickness;x++) {
+      for(y=0;y<p.Ly;y++) {
+	for(z=0;z<p.Lz;z++) {
 
 	/*
         if(((x+x_start)>p.Lx/2) || (y> p.Ly/2) || (z>p.Lz/2))
           continue;
 	*/
-        if(x+x_start > p.Lx/2)
-          true_x = p.Lx - (x+x_start);
-        else
-          true_x = x+x_start;
+	  if(x+x_start > p.Lx/2)
+	    true_x = p.Lx - (x+x_start);
+	  else
+	    true_x = x+x_start;
 
-        if(y > p.Ly/2)
-          true_y = p.Ly - y;
-        else
-          true_y = y;
+	  if(y > p.Ly/2)
+	    true_y = p.Ly - y;
+	  else
+	    true_y = y;
 
-        if(z > p.Lz/2)
-          true_z = p.Lz - z;
-        else
-          true_z = z;
+	  if(z > p.Lz/2)
+	    true_z = p.Lz - z;
+	  else
+	    true_z = z;
 	
 
-        kmode = sqrt(
-                     ((float)(true_x*true_x))/((float)(p.Lx*p.Lx))
-                     + ((float)(true_y*true_y))/((float)(p.Ly*p.Ly))
-                     + ((float)(true_z*true_z))/((float)(p.Lz*p.Lz))
-                     )*2.0*M_PI;
+	  kmode = sqrt(
+		       ((float)(true_x*true_x))/((float)(p.Lx*p.Lx))
+		       + ((float)(true_y*true_y))/((float)(p.Ly*p.Ly))
+		       + ((float)(true_z*true_z))/((float)(p.Lz*p.Lz))
+		       )*2.0*M_PI;
+	  
+	  whichbin = (int)floor(kmode/dk);
+	  bins_re[whichbin] += slice_re[x*p.Ly*p.Lz + y*p.Lz + z];
+	  bins_im[whichbin] += slice_im[x*p.Ly*p.Lz + y*p.Lz + z];
+	  counts[whichbin]++;
 
-	whichbin = (int)floor(kmode/dk);
-	bins_re[whichbin] += slice_re[x*p.Ly*p.Lz + y*p.Lz + z];
-	bins_im[whichbin] += slice_im[x*p.Ly*p.Lz + y*p.Lz + z];
-	counts[whichbin]++;
-
+	}
       }
     }
-  }
 
 
-  float red_value;
-  int red_count;
-
-  for(i=0;i<nbins;i++) {
-
-    red_value = reduce_sum(bins_re[i], p);
-    bins_re[i] = red_value;
-
-    red_value = reduce_sum(bins_im[i], p);
-    bins_im[i] = red_value;
-
-    red_count = reduce_sum_int(counts[i], p);
-    counts[i] = red_count;
-  }
-
-
-  float thisk = dk/2.0;
-
-  // spokesman does the final analysis
-  if(!p.rank) {
-
-  char fftdest[200];
-
-  sprintf(fftdest,"uetc-step%d.txt", step);
-
-  FILE *fp = fopen(fftdest,"w");
+    float red_value;
+    int red_count;
 
     for(i=0;i<nbins;i++) {
 
-      fprintf(fp, "%lf %g %g %d %d\n",
-	      thisk, bins_re[i], bins_im[i], counts[i], step);
-
-      thisk = thisk + dk;
+      red_value = reduce_sum(bins_re[i], p);
+      bins_re[i] = red_value;
+    
+      red_value = reduce_sum(bins_im[i], p);
+      bins_im[i] = red_value;
+    
+      red_count = reduce_sum_int(counts[i], p);
+      counts[i] = red_count;
     }
 
-  fclose(fp);
 
+    float thisk = dk/2.0;
+
+    // spokesman does the final analysis
+    if(!p.rank) {
+
+      char fftdest[200];
+  
+      sprintf(fftdest,"uetc-step%d.txt", step);
+      
+      FILE *fp = fopen(fftdest,"w");
+  
+      for(i=0;i<nbins;i++) {
+
+	fprintf(fp, "%lf %g %g %d %d\n",
+		thisk, bins_re[i], bins_im[i], counts[i], step);
+
+	thisk = thisk + dk;
+      }
+
+      fclose(fp);
+
+    }
+
+    free(bins_re);
+    free(bins_im);
+    free(counts);
   }
 
+  if(step >= p.uetcstart) {
 
-  free(bins_re);
-  free(bins_im);
-  free(counts);
+
+    printf0(p,"projecting for equal time\n");
+
+    uetc_project(p, x_start, x_thickness, slice_re, slice_im,
+		 outcpts_now, outcpts_now);
+
+
+    printf0(p,"binning for equal time\n");
+
+    int nbins = minof3_int(p.Lx, p.Ly, p.Lz);
+    float mink = 0.0;
+    float maxk = 2.0*M_PI;
+
+    float dk = (maxk-mink)/((float)nbins);
+
+    float *bins_re = (float *)malloc(nbins*sizeof(float));
+    float *bins_im = (float *)malloc(nbins*sizeof(float));
+    int *counts = (int *)malloc(nbins*sizeof(int));
+
+    for(i=0;i<nbins;i++) {
+      bins_re[i] = 0.0;
+      bins_im[i] = 0.0;
+      counts[i] = 0;
+    }
+
+    int whichbin;
+
+    int true_x, true_y, true_z;
+
+    for(x=0;x<x_thickness;x++) {
+      for(y=0;y<p.Ly;y++) {
+	for(z=0;z<p.Lz;z++) {
+
+	/*
+        if(((x+x_start)>p.Lx/2) || (y> p.Ly/2) || (z>p.Lz/2))
+          continue;
+	*/
+	  if(x+x_start > p.Lx/2)
+	    true_x = p.Lx - (x+x_start);
+	  else
+	    true_x = x+x_start;
+
+	  if(y > p.Ly/2)
+	    true_y = p.Ly - y;
+	  else
+	    true_y = y;
+
+	  if(z > p.Lz/2)
+	    true_z = p.Lz - z;
+	  else
+	    true_z = z;
+	
+
+	  kmode = sqrt(
+		       ((float)(true_x*true_x))/((float)(p.Lx*p.Lx))
+		       + ((float)(true_y*true_y))/((float)(p.Ly*p.Ly))
+		       + ((float)(true_z*true_z))/((float)(p.Lz*p.Lz))
+		       )*2.0*M_PI;
+	  
+	  whichbin = (int)floor(kmode/dk);
+	  bins_re[whichbin] += slice_re[x*p.Ly*p.Lz + y*p.Lz + z];
+	  bins_im[whichbin] += slice_im[x*p.Ly*p.Lz + y*p.Lz + z];
+	  counts[whichbin]++;
+
+	}
+      }
+    }
+
+
+    float red_value;
+    int red_count;
+
+    for(i=0;i<nbins;i++) {
+
+      red_value = reduce_sum(bins_re[i], p);
+      bins_re[i] = red_value;
+    
+      red_value = reduce_sum(bins_im[i], p);
+      bins_im[i] = red_value;
+    
+      red_count = reduce_sum_int(counts[i], p);
+      counts[i] = red_count;
+    }
+
+
+    float thisk = dk/2.0;
+
+    // spokesman does the final analysis
+    if(!p.rank) {
+
+      char fftdest[200];
+  
+      sprintf(fftdest,"shearstress-step%d.txt", step);
+      
+      FILE *fp = fopen(fftdest,"w");
+  
+      for(i=0;i<nbins;i++) {
+
+	fprintf(fp, "%lf %g %g %d %d\n",
+		thisk, bins_re[i], bins_im[i], counts[i], step);
+
+	thisk = thisk + dk;
+      }
+
+      fclose(fp);
+
+    }
+
+    free(bins_re);
+    free(bins_im);
+    free(counts);
+
+  }
 
   // Tidy up
 
