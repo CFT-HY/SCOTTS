@@ -419,7 +419,7 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
   // then gv is the four-velocity (2.84)
   // (what we call kappa they call sigma, ish?)
   //
-  // Section 3.4.5, equations 3.5.7, 3.5.8
+  // Section 3.4.5, equations 3.57, 3.58
 
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
