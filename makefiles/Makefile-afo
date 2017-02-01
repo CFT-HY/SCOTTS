@@ -1,6 +1,6 @@
 #### CC ####
 
-CC := mpicc -g -DMPI -DFFT
+CC := mpicc -g -DMPI -DFFT -DSILO
 
 #### CFLAGS ####
 
@@ -9,7 +9,7 @@ CFLAGS := -O3 -I/home/weir/local/include/
 #### LIBS ####
 
 LIBS := -L/home/weir/local/lib/ \
-	-lsiloh5 -lhdf5 -lfftw3f_mpi -lfftw3f -lm -lstdc++
+	-lsiloh5 -lhdf5 -lfftw3f_mpi -lfftw3f -lm -lstdc++ -lz
 
 #### No user-serviceable parts below ####
 
