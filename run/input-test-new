@@ -4,36 +4,27 @@
 # Note that if the simulation is checkpointed and restarts the cumulative
 # number of timesteps is counted, so 'steps' would (for example) need to
 # be increased if you wanted to run for longer.
-Lx      64
-Ly	64
-Lz	64
+Lx      128
+Ly	128
+Lz	128
 steps  1000
 
 # How big the simulation is: lattice spacing and timestep
-dx     1.0
-dt     0.1
+dx     2.0
+dt     0.2
  
 # Viscosity terms. Cav is the artificial viscosity
 # and is not currently used. C is the 'eta' term that
 # takes energy out of the field and into the fluid.
+# C = 0.93 gives vW = 0.44 with the new parameters
 Cav    0.0
-C      0.0
+C      0.93
 
-# The old style potential parameters were as follows, and required
-# their conversion into alpha, gamma, lambda within the code.
-# As they are not what the potential actually contains, this was a bore!
-# However they are retained here for reference; the example parameters
-# in this file correspond directly to these old parameters.
-#
-# Lheat  0.1
-# sigma  0.1
-# lcorr  6.0
-
-# Replacements for the old-style potential parameters (weak case).
-alpha 0.0439205
-gamma 0.0555556
-lambda 0.0154321
-T0 0.70710678
+# Example potential parameters (weak case, dimensionless eta).
+alpha 0.19902
+gamma 0.2222
+lambda 0.079221
+T0 0.70710678118654757
 
 # Tconst is the initial temperature everywhere.
 # NB: cooling is faked by nucleating ready-made bubbles.
@@ -47,6 +38,13 @@ Tconst 0.86
 interval 10
 silointerval -1
 
+# Power spectra measurements. How often to write FFT's (i.e. field, fluid
+# velocity, and GW power spectra) - set to -1 to disable.
+fftinterval 100
+# .. and when to start writing UETC's
+uetcstart -1
+
+
 # Initial conditions; choices are "shocktube", "bubble"; only
 # "bubble" should be currently used.
 initial bubble
@@ -56,7 +54,7 @@ bubbles 1
 
 # Where visualisation data gets stored. If silointerval is less than or
 # equal to zero then this is not accessed.
-silodir silage
+silodir silage/
 
 # How much the gaussian ansatz for the initial bubble is enlarged by
 scale 1.0
@@ -88,17 +86,12 @@ checkpointinterval -1
 # What the gravitational wave power spectrum is sourced by
 # choices are 'fluid', 'field' or 'both'. The default (if the choice
 # is unrecognisable) is 'both'.
-gwsource field
+gwsource fluid
 
 # The random seed. This must be set. The seed is 'salted' with the
 # timestep every update so that results are reproducible across
 # simulations. The randomness is used for bubble locations only.
 seed 1234
 
-gstar 100
+gstar 106.75
 
-# How often to write FFT's (-1 to switch off)
-fftinterval -1
-
-# When to start writing UETC's (-1 to switch off)
-uetcstart -1
