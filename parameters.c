@@ -279,7 +279,9 @@ void get_parameters(char *infile, hydro_params *p)
       set_gwsource = 1;
     }
     else if(!strcasecmp(key,"nucleation")) {
-      if(!strcasecmp(value, "exp")) {
+      if(!strcasecmp(value, "off")) {
+	p->nucleation = NUC_OFF;
+      } else if(!strcasecmp(value, "exp")) {
 	p->nucleation = NUC_EXP;
       } else if(!strncasecmp(value, "list", 4)) {
 	p->nucleation = NUC_LIST;
@@ -605,6 +607,8 @@ void get_parameters(char *infile, hydro_params *p)
       //	printf0(*p, "%d, ", p->nucsteps[i]);
 
       printf0(*p,"bubbles will be nucleated>\n");
+    } else if(p->nucleation == NUC_OFF) {
+      printf0(*p, "<No nucleation>\n");
     } else {
       printf0(*p, "<Warning, somehow have unknown nucleation process.\n");
     }
