@@ -59,7 +59,9 @@ silodir silage/
 # How much the gaussian ansatz for the initial bubble is enlarged by
 scale 1.0
 
-# Nucleation procedure; choices are "exp", "list" or "file"
+# Nucleation procedure; choices are "off", "exp", "list" or "file"
+# - "off" does nothing (the number of bubbles given above as 'bubbles' is
+#   still created at the start however)
 # - "exp" is currently broken (seeded incorrectly), but would be
 #   exponential nucleation implemented at runtime
 # - "list" is a comma-separated list without spaces of timesteps
@@ -70,7 +72,7 @@ scale 1.0
 #   "nucleation file nucleation-list". There may be more than
 #   one nucleation attempt per timestep.
 #   The program utils/nucproc.py produces output in this format.
-nucleation file nucleation-list
+nucleation off
 
 # If nucleation is "exp" then this is the rate; otherwise not used
 beta 1.0
