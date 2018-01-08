@@ -1,11 +1,37 @@
-/* arrangement.c
+/** @file comms.c
+ *
+ * Routines for communication and haloing.
  *
  * How the physical geometry is laid out in the system, and (where necessary)
  * communication between nodes (when MPI is used).
+ *
+ * Note that minimal definitions of all the functions are also
+ * provided for when MPI is not in use (the MPI versions are protected
+ * by an `#ifdef MPI`).
+ *
+ * Some notes on variables:
+ * - `Lx`, `Ly`, `Lz` are the total physical size
+ * - `slicex` and `slicey` are the size of the physical 'pencil' each node gets
+ *   (recall that the fields and vectors have an extra 2 sites in each
+ *   direction for haloing purposes, so each one is
+ *   `(slicex+2)*(slicey+2)*(Lz)` in size)
+ * - the first and the last sites in any direction are the halo
+ * - `myposx` and `myposy` are the position of this node within the layout
+ *   (zero-based)
+ * - `shiftx` and `shifty` are the datum of `x=0`, `y=0` in the local node
+ *   (ie `shiftx = slicex*myposx`, `shifty = slicey*myposy`)
+ *   this means that the physical coordinate of a site would be
+ *   `(p.shiftx+x-1,p.shifty+y-1,z)` after taking halos into account.
+ * - `rank` is this node's unique id (rank 0 is the 'master')
+ *
+ * 2010-2017 David Weir
  */
 #include "hydro.h"
 
-// Nasty global to track how much walltime is spent doing communications
+
+/** Nasty global to track how much walltime is spent doing
+ *  communications
+ */
 float comms_time;
 
 
@@ -17,26 +43,14 @@ float comms_time;
 #ifdef MPI
 
 
-/* Some notes on variables:
+
+/** Lay out the lattice on the available nodes.
  *
- * -- Lx, Ly, Lz are the total physical size
- * -- slicex and slicey are the size of the physical 'pencil' each node gets
- *    (recall that the fields and vectors have an extra 2 sites in each
- *    direction for haloing purposes, so each one is
- *    (slicex+2)*(slicey+2)*(Lz) in size)
- * -- the first and the last sites in any direction are the halo
- * -- myposx and myposy are the position of this node within the layout
- *    (zero-based)
- * -- shiftx and shifty are the datum of x=0, y=0 in the local node
- *    (ie shiftx = slicex*myposx, shifty = slicey*myposy)
- *    this means that the physical coordinate of a site would be
- *    (p.shiftx+x-1,p.shifty+y-1,z) after taking halos into account.
- * -- rank is this nodes unique id (rank 0 is the 'master')
- */
-
-
-/*
- * Inspired by the contents of setup_layout_generic.c in Kari's code
+ * Sets out the pencils, work out the mapping between ranks and lattice
+ * sites.
+ *
+ * Inspired by - but not a copy of - the contents of
+ * `setup_layout_generic.c` in Kari Rummukainen's lattice code
  */
 void layout(hydro_params *p) {
 
@@ -181,13 +195,13 @@ void layout(hydro_params *p) {
 
 
 
-/* void halo_field(float *field, hydro_params p)
+/** Send halo region of field to neighbouring nodes.
  *
- * Do halo communication of the variable in field to neighbours.
+ * Do halo communication of the variable in `field` to neighbours.
  *
- * Correct functioning depends on the setup above, which
- * means each node knows which rank is its up/down neighbour in the
- * x/y directions and also the four corners (p.rank_[xy][MP] etc).
+ * Correct functioning depends on the setup in layout(), which means
+ * each node knows which rank is its up/down neighbour in the x/y
+ * directions and also the four corners (`p.rank_[xy][MP]` etc).
  */
 void halo_field(float ***field, hydro_params p) {
 
@@ -338,9 +352,9 @@ void halo_field(float ***field, hydro_params p) {
 
 // Reduction routines, for when we want to combine things    
 
-/* float reduce_sum(float result, hydro_params p)
+/** Add together floats from each node.
  *
- * Add together floats from each node.
+ * See reduce_sum_int() for an integer version.
  */
 float reduce_sum(float result, hydro_params p) {
 
@@ -350,9 +364,10 @@ float reduce_sum(float result, hydro_params p) {
 
 }
 
-/* int reduce_sum_int(int result, hydro_params p)
+
+/** Add together integers from each node.
  *
- * Add together floats from each node, integer version
+ * See reduce_sum() for the floating-point version.
  */
 int reduce_sum_int(int result, hydro_params p) {
 
@@ -362,9 +377,10 @@ int reduce_sum_int(int result, hydro_params p) {
 
 }
 
-/* float reduce_max(float result, hydro_params p)
+
+/** Return the maximum of all the values submitted by each node.
  *
- * Return the maximum of all the values submitted by each node.
+ * See reduce_max_int() for an integer version.
  */
 float reduce_max(float result, hydro_params p) {
 
@@ -374,9 +390,11 @@ float reduce_max(float result, hydro_params p) {
 
 }
 
-/* float reduce_max(float result, hydro_params p)
+
+/** Return the maximum of all the values submitted by each node;
+ * integer version.
  *
- * Return the maximum of all the values submitted by each node.
+ * See reduce_max() for the floating-point version.
  */
 int reduce_max_int(int result, hydro_params p) {
 
@@ -386,9 +404,8 @@ int reduce_max_int(int result, hydro_params p) {
 
 }
 
-/* float reduce_min(float result, hydro_params p)
- *
- * Return the minimum of all the values submitted by each node.
+
+/** Return the minimum of all the values submitted by each node.
  */
 float reduce_min(float result, hydro_params p) {
 
@@ -398,9 +415,8 @@ float reduce_min(float result, hydro_params p) {
 
 }
 
-/* int reduce_and(int result, hydro_params p)
- *
- * Returns the integers supplied, logical and'ed together
+
+/** Returns the integers supplied, logically and'ed together
  */
 int reduce_and(int result, hydro_params p) {
 
@@ -411,23 +427,23 @@ int reduce_and(int result, hydro_params p) {
 }
 
 
-/* void init_comms_time(hydro_params *p)
- * float get_comms_time(hydro_params *p)
- *
- * Fake getters and setters for the communications time routines.
+/** Resets the global variable comms_time to zero.
  */
 void init_comms_time(hydro_params *p) {
   comms_time = 0.0;
 }
 
+
+/** Returns the current value of the global variable comms_time.
+ */
 float get_comms_time(hydro_params *p) {
   return comms_time;
 }
 
 
-/* void printf0(hydro_params p, char *msg, ...)
+/** Formatted printing function, root node only.
  *
- * Drop-in replacement for fprintf(stder,...) that only
+ * Drop-in replacement for `fprintf(stderr,...)` that only
  * prints stuff if called by the master node, rank 0.
  */
 void printf0(hydro_params p, char *msg, ...) {
@@ -439,10 +455,10 @@ void printf0(hydro_params p, char *msg, ...) {
 }
 
 
-/* void die(int howbad)
+/** Call `MPI_Finalize` and quit.
  *
- * Die!!!
- * The return value is 'howbad'
+ * The return value is 'howbad'.  Note that all nodes have to call
+ * this, or the code may hang.
  */
 void die(int howbad) {
   MPI_Finalize();
@@ -452,6 +468,14 @@ void die(int howbad) {
 
 #else // not MPI
 
+#warning Not using MPI!!!
+
+/* Here we just have dummy routines for everything, basically.  The
+ * memory layout is the same as for the parallel code, so haloing
+ * still takes place. This is a useful check - if the code is correct
+ * and haloes at the right times in the serial case, it should also
+ * work in the parallel case.
+ */
 
 
 void layout(hydro_params *p) {
