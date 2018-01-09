@@ -1,4 +1,4 @@
-/* checkpoint.c
+/** @file checkpoint.c
  * 
  * Checkpoint and restore configuration.
  */
@@ -7,10 +7,14 @@
 
 #ifdef SILO
 
-/* int load_checkpoint(hydro_fields f, hydro_params p)
+
+/** Restore checkpointed data to hydro_fields struct. 
  *
- * Restore checkpointed data to hydro_fields struct. Returns
- * the iteration step to which the state was restored.
+ * Expects to find a checkpointed configuration in `checkpointdir`
+ * stored in hydro_params. Does _not_ check the integrity of the
+ * checkpoint, or that the geometry matches (call usable_checkpoint()
+ * first!). Return value is the iteration step to which the state was
+ * restored.
  */
 int load_checkpoint(hydro_fields f, hydro_params p)
 {
@@ -127,9 +131,27 @@ int load_checkpoint(hydro_fields f, hydro_params p)
 }
 
 
-/* int usable_checkpoint(hydro_fields f, hydro_params p)
+
+/** Check for a usable checkpoint directory.
  *
- * Do we have a usable checkpoint directory? Return 1 if so, 0 otherwise.
+ * Do we have a usable checkpoint directory? Return 1 if so, 0
+ * otherwise.
+
+ * 1. First, this function checks that the empty file called
+ *    `checkpoint-integrity` exists in the directory concerned
+ *    (`checkpointdir` in hydro_params).
+ *
+ * 2. Next, each rank looks for the checkpoint file that it _would_
+ *    read if we were really restoring the checkpoint, and looks to
+ *    see if the lattice geometry agrees with the current
+ *    configuration file.
+ *
+ * 3. If so, then print a debug message on the root node stating the
+ *    timestep that would be restored (based on the root node's
+ *    checkpoint file only, no consistency checks are made).
+ *
+ * If this function returns 1 and it is desired to load the checkpoint
+ * then the next step is to run load_checkpoint().
  */
 int usable_checkpoint(hydro_fields f, hydro_params p)
 {
@@ -188,10 +210,14 @@ int usable_checkpoint(hydro_fields f, hydro_params p)
 }
 
 
-/* void checkpoint(hydro_fields f, hydro_params p, int step)
+/** Checkpoints the state of the system.
  *
- * Checkpoints the state of the system (except the initial Tij needed for
- * UETC calculations), for given timestep step.
+ * Saves the state of the system to the `checkpointdir` in
+ * hydro_params, _except_ the initial Tij needed for UETC
+ * calculations, and returns. The original simulation code can
+ * continue (this does not terminate the program or overwrite
+ * anything).  The function load_checkpoint() can be used later to
+ * restore the saved checkpoint.
  */
 void checkpoint(hydro_fields f, hydro_params p, int step)
 {
