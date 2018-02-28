@@ -79,7 +79,10 @@ int main(int argc, char *argv[])
 	  "-- T0 %g\n", p.T0);
   */
 
+  //Set siloslicecoord to -1 so we know it is not set.
+  p.siloslicecoord=-1;
 
+  
   // Degrees of freedom, still hardcoded
   p.gdeg = p.gstar*M_PI*M_PI/90.0;
 
@@ -175,7 +178,7 @@ int main(int argc, char *argv[])
       // p.bubbles is how many bubbles to make at the start (usually 1)
       for(step=0;step<p.bubbles;step++) {
 	start = clock();
-	still_nucleate = do_nucleate(f, p);
+	still_nucleate = do_nucleate(f, &p);
 	end = clock();
 	if(!p.rank)
 	  fprintf(stderr,"Nucleation attempt took %lf\n",
@@ -191,7 +194,7 @@ int main(int argc, char *argv[])
     } else {
       // One bubble only (not normally used)
       printf0(p, "Nucleating just one bubble\n");
-      initial_scalar_bubble(f, p);
+      initial_scalar_bubble(f, &p);
     }
 
 #endif // INITPS
@@ -296,7 +299,7 @@ int main(int argc, char *argv[])
 
     while(i < howmany) {
 
-      still_nucleate = do_nucleate(f, p);
+      still_nucleate = do_nucleate(f, &p);
 
       bcount += still_nucleate;
       i++;
@@ -316,8 +319,8 @@ int main(int argc, char *argv[])
 #ifdef SILO
     // Write visualisation stuff if necessary
     if((p.silointerval > 0) && (step % p.silointerval == 0)) {
-      write_silo_slice_step(f, p, step);
-      // write_silo_step(f, p, step);
+      write_silo_slice_step(f, &p, step);
+      write_silo_step(f, p, step);
     }
 #endif // SILO
 
