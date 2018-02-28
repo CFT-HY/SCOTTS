@@ -12,8 +12,10 @@
  * Create a single isolated scalar bubble at the
  * centre of the box.
  */
-void initial_scalar_bubble(hydro_fields f, hydro_params p) {
+void initial_scalar_bubble(hydro_fields f, hydro_params *p_ptr) {
 
+  hydro_params p=*p_ptr;
+  
   int x, y, z, i;
 
   float sigmlo = 2.0*sqrt(2.0)/81.0*p.alpha*p.alpha*p.alpha
@@ -34,6 +36,11 @@ void initial_scalar_bubble(hydro_fields f, hydro_params p) {
 
   float Rtenab = p.scale*Rlapab;
 
+  if(p_ptr->siloslicecoord==-1){
+    p_ptr->siloslicecoord=p.Lx/2;
+  }
+
+  
   printf0(p,
 	  "** phimin %g, cstrab %g, Rtenab %g\n",
 	  phimin, cstrab, Rtenab);
@@ -324,7 +331,8 @@ void nucleate_at(hydro_fields f, hydro_params p, int x0, int y0, int z0) {
  * No scalar field initialisation.
  */
 void initial_3D(hydro_fields f, hydro_params p) {
- 
+
+  
   int x, y, z, i; 
 
   float sigmlo = 2.0*sqrt(2.0)/81.0*p.alpha*p.alpha*p.alpha
@@ -393,7 +401,7 @@ void initial_3D(hydro_fields f, hydro_params p) {
 
 
 
-/* int do_nucleate(hydro_fields f, hydro_params p) 
+/* int do_nucleate(hydro_fields f, hydro_params *p_ptr) 
  *
  * Attempt exactly one nucleation:
  * - choose a site
@@ -401,9 +409,11 @@ void initial_3D(hydro_fields f, hydro_params p) {
  * - if so, nucleate
  * - if not, do nothing
  */
-int do_nucleate(hydro_fields f, hydro_params p) {
+int do_nucleate(hydro_fields f, hydro_params *p_ptr) {
 
-  printf0(p, "Trying to nucleate a bubble (safe distance = %d)\n",
+  hydro_params p=*p_ptr;
+  
+  printf0(p, "Trying to nucleate a bubble (safe distance = %d)\n", 
 	  safe_distance(f,p));
 
   int tryx = random()%p.Lx;
@@ -424,6 +434,9 @@ int do_nucleate(hydro_fields f, hydro_params p) {
   } else {
     nucleate_at(f, p, tryx, tryy, tryz);
     halo_field(f.phi, p);
+    if(p_ptr->siloslicecoord==-1){
+      p_ptr->siloslicecoord=tryx;
+    }
   }
 
   return 1;
