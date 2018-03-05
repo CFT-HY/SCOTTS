@@ -1,3 +1,15 @@
+# Makefile for the COSMOS supercomputer
+#
+# Tested with modules:
+#
+#  1) cosmos.common            5) mpt/2.14
+#  2) python/2.7.10            6) fftw3/3.3.4-intel-15.0
+#  3) icomp/15.0.5.223         7) hdf5/1.8.13-intel-15.0
+#  4) impi/5.0.3.049
+#
+# To use Silo, you may need to compile it yourself...
+#
+
 #### CC ####
 
 CC := mpicc -g -DMPI -DFFT
@@ -10,7 +22,7 @@ CFLAGS := -O3 -I$(HOME)/include/
 
 LIBS := -L$(HOME)/local/lib64/ \
 	-lsiloh5 -lhdf5 -lfftw3f_mpi -lfftw3f -lm -lstdc++
-
+	
 #### No user-serviceable parts below ####
 
 OBJECTS := main.o evolve.o potential.o energy.o eos.o \
