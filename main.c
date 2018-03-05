@@ -229,7 +229,7 @@ int main(int argc, char *argv[])
 #ifdef SILO
 
   // Are we using silo for visualisation?
-  if(p.silointerval > 0)
+  if(p.silointerval > 0 || p.silosliceinterval>0 )
     silo_init(p);
 
 #endif // SILO
@@ -319,8 +319,11 @@ int main(int argc, char *argv[])
 #ifdef SILO
     // Write visualisation stuff if necessary
     if((p.silointerval > 0) && (step % p.silointerval == 0)) {
-      write_silo_slice_step(f, &p, step);
       write_silo_step(f, p, step);
+    }
+
+    if((p.silosliceinterval > 0) && (step % p.silosliceinterval == 0)) {
+      write_silo_slice_step(f, &p, step);
     }
 #endif // SILO
 

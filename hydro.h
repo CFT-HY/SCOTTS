@@ -136,8 +136,9 @@ typedef struct {
   int interval;
   int fftinterval;
   int silointerval;
+  int silosliceinterval;
   int checkpointinterval;
-
+  
   // x coord to slice through for write_silo_slice_step
   int siloslicecoord;
   
