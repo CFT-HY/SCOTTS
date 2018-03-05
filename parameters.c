@@ -52,6 +52,7 @@ void get_parameters(char *infile, hydro_params *p)
   int set_interval = 0;
   int set_fftinterval = 0;
   int set_silointerval = 0;
+  int set_silosliceinterval =0;
   int set_checkpointinterval = 0;
 
   int set_uetcstart = 0;
@@ -213,6 +214,10 @@ void get_parameters(char *infile, hydro_params *p)
     else if(!strcasecmp(key,"silointerval")) {
       p->silointerval = strtol(value,NULL,10);
       set_silointerval = 1;
+    }
+        else if(!strcasecmp(key,"silosliceinterval")) {
+      p->silosliceinterval = strtol(value,NULL,10);
+      set_silosliceinterval = 1;
     }
     else if(!strcasecmp(key,"checkpointinterval")) {
       p->checkpointinterval = strtol(value,NULL,10);
@@ -476,7 +481,10 @@ void get_parameters(char *infile, hydro_params *p)
   } else if(!set_silointerval) {
     printf0(*p, "Did not set parameter \'silointerval\'\n");
     die(100);
-  } else if(!set_checkpointinterval) {
+  } else if(!set_silosliceinterval) {
+    printf0(*p, "Did not set parameter \'silosliceinterval\'\n");
+    die(100);
+  }else if(!set_checkpointinterval) {
     printf0(*p, "Did not set parameter \'checkpointinterval\'\n");
     die(100);
   } else if(!set_uetcstart) {
@@ -542,7 +550,7 @@ void get_parameters(char *infile, hydro_params *p)
 	    "-- gstar %g\n"
 	    "-- T0 %g, Tconst %g\n"
 	    "-- interval %d, fftinterval %d\n"
-	    "-- silointerval %d, checkpointinterval %d\n"
+	    "-- silointerval %d, silosliceinterval %d,checkpointinterval %d\n"
 	    "-- uetcstart %d\n"
 	    "-- bubbles %d, beta %g, scale %g\n"
 #ifdef INITPS
@@ -564,7 +572,7 @@ void get_parameters(char *infile, hydro_params *p)
 	    p->gstar,
 	    p->T0, p->Tconst,
 	    p->interval, p->fftinterval,
-	    p->silointerval, p->checkpointinterval,
+	    p->silointerval, p->silosliceinterval, p->checkpointinterval,
 	    p->uetcstart,
 	    p->bubbles, p->beta, p->scale,
 #ifdef INITPS
