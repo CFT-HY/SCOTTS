@@ -129,6 +129,14 @@ void histo_field(float ***field, hydro_params p, int step) {
   overall_max = reduce_max(fmax, p);
   overall_min = reduce_min(fmin, p);
 
+  /* Avoid fencepost errors by making overall_max and overall_min
+     slightly larger (and smaller, respectively) than the largest (and
+     smallest) field values found in the lattice. */
+  const double bin_epsilon = 0.01*(overall_max - overall_min);
+  overall_min = overall_min - bin_epsilon;
+  overall_max = overall_max + bin_epsilon;
+  
+
 
   int nbins = 100;
 
