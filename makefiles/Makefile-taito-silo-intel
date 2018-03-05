@@ -1,18 +1,28 @@
+# This makefile assumes that you have compiled and installed
+# your own version of HDF5, single-precision FFTW3, and Silo
+# with ~/local_taito/ as the prefix.
+#
+# Assumes that the Intel compiler is being used, e.g. the result
+# of `module list` could be:
+#
+# 1) intel/16.0.0   2) mkl/11.3.0  
+# 3) intelmpi/5.1.1   4) StdEnv
+
 #### CC ####
 
-CC := mpicc -DMPI -DFFT -DSILO -DINITPS
+CC := mpicc -DMPI -DFFT -DSILO
 
 #### CFLAGS ####
 
-CFLAGS := -L/homeappl/home/weir/local_taito/lib \
-        -I/homeappl/home/weir/local_taito/include \
+CFLAGS := -L$(HOME)/local_taito/lib \
+        -I$(HOME)/local_taito/include \
         -O3 -opt-prefetch -unroll-aggressive -no-prec-div \
         -fp-model fast=2 -align -fno-alias -fno-fnalias -ipo
 
 
 #### LIBS ####
 
-LIBS := -lfftw3_mpi -lfftw3 -lfftw3f_mpi -lfftw3f -lsiloh5 -lhdf5 -lstdc++ -lz
+LIBS := -lfftw3f_mpi -lfftw3f -lsiloh5 -lhdf5 -lstdc++ -lz
 
 
 #### No user-serviceable parts below ####
