@@ -54,7 +54,9 @@ void get_parameters(char *infile, hydro_params *p)
   int set_silointerval = 0;
   int set_silosliceinterval =0;
   int set_checkpointinterval = 0;
+  int set_siloslicecoord=0;
 
+  
   int set_uetcstart = 0;
 
   int set_initial = 0;
@@ -215,13 +217,17 @@ void get_parameters(char *infile, hydro_params *p)
       p->silointerval = strtol(value,NULL,10);
       set_silointerval = 1;
     }
-        else if(!strcasecmp(key,"silosliceinterval")) {
+    else if(!strcasecmp(key,"silosliceinterval")) {
       p->silosliceinterval = strtol(value,NULL,10);
       set_silosliceinterval = 1;
     }
     else if(!strcasecmp(key,"checkpointinterval")) {
       p->checkpointinterval = strtol(value,NULL,10);
       set_checkpointinterval = 1;
+    }
+    else if(!strcasecmp(key,"siloslicecoord")) {
+      p->siloslicecoord = strtol(value,NULL,10);
+      set_siloslicecoord = 1;
     }
     else if(!strcasecmp(key,"uetcstart")) {
       p->uetcstart = strtol(value,NULL,10);
@@ -486,6 +492,9 @@ void get_parameters(char *infile, hydro_params *p)
     die(100);
   }else if(!set_checkpointinterval) {
     printf0(*p, "Did not set parameter \'checkpointinterval\'\n");
+    die(100);
+  }else if(!set_siloslicecoord) {
+    printf0(*p, "Did not set parameter \'siloslicecoord\'\n");
     die(100);
   } else if(!set_uetcstart) {
     printf0(*p, "Did not set parameter \'uetcstart\'\n");

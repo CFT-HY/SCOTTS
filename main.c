@@ -79,8 +79,6 @@ int main(int argc, char *argv[])
 	  "-- T0 %g\n", p.T0);
   */
 
-  //Set siloslicecoord to -1 so we know it is not set.
-  p.siloslicecoord=-1;
 
   
   // Degrees of freedom, still hardcoded
@@ -175,10 +173,22 @@ int main(int argc, char *argv[])
       // Instead, start off with an empty box
       initial_blank(f, p);
 
+      start = clock();
+      printf0(p, "Nucleating first bubble\n");
+      nucleate_at(f,p,0,0,0);
+      halo_field(f.phi,p);
+
+
+      end = clock();
+      if(!p.rank)
+	fprintf(stderr,"Nucleation attempt took %lf\n",
+		((float) (end - start)) / CLOCKS_PER_SEC);
+      bcount+=1;
+      
       // p.bubbles is how many bubbles to make at the start (usually 1)
-      for(step=0;step<p.bubbles;step++) {
+      for(step=1;step<p.bubbles;step++) {
 	start = clock();
-	still_nucleate = do_nucleate(f, &p);
+	still_nucleate = do_nucleate(f, p);
 	end = clock();
 	if(!p.rank)
 	  fprintf(stderr,"Nucleation attempt took %lf\n",
@@ -193,8 +203,11 @@ int main(int argc, char *argv[])
       }
     } else {
       // One bubble only (not normally used)
+      initial_blank(f, p);
+
       printf0(p, "Nucleating just one bubble\n");
-      initial_scalar_bubble(f, &p);
+      nucleate_at(f,p,0,0,0);
+      halo_field(f.phi,p);
     }
 
 #endif // INITPS
@@ -299,7 +312,7 @@ int main(int argc, char *argv[])
 
     while(i < howmany) {
 
-      still_nucleate = do_nucleate(f, &p);
+      still_nucleate = do_nucleate(f, p);
 
       bcount += still_nucleate;
       i++;
@@ -323,7 +336,7 @@ int main(int argc, char *argv[])
     }
 
     if((p.silosliceinterval > 0) && (step % p.silosliceinterval == 0)) {
-      write_silo_slice_step(f, &p, step);
+      write_silo_slice_step(f, p, step);
     }
 #endif // SILO
 

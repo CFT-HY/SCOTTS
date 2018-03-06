@@ -7,77 +7,6 @@
 #include "hydro.h"
 
 
-/* void initial_scalar_bubble(hydro_fields f, hydro_params p)
- *
- * Create a single isolated scalar bubble at the
- * centre of the box.
- */
-void initial_scalar_bubble(hydro_fields f, hydro_params *p_ptr) {
-
-  hydro_params p=*p_ptr;
-  
-  int x, y, z, i;
-
-  float sigmlo = 2.0*sqrt(2.0)/81.0*p.alpha*p.alpha*p.alpha
-    /(p.lambda*p.lambda*sqrt(p.lambda));
-
-  printf0(p,
-	  "** Initial conditions magic:\n"
-	  "** sigmlo %g\n", sigmlo);
-  
-  float phimin =  ( p.alpha*p.Tconst
-		     + sqrt((p.alpha*p.Tconst)*(p.alpha*p.Tconst)
-			    - 4*p.lambda*p.gamma
-			    *(p.Tconst*p.Tconst - p.T0*p.T0)) )/(2*p.lambda);
-
-  float cstrab = 1.0*phimin;
-
-  float Rlapab = 2.0*sigmlo/(-1.0*Vf(p, p.Tconst, phimin));
-
-  float Rtenab = p.scale*Rlapab;
-
-  if(p_ptr->siloslicecoord==-1){
-    p_ptr->siloslicecoord=p.Lx/2;
-  }
-
-  
-  printf0(p,
-	  "** phimin %g, cstrab %g, Rtenab %g\n",
-	  phimin, cstrab, Rtenab);
-
-
-  for(x=1;x<=p.slicex;x++) {
-    for(y=1;y<=p.slicey;y++) {
-      for(z=0;z<p.Lz;z++) {
-    
-	f.phi[x][y][z] = cstrab*exp(-1.0*p.dx*p.dx
-				    *(((float)(p.shiftx+x-1-p.Lx/2))
-				      *((float)(p.shiftx+x-1-p.Lx/2))
-				      + ((float)(p.shifty+y-1-p.Ly/2))
-				      *((float)(p.shifty+y-1-p.Ly/2))
-				      + ((float)(z-p.Lz/2))
-				      *((float)(z-p.Lz/2)))
-				    /2.0/(Rtenab*Rtenab) );
-	
-	f.pifull[x][y][z] = 0.0;
-
-#ifndef SCALAR	
-	f.T[x][y][z] = p.Tconst;
-	
-	f.E[x][y][z] = 3.0*p.gdeg*f.T[x][y][z]*f.T[x][y][z]
-	  *f.T[x][y][z]*f.T[x][y][z]
-	  + Vf(p, f.T[x][y][z], f.phi[x][y][z])
-	  - f.T[x][y][z]*VTf(p, f.T[x][y][z], f.phi[x][y][z]);
-	
-	f.Z[0][x][y][z] = 0.0;
-	f.V[0][x][y][z] = 0.0;
-	f.W[x][y][z] = 1.0;
-#endif // SCALAR
-      }
-    }
-  }
-}
-
 
 
 
@@ -409,9 +338,7 @@ void initial_3D(hydro_fields f, hydro_params p) {
  * - if so, nucleate
  * - if not, do nothing
  */
-int do_nucleate(hydro_fields f, hydro_params *p_ptr) {
-
-  hydro_params p=*p_ptr;
+int do_nucleate(hydro_fields f, hydro_params p) {
   
   printf0(p, "Trying to nucleate a bubble (safe distance = %d)\n", 
 	  safe_distance(f,p));
@@ -434,10 +361,8 @@ int do_nucleate(hydro_fields f, hydro_params *p_ptr) {
   } else {
     nucleate_at(f, p, tryx, tryy, tryz);
     halo_field(f.phi, p);
-    if(p_ptr->siloslicecoord==-1){
-      p_ptr->siloslicecoord=tryx;
-    }
   }
+  
 
   return 1;
 }
