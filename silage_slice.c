@@ -27,19 +27,13 @@ void make_kinetic(hydro_fields f, hydro_params p, float ***temp) {
   halo_field(temp, p);
 }
 
-void make_slice(hydro_fields f, hydro_params *p_ptr, float *slice, float ***temp)
+void make_slice(hydro_fields f, hydro_params p, float *slice, float ***temp)
 {
 
-  hydro_params p = *p_ptr;
   
   int x, y, z;
 
-  
-  if(p_ptr->siloslicecoord==-1){
-    p_ptr->siloslicecoord=0;
-  }
-  x = p_ptr->siloslicecoord;
-  
+  x=p.siloslicecoord;
   
   float *trim = (float *)malloc(p.slicey*p.Lz*sizeof(float));
   
@@ -47,7 +41,7 @@ void make_slice(hydro_fields f, hydro_params *p_ptr, float *slice, float ***temp
     int localx=x%p.slicex+1;
     for(y=1; y<=p.slicey; y++) {
       for(z=0; z<p.Lz; z++) {
-	trim[(y-1)*p.Lz + z] = temp[localx+1][y][z];
+	trim[(y-1)*p.Lz + z] = temp[localx][y][z];
       }
     }
   }
@@ -105,10 +99,9 @@ void make_slice(hydro_fields f, hydro_params *p_ptr, float *slice, float ***temp
  *
  * write fields to a silo file for use with Visit
  */
-void write_silo_slice_step(hydro_fields f, hydro_params *p_ptr, int step)
+void write_silo_slice_step(hydro_fields f, hydro_params p, int step)
 {
 
-  hydro_params p=*p_ptr;
   
   int x, y, z, i;
 
@@ -173,7 +166,7 @@ void write_silo_slice_step(hydro_fields f, hydro_params *p_ptr, int step)
 
   make_kinetic(f, p, temp);
 
-  make_slice(f, p_ptr, slice, temp);
+  make_slice(f, p, slice, temp);
 
   if(!p.rank){
     fprintf(stderr,"Slice coord x=%d\n",p.siloslicecoord);
@@ -192,7 +185,7 @@ void write_silo_slice_step(hydro_fields f, hydro_params *p_ptr, int step)
 
   //// make phi slice ///
 
-  make_slice(f, p_ptr, slice, f.phi);
+  make_slice(f, p, slice, f.phi);
 
   //// write phi slice ///
 

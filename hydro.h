@@ -351,13 +351,12 @@ void advect_E(hydro_fields f, hydro_params p);
 void advect_Z(hydro_fields f, hydro_params p);
 
 // initial.c
-void initial_scalar_bubble(hydro_fields f, hydro_params *p_ptr);
 void initial_blank(hydro_fields f, hydro_params p);
 int safe_distance(hydro_fields f, hydro_params p);
 int can_nucleate(hydro_fields f, hydro_params p, int x0, int y0, int z0);
 void nucleate_at(hydro_fields f, hydro_params p, int x0, int y0, int z0);
 void initial_3D(hydro_fields f, hydro_params p);
-int do_nucleate(hydro_fields f, hydro_params *p_ptr);
+int do_nucleate(hydro_fields f, hydro_params p);
 int should_nucleate(hydro_fields f, hydro_params p, float t, int step);
 void init_profile(hydro_fields *f, hydro_params *p);
 
@@ -382,7 +381,7 @@ void get_parameters(char *filename, hydro_params *p);
 void silo_init(hydro_params p);
 void write_silo_step(hydro_fields f, hydro_params p, int step);
 
-void write_silo_slice_step(hydro_fields f, hydro_params *p_ptr, int step);
+void write_silo_slice_step(hydro_fields f, hydro_params p, int step);
 #endif // SILO
 
 
