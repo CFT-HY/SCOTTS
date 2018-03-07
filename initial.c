@@ -6,6 +6,30 @@
  * initial_blank() *before* nucleating bubbles with nucleate_at()
  * or do_nucleate().
  *
+ * Bubbles are generally nucleated as blobs of scalar field with the 
+ * Gaussian ansatz. The value of the field at the centre of the blob is
+ * is the broken-phase value of the scalar field,
+ * \f[
+ *  \phi_\text{min} = \frac{\alpha T_N + \sqrt{(\alpha T_N)^2 
+ *                                      - 4 \lambda\gamma (T_N^2 - T_0^2)}}
+ *                         {2\lambda}
+ * \f]
+ * 
+ * The surface tension is
+ * \f[
+ *  \sigma = \frac{2\sqrt{2}}{81} \frac{\alpha^3}{\lambda^{5/2}}
+ * \f]
+ *
+ * The radius of the critical bubble is
+ * \f[
+ *  R_\text{crit} = - \frac{2 \sigma}{V(\phi,T_N)}
+ * \f]
+ * This is scaled by `p.scale` to get the initial conditions for
+ * a freshly-nucleated Gaussian blob. This scaling may be necessary
+ * to get the bubbles to grow due to e.g. lattice artifacts.
+ *
+ * These expressions are used in various functions in this file.
+ *
  * Contributors:
  * - 2010-2017 David Weir
  * - 2018-     Daniel Cutting
@@ -74,7 +98,6 @@ void initial_blank(hydro_fields f, hydro_params p) {
 }
 
 
-
 /** Compute the safe distance required around new bubbles.
  *
  * Note, returns the distance in number of lattice sites, rounded
@@ -109,54 +132,84 @@ int safe_distance(hydro_fields f, hydro_params p) {
 /** Check whether a bubble can be nucleated at a given point.
  *
  * Are the conditions suitable for nucleation at `(x0, y0, z0)`?
- * Returns 1 if so.
+ * Returns 1 if so, 0 if not.
+ *
+ * Two conditions are applied:
+ *  - The distance between the bubbles must
+ *    be at least the 'safe distance' computed by safe_distance().
+ *  - There is no scalar radiation or other disturbances
+ *    of a greater magnitude than threshold_phi (which is a hard-coded
+ *    percentage of the field value at the centre of the Gaussian ansatz).
  */
 int can_nucleate(hydro_fields f, hydro_params p, int x0, int y0, int z0) {
 
   int safedist = safe_distance(f,p);
-  float threshphi = 0.0001;
 
-  int shortx, shorty, shortz;
-  int longx, longy, longz;
-  int dx, dy, dz;
+  float phimin =  (p.alpha*p.Tconst
+		   + sqrt((p.alpha*p.Tconst)*(p.alpha*p.Tconst)
+			  - 4.0*p.lambda*p.gamma
+			  *(p.Tconst*p.Tconst - p.T0*p.T0))
+		   )/(2.0*p.lambda);
+
+  float threshold_phi = 0.00005*phimin;
+
+  int direct_x, direct_y, direct_z;
+  int wrap_x, wrap_y, wrap_z;
+  int delta_x, delta_y, delta_z;
 
   int is_good = 1;
   int x, y, z;
 
-  for(x=1;x<=p.slicex;x++) {
-    for(y=1;y<=p.slicey;y++) {
-      for(z=0;z<p.Lz;z++) {
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0 ; z < p.Lz; z++) {
 
-	shortx = abs(p.shiftx+x-1-x0);
-	shorty = abs(p.shifty+y-1-y0);
-	shortz = abs(z - z0);
+	// These are distances 'within the lattice'
+	direct_x = abs(p.shiftx + x - 1 - x0);
+	direct_y = abs(p.shifty + y - 1 - y0);
+	direct_z = abs(z - z0);
 
-	longx = (p.Lx - shortx);
-	longy = (p.Ly - shorty);
-	longz = (p.Lz - shortz);
+	// These are distances which 'wrap around' the boundary
+	wrap_x = (p.Lx - direct_x);
+	wrap_y = (p.Ly - direct_y);
+	wrap_z = (p.Lz - direct_z);
 
-	if(shortx < longx)
-	  dx = shortx;
+	// Check which of direct_ and wrap_ is shorter
+	
+	if(direct_x < wrap_x)
+	  delta_x = direct_x;
 	else
-	  dx = longx;
+	  delta_x = wrap_x;
 
-	if(shorty < longy)
-	  dy = shorty;
+	if(direct_y < wrap_y)
+	  delta_y = direct_y;
 	else
-	  dy = longy;
+	  delta_y = wrap_y;
 
-	if(shortz < longz)
-	  dz = shortz;
+	if(direct_z < wrap_z)
+	  delta_z = direct_z;
 	else
-	  dz = longz;
+	  delta_z = wrap_z;
 
-	if(((dx*dx + dy*dy + dz*dz) < safedist*safedist)
-	   && (fabs(f.phi[x][y][z]) > threshphi)) {
+	// Apply two conditions:
+	// 1. The distance between the bubbles must
+	//    be at least the 'safe distance' computed by safe_distance.
+	// 2. There is no scalar radiation or other disturbances
+	//    of a greater magnitude than threshold_phi.
+	if(((delta_x*delta_x + delta_y*delta_y + delta_z*delta_z)
+	    < safedist*safedist)
+	   && (fabs(f.phi[x][y][z]) > threshold_phi)) {
+
 	  fprintf(stderr,
-		  "Dead (%d,%d,%d) (dx=%d, dy=%d, dz=%d, safe=%d, phi %lf)\n",
-		  x0, y0, z0, dx, dy, dz, safedist, f.phi[x][y][z]);
+		  "Dead (%d, %d, %d) "
+		  "(dx=%d, dy=%d, dz=%d, safe=%d, phi %lf)\n",
+		  x0, y0, z0,
+		  delta_x, delta_y, delta_z, safedist, f.phi[x][y][z]);
+
 	  is_good = 0;
+
 	  break;
+
 	}
       }
       
@@ -175,72 +228,82 @@ int can_nucleate(hydro_fields f, hydro_params p, int x0, int y0, int z0) {
 
 /** Nucleate one bubble at a given location.
  *
- * Nucleate a bubble at `(x0, y0, z0)`.
+ * Nucleate a bubble at `(x0, y0, z0)`. Does _not_ check whether a
+ * bubble 'can' be nucleated there, see can_nucleate() to test whether
+ * this is the case. The Gaussian ansatz is added to the scalar field
+ * `f.phi`, and so if one does not check that the area is empty, this
+ * can end up overshooting the broken phase.
  */
 void nucleate_at(hydro_fields f, hydro_params p, int x0, int y0, int z0) {
 
   int x, y, z, i;  
+
+
+  float surface_tension = (2.0*sqrt(2.0)/81.0)*(
+						p.alpha*p.alpha*p.alpha
+						/(p.lambda*p.lambda
+						  *sqrt(p.lambda)));
+
+  float phimin =  (p.alpha*p.Tconst
+		   + sqrt((p.alpha*p.Tconst)*(p.alpha*p.Tconst)
+			  - 4.0*p.lambda*p.gamma
+			  *(p.Tconst*p.Tconst - p.T0*p.T0))
+		   )/(2.0*p.lambda);
   
-  float surface_tension = 2.0*sqrt(2.0)/81.0*p.alpha*p.alpha*p.alpha
-    /(p.lambda*p.lambda*sqrt(p.lambda));
-
-
-
-  float phimin =  ( p.alpha*p.Tconst
-		     + sqrt((p.alpha*p.Tconst)*(p.alpha*p.Tconst)
-			    - 4*p.lambda*p.gamma
-			    *(p.Tconst*p.Tconst - p.T0*p.T0)) )/ (2*p.lambda);
-  
-  float R_critical = 2.0*surface_tension/(-1.0*Vf(p, p.Tconst, phimin));
+  float R_critical = -2.0*surface_tension/Vf(p, p.Tconst, phimin);
   
   float R_scaled = p.scale*R_critical;
 
-  printf0(p, "Nucleating at (%d,%d,%d)\n",x0,y0,z0);
+  float threshold_phi = 0.00005*phimin;
+  
+  printf0(p, "Nucleating at (%d, %d, %d)\n", x0, y0, z0);
 
-  int shortx, shorty, shortz;
-  int longx, longy, longz;
-  int dx, dy, dz;
+  int direct_x, direct_y, direct_z;
+  int wrap_x, wrap_y, wrap_z;
+  int delta_x, delta_y, delta_z;
 
   float phival;
 
-  for(x=1;x<=p.slicex;x++) {
-    for(y=1;y<=p.slicey;y++) {
-      for(z=0;z<p.Lz;z++) {
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
 
-	shortx = abs(p.shiftx+x-1-x0);
-	shorty = abs(p.shifty+y-1-y0);
-	shortz = abs(z - z0);
+	direct_x = abs(p.shiftx + x - 1 - x0);
+	direct_y = abs(p.shifty + y - 1 - y0);
+	direct_z = abs(z - z0);
 
-	longx = (p.Lx - shortx);
-	longy = (p.Ly - shorty);
-	longz = (p.Lz - shortz);
+	wrap_x = (p.Lx - direct_x);
+	wrap_y = (p.Ly - direct_y);
+	wrap_z = (p.Lz - direct_z);
 
-	if(shortx < longx)
-	  dx = shortx;
+	if(direct_x < wrap_x)
+	  delta_x = direct_x;
 	else
-	  dx = longx;
+	  delta_x = wrap_x;
 
-	if(shorty < longy)
-	  dy = shorty;
+	if(direct_y < wrap_y)
+	  delta_y = direct_y;
 	else
-	  dy = longy;
+	  delta_y = wrap_y;
 
-	if(shortz < longz)
-	  dz = shortz;
+	if(direct_z < wrap_z)
+	  delta_z = direct_z;
 	else
-	  dz = longz;
+	  delta_z = wrap_z;
 
-
-	phival = phimin*exp(-1.0*p.dx*p.dx*((float)((dx*dx) 
-						     + (float)(dy*dy)
-						     + (float)(dz*dz)))
-			    /2.0/(R_scaled*R_scaled) );
+	// Gaussian ansatz
+	phival = phimin*exp(-1.0*p.dx*p.dx*((float)(delta_x*delta_x 
+						    + delta_y*delta_y
+						    + delta_z*delta_z))
+			    /(2.0*R_scaled*R_scaled));
 	
 	f.phi[x][y][z] += phival;
 
 
 #ifndef SCALAR
-	if(phival > 1e-8) {
+	// Only bother computing the resulting fluid energy density
+	// if the value of phi is 'not small'
+	if(phival > threshold_phi) {
 
 	  f.E[x][y][z] = 3.0*p.gdeg*f.T[x][y][z]*f.T[x][y][z]
 	    *f.T[x][y][z]*f.T[x][y][z]
@@ -249,18 +312,17 @@ void nucleate_at(hydro_fields f, hydro_params p, int x0, int y0, int z0) {
 
 	}
 
-	// Don't set up the energy density according to the Eqn of state?
+	// Don't set up the energy density according to the Eqn of state?!
 	//	f.E[x][y][z] = 0.0;
 #endif // SCALAR
       }
     }
   }
-  
-  //  fprintf(stderr,"Done\n");
+ 
 }
 
 
-/** Initialise the system with a shock tube.h
+/** Initialise the system with a shock tube.
  *
  * "Shock tube"-style initial conditions for testing the fluid.
  * No scalar field initialisation.
