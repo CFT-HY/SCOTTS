@@ -5,8 +5,7 @@
 #include "hydro.h"
 
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
 
   hydro_params p;
 
@@ -201,14 +200,19 @@ int main(int argc, char *argv[])
 	//	break;
 
       }
-    } else {
+    } else if(p.bubbles == 1) {
       // One bubble only (not normally used)
       initial_blank(f, p);
 
       printf0(p, "Nucleating just one bubble\n");
       nucleate_at(f,p,0,0,0);
       halo_field(f.phi,p);
+    } else {
+      // Empty system
+      initial_blank(f, p);
     }
+    // TODO: Make INITPS just another parameter choice rather than
+    // dependent on conditional compilation...
 
 #endif // INITPS
 
