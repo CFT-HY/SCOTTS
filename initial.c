@@ -18,54 +18,56 @@
  * Note that this must be run at the start of the simulation, prior to
  * (for example) nucleate_at(), even if one is just nucleating one
  * bubble.
+ *
+ * Initialises the scalar field `f.phi` and its conjugate momentum
+ * `f.pifull` to zero everywhere.
+ *
+ * If we are _not_ running a scalar-only simulation (i.e. `SCALAR` is
+ * not defined) we also initialise the temperature to `p.Tconst`,
+ * which is the temperature at which we nucleate bubbles; there is no
+ * physical input to determine this temperature, it is set 'by hand'.
+ *
+ * The internal energy of the fluid is then set appropriately.
+ *
+ * The remaining quantities - the fluid 3-velocity `f.V` and momentum
+ * density `f.Z` are set everywhere to zero, and the body-centred
+ * gamma factor `f.W` is set to unity.
+ *
+ * Does not initialise the haloes - you must call halo_field() where
+ * appropriate shortly after running this.
  */
 void initial_blank(hydro_fields f, hydro_params p) {
 
   int x, y, z, i;
 
-  float sigmlo = 2.0*sqrt(2.0)/81.0*p.alpha*p.alpha*p.alpha
-    /(p.lambda*p.lambda*sqrt(p.lambda));
-
-  printf0(p,
-	  "** Initial conditions magic:\n"
-	  "** sigmlo %g\n", sigmlo);
-
-  float phimin =  ( p.alpha*p.Tconst
-		     + sqrt((p.alpha*p.Tconst)*(p.alpha*p.Tconst)
-			    - 4*p.lambda*p.gamma
-			    *(p.Tconst*p.Tconst - p.T0*p.T0)) )/(2*p.lambda);
-  
-  float cstrab = 1.0*phimin;
-
-  float Rlapab = 2.0*sigmlo/(-1.0*Vf(p, p.Tconst, phimin));
-
-  float Rtenab = p.scale*Rlapab;
-
-  printf0(p,
-	  "** phimin %g, cstrab %g, Rtenab %g\n",
-	  phimin, cstrab, Rtenab);
-
-
-  for(x=1;x<=p.slicex;x++) {
-    for(y=1;y<=p.slicey;y++) {
-      for(z=0;z<p.Lz;z++) {
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
 	
 	f.phi[x][y][z] = 0.0; 
 	
 	f.pifull[x][y][z] = 0.0;
 
 #ifndef SCALAR	
+
 	f.T[x][y][z] = p.Tconst;
-	
+
+	// Note when the fluid is at rest, f.W = 1 and so
+	// f.E is just the internal rest-energy i.e. \epsilon.
 	f.E[x][y][z] = 3.0*p.gdeg*f.T[x][y][z]*f.T[x][y][z]
 	  *f.T[x][y][z]*f.T[x][y][z]
 	  + Vf(p, f.T[x][y][z], f.phi[x][y][z])
 	  - f.T[x][y][z]*VTf(p, f.T[x][y][z], f.phi[x][y][z]);
-	
-	f.Z[0][x][y][z] = 0.0;
-	f.V[0][x][y][z] = 0.0;
+
+	for(i = 0; i < 3; i++) {
+	  f.Z[i][x][y][z] = 0.0;
+	  f.V[i][x][y][z] = 0.0;
+	}
+
 	f.W[x][y][z] = 1.0;
+
 #endif // SCALAR
+
       }
     }
   }
