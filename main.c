@@ -151,7 +151,7 @@ int main(int argc, char *argv[])
 
     // Shock tube style initial conditions for fluid only (not used)
 #ifdef INITPS
-    initial_3D(f,p);
+    initial_blank(f,p);
     init_ps(f, p, f.Z);
     norm_power(f, p, f.Z);
 
@@ -188,7 +188,7 @@ int main(int argc, char *argv[])
       // p.bubbles is how many bubbles to make at the start (usually 1)
       for(step=1;step<p.bubbles;step++) {
 	start = clock();
-	still_nucleate = do_nucleate(f, p);
+	still_nucleate = try_nucleate(f, p);
 	end = clock();
 	if(!p.rank)
 	  fprintf(stderr,"Nucleation attempt took %lf\n",
@@ -312,7 +312,7 @@ int main(int argc, char *argv[])
 
     while(i < howmany) {
 
-      still_nucleate = do_nucleate(f, p);
+      still_nucleate = try_nucleate(f, p);
 
       bcount += still_nucleate;
       i++;

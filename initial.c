@@ -4,7 +4,7 @@
  *
  * To create a system with bubbles, one would first call
  * initial_blank() *before* nucleating bubbles with nucleate_at()
- * or do_nucleate().
+ * or try_nucleate().
  *
  * Bubbles are generally nucleated as blobs of scalar field with the 
  * Gaussian ansatz. The value of the field at the centre of the blob is
@@ -325,33 +325,31 @@ void nucleate_at(hydro_fields f, hydro_params p, int x0, int y0, int z0) {
 /** Full nucleation process including site selection.
  *
  * Attempt exactly one nucleation:
- * - choose a site
- * - check if nucleation is allowed there
- * - if so, nucleate
+ * - choose a site at random uniformly out of the whole box
+ * - check if nucleation is allowed there with can_nucleate()
+ * - if so, nucleate with nucleate_at()
  * - if not, do nothing
  */
-int do_nucleate(hydro_fields f, hydro_params p) {
+int try_nucleate(hydro_fields f, hydro_params p) {
   
   printf0(p, "Trying to nucleate a bubble (safe distance = %d)\n", 
-	  safe_distance(f,p));
+	  safe_distance(f, p));
 
-  int tryx = random()%p.Lx;
-  int tryy = random()%p.Ly;
-  int tryz = random()%p.Lz;
-
-  int attempts = 0;
+  int try_x = random() % p.Lx;
+  int try_y = random() % p.Ly;
+  int try_z = random() % p.Lz;
 
 
   // NB: number of attempts set to 1, but can always retry
-  if(!can_nucleate(f,p,tryx,tryy,tryz)) {
+  if(!can_nucleate(f, p, try_x, try_y, try_z)) {
 
     printf0(p, "Not allowed to nucleate at (%d,%d,%d)!\n",
-	    tryx, tryy, tryz);
+	    try_x, try_y, try_z);
 
     return 0;
 
   } else {
-    nucleate_at(f, p, tryx, tryy, tryz);
+    nucleate_at(f, p, try_x, try_y, try_z);
     halo_field(f.phi, p);
   }
   
