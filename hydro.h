@@ -136,8 +136,12 @@ typedef struct {
   int interval;
   int fftinterval;
   int silointerval;
+  int silosliceinterval;
   int checkpointinterval;
-
+  
+  // x coord to slice through for write_silo_slice_step
+  int siloslicecoord;
+  
   int uetcstart;
 
   // Initial conditions type (see #defines above)
@@ -347,7 +351,6 @@ void advect_E(hydro_fields f, hydro_params p);
 void advect_Z(hydro_fields f, hydro_params p);
 
 // initial.c
-void initial_scalar_bubble(hydro_fields f, hydro_params p);
 void initial_blank(hydro_fields f, hydro_params p);
 int safe_distance(hydro_fields f, hydro_params p);
 int can_nucleate(hydro_fields f, hydro_params p, int x0, int y0, int z0);
