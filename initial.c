@@ -76,27 +76,32 @@ void initial_blank(hydro_fields f, hydro_params p) {
 
 
 /** Compute the safe distance required around new bubbles.
+ *
+ * Note, returns the distance in number of lattice sites, rounded
+ * (up or down).
  */
 int safe_distance(hydro_fields f, hydro_params p) {
 
 
-  float sigmlo = 2.0*sqrt(2.0)/81.0*p.alpha*p.alpha*p.alpha
-    /(p.lambda*p.lambda*sqrt(p.lambda));
+  float surface_tension = (2.0*sqrt(2.0)/81.0)*(
+						p.alpha*p.alpha*p.alpha
+						/(p.lambda*p.lambda
+						  *sqrt(p.lambda)));
 
-  float phimin =  ( p.alpha*p.Tconst
-		     + sqrt((p.alpha*p.Tconst)*(p.alpha*p.Tconst)
-			    - 4*p.lambda*p.gamma
-			    *(p.Tconst*p.Tconst - p.T0*p.T0)) )/ (2*p.lambda);
-
-  float cstrab = 1.0*phimin;
-
-  float Rlapab = 2.0*sigmlo/(-1.0*Vf(p, p.Tconst, phimin));
+  float phimin =  (p.alpha*p.Tconst
+		   + sqrt((p.alpha*p.Tconst)*(p.alpha*p.Tconst)
+			  - 4.0*p.lambda*p.gamma
+			  *(p.Tconst*p.Tconst - p.T0*p.T0))
+		   )/(2.0*p.lambda);
   
-  float Rtenab = p.scale*Rlapab;
-
-  float sigma = 1.0/(sqrt(p.dx*p.dx/2.0/(Rtenab*Rtenab) ));
+  float R_critical = -2.0*surface_tension/Vf(p, p.Tconst, phimin);
   
-  return (int)(round(sigma));
+  float R_scaled = p.scale*R_critical;
+
+  float safe_lattice_distance = sqrt(2.0*R_scaled*R_scaled/
+				     (p.dx*p.dx));
+  
+  return (int)round(safe_lattice_distance);
  	
 }
 
@@ -176,7 +181,7 @@ void nucleate_at(hydro_fields f, hydro_params p, int x0, int y0, int z0) {
 
   int x, y, z, i;  
   
-  float sigmlo = 2.0*sqrt(2.0)/81.0*p.alpha*p.alpha*p.alpha
+  float surface_tension = 2.0*sqrt(2.0)/81.0*p.alpha*p.alpha*p.alpha
     /(p.lambda*p.lambda*sqrt(p.lambda));
 
 
@@ -186,11 +191,9 @@ void nucleate_at(hydro_fields f, hydro_params p, int x0, int y0, int z0) {
 			    - 4*p.lambda*p.gamma
 			    *(p.Tconst*p.Tconst - p.T0*p.T0)) )/ (2*p.lambda);
   
-  float cstrab = 1.0*phimin;
+  float R_critical = 2.0*surface_tension/(-1.0*Vf(p, p.Tconst, phimin));
   
-  float Rlapab = 2.0*sigmlo/(-1.0*Vf(p, p.Tconst, phimin));
-  
-  float Rtenab = p.scale*Rlapab;
+  float R_scaled = p.scale*R_critical;
 
   printf0(p, "Nucleating at (%d,%d,%d)\n",x0,y0,z0);
 
@@ -228,10 +231,10 @@ void nucleate_at(hydro_fields f, hydro_params p, int x0, int y0, int z0) {
 	  dz = longz;
 
 
-	phival = cstrab*exp(-1.0*p.dx*p.dx*((float)((dx*dx) 
+	phival = phimin*exp(-1.0*p.dx*p.dx*((float)((dx*dx) 
 						     + (float)(dy*dy)
 						     + (float)(dz*dz)))
-			    /2.0/(Rtenab*Rtenab) );
+			    /2.0/(R_scaled*R_scaled) );
 	
 	f.phi[x][y][z] += phival;
 
@@ -267,7 +270,7 @@ void initial_3D(hydro_fields f, hydro_params p) {
   
   int x, y, z, i; 
 
-  float sigmlo = 2.0*sqrt(2.0)/81.0*p.alpha*p.alpha*p.alpha
+  float surface_tension = 2.0*sqrt(2.0)/81.0*p.alpha*p.alpha*p.alpha
     /(p.lambda*p.lambda*sqrt(p.lambda));
 
   float phimin =  ( p.alpha*p.Tconst 
@@ -275,15 +278,14 @@ void initial_3D(hydro_fields f, hydro_params p) {
 			    - 4*p.lambda*p.gamma
 			    *(p.Tconst*p.Tconst - p.T0*p.T0)) )/ (2*p.lambda);
 
-  float cstrab = 1.0*phimin;
 
-  float Rlapab = 2.0*sigmlo/(-1.0*Vf(p, p.Tconst, phimin));
+  float R_critical = 2.0*surface_tension/(-1.0*Vf(p, p.Tconst, phimin));
 
-  float Rtenab = p.scale*Rlapab;
+  float R_scaled = p.scale*R_critical;
 
   printf0(p,
-	  "** phimin %g, cstrab %g, Rtenab %g\n",
-	  phimin, cstrab, Rtenab);
+	  "** phimin %g, R_critical %g, R_scaled %g\n",
+	  phimin, R_critical, R_scaled);
   
   float Er, El, rE;
 
