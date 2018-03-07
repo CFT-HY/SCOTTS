@@ -306,7 +306,7 @@ int main(int argc, char *argv[])
     srandom(p.seed + step);
 
     // How many bubbles do we (try to) nucleate this timestep?
-    howmany = should_nucleate(f, p, t, step);
+    howmany = bubbles_at_step(f, p, t, step);
 
     i = 0;
 

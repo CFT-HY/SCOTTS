@@ -356,7 +356,7 @@ int can_nucleate(hydro_fields f, hydro_params p, int x0, int y0, int z0);
 void nucleate_at(hydro_fields f, hydro_params p, int x0, int y0, int z0);
 void initial_3D(hydro_fields f, hydro_params p);
 int do_nucleate(hydro_fields f, hydro_params p);
-int should_nucleate(hydro_fields f, hydro_params p, float t, int step);
+int bubbles_at_step(hydro_fields f, hydro_params p, float t, int step);
 void init_profile(hydro_fields *f, hydro_params *p);
 
 // output.c
