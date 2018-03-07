@@ -1,15 +1,23 @@
-/* alloc.c
- * 
- * Allocate, free and zero fields.
+/** @file alloc.c
+ *
+ * Routines for memory allocation.
+ *
+ * Handles memory allocation, freeing and management, for
+ * multi-dimensional arrays that are allocated contiguously in memory
+ * for improved performance.
+ *
+ * 2010-2017 David Weir
  */
 #include "hydro.h"
 
 
-/* float ***make_field(hydro_params p)
- * 
+/** Allocate memory for a 3D, 1-component field
+ *
  * Performs a sneaky trick to return 3D array with contiguous memory.
- * Accessed as: field[x][y][z], with the x- and y-coordinates
- * having haloes at x=0 and x=p.slicex+1, y=0, y=p.slicey+1
+ * Accessed as: `field[x][y][z]`, with the x- and y-coordinates
+ * having haloes at `x=0` and `x=p.slicex+1`, `y=0`, `y=p.slicey+1`.
+ *
+ * Use free_field() to free this memory again.
  */
 float ***make_field(hydro_params p) {
    
@@ -34,11 +42,12 @@ float ***make_field(hydro_params p) {
 
 
 
-/* float ****make_vector(hydro_params p)
- * 
- * As for make_field, but for a 3-component vector
- * Accessed as: field[cpt][x][y][z], with the x- and y-coordinates
- * having haloes at x=0 and x=p.slicex+1, y=0, y=p.slicey+1
+/** Allocate memory for a vector field.
+ *
+ * As for make_field() but for a field with three components.
+ * See make_tensor() for a field with six components.
+ *
+ * Use free_vector() to free memory allocated with this function.
  */
 float ****make_vector(hydro_params p) {
    
@@ -70,11 +79,13 @@ float ****make_vector(hydro_params p) {
 
 
 
-/* float ****make_tensor(hydro_params p)
- * 
- * As for make_vector, but for a 6-component tensor (TENSOR_CPTS=6)
- * Accessed as: field[cpt][x][y][z], with the x- and y-coordinates
- * having haloes at x=0 and x=p.slicex+1, y=0, y=p.slicey+1
+/** Allocate memory for a tensor.
+ *
+ * As for make_field() but for a field with six components (set by
+ * `TENSOR_CPTS`). See make_vector() for a field with three
+ * components.
+ *
+ * Use free_tensor() to free memory allocated with this function.
  */
 float ****make_tensor(hydro_params p) {
    
@@ -106,13 +117,11 @@ float ****make_tensor(hydro_params p) {
 
 
 
-/* void free_field(hydro_params p, float ***field)
- * void free_vector(hydro_params p, float ****vector)
- * void free_tensor(hydro_params p, float ****tensor)
+/** Free memory allocated by make_field().
  *
- * Frees the memory associated with a field allocated by make_field
- * (or make_vector or make_tensor) above: first frees the contiguous blob,
- * then the 'shortcut' arrays and finally the outermost layer.
+ * Frees the memory associated with a field allocated by make_field():
+ * first frees the contiguous blob, then the 'shortcut' arrays, and
+ * finally the outermost layer.
  */
 void free_field(hydro_params p, float ***field) {
 
@@ -128,6 +137,13 @@ void free_field(hydro_params p, float ***field) {
 }
 
 
+
+ /** Free memory allocated by make_vector().
+ *
+ * Frees the memory associated with a field allocated by
+ * make_vector(): first frees the contiguous blob, then the 'shortcut'
+ * arrays and finally the outermost layer.
+ */
 void free_vector(hydro_params p, float ****vector) {
 
   int x, i;
@@ -145,6 +161,13 @@ void free_vector(hydro_params p, float ****vector) {
 }
 
 
+
+/** Free memory allocated by make_tensor().
+ *
+ * Frees the memory associated with a field allocated by
+ * make_tensor(): first frees the contiguous blob, then the 'shortcut'
+ * arrays and finally the outermost layer.
+ */
 void free_tensor(hydro_params p, float ****tensor) {
 
   int x, i;
@@ -164,9 +187,7 @@ void free_tensor(hydro_params p, float ****tensor) {
 
 
 
-/* void alloc_fields(hydro_fields *f, hydro_params p)
- *
- * Allocate all the fields needed for a simulation.
+/** Allocate all the fields needed for a simulation.
  */
 void alloc_fields(hydro_fields *f, hydro_params p) {
 
@@ -234,9 +255,7 @@ void alloc_fields(hydro_fields *f, hydro_params p) {
 
 
 
-/* void zero_fields(hydro_fields *f, hydro_params p)
- *
- * Zero all the fields needed for a simulation.
+/** Zero all the fields needed for a simulation.
  */
 void zero_fields(hydro_fields f, hydro_params p) {
 
@@ -288,9 +307,7 @@ void zero_fields(hydro_fields f, hydro_params p) {
 }
 
 
-/* void free_fields(hydro_fields *f, hydro_params p)
- *
- * Free all the fields needed for a simulation.
+/** Free all the fields needed for a simulation.
  */
 void free_fields(hydro_fields *f, hydro_params p) {
 

@@ -29,19 +29,23 @@ void make_kinetic(hydro_fields f, hydro_params p, float ***temp) {
 
 void make_slice(hydro_fields f, hydro_params p, float *slice, float ***temp)
 {
+
+  
   int x, y, z;
 
-  float *trim = (float *)malloc(p.slicex*p.slicey*p.Lz*sizeof(float));
+  x=p.siloslicecoord;
   
-  for(x=1; x<=p.slicex; x++) {
+  float *trim = (float *)malloc(p.slicey*p.Lz*sizeof(float));
+  
+  if(x/p.slicex == p.myposx){
+    int localx=x%p.slicex+1;
     for(y=1; y<=p.slicey; y++) {
       for(z=0; z<p.Lz; z++) {
-	trim[(x-1)*p.slicey*p.Lz + (y-1)*p.Lz + z] = temp[x][y][z];
+	trim[(y-1)*p.Lz + z] = temp[localx][y][z];
       }
     }
   }
-  
-  x = 0;
+
 
   int ry;
   int ny = p.Ly/p.slicey;
@@ -57,14 +61,14 @@ void make_slice(hydro_fields f, hydro_params p, float *slice, float ***temp)
 
 	if((x/p.slicex == p.myposx) && (ry == p.myposy)) {
 
-	  memcpy(&slice[(x-0)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
-		 &trim[(x-p.shiftx)*p.slicey*p.Lz],
+	  memcpy(&slice[ry*p.slicey*p.Lz],
+		 &trim[0],
 		 p.slicey*p.Lz*sizeof(float));
 	  continue;
 	}
 
 
-	MPI_Recv(&slice[(x-0)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
+	MPI_Recv(&slice[ry*p.slicey*p.Lz],
 		 p.slicey*p.Lz,
 		 MPI_FLOAT,
 		 ry*nx + x/p.slicex,
@@ -77,10 +81,10 @@ void make_slice(hydro_fields f, hydro_params p, float *slice, float ***temp)
     } else if((x >= p.shiftx) && (x < (p.shiftx + p.slicex))) {
 
 
-      MPI_Send(&trim[(x-p.shiftx)*p.slicey*p.Lz],
+      MPI_Send(&trim[0],
                p.slicey*p.Lz,
                MPI_FLOAT,
-	       x/1,
+	       0,
                x*ny + p.myposy,
 	       MPI_COMM_WORLD);
     }
@@ -89,15 +93,16 @@ void make_slice(hydro_fields f, hydro_params p, float *slice, float ***temp)
 
   free(trim);
 
-  }
+}
 
-/* void write_silo_step(hydro_fields f, hydro_params p, int step)
+/* void write_silo_step(hydro_fields f, hydro_params *p_ptr, int step)
  *
  * write fields to a silo file for use with Visit
  */
 void write_silo_slice_step(hydro_fields f, hydro_params p, int step)
 {
 
+  
   int x, y, z, i;
 
 
@@ -113,7 +118,8 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step)
     /* Create a unique filename for the new Silo file */
     char filename[600];
     sprintf(filename, "%s/slice-%06d.silo", p.silodir, step);  
-    fprintf(stderr,"Writing SLICE to %s\n",filename);  
+    fprintf(stderr,"Writing SLICE to %s\n",filename);
+
     dbfile = DBCreate(filename, DB_CLOBBER, DB_LOCAL,
 		      "time step", CPMODE);
 
@@ -162,6 +168,10 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step)
 
   make_slice(f, p, slice, temp);
 
+  if(!p.rank){
+    fprintf(stderr,"Slice coord x=%d\n",p.siloslicecoord);
+  }
+  
   //// write kinetic slice ///
 
 
