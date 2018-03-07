@@ -57,7 +57,6 @@
 
 
 #define NUC_OFF 0
-#define NUC_EXP 1
 #define NUC_LIST 2
 #define NUC_FILE 3
 
