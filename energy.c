@@ -1,13 +1,14 @@
-/* energy.c
+/** @file energy.c
  *
  * Calculation of total energy and related quantities.
  */
 #include "hydro.h"
 
 
-/* float field_energy(hydro_fields f, hydro_params p)
+/** Computes the total energy in the scalar field.
  *
- * Total energy in the fields: kinetic, gradient and potential.
+ * Separately computes the kinetic, gradient and potential energy of
+ * the scalar field and returns the total, summed over all sites.
  */
 float field_energy(hydro_fields f, hydro_params p) {
 
@@ -62,9 +63,10 @@ float field_energy(hydro_fields f, hydro_params p) {
 
 
 
-/* float gradient_energy(hydro_fields f, hydro_params p)
+/** Computes the gradient energy in the scalar field.
  *
- * Field gradient energy only.
+ * Note that this does _not_ currently sum over all sites, only those
+ * on the current node.
  */
 float gradient_energy(hydro_fields f, hydro_params p) {
 
@@ -100,11 +102,14 @@ float gradient_energy(hydro_fields f, hydro_params p) {
 
 
 
-/* float total_energy(hydro_fields f, hydro_params p)
+/** Compute the total internal energy of the system.
  *
  * Total (field+fluid) energy. Borrowed directly from the
  * 1+1D spherical fortran code, which might explain the strange
  * way of performing the calculation.
+ *
+ * NB: This function currently does _not_ sum over all sites, only
+ * those on the current node.
  */
 float total_energy(hydro_fields f, hydro_params p) {
 
@@ -165,9 +170,9 @@ float total_energy(hydro_fields f, hydro_params p) {
 
 
 
-/* float kinetic_energy(hydro_fields f, hydro_params p)
+/** Compute the total kinetic energy in the fluid.
  *
- * Fluid kinetic energy only.
+ * NB: This function does _not_ currently sum over all sites.
  */
 float kinetic_energy(hydro_fields f, hydro_params p) {
 
@@ -208,9 +213,9 @@ float kinetic_energy(hydro_fields f, hydro_params p) {
 
 
 
-/* float rest_energy(hydro_fields f, hydro_params p)
+/** Compute the rest energy in the fluid.
  *
- * Fluid rest energy only.
+ * NB: This function does _not_ currently sum over all sites.
  */
 float rest_energy(hydro_fields f, hydro_params p) {
 
@@ -249,7 +254,12 @@ float rest_energy(hydro_fields f, hydro_params p) {
 
 }
 
- 
+
+
+/** Compute the total pressure (despite the name).
+ *
+ * NB: This function does _not_ currently sum over all sites.
+ */
 float avg_pressure(hydro_fields f, hydro_params p) {
 
   int x, y, z;
@@ -284,11 +294,11 @@ float avg_pressure(hydro_fields f, hydro_params p) {
    
 			    
 
-/* float tzerozero(hydro_fields f, hydro_params p)
+/** Compute total energy, i.e. 00 component of stress-energy.
  *
- * The zero-zero component of the stress energy tensor.
- * It's basically just a different way of calculating total_energy,
- * (see above) and therefore serves as a cross-check.
+ * The zero-zero component of the stress energy tensor.  It's
+ * basically just a different way of calculating total_energy(), and
+ * therefore serves as a cross-check.
  */
 float tzerozero(hydro_fields f, hydro_params p) {
 
@@ -355,7 +365,7 @@ float tzerozero(hydro_fields f, hydro_params p) {
 
 
 
-/* void stress_energy(hydro_fields f, hydro_params p, float ****Tij)
+/** Compute sources of metric perturbations.
  *
  * Terms in the stress-energy tensor that are *LINEAR* in the metric,
  * and therefore source metric perturbations.
@@ -459,9 +469,9 @@ void stress_energy(hydro_fields f, hydro_params p, float ****Tij) {
 }
 
 
-/* void energy_density(hydro_fields f, hydro_params p, float ***en)
+/** Compute energy density and store as a field.
  *
- * As for total_energy, see above, but calculated on a per-lattice-site
+ * As for total_energy() but calculated on a per-lattice-site
  * basis and then stored in en.
  */
 void energy_density(hydro_fields f, hydro_params p, float ***en) {
