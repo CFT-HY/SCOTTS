@@ -1,18 +1,23 @@
-/* initial.c
+/** @file initial.c
  *
  * Initial conditions for hydro evolution.
  *
- * Also, nucleation.
+ * To create a system with bubbles, one would first call
+ * initial_blank() *before* nucleating bubbles with nucleate_at()
+ * or do_nucleate().
+ *
+ * Contributors:
+ * - 2010-2017 David Weir
+ * - 2018-     Daniel Cutting
  */
 #include "hydro.h"
 
 
-
-
-
-/* void initial_blank(hydro_fields f, hydro_params p)
+/** Initialise the system to an empty box with no bubbles.
  *
- * Empty box with no bubbles.
+ * Note that this must be run at the start of the simulation, prior to
+ * (for example) nucleate_at(), even if one is just nucleating one
+ * bubble.
  */
 void initial_blank(hydro_fields f, hydro_params p) {
 
@@ -68,10 +73,7 @@ void initial_blank(hydro_fields f, hydro_params p) {
 
 
 
-/* int safe_distance(hydro_fields f, hydro_params p)
- *
- * Returns the safe distance required around a newly
- * nucleated bubble.
+/** Compute the safe distance required around new bubbles.
  */
 int safe_distance(hydro_fields f, hydro_params p) {
 
@@ -97,9 +99,9 @@ int safe_distance(hydro_fields f, hydro_params p) {
 }
 
 
-/* int can_nucleate(hydro_fields f, hydro_params p, int x0, int y0, int z0)
+/** Check whether a bubble can be nucleated at a given point.
  *
- * Are the conditions suitable for nucleation at (x0, y0, z0)?
+ * Are the conditions suitable for nucleation at `(x0, y0, z0)`?
  * Returns 1 if so.
  */
 int can_nucleate(hydro_fields f, hydro_params p, int x0, int y0, int z0) {
@@ -164,10 +166,9 @@ int can_nucleate(hydro_fields f, hydro_params p, int x0, int y0, int z0) {
 }
 
 
-/* nucleate_at(hydro_fields f, hydro_params p, int x0, int y0, int z0)
+/** Nucleate one bubble at a given location.
  *
- * Nucleate a bubble at (x0, y0, z0). Equivalent to initial_scalar_bubble
- * at a given point.
+ * Nucleate a bubble at `(x0, y0, z0)`.
  */
 void nucleate_at(hydro_fields f, hydro_params p, int x0, int y0, int z0) {
 
@@ -254,7 +255,7 @@ void nucleate_at(hydro_fields f, hydro_params p, int x0, int y0, int z0) {
 }
 
 
-/* void initial_3D(hydro_fields f, hydro_params p)
+/** Initialise the system with a shock tube.h
  *
  * "Shock tube"-style initial conditions for testing the fluid.
  * No scalar field initialisation.
@@ -330,7 +331,7 @@ void initial_3D(hydro_fields f, hydro_params p) {
 
 
 
-/* int do_nucleate(hydro_fields f, hydro_params *p_ptr) 
+/** Full nucleation process including site selection.
  *
  * Attempt exactly one nucleation:
  * - choose a site
@@ -368,7 +369,7 @@ int do_nucleate(hydro_fields f, hydro_params p) {
 }
 
 
-/* int should_nucleate(hydro_fields f, hydro_params p, float t, int step)
+/** Check whether one should nucleate a bubble.
  *
  * Should an attempt to nucleate be carried out at the current step?
  *
@@ -426,9 +427,8 @@ int should_nucleate(hydro_fields f, hydro_params p, float t, int step) {
 
 
 
-/* void init_profile(hydro_fields *f, hydro_params *p)
+/** Initialise an invariant scaling profile for new bubbles.
  *
- * Initialise an invariant scaling profile for new bubbles.
  * Based on my Q-ball code. Not currently in use.
  */
 void init_profile(hydro_fields *f, hydro_params *p) {
