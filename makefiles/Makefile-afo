@@ -1,14 +1,20 @@
+# This is built with personal versions of single-precision FFTW3,
+# HDF5, and SILO. I create a directory ~/local/, inside which I create
+# a subdirectory installed/, and download and compile the source in
+# there. This is represented below by the use of the environment
+# variable $(HOME) in the include and library paths.
+
 #### CC ####
 
 CC := mpicc -g -DMPI -DFFT -DSILO
 
 #### CFLAGS ####
 
-CFLAGS := -O3 -I/home/weir/local/include/
+CFLAGS := -O3 -I$(HOME)/local/include/
 
 #### LIBS ####
 
-LIBS := -L/home/weir/local/lib/ \
+LIBS := -L$(HOME)/local/lib/ \
 	-lsiloh5 -lhdf5 -lfftw3f_mpi -lfftw3f -lm -lstdc++ -lz
 
 #### No user-serviceable parts below ####
