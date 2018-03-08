@@ -1,5 +1,34 @@
 # 3D hydro code
 
+## The model
+
+[Include links to papers here]
+
+The potential is
+\f[
+V(\phi, T) = \frac{1}{2} \gamma(T^2 - T_0^2)\phi^2 - \frac{1}{3}\alpha T \phi^3 + \frac{1}{4}\lambda\phi^4
+\f]
+
+where, in the code:
+
+* \f$ \gamma \f$ is `p.gamma`
+* \f$ T_0 \f$ is `p.T0`
+* \f$ \alpha \f$ is `p.alpha`
+* \f$ \lambda \f$ is `p.lambda`
+
+The internal energy of the fluid (`f.E`) is given by
+
+\f[
+\epsilon = 3 a T^4 + V(\phi, T) - T \frac{\partial V}{\partial T}
+\f]
+
+where:
+
+* `f.E` is related to \f$ \epsilon \f$ by a gamma factor (`f.W`),
+  thus: \f$ E = W \epsilon \f$
+* \f$ V(\phi, T) \f$ is Vf()
+* \f$ \frac{\partial V}{\partial T} \f$ is VTf()
+
 ## Compilation
 
 There are various makefiles in the `makefiles/` directory. By default,
@@ -24,3 +53,5 @@ FFTW.
   `-DFFT`).
 
 * `-DMPI`: compile with MPI support (necessary for parallelisation).
+
+* `-DSCALAR`: compile without the fluid.

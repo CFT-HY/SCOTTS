@@ -292,8 +292,6 @@ void get_parameters(char *infile, hydro_params *p)
     else if(!strcasecmp(key,"nucleation")) {
       if(!strcasecmp(value, "off")) {
 	p->nucleation = NUC_OFF;
-      } else if(!strcasecmp(value, "exp")) {
-	p->nucleation = NUC_EXP;
       } else if(!strncasecmp(value, "list", 4)) {
 	p->nucleation = NUC_LIST;
 	char *curr = option;
@@ -397,9 +395,9 @@ void get_parameters(char *infile, hydro_params *p)
 	}
 
       } else {
-	printf0(*p, "warning, unrecognised value for nucleation"
-		" (%s); defaulting to exp.\n", value);
-	p->nucleation = NUC_EXP;
+	printf0(*p ,"Unrecognised nucleation type (%s), giving up!\n",
+		value);
+	  die(123);
       }
       set_nucleation = 1;
     }
@@ -614,9 +612,7 @@ void get_parameters(char *infile, hydro_params *p)
       printf0(*p, "-- warning, somehow have unknown gwsource param\n");
     }
 
-    if(p->nucleation == NUC_EXP) {
-      printf0(*p, "<Random nucleation>\n");
-    } else if((p->nucleation == NUC_LIST) || (p->nucleation == NUC_FILE)) {
+    if((p->nucleation == NUC_LIST) || (p->nucleation == NUC_FILE)) {
       printf0(*p, "<List nucleation\n");
       printf0(*p, "At steps: [%d,...%d]", p->nucsteps[0],
 	      p->nucsteps[p->n_nucsteps-1]);

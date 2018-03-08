@@ -5,8 +5,7 @@
 #include "hydro.h"
 
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
 
   hydro_params p;
 
@@ -151,7 +150,7 @@ int main(int argc, char *argv[])
 
     // Shock tube style initial conditions for fluid only (not used)
 #ifdef INITPS
-    initial_3D(f,p);
+    initial_blank(f,p);
     init_ps(f, p, f.Z);
     norm_power(f, p, f.Z);
 
@@ -188,7 +187,7 @@ int main(int argc, char *argv[])
       // p.bubbles is how many bubbles to make at the start (usually 1)
       for(step=1;step<p.bubbles;step++) {
 	start = clock();
-	still_nucleate = do_nucleate(f, p);
+	still_nucleate = try_nucleate(f, p);
 	end = clock();
 	if(!p.rank)
 	  fprintf(stderr,"Nucleation attempt took %lf\n",
@@ -201,14 +200,19 @@ int main(int argc, char *argv[])
 	//	break;
 
       }
-    } else {
+    } else if(p.bubbles == 1) {
       // One bubble only (not normally used)
       initial_blank(f, p);
 
       printf0(p, "Nucleating just one bubble\n");
       nucleate_at(f,p,0,0,0);
       halo_field(f.phi,p);
+    } else {
+      // Empty system
+      initial_blank(f, p);
     }
+    // TODO: Make INITPS just another parameter choice rather than
+    // dependent on conditional compilation...
 
 #endif // INITPS
 
@@ -306,13 +310,13 @@ int main(int argc, char *argv[])
     srandom(p.seed + step);
 
     // How many bubbles do we (try to) nucleate this timestep?
-    howmany = should_nucleate(f, p, t, step);
+    howmany = bubbles_at_step(f, p, t, step);
 
     i = 0;
 
     while(i < howmany) {
 
-      still_nucleate = do_nucleate(f, p);
+      still_nucleate = try_nucleate(f, p);
 
       bcount += still_nucleate;
       i++;
