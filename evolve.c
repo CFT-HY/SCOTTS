@@ -64,28 +64,27 @@ void evolve_field(hydro_fields f, hydro_params p) {
 #ifndef SCALAR
 	// first-order viscosity term
 	s = -0.5*p.dt*(p.C*f.phi[x][y][z]*f.phi[x][y][z]/f.T[x][y][z])*f.W[x][y][z];
+
 	f.pi[x][y][z] = (1+s)*f.pi[x][y][z]/(1-s);
 	
 	// gradient term
-	f.pi[x][y][z] = f.pi[x][y][z] 
-	  - (0.5*p.dt*(p.C*f.phi[x][y][z]*f.phi[x][y][z]/f.T[x][y][z])*f.W[x][y][z]
-	     *(f.V[0][x][y][z]*(f.phi[x][y][z]
-				- f.phi[x-1][y][z])
-	       + f.V[0][x+1][y][z]*(f.phi[x+1][y][z]
-				    - f.phi[x][y][z])
-	       )/p.dx
-	     + 0.5*p.dt*(p.C*f.phi[x][y][z]*f.phi[x][y][z]/f.T[x][y][z])*f.W[x][y][z]
-	     *(f.V[1][x][y][z]*(f.phi[x][y][z]
-				- f.phi[x][y-1][z])
-	       + f.V[1][x][y+1][z]*(f.phi[x][y+1][z]
-				    - f.phi[x][y][z])
-	       )/p.dx
-	     + 0.5*p.dt*(p.C*f.phi[x][y][z]*f.phi[x][y][z]/f.T[x][y][z])*f.W[x][y][z]
-	     *(f.V[2][x][y][z]*(f.phi[x][y][z]
-				- f.phi[x][y][((z-1+p.Lz)%p.Lz)])
-	       + f.V[2][x][y][((z+1)%p.Lz)]*(f.phi[x][y][((z+1)%p.Lz)]
-					     - f.phi[x][y][z]))/p.dx
-	     )/(1-s);
+	f.pi[x][y][z] = f.pi[x][y][z] +s*(
+					
+					  (f.V[0][x][y][z]*(f.phi[x][y][z]
+							    - f.phi[x-1][y][z])
+					   + f.V[0][x+1][y][z]*(f.phi[x+1][y][z]
+								- f.phi[x][y][z]))
+					 
+					  +(f.V[1][x][y][z]*(f.phi[x][y][z]
+							     - f.phi[x][y-1][z])
+					    + f.V[1][x][y+1][z]*(f.phi[x][y+1][z]
+								 - f.phi[x][y][z]))
+					  
+					  +(f.V[2][x][y][z]*(f.phi[x][y][z]
+							     - f.phi[x][y][((z-1+p.Lz)%p.Lz)])
+					    + f.V[2][x][y][((z+1)%p.Lz)]*(f.phi[x][y][((z+1)%p.Lz)]
+									  - f.phi[x][y][z]))	
+					  )/(p.dx*(1-s));
 #endif // !SCALAR
 	
 	// scalar field gradient and potential terms
