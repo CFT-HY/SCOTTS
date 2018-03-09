@@ -1,50 +1,20 @@
-/* evolve.c
+/* @file evolve.c
  *
  * Everything to do with evolving fields and fluids with the
  * equations of motion.
+ *
+ * Contributors:
+ * - 2010-2017 David Weir
+ * - 2018-     Daniel Cutting
  */
 #include "hydro.h"
 
 
-/* void evolve_backstep(hydro_fields f, hydro_params p)
- *
- * Evolve the scalar field momentum back a halfstep.
- * Taken straight from the 1+1 spherical fortran code.
- */
-void evolve_backstep(hydro_fields f, hydro_params p) {
-
-  int x, y, z;
-
-  for(x = 1; x <= p.slicex; x++) {
-    for(y = 1; y <= p.slicey; y++) {
-      for(z = 0; z < p.Lz; z++) {
-	f.pi[x][y][z] = f.pifull[x][y][z] - 0.5*p.dt
-	  *(f.phi[x+1][y][z] + f.phi[x][y+1][z] 
-	    + f.phi[x][y][((z+1)%p.Lz)] 
-	    - 6.0*f.phi[x][y][z] 
-	    + f.phi[x-1][y][z] + f.phi[x][y-1][z]
-	    + f.phi[x][y][((z-1+p.Lz)%p.Lz)])/(p.dx*p.dx)
-	  + 0.125*p.dt*p.dt
-	  *(f.pifull[x+1][y][z] - 2.0*f.pifull[x][y][z]
-	    + f.pifull[x-1][y][z])/(p.dx*p.dx)
-#ifndef SCALAR
-	  + 0.5*p.dt*Vdf(p, f.T[x][y][z], f.phi[x][y][z] 
-			 - 0.25*p.dt*f.pifull[x][y][z]);
-#else
-	  + 0.5*p.dt*Vdf(p, p.Tconst, f.phi[x][y][z] 
-			 - 0.25*p.dt*f.pifull[x][y][z]);
-#endif
-      }
-    }
-  }
-
-  halo_field(f.pi, p);
-}
 
 
-/* void evolve_field(hydro_fields f, hydro_params p)
- *
- * Evolve the scalar field forward one timestep.
+
+/* Evolve the scalar field forward one timestep.
+ * 
  * Taken more or less straight from the 1+1 spherical fortran code.
  */
 void evolve_field(hydro_fields f, hydro_params p) {
@@ -62,29 +32,37 @@ void evolve_field(hydro_fields f, hydro_params p) {
 	piold = f.pi[x][y][z];
 
 #ifndef SCALAR
-	// first-order viscosity term
+	/* First-order viscosity term:
+	 * Factor of 0.5 comes from Crank-Nicolson method and leapfrog:
+	 * pi lives on boundary between timesteps but need pi on timestep so need to average.
+	 * Get a term with (1+s)*pi from last timestep on RHS and have (1-s)*pi on current step on LHS, 
+	 * then divide through by (1-s).
+	 */
 	s = -0.5*p.dt*(p.C*f.phi[x][y][z]*f.phi[x][y][z]/f.T[x][y][z])*f.W[x][y][z];
 
 	f.pi[x][y][z] = (1+s)*f.pi[x][y][z]/(1-s);
 	
-	// gradient term
+	/* Gradient term:
+	 * Gradients and velocities live on cell boundaries,
+	 * but we want the values in the body of the cell so we average the two boundaries.
+	 */ 
 	f.pi[x][y][z] = f.pi[x][y][z] +s*(
 					
 					  (f.V[0][x][y][z]*(f.phi[x][y][z]
 							    - f.phi[x-1][y][z])
 					   + f.V[0][x+1][y][z]*(f.phi[x+1][y][z]
-								- f.phi[x][y][z]))
+								- f.phi[x][y][z]))/p.dx
 					 
 					  +(f.V[1][x][y][z]*(f.phi[x][y][z]
 							     - f.phi[x][y-1][z])
 					    + f.V[1][x][y+1][z]*(f.phi[x][y+1][z]
-								 - f.phi[x][y][z]))
+								 - f.phi[x][y][z]))/p.dx
 					  
 					  +(f.V[2][x][y][z]*(f.phi[x][y][z]
 							     - f.phi[x][y][((z-1+p.Lz)%p.Lz)])
 					    + f.V[2][x][y][((z+1)%p.Lz)]*(f.phi[x][y][((z+1)%p.Lz)]
-									  - f.phi[x][y][z]))	
-					  )/(p.dx*(1-s));
+									  - f.phi[x][y][z]))/p.dx	
+					  )/(1-s);
 #endif // !SCALAR
 	
 	// scalar field gradient and potential terms

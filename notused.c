@@ -140,3 +140,38 @@ void init_profile(hydro_fields *f, hydro_params *p) {
   // Not quite: we want ...???
 
 }
+
+/* void evolve_backstep(hydro_fields f, hydro_params p)
+ *
+ * Evolve the scalar field momentum back a halfstep.
+ * Taken straight from the 1+1 spherical fortran code.
+ */
+void evolve_backstep(hydro_fields f, hydro_params p) {
+
+  int x, y, z;
+
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+	f.pi[x][y][z] = f.pifull[x][y][z] - 0.5*p.dt
+	  *(f.phi[x+1][y][z] + f.phi[x][y+1][z] 
+	    + f.phi[x][y][((z+1)%p.Lz)] 
+	    - 6.0*f.phi[x][y][z] 
+	    + f.phi[x-1][y][z] + f.phi[x][y-1][z]
+	    + f.phi[x][y][((z-1+p.Lz)%p.Lz)])/(p.dx*p.dx)
+	  + 0.125*p.dt*p.dt
+	  *(f.pifull[x+1][y][z] - 2.0*f.pifull[x][y][z]
+	    + f.pifull[x-1][y][z])/(p.dx*p.dx)
+#ifndef SCALAR
+	  + 0.5*p.dt*Vdf(p, f.T[x][y][z], f.phi[x][y][z] 
+			 - 0.25*p.dt*f.pifull[x][y][z]);
+#else
+	  + 0.5*p.dt*Vdf(p, p.Tconst, f.phi[x][y][z] 
+			 - 0.25*p.dt*f.pifull[x][y][z]);
+#endif
+      }
+    }
+  }
+
+  halo_field(f.pi, p);
+}
