@@ -253,7 +253,6 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
 		     + f.W[x-1][y-1][z]
 		     + f.W[x][y][((z-1+p.Lz)%p.Lz)]
 		     + f.W[x][y-1][((z+p.Lz-1)%p.Lz)]
-
 		     + f.W[x-1][y][((z+p.Lz-1)%p.Lz)]
 		     + f.W[x-1][y-1][((z+p.Lz-1)%p.Lz)]);
 	
