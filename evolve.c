@@ -1,4 +1,4 @@
-/* @file evolve.c
+/** @file evolve.c
  *
  * Everything to do with evolving fields and fluids with the
  * equations of motion.
@@ -13,7 +13,7 @@
 
 
 
-/* Evolve the scalar field forward one timestep.
+/** Evolve the scalar field forward one timestep.
  * 
  * Taken more or less straight from the 1+1 spherical fortran code.
  */
