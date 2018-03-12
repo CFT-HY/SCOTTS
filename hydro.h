@@ -236,9 +236,9 @@ typedef struct {
 
   // Scalar field
   float ***phi;
-  float ***pifull;
+  float ***pi_future;
   float ***pi;
-  float ***phiold;
+  float ***phi_old;
 
 #ifndef SCALAR
   // Fluid

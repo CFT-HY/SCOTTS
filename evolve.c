@@ -21,7 +21,7 @@ void evolve_field(hydro_fields f, hydro_params p) {
   
   int x, y, z;
 
-  float piold, s;
+  float pi_old, s;
 
   // Move conjugate momentum (leapfrog)
   for(x = 1; x <= p.slicex; x++) {
@@ -29,7 +29,7 @@ void evolve_field(hydro_fields f, hydro_params p) {
       for(z = 0; z < p.Lz; z++) {
 	
 	
-	piold = f.pi[x][y][z];
+	pi_old = f.pi[x][y][z];
 
 #ifndef SCALAR
 	/* First-order viscosity term:
@@ -91,7 +91,7 @@ void evolve_field(hydro_fields f, hydro_params p) {
 	 * timestep as phi. This is useful for outputting energies, etc., but
 	 * is not used in the evolution code.
 	 */
-         f.pifull[x][y][z] = f.pi[x][y][z] + 0.5*(f.pi[x][y][z] - piold);
+         f.pi_future[x][y][z] = f.pi[x][y][z] + 0.5*(f.pi[x][y][z] - pi_old);
 
       }
     }
@@ -102,17 +102,19 @@ void evolve_field(hydro_fields f, hydro_params p) {
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
-	f.phiold[x][y][z] = f.phi[x][y][z];
+	// (We need to keep phi_old for averaging things on the half timestep)
+	f.phi_old[x][y][z] = f.phi[x][y][z];
+	
 	f.phi[x][y][z] = f.phi[x][y][z] + p.dt*f.pi[x][y][z];
       }
     }
   }
   
   halo_field(f.pi, p);
-  halo_field(f.pifull, p);
+  halo_field(f.pi_future, p);
   
   halo_field(f.phi, p);
-  halo_field(f.phiold, p);
+  halo_field(f.phi_old, p);
   
 }
 
@@ -172,19 +174,19 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
 
 
 	
-	phiav[x][y][z] = 0.5*(f.phiold[x][y][z] + f.phi[x][y][z]);
+	phiav[x][y][z] = 0.5*(f.phi_old[x][y][z] + f.phi[x][y][z]);
 	
-	dxphi[0][x][y][z] =  0.5*(f.phiold[x+1][y][z]
+	dxphi[0][x][y][z] =  0.5*(f.phi_old[x+1][y][z]
 				  + f.phi[x+1][y][z]
-				  - f.phiold[x][y][z] - f.phi[x][y][z])/p.dx;
+				  - f.phi_old[x][y][z] - f.phi[x][y][z])/p.dx;
 	
-	dxphi[1][x][y][z] =  0.5*(f.phiold[x][y+1][z]
+	dxphi[1][x][y][z] =  0.5*(f.phi_old[x][y+1][z]
 				  + f.phi[x][y+1][z]
-				  - f.phiold[x][y][z] - f.phi[x][y][z])/p.dx;
+				  - f.phi_old[x][y][z] - f.phi[x][y][z])/p.dx;
 	
-	dxphi[2][x][y][z] =  0.5*(f.phiold[x][y][((z+1)%p.Lz)]
+	dxphi[2][x][y][z] =  0.5*(f.phi_old[x][y][((z+1)%p.Lz)]
 				  + f.phi[x][y][((z+1)%p.Lz)]
-				  - f.phiold[x][y][z] - f.phi[x][y][z])/p.dx;
+				  - f.phi_old[x][y][z] - f.phi[x][y][z])/p.dx;
 	
       }
     }

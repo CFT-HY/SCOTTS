@@ -39,16 +39,16 @@ int load_checkpoint(hydro_fields f, hydro_params p)
   memcpy(f.phi[0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(float));
   free(qvptr);
 
-  qvptr = DBGetQuadvar(dbfile, "pifull");
-  memcpy(f.pifull[0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(float));
+  qvptr = DBGetQuadvar(dbfile, "pi_future");
+  memcpy(f.pi_future[0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(float));
   free(qvptr);
 
   qvptr = DBGetQuadvar(dbfile, "pi");
   memcpy(f.pi[0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(float));
   free(qvptr);
 
-  qvptr = DBGetQuadvar(dbfile, "phiold");
-  memcpy(f.phiold[0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(float));
+  qvptr = DBGetQuadvar(dbfile, "phi_old");
+  memcpy(f.phi_old[0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(float));
   free(qvptr);
 
 
@@ -310,13 +310,13 @@ void checkpoint(hydro_fields f, hydro_params p, int step)
   DBPutQuadvar1(dbfile, "phi", "quadmesh", f.phi[0][0], meshsize, 3,
                 NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
 
-  DBPutQuadvar1(dbfile, "pifull", "quadmesh", f.pifull[0][0], meshsize, 3,
+  DBPutQuadvar1(dbfile, "pi_future", "quadmesh", f.pi_future[0][0], meshsize, 3,
                 NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
 
   DBPutQuadvar1(dbfile, "pi", "quadmesh", f.pi[0][0], meshsize, 3,
                 NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
 
-  DBPutQuadvar1(dbfile, "phiold", "quadmesh", f.phiold[0][0], meshsize, 3,
+  DBPutQuadvar1(dbfile, "phi_old", "quadmesh", f.phi_old[0][0], meshsize, 3,
                 NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
 
 
