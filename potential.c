@@ -52,12 +52,18 @@ float VTTf(hydro_params p, float T, float this_phi) {
  * does not encourage the compiler to fuse the loops.
  */
 void Vpot(hydro_params p,
-	  float *T,
-	  float *phi, float *Vprecalc) {
-  int x;
+	  float ***T,
+	  float ***phi,
+	  float ***Vprecalc) {
 
-  for(x=0; x<p.fieldN; x++)  {
-    Vprecalc[x] = Vf(p, T[x], phi[x]);
+  int x, y, z;
+
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+	Vprecalc[x][y][z] = Vf(p, T[x][y][z], phi[x][y][z]);
+      }
+    }
   }
 }
 
@@ -67,11 +73,18 @@ void Vpot(hydro_params p,
  * Calculate first deriviative of potential wrt phi for all sites.
  */
 void Vdpot(hydro_params p,
-	    float *T,
-	    float *phi, float *Vprecalc) {
-  int x;
+	   float ***T,
+	   float ***phi,
+	   float ***Vprecalc) {
 
-  for(x=0; x<p.fieldN; x++)  {
-    Vprecalc[x] = Vdf(p, T[x], phi[x]);
+  int x, y, z;
+
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+	Vprecalc[x][y][z] = Vdf(p, T[x][y][z], phi[x][y][z]);
+      }
+    }
   }
+
 }

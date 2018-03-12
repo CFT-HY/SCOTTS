@@ -196,7 +196,7 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
   halo_field(dxphi[1], p);
   halo_field(dxphi[2], p);
 
-  Vdpot(p, f.T[0][0], phiav[0][0], Vdmid[0][0]);
+  Vdpot(p, f.T, phiav, Vdmid);
 
 
   halo_field(Vdmid, p);
