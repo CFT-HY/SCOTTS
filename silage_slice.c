@@ -1,13 +1,23 @@
-/* silage.c
+/** @file silage_slice.c
  *
- * Write data for the purposes of visualisation. Note that checkpointing
- * (see checkpoint.c) also uses silo as a wrapper around hdf5 storage.
+ * Module to write slices of silo data for visualisations.
+ *
+ * Slicing is done through the x coordinate at 'x=p.siloslicecoord' 
+ * where 'p.siloslicecoord' is specified in the input file.
+ * 
+ * write_silo_slice_step() makes a silo file containing a slice
+ * of the scalar field phi and the kinetic energy density. It calls make_kinetic()
+ * to populate an array with the kinetic energy density and make_slice() to create
+ * a slice out of some field, which is then populated on the rank 0 processor.
+ *
  */
 #include "hydro.h"
 
 #ifdef SILO
 
-
+/** Populate an array with kinetic energy density.
+ *
+ */
 void make_kinetic(hydro_fields f, hydro_params p, float ***temp) {
   float vol = p.dx*p.dx*p.dx;
 
@@ -26,6 +36,28 @@ void make_kinetic(hydro_fields f, hydro_params p, float ***temp) {
   
   halo_field(temp, p);
 }
+
+/** Populate an array with a slice through `temp`.
+ *
+ * This function takes a 3 dimensional array `temp` 
+ * which contains a quanitity defined over the simulation box
+ * and populates the 1 dimensional array `slice` with a slice through 
+ * `x=p.siloslicecoord` where `p.siloslicecoord` is specified in the input file.
+ * 
+ * Only processors containing the coordinate `x=p.siloslicecoord`
+ * will participate in this. 
+ *
+ * First the 1 dimensional array `trim` is populated with the data on 
+ * the local slice. The size of trim is `p.slicey*p.Lz`, and it increases
+ * first in `z` and then in `y`.
+ *
+ * Then the array slice is populated on the rank 0 processor 
+ * with `trim` from the other processors. 
+ * The size of `slice` is `p.Lz*p.Ly` and it increases first in `z` 
+ * and then in `y`.
+ * 
+ *
+ */
 
 void make_slice(hydro_fields f, hydro_params p, float *slice, float ***temp)
 {
@@ -95,9 +127,24 @@ void make_slice(hydro_fields f, hydro_params p, float *slice, float ***temp)
 
 }
 
-/* void write_silo_step(hydro_fields f, hydro_params *p_ptr, int step)
+/** Write a silo file containing slices through the simulation box.
  *
- * write fields to a silo file for use with Visit
+ * This function saves in a silo file slices through
+ * the coordinate `x=p.siloslicecoord` where `p.siloslicecoord`
+ * is specified in the input file.
+ *
+ * The silo file will contain both the kinetic energy density of the fluid
+ * and the scalar field value phi.
+ *
+ * The kinetic energy density is found by calling make_kinetic(),
+ * and the slices are populated using make_slice().
+ *
+ * The `slice` arrays are of length `p.Lz*p.Ly`, and increase first
+ * in `z` and then in `y`.
+ *
+ * Contributors:
+ * - 2010-2017 David Weir
+ * - 2018-     Daniel Cutting
  */
 void write_silo_slice_step(hydro_fields f, hydro_params p, int step)
 {
