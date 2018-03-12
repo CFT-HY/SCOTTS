@@ -44,7 +44,7 @@
  * bubble.
  *
  * Initialises the scalar field `f.phi` and its conjugate momentum
- * `f.pifull` to zero everywhere.
+ * `f.pi_future` to zero everywhere.
  *
  * If we are _not_ running a scalar-only simulation (i.e. `SCALAR` is
  * not defined) we also initialise the temperature to `p.Tconst`,
@@ -70,7 +70,7 @@ void initial_blank(hydro_fields f, hydro_params p) {
 	
 	f.phi[x][y][z] = 0.0; 
 	
-	f.pifull[x][y][z] = 0.0;
+	f.pi_future[x][y][z] = 0.0;
 
 #ifndef SCALAR	
 

@@ -77,7 +77,7 @@ void eq_of_state(hydro_fields f, hydro_params p) {
 
 
 
-  Vpot(p, f.T[0][0], f.phi[0][0], Vnew[0][0]);
+  Vpot(p, f.T, f.phi, Vnew);
 
 
   for(x=1; x<=p.slicex; x++) {
