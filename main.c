@@ -223,7 +223,7 @@ int main(int argc, char *argv[]) {
 
     // Communicate everything that neighbours need
     halo_field(f.phi, p);
-    halo_field(f.pifull, p);
+    halo_field(f.pi_future, p);
 #ifndef SCALAR
     halo_field(f.E, p);
     halo_field(f.Z[0], p);

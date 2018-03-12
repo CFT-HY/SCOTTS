@@ -29,7 +29,7 @@ float field_energy(hydro_fields f, hydro_params p) {
       for(z = 0; z < p.Lz; z++) {
 
 	
-	a += 0.5*f.pifull[x][y][z]*f.pifull[x][y][z]*vol;
+	a += 0.5*f.pi_future[x][y][z]*f.pi_future[x][y][z]*vol;
 
 	a += 0.5*((f.phi[x+1][y][z] - f.phi[x][y][z])/p.dx)
 	  *((f.phi[x+1][y][z] - f.phi[x][y][z])/p.dx)*vol;
@@ -141,7 +141,7 @@ float total_energy(hydro_fields f, hydro_params p) {
 
 		
 	// momentum squared (scalar field kinetic energy)
-	kinphi += 0.5*f.pifull[x][y][z]*f.pifull[x][y][z]*vol;
+	kinphi += 0.5*f.pi_future[x][y][z]*f.pi_future[x][y][z]*vol;
 	
 	// gradient term
 	
@@ -316,11 +316,11 @@ float tzerozero(hydro_fields f, hydro_params p) {
 
 	// d_mu phi d^nu phi
 	// pi field if 00, otherwise grad mu, grad nu
-	total += f.pifull[x][y][z]*f.pifull[x][y][z];
+	total += f.pi_future[x][y][z]*f.pi_future[x][y][z];
 
 	// d_alpha phi d^alpha phi
 	// (minus sign if 00, otherwise plus)
-	total -= (0.5*f.pifull[x][y][z]*f.pifull[x][y][z]
+	total -= (0.5*f.pi_future[x][y][z]*f.pi_future[x][y][z]
 		  - 0.125*((f.phi[x+1][y][z] - f.phi[x-1][y][z])/p.dx)
 		  *((f.phi[x+1][y][z] - f.phi[x-1][y][z])/p.dx)
 		  - 0.125*((f.phi[x][y+1][z] - f.phi[x][y-1][z])/p.dx)
@@ -499,7 +499,7 @@ void energy_density(hydro_fields f, hydro_params p, float ***en) {
 #endif // SCALAR	
 
 	// momentum squared (scalar field kinetic energy)
-	en[x][y][z] += 0.5*f.pifull[x][y][z]*f.pifull[x][y][z]*vol;
+	en[x][y][z] += 0.5*f.pi_future[x][y][z]*f.pi_future[x][y][z]*vol;
 	
 	// gradient term
 	
