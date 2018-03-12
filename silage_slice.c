@@ -2,8 +2,8 @@
  *
  * Module to write slices of silo data for visualisations.
  *
- * Slicing is done through the x coordinate at 'x=p.siloslicecoord' 
- * where 'p.siloslicecoord' is specified in the input file.
+ * Slicing is done through the x coordinate at `x=p.siloslicecoord` 
+ * where `p.siloslicecoord` is specified in the input file.
  * 
  * write_silo_slice_step() makes a silo file containing a slice
  * of the scalar field phi and the kinetic energy density. It calls make_kinetic()
