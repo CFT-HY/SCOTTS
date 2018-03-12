@@ -33,36 +33,41 @@ void evolve_field(hydro_fields f, hydro_params p) {
 
 #ifndef SCALAR
 	/* First-order viscosity term:
-	 * Factor of 0.5 comes from Crank-Nicolson method and leapfrog:
-	 * pi lives on boundary between timesteps but need pi on timestep so need to average.
-	 * Get a term with (1+s)*pi from last timestep on RHS and have (1-s)*pi on current step on LHS, 
-	 * then divide through by (1-s).
+	 * Factor of 0.5 comes from Crank-Nicolson method and
+	 * leapfrog: pi lives on boundary between timesteps but need
+	 * pi on timestep so need to average.  Get a term with
+	 * (1+s)*pi from last timestep on RHS and have (1-s)*pi on
+	 * current step on LHS, then divide through by (1-s).
 	 */
-	s = -0.5*p.dt*(p.C*f.phi[x][y][z]*f.phi[x][y][z]/f.T[x][y][z])*f.W[x][y][z];
+	s = -0.5*p.dt*(p.C*f.phi[x][y][z]*f.phi[x][y][z]
+		       /f.T[x][y][z])*f.W[x][y][z];
 
 	f.pi[x][y][z] = (1+s)*f.pi[x][y][z]/(1-s);
 	
 	/* Gradient term:
-	 * Gradients and velocities live on cell boundaries,
-	 * but we want the values in the body of the cell so we average the two boundaries.
+	 * Gradients and velocities live on cell boundaries, but we
+	 * want the values in the body of the cell so we average the
+	 * two boundaries.
 	 */ 
-	f.pi[x][y][z] = f.pi[x][y][z] -p.dt*(p.C*f.phi[x][y][z]*f.phi[x][y][z]
-                                         /f.T[x][y][z])*f.W[x][y][z]*(
-					   0.5*(f.V[0][x][y][z]*(f.phi[x][y][z]
-							    - f.phi[x-1][y][z])
-					   + f.V[0][x+1][y][z]*(f.phi[x+1][y][z]
-								- f.phi[x][y][z]))/p.dx
-					 
-					  + 0.5*(f.V[1][x][y][z]*(f.phi[x][y][z]
-							     - f.phi[x][y-1][z])
-					    + f.V[1][x][y+1][z]*(f.phi[x][y+1][z]
-								 - f.phi[x][y][z]))/p.dx
+	f.pi[x][y][z] = f.pi[x][y][z]
+	  - p.dt*(p.C*f.phi[x][y][z]*f.phi[x][y][z]/f.T[x][y][z]) \
+	  *f.W[x][y][z] \
+	  *(
+	    0.5*(f.V[0][x][y][z]*(f.phi[x][y][z]
+				  - f.phi[x-1][y][z])
+		 + f.V[0][x+1][y][z]*(f.phi[x+1][y][z]
+				      - f.phi[x][y][z]))/p.dx
+	    
+	    + 0.5*(f.V[1][x][y][z]*(f.phi[x][y][z]
+				    - f.phi[x][y-1][z])
+		   + f.V[1][x][y+1][z]*(f.phi[x][y+1][z]
+					- f.phi[x][y][z]))/p.dx
 					  
-					  + 0.5*(f.V[2][x][y][z]*(f.phi[x][y][z]
-							     - f.phi[x][y][((z-1+p.Lz)%p.Lz)])
-					    + f.V[2][x][y][((z+1)%p.Lz)]*(f.phi[x][y][((z+1)%p.Lz)]
-									  - f.phi[x][y][z]))/p.dx	
-					  )/(1-s);
+	    + 0.5*(f.V[2][x][y][z]*(f.phi[x][y][z]
+				    - f.phi[x][y][((z-1+p.Lz)%p.Lz)])
+		   + f.V[2][x][y][((z+1)%p.Lz)]*(f.phi[x][y][((z+1)%p.Lz)]
+						 - f.phi[x][y][z]))/p.dx
+	    )/(1-s);
 #endif // !SCALAR
 	
 	// scalar field gradient and potential terms
