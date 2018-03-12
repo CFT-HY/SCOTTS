@@ -85,15 +85,14 @@ void evolve_field(hydro_fields f, hydro_params p) {
 	    - Vdf(p, p.Tconst, f.phi[x][y][z]));
 #endif // !SCALAR	
 
-#ifndef SCALAR
-      // pifull is (1.5*pi - 0.5*piold), not sure why
-      f.pifull[x][y][z] = piold + 1.5*(f.pi[x][y][z] - piold);
-#else
-      // more reasonable?
-      f.pifull[x][y][z] = 0.5*(piold + f.pi[x][y][z]);
-#endif // !SCALAR	
+        /* In the leapfrog/Verlet method, pi lives half a timestep behind
+	 * phi. Evolving by an additional half-interval between the new and
+	 * old pi's gives an approximation to the value of pi on the same
+	 * timestep as phi. This is useful for outputting energies, etc., but
+	 * is not used in the evolution code.
+	 */
+         f.pifull[x][y][z] = f.pi[x][y][z] + 0.5*(f.pi[x][y][z] - piold);
 
-	
       }
     }
   }
