@@ -198,13 +198,13 @@ void alloc_fields(hydro_fields *f, hydro_params p) {
 
   // scalar field and conjugate momentum
   f->phi = make_field(p);
-  f->pifull = make_field(p);
+  f->pi_future = make_field(p);
 
   // pi gets initialised in backstep
   f->pi = make_field(p);
 
-  // phiold initialised by evolve_field
-  f->phiold = make_field(p);
+  // phi_old initialised by evolve_field
+  f->phi_old = make_field(p);
 
 
 #ifndef SCALAR
@@ -267,9 +267,9 @@ void zero_fields(hydro_fields f, hydro_params p) {
   for(x=0;x<p.fieldN;x++) {
 
     f.phi[0][0][x] = 0.0000;
-    f.pifull[0][0][x] = 0.0000;
+    f.pi_future[0][0][x] = 0.0000;
     f.pi[0][0][x] = 0.0000;
-    f.phiold[0][0][x] = 0.0000;
+    f.phi_old[0][0][x] = 0.0000;
 
 #ifndef SCALAR
     f.T[0][0][x] = 0.0000;
@@ -312,9 +312,9 @@ void zero_fields(hydro_fields f, hydro_params p) {
 void free_fields(hydro_fields *f, hydro_params p) {
 
   free_field(p, f->phi);
-  free_field(p, f->pifull);
+  free_field(p, f->pi_future);
   free_field(p, f->pi);
-  free_field(p, f->phiold);
+  free_field(p, f->phi_old);
 
 #ifndef SCALAR
   free_field(p, f->T);

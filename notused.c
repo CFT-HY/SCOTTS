@@ -47,7 +47,7 @@ void initial_3D(hydro_fields f, hydro_params p) {
 
 	f.phi[x][y][z] = 0.0; // cstrab*(1.0 + 0.1*drand48());
 	
-	f.pifull[x][y][z] = 0.0;
+	f.pi_future[x][y][z] = 0.0;
 
 #ifndef SCALAR	
 	f.T[x][y][z] = 0.0; // p.Tconst;
@@ -153,21 +153,21 @@ void evolve_backstep(hydro_fields f, hydro_params p) {
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
-	f.pi[x][y][z] = f.pifull[x][y][z] - 0.5*p.dt
+	f.pi[x][y][z] = f.pi_future[x][y][z] - 0.5*p.dt
 	  *(f.phi[x+1][y][z] + f.phi[x][y+1][z] 
 	    + f.phi[x][y][((z+1)%p.Lz)] 
 	    - 6.0*f.phi[x][y][z] 
 	    + f.phi[x-1][y][z] + f.phi[x][y-1][z]
 	    + f.phi[x][y][((z-1+p.Lz)%p.Lz)])/(p.dx*p.dx)
 	  + 0.125*p.dt*p.dt
-	  *(f.pifull[x+1][y][z] - 2.0*f.pifull[x][y][z]
-	    + f.pifull[x-1][y][z])/(p.dx*p.dx)
+	  *(f.pi_future[x+1][y][z] - 2.0*f.pi_future[x][y][z]
+	    + f.pi_future[x-1][y][z])/(p.dx*p.dx)
 #ifndef SCALAR
 	  + 0.5*p.dt*Vdf(p, f.T[x][y][z], f.phi[x][y][z] 
-			 - 0.25*p.dt*f.pifull[x][y][z]);
+			 - 0.25*p.dt*f.pi_future[x][y][z]);
 #else
 	  + 0.5*p.dt*Vdf(p, p.Tconst, f.phi[x][y][z] 
-			 - 0.25*p.dt*f.pifull[x][y][z]);
+			 - 0.25*p.dt*f.pi_future[x][y][z]);
 #endif
       }
     }
