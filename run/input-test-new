@@ -33,10 +33,18 @@ Tconst 0.86
 
 # How often to write data. "interval" is how often to write a line of
 # global quantities to stdout, and do any FFTs/power spectra that are
-# compiled in. "silointerval" is the interval for writing visualisation
-# data; if it is 0 or -1 then nothing is done.
+# compiled in. 
 interval 10
+
+# "silointerval" is the interval for writing visualisation data;
+# if it is 0 or -1 then nothing is done
 silointerval -1
+
+# "silosliceinterval" is the inteval for writing a *slice* of data for
+# visualisation, the slice is taken at the x-coordinate given by
+# "siloslicecoord"
+silosliceinterval -1
+siloslicecoord 0
 
 # Power spectra measurements. How often to write FFT's (i.e. field, fluid
 # velocity, and GW power spectra) - set to -1 to disable.

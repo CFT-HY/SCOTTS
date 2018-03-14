@@ -21,7 +21,7 @@ void evolve_field(hydro_fields f, hydro_params p) {
   
   int x, y, z;
 
-  float piold, s;
+  float pi_old, s;
 
   // Move conjugate momentum (leapfrog)
   for(x = 1; x <= p.slicex; x++) {
@@ -29,40 +29,45 @@ void evolve_field(hydro_fields f, hydro_params p) {
       for(z = 0; z < p.Lz; z++) {
 	
 	
-	piold = f.pi[x][y][z];
+	pi_old = f.pi[x][y][z];
 
 #ifndef SCALAR
 	/* First-order viscosity term:
-	 * Factor of 0.5 comes from Crank-Nicolson method and leapfrog:
-	 * pi lives on boundary between timesteps but need pi on timestep so need to average.
-	 * Get a term with (1+s)*pi from last timestep on RHS and have (1-s)*pi on current step on LHS, 
-	 * then divide through by (1-s).
+	 * Factor of 0.5 comes from Crank-Nicolson method and
+	 * leapfrog: pi lives on boundary between timesteps but need
+	 * pi on timestep so need to average.  Get a term with
+	 * (1+s)*pi from last timestep on RHS and have (1-s)*pi on
+	 * current step on LHS, then divide through by (1-s).
 	 */
-	s = -0.5*p.dt*(p.C*f.phi[x][y][z]*f.phi[x][y][z]/f.T[x][y][z])*f.W[x][y][z];
+	s = -0.5*p.dt*(p.C*f.phi[x][y][z]*f.phi[x][y][z]
+		       /f.T[x][y][z])*f.W[x][y][z];
 
 	f.pi[x][y][z] = (1+s)*f.pi[x][y][z]/(1-s);
 	
 	/* Gradient term:
-	 * Gradients and velocities live on cell boundaries,
-	 * but we want the values in the body of the cell so we average the two boundaries.
+	 * Gradients and velocities live on cell boundaries, but we
+	 * want the values in the body of the cell so we average the
+	 * two boundaries.
 	 */ 
-	f.pi[x][y][z] = f.pi[x][y][z] -p.dt*(p.C*f.phi[x][y][z]*f.phi[x][y][z]
-                                         /f.T[x][y][z])*f.W[x][y][z]*(
-					   0.5*(f.V[0][x][y][z]*(f.phi[x][y][z]
-							    - f.phi[x-1][y][z])
-					   + f.V[0][x+1][y][z]*(f.phi[x+1][y][z]
-								- f.phi[x][y][z]))/p.dx
-					 
-					  + 0.5*(f.V[1][x][y][z]*(f.phi[x][y][z]
-							     - f.phi[x][y-1][z])
-					    + f.V[1][x][y+1][z]*(f.phi[x][y+1][z]
-								 - f.phi[x][y][z]))/p.dx
+	f.pi[x][y][z] = f.pi[x][y][z]
+	  - p.dt*(p.C*f.phi[x][y][z]*f.phi[x][y][z]/f.T[x][y][z]) \
+	  *f.W[x][y][z] \
+	  *(
+	    0.5*(f.V[0][x][y][z]*(f.phi[x][y][z]
+				  - f.phi[x-1][y][z])
+		 + f.V[0][x+1][y][z]*(f.phi[x+1][y][z]
+				      - f.phi[x][y][z]))/p.dx
+	    
+	    + 0.5*(f.V[1][x][y][z]*(f.phi[x][y][z]
+				    - f.phi[x][y-1][z])
+		   + f.V[1][x][y+1][z]*(f.phi[x][y+1][z]
+					- f.phi[x][y][z]))/p.dx
 					  
-					  + 0.5*(f.V[2][x][y][z]*(f.phi[x][y][z]
-							     - f.phi[x][y][((z-1+p.Lz)%p.Lz)])
-					    + f.V[2][x][y][((z+1)%p.Lz)]*(f.phi[x][y][((z+1)%p.Lz)]
-									  - f.phi[x][y][z]))/p.dx	
-					  )/(1-s);
+	    + 0.5*(f.V[2][x][y][z]*(f.phi[x][y][z]
+				    - f.phi[x][y][((z-1+p.Lz)%p.Lz)])
+		   + f.V[2][x][y][((z+1)%p.Lz)]*(f.phi[x][y][((z+1)%p.Lz)]
+						 - f.phi[x][y][z]))/p.dx
+	    )/(1-s);
 #endif // !SCALAR
 	
 	// scalar field gradient and potential terms
@@ -80,15 +85,14 @@ void evolve_field(hydro_fields f, hydro_params p) {
 	    - Vdf(p, p.Tconst, f.phi[x][y][z]));
 #endif // !SCALAR	
 
-#ifndef SCALAR
-      // pifull is (1.5*pi - 0.5*piold), not sure why
-      f.pifull[x][y][z] = piold + 1.5*(f.pi[x][y][z] - piold);
-#else
-      // more reasonable?
-      f.pifull[x][y][z] = 0.5*(piold + f.pi[x][y][z]);
-#endif // !SCALAR	
+        /* In the leapfrog/Verlet method, pi lives half a timestep behind
+	 * phi. Evolving by an additional half-interval between the new and
+	 * old pi's gives an approximation to the value of pi on the same
+	 * timestep as phi. This is useful for outputting energies, etc., but
+	 * is not used in the evolution code.
+	 */
+         f.pi_future[x][y][z] = f.pi[x][y][z] + 0.5*(f.pi[x][y][z] - pi_old);
 
-	
       }
     }
   }
@@ -98,17 +102,19 @@ void evolve_field(hydro_fields f, hydro_params p) {
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
-	f.phiold[x][y][z] = f.phi[x][y][z];
+	// (We need to keep phi_old for averaging things on the half timestep)
+	f.phi_old[x][y][z] = f.phi[x][y][z];
+	
 	f.phi[x][y][z] = f.phi[x][y][z] + p.dt*f.pi[x][y][z];
       }
     }
   }
   
   halo_field(f.pi, p);
-  halo_field(f.pifull, p);
+  halo_field(f.pi_future, p);
   
   halo_field(f.phi, p);
-  halo_field(f.phiold, p);
+  halo_field(f.phi_old, p);
   
 }
 
@@ -168,19 +174,19 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
 
 
 	
-	phiav[x][y][z] = 0.5*(f.phiold[x][y][z] + f.phi[x][y][z]);
+	phiav[x][y][z] = 0.5*(f.phi_old[x][y][z] + f.phi[x][y][z]);
 	
-	dxphi[0][x][y][z] =  0.5*(f.phiold[x+1][y][z]
+	dxphi[0][x][y][z] =  0.5*(f.phi_old[x+1][y][z]
 				  + f.phi[x+1][y][z]
-				  - f.phiold[x][y][z] - f.phi[x][y][z])/p.dx;
+				  - f.phi_old[x][y][z] - f.phi[x][y][z])/p.dx;
 	
-	dxphi[1][x][y][z] =  0.5*(f.phiold[x][y+1][z]
+	dxphi[1][x][y][z] =  0.5*(f.phi_old[x][y+1][z]
 				  + f.phi[x][y+1][z]
-				  - f.phiold[x][y][z] - f.phi[x][y][z])/p.dx;
+				  - f.phi_old[x][y][z] - f.phi[x][y][z])/p.dx;
 	
-	dxphi[2][x][y][z] =  0.5*(f.phiold[x][y][((z+1)%p.Lz)]
+	dxphi[2][x][y][z] =  0.5*(f.phi_old[x][y][((z+1)%p.Lz)]
 				  + f.phi[x][y][((z+1)%p.Lz)]
-				  - f.phiold[x][y][z] - f.phi[x][y][z])/p.dx;
+				  - f.phi_old[x][y][z] - f.phi[x][y][z])/p.dx;
 	
       }
     }
@@ -190,7 +196,7 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
   halo_field(dxphi[1], p);
   halo_field(dxphi[2], p);
 
-  Vdpot(p, f.T[0][0], phiav[0][0], Vdmid[0][0]);
+  Vdpot(p, f.T, phiav, Vdmid);
 
 
   halo_field(Vdmid, p);
@@ -247,7 +253,6 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
 		     + f.W[x-1][y-1][z]
 		     + f.W[x][y][((z-1+p.Lz)%p.Lz)]
 		     + f.W[x][y-1][((z+p.Lz-1)%p.Lz)]
-
 		     + f.W[x-1][y][((z+p.Lz-1)%p.Lz)]
 		     + f.W[x-1][y-1][((z+p.Lz-1)%p.Lz)]);
 	

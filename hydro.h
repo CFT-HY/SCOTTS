@@ -236,9 +236,9 @@ typedef struct {
 
   // Scalar field
   float ***phi;
-  float ***pifull;
+  float ***pi_future;
   float ***pi;
-  float ***phiold;
+  float ***phi_old;
 
 #ifndef SCALAR
   // Fluid
@@ -324,8 +324,8 @@ float Vf(hydro_params p, float T, float this_phi);
 float Vdf(hydro_params p, float T, float this_phi);
 float VTf(hydro_params p, float T, float this_phi);
 float VTTf(hydro_params p, float T, float this_phi);
-void Vpot(hydro_params p, float *T, float *phi, float *Vprecalc);
-void Vdpot(hydro_params p, float *T, float *phi, float *Vprecalc);
+void Vpot(hydro_params p, float ***T, float ***phi, float ***Vprecalc);
+void Vdpot(hydro_params p, float ***T, float ***phi, float ***Vprecalc);
 
 
 // energy.c
