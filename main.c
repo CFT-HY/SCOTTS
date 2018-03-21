@@ -435,18 +435,8 @@ int main(int argc, char *argv[]) {
     // Do the hydro bits
     evolve_hydro(f, p);
 
-#ifdef CUTOFF
-    float cutoff = 0.5*(1.0-tanh(10.0*(t/p.tcutoff - 0.9)));
-
-    if((p.interval > 0) && (step % p.interval == 0)) {
-      printf0(p,"cutoff is %lf\n", cutoff);
-    }
-
     // Evolve metric perturbations
-    evolve_uij(f, p, cutoff);
-#else // not cutoff
     evolve_uij(f, p);
-#endif
 
     // Advection of state variables
     advect_E(f, p);
