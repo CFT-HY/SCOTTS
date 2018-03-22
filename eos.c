@@ -1,13 +1,43 @@
-/* eos.c
+/** @file eos.c
  * 
- * Calculations of the equation of state and T
+ * Calculations of the equation of state and T.
+ * 
+ * Note that find_Ta() can be called seperately from eq_of_state() but
+ * eq_of_state() at the start. 
+ *
+ * We find `f.T` by solving
+ * \f[
+ * \epsilon = 3 a T^4 + V(\phi, T) - T \frac{\partial V}{\partial T}
+ * \f]
+ * for \f$ T \f$. 
+ *
+ * This leads to
+ * \f[
+ * T^2= \dfrac{ \frac{1}{2} \gamma \phi^2 
+ *              \pm \sqrt{\frac{1}{4} \gamma^2\phi^4 +12a(\epsilon + 
+ *		    \frac{1}{2}\gamma T_0^2 \phi^2 -\frac{1}{4}\lambda\phi^4)}}
+ *	{6a}\text.
+ * \f]
+ *
+ * Then `f.p` is found from
+ * \f[
+ * P = a T^4 + V(\phi, T)\text.
+ * \f]
+ *
+ * The adiabatic constant `f.kappa` is given by
+ * \f[
+ * \kappa= 1 + \frac{PW}{E}\text.
+ * \f]
  */
 #include "hydro.h"
 
 
-/* find_Ta(hydro_fields f, hydro_params p)
+/** Find temperature by 'solving' equation of state.
  *
- * Find temperature by 'solving' equation of state.
+ * Root finding algorithm from internal energy equation. 
+ * Note that if `Tfix` goes negative then at that site `f.T` will become
+ * NaN's which then spread.
+ *
  * Directly copied from the 1+1 fortran code.
  */
 void find_Ta(hydro_fields f, hydro_params p) {
@@ -32,11 +62,7 @@ void find_Ta(hydro_fields f, hydro_params p) {
 		      *f.phi[x][y][z]*f.phi[x][y][z]
 		      - 0.5*p.gamma*p.T0*p.T0*f.phi[x][y][z]*f.phi[x][y][z]
 		      - f.E[x][y][z]/f.W[x][y][z]);
-	
-	// Tfix not used (and ruins energy conservation anyway)
-	//    if(Tfix < 0)
-	//      Tfix = 0.0;
-	
+		
 	f.T[x][y][z] = sqrt((1.0/(6.0*p.gdeg))
 			    * (0.5*p.gamma*f.phi[x][y][z]*f.phi[x][y][z]
 			       + sqrt(Tfix)));
@@ -53,10 +79,11 @@ void find_Ta(hydro_fields f, hydro_params p) {
 
 
 
-/* void eq_of_state(hydro_fields f, hydro_params p)
- *
- * By 'solving' the equation of state, determine first T and then
- * pressure p and the adiabatic parameter kappa.
+
+/** By 'solving' the equation of state, determine first T and then
+ * pressure p and the adiabatic parameter kappa. 
+ * 
+ * Calls find_Ta() to obtain the temperature.
  */
 void eq_of_state(hydro_fields f, hydro_params p) {
 
