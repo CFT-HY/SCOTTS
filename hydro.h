@@ -54,12 +54,11 @@
  */
 #define INIT_SHOCK_TUBE 1
 #define INIT_BUBBLE 2
-
+#define INIT_PS 3
 
 #define NUC_OFF 0
 #define NUC_LIST 2
 #define NUC_FILE 3
-
 
 #define GW_BOTH 1
 #define GW_FIELD 2
@@ -118,18 +117,10 @@ typedef struct {
   float Tconst;
   float T0;
 
-#ifdef INITPS
-  // Cutoff time
-  float initps;
+  float initnorm;
 
   float initcutoff;
   float initlength;
-#endif
-
-#ifdef CUTOFF
-  // Cutoff time
-  float tcutoff;
-#endif
 
   // How often to deal with output
   int interval;
@@ -310,11 +301,7 @@ int load_checkpoint(hydro_fields f, hydro_params p);
 void evolve_backstep(hydro_fields f, hydro_params p);
 void evolve_field(hydro_fields f, hydro_params p);
 void evolve_hydro(hydro_fields f, hydro_params p);
-#ifdef CUTOFF
-void evolve_uij(hydro_fields f, hydro_params p, float cutoff);
-#else
 void evolve_uij(hydro_fields f, hydro_params p);
-#endif
 
 // Not implemented yet
 void artificial_viscosity(hydro_fields f, int **nb, hydro_params p);
@@ -413,9 +400,9 @@ void fft_vel(hydro_fields f, hydro_params p, int step, float ****vectorfield);
 #endif // FFT
 
 
-#ifdef INITPS
 
 // initps.c
 void init_ps(hydro_fields f, hydro_params p, float ****field);
+void norm_power(hydro_fields f, hydro_params p, float ****field);
+float get_momtot(hydro_fields f, hydro_params p);
 
-#endif // INITPS

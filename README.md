@@ -31,7 +31,7 @@ where:
 
 Also present in the code is the variable `f.kappa` which is given by
 \f[
-\kappa=1-\dfrac{PW}{E}
+\kappa=1+\dfrac{PW}{E}
 \f]
 
 

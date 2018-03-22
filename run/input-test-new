@@ -53,9 +53,14 @@ fftinterval 100
 uetcstart -1
 
 
-# Initial conditions; choices are "shocktube", "bubble"; only
+# Initial conditions; choices are "shocktube", "bubble" and "initps"; only
 # "bubble" should be currently used.
 initial bubble
+
+# If "initps" is used, we need to set some extra parameters
+initnorm -1
+initcutoff -1
+initlength -1
 
 # How many bubbles to start off with. May be zero.
 bubbles 1
@@ -67,7 +72,7 @@ silodir silage/
 # How much the gaussian ansatz for the initial bubble is enlarged by
 scale 1.0
 
-# Nucleation procedure; choices are "off", "exp", "list" or "file"
+# Nucleation procedure; choices are "off", "exp", "list" or "file" 
 # - "off" does nothing (the number of bubbles given above as 'bubbles' is
 #   still created at the start however)
 # - "exp" is currently broken (seeded incorrectly), but would be

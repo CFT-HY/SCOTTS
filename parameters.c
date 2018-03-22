@@ -76,15 +76,10 @@ void get_parameters(char *infile, hydro_params *p)
 
   int set_seed = 0;
 
-#ifdef INITPS
-  int set_initps = 0;
+  int set_initnorm = 0;
   int set_initcutoff = 0;
   int set_initlength = 0;
-#endif
 
-#ifdef CUTOFF
-  int set_tcutoff = 0;
-#endif
 
   char key[100];
   char value[100];
@@ -245,10 +240,9 @@ void get_parameters(char *infile, hydro_params *p)
       p->scale = strtof(value,NULL);
       set_scale = 1;
     }
-#ifdef INITPS
-    else if(!strcasecmp(key,"initps")) {
-      p->initps = strtof(value,NULL);
-      set_initps = 1;
+    else if(!strcasecmp(key,"initnorm")) {
+      p->initnorm = strtof(value,NULL);
+      set_initnorm = 1;
     } else if(!strcasecmp(key,"initcutoff")) {
       p->initcutoff = strtod(value,NULL);
       set_initcutoff = 1;
@@ -256,18 +250,13 @@ void get_parameters(char *infile, hydro_params *p)
       p->initlength = strtod(value,NULL);
       set_initlength = 1;
     }
-#endif
-#ifdef CUTOFF
-    else if(!strcasecmp(key,"tcutoff")) {
-      p->tcutoff = strtof(value,NULL);
-      set_tcutoff = 1;
-    }
-#endif
     else if(!strcasecmp(key,"initial")) {
       if(!strcasecmp(value, "shocktube")) {
 	p->initial = INIT_SHOCK_TUBE;
       } else if(!strcasecmp(value, "bubble")) {
 	p->initial = INIT_BUBBLE;
+      } else if(!strcasecmp(value, "initps")) {
+	p->initial= INIT_PS;
       } else {
 	printf0(*p, "warning, unrecognised value for initial"
 		" (%s); defaulting to bubble.\n", value);
@@ -393,8 +382,7 @@ void get_parameters(char *infile, hydro_params *p)
 	    }
 	  }
 	}
-
-      } else {
+      }else {
 	printf0(*p ,"Unrecognised nucleation type (%s), giving up!\n",
 		value);
 	  die(123);
@@ -506,29 +494,19 @@ void get_parameters(char *infile, hydro_params *p)
   } else if(!set_scale) {
     printf0(*p, "Did not set parameter \'scale\'\n");
     die(100);
-  }
-#ifdef INITPS
- else if(!set_initps) {
-    printf0(*p, "Did not set parameter \'initps\'\n");
-    die(100);
- } else if(!set_initcutoff) {
-   printf0(*p, "Did not set parameter \'initcutoff\'\n");
-   die(100);
- } else if(!set_initlength) {
-   printf0(*p, "Did not set parameter \'initlength\'\n");
-   die(100);
- }
-#endif
-#ifdef CUTOFF
- else if(!set_tcutoff) {
-    printf0(*p, "Did not set parameter \'tcutoff\'\n");
-    die(100);
-  }
-#endif
- else if(!set_initial) {
+  }else if(!set_initial) {
     printf0(*p, "Did not set parameter \'initial\'\n");
     die(100);
-  } else if(!set_gwsource) {
+  }else if(!set_initnorm) {
+    printf0(*p, "Did not set parameter \'initnorm\'\n");
+    die(100);
+  } else if(!set_initcutoff) {
+    printf0(*p, "Did not set parameter \'initcutoff\'\n");
+    die(100);
+  } else if(!set_initlength) {
+    printf0(*p, "Did not set parameter \'initlength\'\n");
+    die(100);
+  }else if(!set_gwsource) {
     printf0(*p, "Did not set parameter \'gwsource\'\n");
     die(100);
   } else if(!set_nucleation) {
@@ -560,14 +538,9 @@ void get_parameters(char *infile, hydro_params *p)
 	    "-- silointerval %d, silosliceinterval %d,checkpointinterval %d\n"
 	    "-- uetcstart %d\n"
 	    "-- bubbles %d, beta %g, scale %g\n"
-#ifdef INITPS
-	    "-- initps %g\n"
+	    "-- initnorm %g\n"
             "-- initcutoff %g\n"
             "-- initlength %g\n"
-#endif
-#ifdef CUTOFF
-	    "-- tcutoff %g\n"
-#endif
 	    "-- silodir \"%s\"\n"
 	    "-- checkpointdir \"%s\"\n"
 	    "-- seed %d\n",
@@ -582,14 +555,9 @@ void get_parameters(char *infile, hydro_params *p)
 	    p->silointerval, p->silosliceinterval, p->checkpointinterval,
 	    p->uetcstart,
 	    p->bubbles, p->beta, p->scale,
-#ifdef INITPS
-	    p->initps,
+	    p->initnorm,
             p->initcutoff,
             p->initlength,
-#endif
-#ifdef CUTOFF
-	    p->tcutoff,
-#endif
 	    p->silodir,
 	    p->checkpointdir,
 	    p->seed);
@@ -598,6 +566,8 @@ void get_parameters(char *infile, hydro_params *p)
       printf0(*p, "-- shock tube\n");
     } else if(p->initial == INIT_BUBBLE) {
       printf0(*p, "-- bubble\n");
+    } else if(p->initial == INIT_PS) {
+      printf0(*p, "-- init_ps\n");
     } else {
       printf0(*p, "-- warning, somehow have unknown initial conds.\n");
     }
