@@ -1,6 +1,9 @@
-/* hydro.h
+/** @file hydro.h
  *
  * Header file for hydro+scalar code.
+ *
+ * Contains the structs `hydro_params` and `hydro_fields`.
+ * Also contains prototypes for all functions in the code.
  */
 
 #include <stdlib.h>
@@ -78,8 +81,8 @@
 
 
 
-/*
- * struct hydro_params
+/** Struct containing parameters that are not changed during the
+ * simulation.
  *
  * Stores the parameters, including:
  * - physics (supplied and derived quantities)
@@ -89,126 +92,232 @@
 
 typedef struct {
 
+  /** Lattice spacing.
+   */
   float dx;
+
+  /** Timestep interval.
+   */
   float dt;
 
-  int Lx, Ly, Lz;
+  /** Number of lattice points in `x` direction.
+   */
+  int Lx;
+  /** Number of lattice points in `y` direction.
+   */
+  int Ly;
+  /** Number of lattice points in `z` direction.
+   */
+  int Lz;
 
+  /* Number of timesteps in the simulation.
+   */
   int steps;
 
-  // NB: artificial viscosity not implemented yet!
+  /** Artificial viscosity parameter.
+   *
+   * NB: artificial viscosity not implemented yet!
+   */
   float Cav;
 
-  // C aka eta, the field viscosity
+  /** C aka \f$ \eta \f$, the field viscosity
+   */
   float C;
 
-  // Input parameters for the potential
-  /*
-  float Lheat;
-  float sigma;
-  float lcorr;
-  */
-
-  // Calculated potential parameters
+  /** Cubic potential parameter \f$ A \f$.
+   */
   float alpha;
+
+  /** Quartic potential parameter \f$ \lambda \f$.
+   */
   float lambda;
+
+  /** Quadratic potential parameter \f$ \gamma \f$.
+   */
   float gamma;
-  // Temperature parameters
+  
+  /** Nucleation temperature \f$ T_N \f$ used to initialise the
+   *  simulation.
+   */
   float Tconst;
+
+  /** Potential parameter \f$ T_0 \f$ which corresponds to the
+   *  temperature at which the transition is no longer first order.
+   */
   float T0;
 
   float initnorm;
-
   float initcutoff;
   float initlength;
 
-  // How often to deal with output
+  /** How frequently to write global outputs to stderr.
+   */
   int interval;
+
+  /** How often to write gravitational wave and velocity power
+   *  spectra.
+   */
   int fftinterval;
+
+  /** How frequently to write fields to a silo file.
+   */
   int silointerval;
+
+  /** How frequently to write slices through the simulation box to a
+      silo file.
+   */
   int silosliceinterval;
   int checkpointinterval;
   
-  // x coord to slice through for write_silo_slice_step
+  /** `x` coord to slice through for write_silo_slice_step()
+   */
   int siloslicecoord;
-  
+
+  /** When to start performing uetc calculations.
+   */
   int uetcstart;
 
-  // Initial conditions type (see #defines above)
+  /** Initial conditions type (see #defines above)
+   */
   int initial;
 
 
 
-  // Scale factor
+  /** Scale factor.
+   */
   float a;
 
-  // Degrees of freedom
-  float gstar, gdeg;
+  /** Effective degrees of freedom.
+   */
+  float gstar;
 
-  // Number of physical sites in volume
+  /** `gdeg` is `gstar` scaled by \f$ (\pi^2/90) \f$.
+   */
+  float gdeg;
+
+  /** Number of physical sites in volume.
+   */
   int N;
 
-  // Sites in local area (including halo)
+  /** Sites in local area (including halo).
+   */
   int fieldN;
 
-  // How many nodes, and which are we
+  /** How many nodes we are using.
+   */
   int size;
+
+  /** Our node identifier.
+   */
   int rank;
 
   //  float comms_time;
 
-  // How many sites in each direction are unique to us
+  /** How many sites in the `x` direction are unique to us.
+   *
+   * -- i.e. we have (slicex+2)*(slicey+2)*Lz sites to ourselves
+   */
   int slicex;
+  /** How many sites in the `y` direction are unique to us.
+   *
+   * -- i.e. we have `(slicex+2)*(slicey+2)*Lz` sites to ourselves
+   */
   int slicey;
-  // -- i.e. we have (slicex+2)*(slicey+2)*Lz sites to ourselves
+  
 
-  // Where do our sites start in the physical volume?
+  /** `shiftx` corresponds to where the local `x` coordinate starts in
+   * the physical volume.
+   *
+   * NB: the physical position of a site `x` is e.g. `(x+shiftx-1)`
+   */
   int shiftx;
+
+  /** `shiftx` corresponds to where the local `y` coordinate starts in
+   * the physical volume.
+   *
+   * NB: the physical position of a site `y` is e.g. `(y+shifty-1)`
+   */
   int shifty;
-  // NB: the physical position of a site x is e.g. (x+shiftx-1)
 
 
-  // Where the silo files go
+  /** Where the silo files go.
+   */
   char silodir[500];
 
-  // Where checkpoint files go
+  /** Where checkpoint files go
+   */
   char checkpointdir[500];
 
+  /** Number of bubbles to spawn on the first timestep.
+   */
   int bubbles;
 
-  // How we nucleate
+  /** Nucleation type.
+   */
   int nucleation;
 
+  /** Steps on which to perform nucleation.
+   *
+   * NB: The same step can appear more than once to indicate to try to
+   * nucleate multiple bubbles on that timestep.
+   */
   int *nucsteps;
+  /** Total number of steps on which we perform nucleation. 
+   *
+   * NB: If a step is repeated it is counted multiple times.
+   */
   int n_nucsteps;
 
+  /** Parameter for exponential nucleation rate.
+   */
   float beta;
 
-  // to rescale bubble size
+  /** Used to rescale bubble size
+   */
   float scale;
 
-  int Linv;
-
+  /** Random seed so it is kept the same across nodes.
+   */
   int seed;
 
+  /** What is used to source gravitational waves? (fluid, scalar or
+   *  both)
+   */
   int gwsource;
 
 #ifdef MPI
 
-  // Ranks of neighbours
+  /** Rank of neighbour in negative `x` direction.
+   */
   int rank_xM;
+  /** Rank of neighbour in positive `x` direction.
+   */
   int rank_xP;
+  /** Rank of neighbour in negative `y` direction.
+   */
   int rank_yM;
+  /** Rank of neighbour in positive `x` direction.
+   */
   int rank_yP;
 
-  // Ranks of float neighbours
+  /** Rank of neighbour in negative `x` and `y` direction.
+   */
   int rank_xMyM;
+  /** Rank of neighbour in negative `x` and positive `y` direction.
+   */
   int rank_xMyP;
+  /** Rank of neighbour in positive `x` and negative `y` direction.
+   */
   int rank_xPyM;
+  /** Rank of neighbour in positive `x` and `y` direction.
+   */
   int rank_xPyP;
 
-  // Where am I in the domain decomposition?
+  /** Where am I in the domain decomposition along `x` direction?
+   */
   int myposx;
+  /** Where am I in the domain decomposition along `y` direction?
+   */
   int myposy;
 
 #endif // MPI
@@ -218,7 +327,23 @@ typedef struct {
 
 
 
-// See alloc_fields in alloc.c for details
+/** Struct containing the fields defined on the lattice that we track
+ * at every timestep.
+ * 
+ * Scalar field fields:
+ *
+ * `phi`, `phi_old`, `pi`, `pi_future`.
+ *
+ * Fluid fields:
+ *
+ * `T`, `E`, `W`, `kappa`, `p`, `V`, `Z`, `U`, and `F`.
+ *
+ *
+ * Gravity fields:
+ *
+ * `uij`, `udotij`, and `initial_Tij`.
+ * 
+ */
 typedef struct {
 
   float *x_inv;
@@ -226,30 +351,80 @@ typedef struct {
   float *V_inv;
 
   // Scalar field
+
+  /** `phi` is the scalar field on the current timestep.
+   */
   float ***phi;
+
+  /** `pi_future` is the value of `pi` on the same timestep as `phi`.
+   */
   float ***pi_future;
+
+  /** `pi` is the conjugate momenta of the scalar field.
+   */
   float ***pi;
+
+  /** `phi_old` is the scalar field on the last timestep.
+   */
   float ***phi_old;
 
 #ifndef SCALAR
   // Fluid
+  
+  /** `T` is the temperature of the fluid.
+   */
   float ***T;
+
+  /** `E` is the internal energy density of the fluid.
+   */
   float ***E;
+
+  /** `W` is the zone-centred boost.
+   */
   float ***W;
+
+  /** `kappa` is the adiabatic index for the system.
+   */
   float ***kappa;
+
+  /** `p` is the pressure of the fluid. Obtained by eq_of_state() and
+   * used in hydro.
+   */
   float ***p;
 
+  /** `V` is the fluid 3-velocity.
+   */
   float ****V;
+
+  /** `Z` is the fluid momentum density.
+   */
   float ****Z;
+
+  /** `U` is the fluid 4-velocity.
+   */
   float ****U;
+
+  /** `F` is a temporary variable used in advection.
+   */
   float ****F;
 #endif // SCALAR
 
   // Gravity
+
+  /** `uij` are the unprojected metric peturbations.
+   */
   float ****uij;
+
+  /** `udotij` are the time derivative of thhe `uij` and are used for
+   *    GW power spectrum.
+   */
   float ****udotij;
 
   // (Only for UETCs)
+
+  /** `initial_Tij` is only used for calculating unequal time
+   *    correlators.
+   */
   float ****initial_Tij;
 
 

@@ -1,29 +1,28 @@
-/* parameters.c
+/** @file parameters.c
  *
  * Load parameters from infile, in form "key value".
  */
 #include "hydro.h"
 
 
-/* hydro_params get_parameters(char *infile, hydro_params *p)
- *
- * Mostly boilerplate code for parsing lines of the form "key value" 
+/** Mostly boilerplate code for parsing lines of the form "key value"
  * from a file.
  *
- * I previously did this call-by-reference, but the parameters struct
- * (defined in hydro.h) makes the calls a lot neater, even if what is
- * being read in is a little bit more opaque here.
+ * This was previously done through call-by-reference, but the
+ * parameters struct (defined in hydro.h) makes the calls a lot
+ * neater, even if what is being read in is a little bit more opaque
+ * here.
  *
- * For clarity, I try to keep the order in which variables are initialised
- * and parsed the same as for the struct. This helps keep this messy
- * repetitive code as tidy as possible.
+ * For clarity, we try to keep the order in which variables are
+ * initialised and parsed the same as for the struct. This helps keep
+ * this messy repetitive code as tidy as possible.
  *
  * Note, empty lines and lines where the first non-space character is
  * '#' are not parsed.
  *
- * A significant outstanding issue is the limited line length due to our
- * naive use of fgets, but this is unlikely to cause trouble
- * with the sort of parameters we are using.
+ * A significant outstanding issue is the limited line length due to
+ * our naive use of fgets, but this is unlikely to cause trouble with
+ * the sort of parameters we are using.
  */
 void get_parameters(char *infile, hydro_params *p)
 {
