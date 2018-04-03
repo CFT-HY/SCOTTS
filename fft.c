@@ -1,6 +1,6 @@
-/* fft.c
+/** @file fft.c
  *
- * Fourier transform (and power spectrum) of a field
+ * Fourier transform (and power spectrum) of a field.
  */
 #include "hydro.h"
 
@@ -8,7 +8,8 @@
 #ifdef FFT
 
 
-/* fft_field(hydro_fields f, hydro_params p, float ***field, int step)
+/** Perform the FFT of a supplied field, and write the power spectrum
+ * to a file.
  *
  * Carries out the FFT of the supplied field, computes the power
  * spectrum, and stores it binned and labelled with the timestep
