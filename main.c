@@ -301,7 +301,7 @@ int main(int argc, char *argv[]) {
 
   for(step = step_start; step < p.steps; step++) {
 
-
+    printf0(p,"step is %d",step);
 
     /*
     if(!p.rank) {
