@@ -105,23 +105,7 @@ void initial_blank(hydro_fields f, hydro_params p) {
  */
 int safe_distance(hydro_fields f, hydro_params p) {
 
-
-  float surface_tension = (2.0*sqrt(2.0)/81.0)*(
-						p.alpha*p.alpha*p.alpha
-						/(p.lambda*p.lambda
-						  *sqrt(p.lambda)));
-
-  float phimin =  (p.alpha*p.Tconst
-		   + sqrt((p.alpha*p.Tconst)*(p.alpha*p.Tconst)
-			  - 4.0*p.lambda*p.gamma
-			  *(p.Tconst*p.Tconst - p.T0*p.T0))
-		   )/(2.0*p.lambda);
-  
-  float R_critical = -2.0*surface_tension/Vf(p, p.Tconst, phimin);
-  
-  float R_scaled = p.scale*R_critical;
-
-  float safe_lattice_distance = sqrt(2.0*R_scaled*R_scaled/
+  float safe_lattice_distance = sqrt(2.0*p.R_scaled*p.R_scaled/
 				     (p.dx*p.dx));
   
   return (int)round(safe_lattice_distance);
@@ -145,13 +129,7 @@ int can_nucleate(hydro_fields f, hydro_params p, int x0, int y0, int z0) {
 
   int safedist = safe_distance(f,p);
 
-  float phimin =  (p.alpha*p.Tconst
-		   + sqrt((p.alpha*p.Tconst)*(p.alpha*p.Tconst)
-			  - 4.0*p.lambda*p.gamma
-			  *(p.Tconst*p.Tconst - p.T0*p.T0))
-		   )/(2.0*p.lambda);
-
-  float threshold_phi = 0.00005*phimin;
+  float threshold_phi = 0.00005*p.phimin;
 
   int direct_x, direct_y, direct_z;
   int wrap_x, wrap_y, wrap_z;
@@ -238,23 +216,7 @@ void nucleate_at(hydro_fields f, hydro_params p, int x0, int y0, int z0) {
 
   int x, y, z, i;  
 
-
-  float surface_tension = (2.0*sqrt(2.0)/81.0)*(
-						p.alpha*p.alpha*p.alpha
-						/(p.lambda*p.lambda
-						  *sqrt(p.lambda)));
-
-  float phimin =  (p.alpha*p.Tconst
-		   + sqrt((p.alpha*p.Tconst)*(p.alpha*p.Tconst)
-			  - 4.0*p.lambda*p.gamma
-			  *(p.Tconst*p.Tconst - p.T0*p.T0))
-		   )/(2.0*p.lambda);
-  
-  float R_critical = -2.0*surface_tension/Vf(p, p.Tconst, phimin);
-  
-  float R_scaled = p.scale*R_critical;
-
-  float threshold_phi = 0.00005*phimin;
+  float threshold_phi = 0.00005*p.phimin;
   
   printf0(p, "Nucleating at (%d, %d, %d)\n", x0, y0, z0);
 
@@ -292,10 +254,10 @@ void nucleate_at(hydro_fields f, hydro_params p, int x0, int y0, int z0) {
 	  delta_z = wrap_z;
 
 	// Gaussian ansatz
-	phival = phimin*exp(-1.0*p.dx*p.dx*((float)(delta_x*delta_x 
+	phival = p.phimin*exp(-1.0*p.dx*p.dx*((float)(delta_x*delta_x 
 						    + delta_y*delta_y
 						    + delta_z*delta_z))
-			    /(2.0*R_scaled*R_scaled));
+			    /(2.0*p.R_scaled*p.R_scaled));
 	
 	f.phi[x][y][z] += phival;
 

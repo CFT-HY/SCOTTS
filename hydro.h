@@ -14,6 +14,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <stdarg.h>
+#include <float.h>
 
 // Apple doesn't seem to believe in malloc.h
 #ifndef __APPLE__
@@ -321,7 +322,32 @@ typedef struct {
   int myposy;
 
 #endif // MPI
- 
+
+  /** Surface tension \f$ \sigma \f$ for the bubble.
+   *
+   *  \f[
+   *  \sigma=\frac{2\sqrt{2}}{81}\frac{A^3}{\lambda^{5/2}}T_c^3
+   *  \f]
+   */
+  float surface_tension;
+
+  /** Value of `phi` in the broken phase \f$ \phi_b \f$.
+   */
+  float phimin;
+
+  /** Critical radius of the bubble \f$ R_c \f$.
+   *
+   * \f[
+   * R_c= -\dfrac{2\sigma}{-V(\phi_b,T_N)}
+   * \f]
+   */
+  float R_critical;
+
+  /** Scaled version of the critical radius.
+   *
+   * Used to stop bubbles from collapsing when necessary.
+   */
+  float R_scaled;
 
 } hydro_params;
 
@@ -430,7 +456,15 @@ typedef struct {
 
 } hydro_fields;
 
-
+/** Helper struct for performing MPI_MAXLOC and MPI_MINLOC operations.
+ *
+ * Useful for debugging, e.g finding max/min value of something on the
+ * lattice and the processor containing the lattice site.
+ */
+typedef struct{
+  float value;
+  int rank;
+} value_rank;
 
 // main.c just contains main()
 
@@ -450,7 +484,7 @@ void zero_fields(hydro_fields f, hydro_params p);
 void free_fields(hydro_fields *f, hydro_params p);
 
 
-// arrangement.c
+// comms.c
 void layout(hydro_params *p);
 int get_x(int n, hydro_params p);
 int get_y(int n, hydro_params p);
@@ -462,6 +496,8 @@ float reduce_max(float result, hydro_params p);
 int reduce_max_int(int result, hydro_params p);
 float reduce_min(float result, hydro_params p);
 int reduce_and(int result, hydro_params p);
+value_rank reduce_maxloc(float result, hydro_params p);
+value_rank reduce_minloc(float result, hydro_params p);
 void init_comms_time(hydro_params *p);
 float get_comms_time(hydro_params *p);
 void printf0(hydro_params p, char *msg, ...);
@@ -536,6 +572,7 @@ void papi_finalise();
 
 // parameters.c
 void get_parameters(char *filename, hydro_params *p);
+void set_bubble_parameters(hydro_params *p);
 
 // silage.c
 #ifdef SILO
