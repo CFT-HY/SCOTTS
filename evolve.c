@@ -39,6 +39,12 @@ void evolve_field(hydro_fields f, hydro_params p) {
   float pot_term_min=FLT_MAX;
   float T_max=-FLT_MAX;
   float T_min=FLT_MAX;
+  float E_max=-FLT_MAX;
+  float E_min=FLT_MAX;
+  float W_max=-FLT_MAX;
+  float W_min=FLT_MAX;
+  float p_max=-FLT_MAX;
+  float p_min=FLT_MAX;
   
   int phi_min_pos[3];
   int phi_max_pos[3];
@@ -54,7 +60,13 @@ void evolve_field(hydro_fields f, hydro_params p) {
   int pot_max_pos[3];
   int T_min_pos[3];
   int T_max_pos[3];
-  
+  int E_min_pos[3];
+  int E_max_pos[3];
+  int W_min_pos[3];
+  int W_max_pos[3];
+  int p_min_pos[3];
+  int p_max_pos[3];
+
 
   
   // Move conjugate momentum (leapfrog)
@@ -237,6 +249,48 @@ void evolve_field(hydro_fields f, hydro_params p) {
 	  T_min_pos[1]=y+p.shifty-1;
 	  T_min_pos[2]=z;
 	}
+
+	if(f.E[x][y][z]>E_max){
+	  E_max=f.E[x][y][z];
+	  E_max_pos[0]=x+p.shiftx-1;
+	  E_max_pos[1]=y+p.shifty-1;
+	  E_max_pos[2]=z;
+	}
+
+	if(f.E[x][y][z]<E_min){
+	  E_min=f.E[x][y][z];
+	  E_min_pos[0]=x+p.shiftx-1;
+	  E_min_pos[1]=y+p.shifty-1;
+	  E_min_pos[2]=z;
+	}
+
+	if(f.W[x][y][z]>W_max){
+	  W_max=f.W[x][y][z];
+	  W_max_pos[0]=x+p.shiftx-1;
+	  W_max_pos[1]=y+p.shifty-1;
+	  W_max_pos[2]=z;
+	}
+
+	if(f.W[x][y][z]<W_min){
+	  W_min=f.W[x][y][z];
+	  W_min_pos[0]=x+p.shiftx-1;
+	  W_min_pos[1]=y+p.shifty-1;
+	  W_min_pos[2]=z;
+	}
+
+	if(f.p[x][y][z]>p_max){
+	  p_max=f.p[x][y][z];
+	  p_max_pos[0]=x+p.shiftx-1;
+	  p_max_pos[1]=y+p.shifty-1;
+	  p_max_pos[2]=z;
+	}
+
+	if(f.p[x][y][z]<p_min){
+	  p_min=f.p[x][y][z];
+	  p_min_pos[0]=x+p.shiftx-1;
+	  p_min_pos[1]=y+p.shifty-1;
+	  p_min_pos[2]=z;
+	}
 	   
 	/* In the leapfrog/Verlet method, pi lives half a timestep behind
 	 * phi. Evolving by an additional half-interval between the new and
@@ -278,86 +332,124 @@ void evolve_field(hydro_fields f, hydro_params p) {
   
   out=reduce_maxloc(phi_max,p);
   if(out.rank==p.rank){
-    fprintf(stderr,"Phimax = %f at (%d %d %d)",out.value,
+    fprintf(stderr,"Phimax = %f at (%d %d %d) \n",out.value,
 	    phi_max_pos[0],phi_max_pos[1],phi_max_pos[2]);
   }
 
   out=reduce_minloc(phi_min,p);
   if(out.rank==p.rank){
-    fprintf(stderr,"Phimin = %f at (%d %d %d)",out.value,
+    fprintf(stderr,"Phimin = %f at (%d %d %d) \n",out.value,
 	    phi_min_pos[0],phi_min_pos[1],phi_min_pos[2]);
   }
    
   out=reduce_maxloc(T_max,p);
   if(out.rank==p.rank){
-    fprintf(stderr,"Tmax = %f at (%d %d %d)",out.value,
+    fprintf(stderr,"Tmax = %f at (%d %d %d) \n",out.value,
 	    T_max_pos[0],T_max_pos[1],T_max_pos[2]);
   }
 
   
   out=reduce_minloc(T_min,p);
   if(out.rank==p.rank){
-    fprintf(stderr,"Tmin = %f at (%d %d %d)",out.value,
+    fprintf(stderr,"Tmin = %f at (%d %d %d) \n",out.value,
 	    T_min_pos[0],T_min_pos[1],T_min_pos[2]);
   }
 
+  out=reduce_maxloc(E_max,p);
+  if(out.rank==p.rank){
+    fprintf(stderr,"Emax = %f at (%d %d %d) \n",out.value,
+	    E_max_pos[0],E_max_pos[1],E_max_pos[2]);
+  }
+
+  
+  out=reduce_minloc(E_min,p);
+  if(out.rank==p.rank){
+    fprintf(stderr,"Emin = %f at (%d %d %d) \n",out.value,
+	    E_min_pos[0],E_min_pos[1],E_min_pos[2]);
+  }
+
+  out=reduce_maxloc(W_max,p);
+  if(out.rank==p.rank){
+    fprintf(stderr,"Wmax = %f at (%d %d %d) \n",out.value,
+	    W_max_pos[0],W_max_pos[1],W_max_pos[2]);
+  }
+
+  
+  out=reduce_minloc(W_min,p);
+  if(out.rank==p.rank){
+    fprintf(stderr,"Wmin = %f at (%d %d %d) \n",out.value,
+	    W_min_pos[0],W_min_pos[1],W_min_pos[2]);
+  }
+
+   out=reduce_maxloc(p_max,p);
+  if(out.rank==p.rank){
+    fprintf(stderr,"pmax = %f at (%d %d %d) \n",out.value,
+	    p_max_pos[0],p_max_pos[1],p_max_pos[2]);
+  }
+
+  out=reduce_minloc(p_min,p);
+  if(out.rank==p.rank){
+    fprintf(stderr,"pmin = %f at (%d %d %d) \n",out.value,
+	    p_min_pos[0],p_min_pos[1],p_min_pos[2]);
+  }
+  
     out=reduce_maxloc(pi_max,p);
   if(out.rank==p.rank){
-    fprintf(stderr,"Pimax = %f at (%d %d %d)",out.value,
+    fprintf(stderr,"Pimax = %f at (%d %d %d) \n",out.value,
 	    pi_max_pos[0],pi_max_pos[1],pi_max_pos[2]);
   }
 
   out=reduce_minloc(pi_min,p);
   if(out.rank==p.rank){
-    fprintf(stderr,"Pimin = %f at (%d %d %d)",out.value,
+    fprintf(stderr,"Pimin = %f at (%d %d %d) \n",out.value,
 	    pi_min_pos[0],pi_min_pos[1],pi_min_pos[2]);
   }
 
   out=reduce_maxloc(s_max,p);
   if(out.rank==p.rank){
-    fprintf(stderr,"Smax = %f at (%d %d %d)",out.value,
+    fprintf(stderr,"Smax = %f at (%d %d %d) \n",out.value,
 	    s_max_pos[0],s_max_pos[1],s_max_pos[2]);
   }
 
   out=reduce_minloc(s_min,p);
   if(out.rank==p.rank){
-    fprintf(stderr,"Smin = %f at (%d %d %d)",out.value,
+    fprintf(stderr,"Smin = %f at (%d %d %d) \n",out.value,
 	    s_min_pos[0],s_min_pos[1],s_min_pos[2]);
   }
 
   out=reduce_maxloc(damp_term_max,p);
   if(out.rank==p.rank){
-    fprintf(stderr,"damp_term_max = %f at (%d %d %d)",out.value,
+    fprintf(stderr,"damp_term_max = %f at (%d %d %d) \n",out.value,
 	    damp_max_pos[0],damp_max_pos[1],damp_max_pos[2]);
   }
 
   out=reduce_minloc(damp_term_min,p);
   if(out.rank==p.rank){
-    fprintf(stderr,"damp_term_min = %f at (%d %d %d)",out.value,
+    fprintf(stderr,"damp_term_min = %f at (%d %d %d) \n",out.value,
 	    damp_min_pos[0],damp_min_pos[1],damp_min_pos[2]);
   }
 
   out=reduce_maxloc(grad_term_max,p);
   if(out.rank==p.rank){
-    fprintf(stderr,"grad_term_max = %f at (%d %d %d)",out.value,
+    fprintf(stderr,"grad_term_max = %f at (%d %d %d) \n",out.value,
 	    grad_max_pos[0],grad_max_pos[1],grad_max_pos[2]);
   }
 
   out=reduce_minloc(grad_term_min,p);
   if(out.rank==p.rank){
-    fprintf(stderr,"grad_term_min = %f at (%d %d %d)",out.value,
+    fprintf(stderr,"grad_term_min = %f at (%d %d %d) \n",out.value,
 	    grad_min_pos[0],grad_min_pos[1],grad_min_pos[2]);
   }
 
   out=reduce_maxloc(pot_term_max,p);
   if(out.rank==p.rank){
-    fprintf(stderr,"pot_term_max = %f at (%d %d %d)",out.value,
+    fprintf(stderr,"pot_term_max = %f at (%d %d %d) \n",out.value,
 	    pot_max_pos[0],pot_max_pos[1],pot_max_pos[2]);
   }
 
   out=reduce_minloc(pot_term_min,p);
   if(out.rank==p.rank){
-    fprintf(stderr,"pot_term_min = %f at (%d %d %d)",out.value,
+    fprintf(stderr,"pot_term_min = %f at (%d %d %d) \n",out.value,
 	    pot_min_pos[0],pot_min_pos[1],pot_min_pos[2]);
   }
 
