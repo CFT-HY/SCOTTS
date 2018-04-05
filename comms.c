@@ -426,6 +426,33 @@ int reduce_and(int result, hydro_params p) {
 
 }
 
+/** Returns a struct with the maximum of result in all processors and
+ *  the rank of the porcessor containing this value.
+ *
+ *  The maximum result is contained out.value and the rank of the
+ *  processor containing it is in out.rank.
+ */
+value_rank reduce_maxloc(float result, hydro_params p) {
+  value_rank in, out;
+  in.value=result;
+  in.rank=p.rank;
+  MPI_Allreduce(&in,&out,1,MPI_FLOAT_INT,MPI_MAXLOC,MPI_COMM_WORLD);
+  return out;
+}
+
+/** Returns a struct with the maximum of result in all processors and
+ *  the rank of the porcessor containing this value.
+ *
+ *  The minimum result is contained out.value and the rank of the
+ *  processor containing it is in out.rank.
+ */
+value_rank reduce_minloc(float result, hydro_params p) {
+  value_rank in, out;
+  in.value=result;
+  in.rank=p.rank;
+  MPI_Allreduce(&in,&out,1,MPI_FLOAT_INT,MPI_MINLOC,MPI_COMM_WORLD);
+  return out;
+}
 
 /** Resets the global variable comms_time to zero.
  */
@@ -654,6 +681,19 @@ int reduce_and(int result, hydro_params p) {
 
 }
 
+value_rank reduce_maxloc(float result, hydro_params p) {
+  value_rank out;
+  out.value=result;
+  out.rank=p.rank;
+  return out;
+}
+
+value_rank reduce_minloc(float result, hydro_params p) {
+  value_rank out;
+  out.value=result;
+  out.rank=p.rank;
+  return out;
+}
 
 void init_comms_time(hydro_params *p) {
   comms_time = 0.0;

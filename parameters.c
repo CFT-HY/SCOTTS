@@ -27,7 +27,6 @@
 void get_parameters(char *infile, hydro_params *p)
 {
 
-
   int set_dx = 0;
   int set_dt = 0;
  
@@ -597,7 +596,37 @@ void get_parameters(char *infile, hydro_params *p)
     
   }
 
+  set_bubble_parameters(p);
+  
   fclose(fp);
 
+  
+  
 }
 
+/** Set parameters relating to bubble profiles at nucleation.
+ *
+ */
+void set_bubble_parameters(hydro_params *p){
+
+  p->surface_tension = (2.0*sqrt(2.0)/81.0)*(
+						p->alpha*p->alpha*p->alpha
+						/(p->lambda*p->lambda
+						  *sqrt(p->lambda)));
+
+  p->phimin =  (p->alpha*p->Tconst
+		   + sqrt((p->alpha*p->Tconst)*(p->alpha*p->Tconst)
+			  - 4.0*p->lambda*p->gamma
+			  *(p->Tconst*p->Tconst - p->T0*p->T0))
+		   )/(2.0*p->lambda);
+  
+  p->R_critical = -2.0*p->surface_tension/Vf(*p, p->Tconst, p->phimin);
+  
+  p->R_scaled = p->scale*p->R_critical;
+
+  printf0(*p, "-- Calculated bubble profile parameters: \n"
+	  "-- surface_tension %g, phimin %g \n" 
+          "-- R_critical %g, R_scaled %g \n",
+	  p->surface_tension, p->phimin, p->R_critical, p->R_scaled);
+
+}
