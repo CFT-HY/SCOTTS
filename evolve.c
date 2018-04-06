@@ -23,51 +23,6 @@ void evolve_field(hydro_fields f, hydro_params p) {
   int x, y, z;
 
   float pi_old, s;
-
-  float temp;
-  float phi_max=-FLT_MAX;
-  float phi_min=FLT_MAX;
-  float pi_max=-FLT_MAX;
-  float pi_min=FLT_MAX;
-  float s_max=-FLT_MAX;
-  float s_min=FLT_MAX;
-  float damp_term_max=-FLT_MAX;
-  float damp_term_min=FLT_MAX;
-  float grad_term_max=-FLT_MAX;
-  float grad_term_min=FLT_MAX;
-  float pot_term_max=-FLT_MAX;
-  float pot_term_min=FLT_MAX;
-  float T_max=-FLT_MAX;
-  float T_min=FLT_MAX;
-  float E_max=-FLT_MAX;
-  float E_min=FLT_MAX;
-  float W_max=-FLT_MAX;
-  float W_min=FLT_MAX;
-  float p_max=-FLT_MAX;
-  float p_min=FLT_MAX;
-  
-  int phi_min_pos[3];
-  int phi_max_pos[3];
-  int pi_min_pos[3];
-  int pi_max_pos[3];
-  int s_min_pos[3];
-  int s_max_pos[3];
-  int damp_min_pos[3];
-  int damp_max_pos[3];
-  int grad_min_pos[3];
-  int grad_max_pos[3];
-  int pot_min_pos[3];
-  int pot_max_pos[3];
-  int T_min_pos[3];
-  int T_max_pos[3];
-  int E_min_pos[3];
-  int E_max_pos[3];
-  int W_min_pos[3];
-  int W_max_pos[3];
-  int p_min_pos[3];
-  int p_max_pos[3];
-
-
   
   // Move conjugate momentum (leapfrog)
   for(x = 1; x <= p.slicex; x++) {
@@ -86,21 +41,7 @@ void evolve_field(hydro_fields f, hydro_params p) {
 	 * current step on LHS, then divide through by (1-s).
 	 */
 	s = -0.5*p.dt*(p.C*f.phi[x][y][z]*f.phi[x][y][z]
-		       /f.T[x][y][z])*f.W[x][y][z];
-	if(s>s_max){
-	  s_max=s;
-	  s_max_pos[0]=x+p.shiftx-1;
-	  s_max_pos[1]=y+p.shifty-1;
-	  s_max_pos[2]=z;
-	}
-
-	if(s<s_min){
-	  s_min=s;
-	  s_min_pos[0]=x+p.shiftx-1;
-	  s_min_pos[1]=y+p.shifty-1;
-	  s_min_pos[2]=z;
-	}
-	
+		       /f.T[x][y][z])*f.W[x][y][z];	
 	
 	f.pi[x][y][z] = (1+s)*f.pi[x][y][z]/(1-s);
 	
@@ -109,40 +50,9 @@ void evolve_field(hydro_fields f, hydro_params p) {
 	 * want the values in the body of the cell so we average the
 	 * two boundaries.
 	 */
-	temp= - p.dt*(p.C*f.phi[x][y][z]*f.phi[x][y][z]/f.T[x][y][z]) \
-	  *f.W[x][y][z] \
-	  *(
-	    0.5*(f.V[0][x][y][z]*(f.phi[x][y][z]
-				  - f.phi[x-1][y][z])
-		 + f.V[0][x+1][y][z]*(f.phi[x+1][y][z]
-				      - f.phi[x][y][z]))/p.dx
-	    
-	    + 0.5*(f.V[1][x][y][z]*(f.phi[x][y][z]
-				    - f.phi[x][y-1][z])
-		   + f.V[1][x][y+1][z]*(f.phi[x][y+1][z]
-					- f.phi[x][y][z]))/p.dx
-					  
-	    + 0.5*(f.V[2][x][y][z]*(f.phi[x][y][z]
-				    - f.phi[x][y][((z-1+p.Lz)%p.Lz)])
-		   + f.V[2][x][y][((z+1)%p.Lz)]*(f.phi[x][y][((z+1)%p.Lz)]
-						 - f.phi[x][y][z]))/p.dx);
 
-	if(temp>damp_term_max){
-	  damp_term_max=temp;
-	  damp_max_pos[0]=x+p.shiftx-1;
-	  damp_max_pos[1]=y+p.shifty-1;
-	  damp_max_pos[2]=z;
-	}
-
-	if(temp<damp_term_min){
-	  damp_term_min=temp;
-	  damp_min_pos[0]=x+p.shiftx-1;
-	  damp_min_pos[1]=y+p.shifty-1;
-	  damp_min_pos[2]=z;
-	}
 	
-	f.pi[x][y][z] = f.pi[x][y][z] + temp/(1-s);
-	/*
+	f.pi[x][y][z] = f.pi[x][y][z]
 	                - p.dt*(p.C*f.phi[x][y][z]*f.phi[x][y][z]/f.T[x][y][z]) \
 	  *f.W[x][y][z] \
 	  *(
@@ -161,9 +71,8 @@ void evolve_field(hydro_fields f, hydro_params p) {
 		   + f.V[2][x][y][((z+1)%p.Lz)]*(f.phi[x][y][((z+1)%p.Lz)]
 						 - f.phi[x][y][z]))/p.dx
 	    )/(1-s);
-	*/
+
 #endif // !SCALAR
-	/*
 	// scalar field gradient and potential terms
 	f.pi[x][y][z] = f.pi[x][y][z]
 	  + p.dt
@@ -178,119 +87,8 @@ void evolve_field(hydro_fields f, hydro_params p) {
 #else	
 	- Vdf(p, p.Tconst, f.phi[x][y][z]));
 #endif // !SCALAR	
-	*/
 
-	temp= p.dt
-	  *((f.phi[x+1][y][z] + f.phi[x][y+1][z]
-	     + f.phi[x][y][((z+1)%p.Lz)]
-	     - 6.0*f.phi[x][y][z] 
-	     + f.phi[x-1][y][z] + f.phi[x][y-1][z]
-	     + f.phi[x][y][((z-1+p.Lz)%p.Lz)]
-	     )/(p.dx*p.dx));
 
-	if(temp>grad_term_max){
-	  grad_term_max=temp;
-	  grad_max_pos[0]=x+p.shiftx-1;
-	  grad_max_pos[1]=y+p.shifty-1;
-	  grad_max_pos[2]=z;
-	}
-
-	if(temp<grad_term_min){
-	  grad_term_min=temp;
-	  grad_min_pos[0]=x+p.shiftx-1;
-	  grad_min_pos[1]=y+p.shifty-1;
-	  grad_min_pos[2]=z;
-	}
-	
-	f.pi[x][y][z]=f.pi[x][y][z]+temp/(1-s);
-
-	temp= -p.dt*Vdf(p, f.T[x][y][z], f.phi[x][y][z]);
-
-	if(temp>pot_term_max){
-	  pot_term_max=temp;
-	  pot_max_pos[0]=x+p.shiftx-1;
-	  pot_max_pos[1]=y+p.shifty-1;
-	  pot_max_pos[2]=z;
-	}
-
-	if(temp<pot_term_min){
-	  pot_term_min=temp;
-	  pot_min_pos[0]=x+p.shiftx-1;
-	  pot_min_pos[1]=y+p.shifty-1;
-	  pot_min_pos[2]=z;
-	}
-	
-	f.pi[x][y][z]=f.pi[x][y][z] + temp/(1-s);
-
-	if(f.pi[x][y][z]>pi_max){
-	  pi_max=f.pi[x][y][z];
-	  pi_max_pos[0]=x+p.shiftx-1;
-	  pi_max_pos[1]=y+p.shifty-1;
-	  pi_max_pos[2]=z;
-	}
-
-	if(f.pi[x][y][z]<pi_min){
-	  pi_min=f.pi[x][y][z];
-	  pi_min_pos[0]=x+p.shiftx-1;
-	  pi_min_pos[1]=y+p.shifty-1;
-	  pi_min_pos[2]=z;
-	}
-	
-	if(f.T[x][y][z]>T_max){
-	  T_max=f.T[x][y][z];
-	  T_max_pos[0]=x+p.shiftx-1;
-	  T_max_pos[1]=y+p.shifty-1;
-	  T_max_pos[2]=z;
-	}
-
-	if(f.T[x][y][z]<T_min){
-	  T_min=f.T[x][y][z];
-	  T_min_pos[0]=x+p.shiftx-1;
-	  T_min_pos[1]=y+p.shifty-1;
-	  T_min_pos[2]=z;
-	}
-
-	if(f.E[x][y][z]>E_max){
-	  E_max=f.E[x][y][z];
-	  E_max_pos[0]=x+p.shiftx-1;
-	  E_max_pos[1]=y+p.shifty-1;
-	  E_max_pos[2]=z;
-	}
-
-	if(f.E[x][y][z]<E_min){
-	  E_min=f.E[x][y][z];
-	  E_min_pos[0]=x+p.shiftx-1;
-	  E_min_pos[1]=y+p.shifty-1;
-	  E_min_pos[2]=z;
-	}
-
-	if(f.W[x][y][z]>W_max){
-	  W_max=f.W[x][y][z];
-	  W_max_pos[0]=x+p.shiftx-1;
-	  W_max_pos[1]=y+p.shifty-1;
-	  W_max_pos[2]=z;
-	}
-
-	if(f.W[x][y][z]<W_min){
-	  W_min=f.W[x][y][z];
-	  W_min_pos[0]=x+p.shiftx-1;
-	  W_min_pos[1]=y+p.shifty-1;
-	  W_min_pos[2]=z;
-	}
-
-	if(f.p[x][y][z]>p_max){
-	  p_max=f.p[x][y][z];
-	  p_max_pos[0]=x+p.shiftx-1;
-	  p_max_pos[1]=y+p.shifty-1;
-	  p_max_pos[2]=z;
-	}
-
-	if(f.p[x][y][z]<p_min){
-	  p_min=f.p[x][y][z];
-	  p_min_pos[0]=x+p.shiftx-1;
-	  p_min_pos[1]=y+p.shifty-1;
-	  p_min_pos[2]=z;
-	}
 	   
 	/* In the leapfrog/Verlet method, pi lives half a timestep behind
 	 * phi. Evolving by an additional half-interval between the new and
@@ -311,146 +109,9 @@ void evolve_field(hydro_fields f, hydro_params p) {
 	f.phi_old[x][y][z] = f.phi[x][y][z];
 	
 	f.phi[x][y][z] = f.phi[x][y][z] + p.dt*f.pi[x][y][z];
-	if(f.phi[x][y][z]>phi_max){
-	  phi_max=f.phi[x][y][z];
-	  phi_max_pos[0]=x+p.shiftx-1;
-	  phi_max_pos[1]=y+p.shifty-1;
-	  phi_max_pos[2]=z;	    
-	}
-	if(f.phi[x][y][z]<phi_min){
-	  phi_min=f.phi[x][y][z];
-	  phi_min_pos[0]=x+p.shiftx-1;
-	  phi_min_pos[1]=y+p.shifty-1;
-	  phi_min_pos[2]=z;
-	  
-	}
+
       }
     }
-  }
-
-  value_rank out;
-  
-  out=reduce_maxloc(phi_max,p);
-  if(out.rank==p.rank){
-    fprintf(stderr,"Phimax = %f at (%d %d %d) \n",out.value,
-	    phi_max_pos[0],phi_max_pos[1],phi_max_pos[2]);
-  }
-
-  out=reduce_minloc(phi_min,p);
-  if(out.rank==p.rank){
-    fprintf(stderr,"Phimin = %f at (%d %d %d) \n",out.value,
-	    phi_min_pos[0],phi_min_pos[1],phi_min_pos[2]);
-  }
-   
-  out=reduce_maxloc(T_max,p);
-  if(out.rank==p.rank){
-    fprintf(stderr,"Tmax = %f at (%d %d %d) \n",out.value,
-	    T_max_pos[0],T_max_pos[1],T_max_pos[2]);
-  }
-
-  
-  out=reduce_minloc(T_min,p);
-  if(out.rank==p.rank){
-    fprintf(stderr,"Tmin = %f at (%d %d %d) \n",out.value,
-	    T_min_pos[0],T_min_pos[1],T_min_pos[2]);
-  }
-
-  out=reduce_maxloc(E_max,p);
-  if(out.rank==p.rank){
-    fprintf(stderr,"Emax = %f at (%d %d %d) \n",out.value,
-	    E_max_pos[0],E_max_pos[1],E_max_pos[2]);
-  }
-
-  
-  out=reduce_minloc(E_min,p);
-  if(out.rank==p.rank){
-    fprintf(stderr,"Emin = %f at (%d %d %d) \n",out.value,
-	    E_min_pos[0],E_min_pos[1],E_min_pos[2]);
-  }
-
-  out=reduce_maxloc(W_max,p);
-  if(out.rank==p.rank){
-    fprintf(stderr,"Wmax = %f at (%d %d %d) \n",out.value,
-	    W_max_pos[0],W_max_pos[1],W_max_pos[2]);
-  }
-
-  
-  out=reduce_minloc(W_min,p);
-  if(out.rank==p.rank){
-    fprintf(stderr,"Wmin = %f at (%d %d %d) \n",out.value,
-	    W_min_pos[0],W_min_pos[1],W_min_pos[2]);
-  }
-
-   out=reduce_maxloc(p_max,p);
-  if(out.rank==p.rank){
-    fprintf(stderr,"pmax = %f at (%d %d %d) \n",out.value,
-	    p_max_pos[0],p_max_pos[1],p_max_pos[2]);
-  }
-
-  out=reduce_minloc(p_min,p);
-  if(out.rank==p.rank){
-    fprintf(stderr,"pmin = %f at (%d %d %d) \n",out.value,
-	    p_min_pos[0],p_min_pos[1],p_min_pos[2]);
-  }
-  
-    out=reduce_maxloc(pi_max,p);
-  if(out.rank==p.rank){
-    fprintf(stderr,"Pimax = %f at (%d %d %d) \n",out.value,
-	    pi_max_pos[0],pi_max_pos[1],pi_max_pos[2]);
-  }
-
-  out=reduce_minloc(pi_min,p);
-  if(out.rank==p.rank){
-    fprintf(stderr,"Pimin = %f at (%d %d %d) \n",out.value,
-	    pi_min_pos[0],pi_min_pos[1],pi_min_pos[2]);
-  }
-
-  out=reduce_maxloc(s_max,p);
-  if(out.rank==p.rank){
-    fprintf(stderr,"Smax = %f at (%d %d %d) \n",out.value,
-	    s_max_pos[0],s_max_pos[1],s_max_pos[2]);
-  }
-
-  out=reduce_minloc(s_min,p);
-  if(out.rank==p.rank){
-    fprintf(stderr,"Smin = %f at (%d %d %d) \n",out.value,
-	    s_min_pos[0],s_min_pos[1],s_min_pos[2]);
-  }
-
-  out=reduce_maxloc(damp_term_max,p);
-  if(out.rank==p.rank){
-    fprintf(stderr,"damp_term_max = %f at (%d %d %d) \n",out.value,
-	    damp_max_pos[0],damp_max_pos[1],damp_max_pos[2]);
-  }
-
-  out=reduce_minloc(damp_term_min,p);
-  if(out.rank==p.rank){
-    fprintf(stderr,"damp_term_min = %f at (%d %d %d) \n",out.value,
-	    damp_min_pos[0],damp_min_pos[1],damp_min_pos[2]);
-  }
-
-  out=reduce_maxloc(grad_term_max,p);
-  if(out.rank==p.rank){
-    fprintf(stderr,"grad_term_max = %f at (%d %d %d) \n",out.value,
-	    grad_max_pos[0],grad_max_pos[1],grad_max_pos[2]);
-  }
-
-  out=reduce_minloc(grad_term_min,p);
-  if(out.rank==p.rank){
-    fprintf(stderr,"grad_term_min = %f at (%d %d %d) \n",out.value,
-	    grad_min_pos[0],grad_min_pos[1],grad_min_pos[2]);
-  }
-
-  out=reduce_maxloc(pot_term_max,p);
-  if(out.rank==p.rank){
-    fprintf(stderr,"pot_term_max = %f at (%d %d %d) \n",out.value,
-	    pot_max_pos[0],pot_max_pos[1],pot_max_pos[2]);
-  }
-
-  out=reduce_minloc(pot_term_min,p);
-  if(out.rank==p.rank){
-    fprintf(stderr,"pot_term_min = %f at (%d %d %d) \n",out.value,
-	    pot_min_pos[0],pot_min_pos[1],pot_min_pos[2]);
   }
 
   halo_field(f.pi, p);

@@ -301,8 +301,6 @@ int main(int argc, char *argv[]) {
 
   for(step = step_start; step < p.steps; step++) {
 
-    printf0(p,"Step %d \n",step);
-
     /*
     if(!p.rank) {
       fprintf(press, "%d %g\n", step, f.p[1][1][1]);
