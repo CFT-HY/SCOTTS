@@ -60,8 +60,9 @@ void find_Ta(hydro_fields f, hydro_params p) {
 	  *f.phi[x][y][z]*f.phi[x][y][z]
 	  - 12.0*p.gdeg*(0.25*p.lambda*f.phi[x][y][z]*f.phi[x][y][z]
 		      *f.phi[x][y][z]*f.phi[x][y][z]
-		      - 0.5*p.gamma*p.T0*p.T0*f.phi[x][y][z]*f.phi[x][y][z]
-		      - f.E[x][y][z]/f.W[x][y][z]);
+			 + 0.25*p.gamma*p.gamma*p.T0*p.T0*p.T0*p.T0/p.lambda
+			 - 0.5*p.gamma*p.T0*p.T0*f.phi[x][y][z]*f.phi[x][y][z]
+			 - f.E[x][y][z]/f.W[x][y][z]);
 
 	if(Tfix < 0){
 	  fprintf(stderr,"Tfix -ve at (%d,%d,%d) \n"
