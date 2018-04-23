@@ -14,7 +14,6 @@
 #include <time.h>
 #include <unistd.h>
 #include <stdarg.h>
-#include <float.h>
 
 // Apple doesn't seem to believe in malloc.h
 #ifndef __APPLE__
@@ -441,7 +440,7 @@ typedef struct {
    */
   float ****uij;
 
-  /** `udotij` are the time derivative of thhe `uij` and are used for
+  /** `udotij` are the time derivative of the `uij` and are used for
    *    GW power spectrum.
    */
   float ****udotij;
