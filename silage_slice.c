@@ -37,6 +37,30 @@ void make_kinetic(hydro_fields f, hydro_params p, float ***temp) {
   halo_field(temp, p);
 }
 
+/** Populate an array with velocity magnitude.
+ *
+ */
+void make_vel(hydro_fields f, hydro_params p, float ***temp) {
+  float vol = p.dx*p.dx*p.dx;
+
+  int x, y, z;
+
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+   
+   temp[x][y][z] = sqrt(f.V[0][x][y][z]*f.V[0][x][y][z]
+                + f.V[1][x][y][z]*f.V[1][x][y][z]
+                + f.V[2][x][y][z]*f.V[2][x][y][z]);
+        
+      }
+    }
+  }
+  
+  halo_field(temp, p);
+}
+
+
 /** Populate an array with a slice through `temp`.
  *
  * This function takes a 3 dimensional array `temp` 
@@ -228,8 +252,27 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step)
   }
 
 
+
+  //// prepare fluid velocity ////
+
+  make_vel(f, p, temp);
+
+  make_slice(f, p, slice, temp);
+
+  //// write kinetic slice ///
+
+
+  if(!p.rank) {
+    DBPutQuadvar1(dbfile, "V", "quadmesh", slice, meshsize, 2,
+         NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+  }
+  ///
+
+  
   free_field(p, temp);
 
+
+  
   //// make phi slice ///
 
   make_slice(f, p, slice, f.phi);
@@ -243,6 +286,33 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step)
   }
 
 
+  //// make T slice ///
+
+  make_slice(f, p, slice, f.T);
+
+  //// write T slice ///
+
+
+  if(!p.rank) {
+    DBPutQuadvar1(dbfile, "T", "quadmesh", slice, meshsize, 2,
+		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+  }
+
+  
+  //// make E slice ///
+
+  make_slice(f, p, slice, f.E);
+
+  //// write E slice ///
+
+
+  if(!p.rank) {
+    DBPutQuadvar1(dbfile, "E", "quadmesh", slice, meshsize, 2,
+		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+  }
+
+  
+  
   free(slice);
  
 

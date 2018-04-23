@@ -1,4 +1,4 @@
-/* velps.c
+/** @file velps.c
  *
  * Fourier transform and velocity/vorticity power spectrum.
  *
@@ -11,9 +11,7 @@
 #ifdef FFT
 
 
-/* vel_proj(int T, float kx, float ky, float kz);
- *
- * Calculate the projector for the transverse component of the
+/** Calculate the projector for the transverse component of the
  * velocity.
  */
 float vel_proj(int T, float kx, float ky, float kz) {
@@ -70,11 +68,7 @@ float vel_proj(int T, float kx, float ky, float kz) {
 }
 
 
-/* void split_and_power(hydro_params p, int x_start, int slab,
- *                    float *product, float *product_div,
- *                    fftwf_complex **vk)
- *
- * Split the FFT output vk into the transverse and longitudinal ('div')
+/** Split the FFT output `vk` into the transverse and longitudinal ('div')
  * components.
  */
 void split_and_power(hydro_params p, int x_start, int slab,
@@ -194,10 +188,7 @@ void split_and_power(hydro_params p, int x_start, int slab,
 
 
 
-/* void histogram(hydro_params p, float *slice, char *filename,
- *               int slab, int x_start)
- *
- * Combine the data from each slice (supplied separately by each
+/** Combine the data from each slice (supplied separately by each
  * rank to this function), bin, compute the histogram and output.
  */
 void histogram(hydro_params p, float *slice, char *filename,
@@ -308,9 +299,8 @@ void histogram(hydro_params p, float *slice, char *filename,
 
 
 
-/* fft_vel(hydro_fields f, hydro_params p)
+/** Main method. Calculate the velocity power spectrum.
  *
- * Main method. Calculate the velocity power spectrum.
  */
 void fft_vel(hydro_fields f, hydro_params p, int step, float ****vectorfield) {
 

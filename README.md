@@ -5,9 +5,9 @@
 [Include links to papers here]
 
 The potential is
-\f[
-V(\phi, T) = \frac{1}{2} \gamma(T^2 - T_0^2)\phi^2 - \frac{1}{3}\alpha T \phi^3 + \frac{1}{4}\lambda\phi^4
-\f]
+\f[ V(\phi, T) = \frac{1}{2} \gamma(T^2 - T_0^2)\phi^2
+- \frac{1}{3}\alpha T \phi^3 +\frac{1}{4}\lambda\phi^4
++ \frac{1}{4}\frac{\gamma^2 T_0^4}{\lambda} \text.  \f]
 
 where, in the code:
 
@@ -27,7 +27,43 @@ where:
 * `f.E` is related to \f$ \epsilon \f$ by a gamma factor (`f.W`),
   thus: \f$ E = W \epsilon \f$
 * \f$ V(\phi, T) \f$ is Vf()
-* \f$ \frac{\partial V}{\partial T} \f$ is VTf()
+* \f$ \dfrac{\partial V}{\partial T} \f$ is VTf()
+
+Also present in the code is the variable `f.kappa` which is given by
+\f[
+\kappa=1+\dfrac{PW}{E}
+\f]
+
+
+We follow Relativistic Numerical Hydrodynamics by
+Wilson and Mathews to evolve the fluid. However, we define the
+internal energy \f$\epsilon\f$ differently:
+* \f$ \epsilon= \rho_\text{WM} (1 + \epsilon_\text{WM}) \f$
+
+where the subscript WM indicates a variable given in Wilson and Mathews.
+
+This then leads to:
+* \f$ E= D_\text{WM} + E_\text{WM} \f$
+* \f$ \dfrac{\kappa-1}{\Gamma_\text{WM}-1}=\dfrac{E_\text{WM}}{E} \f$
+
+
+## Order of evolution:
+
+This is non unique and can be modified. This was settled on as it
+appears to have good energy conservation.
+
+-# Scalar field is evolved [evolve_field()]
+-# Temperature, pressure and \f$\kappa\f$ calculated [eq_of_state()]
+-# Update \f$E\f$ and \f$Z \f$ with field-fluid interaction terms
+     [evolve_hydro()]
+-# Update \f$ Z \f$ with pressure acceleration [evolve_hydro()]
+-# Update covariant 4-velocity spatial terms \f$ U_i \f$ [evolve_hydro()]
+-# Update contravariant 3-velocity  \f$ V^i \f$ [evolve_hydro()]
+-# Update \f$ E \f$ with PdV work terms [evolve_hydro()]
+-# Evolve metric perturbations \f$ u_{ij} \f$ [evolve_uij()]
+-# Advection of \f$E\f$ and \f$ Z \f$ [advect_E() & advect_Z()]
+-# Find temperature again [find_Ta()]
+
 
 ## Compilation
 
