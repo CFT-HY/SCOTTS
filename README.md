@@ -5,9 +5,9 @@
 [Include links to papers here]
 
 The potential is
-\f[
-V(\phi, T) = \frac{1}{2} \gamma(T^2 - T_0^2)\phi^2 - \frac{1}{3}\alpha T \phi^3 + \frac{1}{4}\lambda\phi^4
-\f]
+\f[ V(\phi, T) = \frac{1}{2} \gamma(T^2 - T_0^2)\phi^2
+- \frac{1}{3}\alpha T \phi^3 +\frac{1}{4}\lambda\phi^4
++ \frac{1}{4}\frac{\gamma^2 T_0^4}{\lambda} \text.  \f]
 
 where, in the code:
 
