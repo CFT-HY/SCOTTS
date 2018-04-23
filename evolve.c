@@ -169,7 +169,7 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
   float ***Wfacez =  make_field(p);
 
   
-  float gpi, dv, gv, s;
+  float gpi, dv, s;
 
   float p_bar_x_plus, p_bar_x_minus;
   float p_bar_y_plus, p_bar_y_minus;
@@ -417,7 +417,9 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
 
 
 
-
+  // update velocity v; denominator is W&M eq (2.85)
+  // but note grid is Eulerian, see readme for conversion 
+  // between gamma and kappa and D.
   // Section 3.4.5, equations 3.57, 3.58
   // Updates spatial comps of covariant 4 velocity
 
