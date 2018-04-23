@@ -26,12 +26,14 @@
  * \f$ \phi \f$.
  *
  * \f[ V(\phi,T) = \frac{1}{2} \gamma(T^2 - T_0^2)\phi^2 -
- * \frac{1}{3}\alpha T \phi^3 + \frac{1}{4}\lambda\phi^4\text.  \f]
+ * \frac{1}{3}\alpha T \phi^3 + \frac{1}{4}\lambda\phi^4 + 
+ * \frac{1}{4}\frac{\gamma^2 T_0^4}{\lambda} \text.  \f]
  */
 float Vf(hydro_params p, float T, float this_phi) {
   return  0.5*p.gamma*(T*T - p.T0*p.T0)*this_phi*this_phi
     - p.alpha*T*this_phi*this_phi*this_phi/3.0
-    + 0.25*p.lambda*this_phi*this_phi*this_phi*this_phi;
+    + 0.25*p.lambda*this_phi*this_phi*this_phi*this_phi
+    + 0.25*p.gamma*p.gamma*p.T0*p.T0*p.T0*p.T0/p.lambda;
 }
 
 
