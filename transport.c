@@ -1,16 +1,25 @@
 
-/* transport.c
+/** @file transport.c
  *
- * Do advection. Two versions, depending on whether the
- * field being advected lives on lattice sites or between them.
+ * This file contains the functions that perform advection. 
+ *
+ * We have two versions, depending on whether the field being advected
+ * lives on lattice sites or between them.
+ *
+ * Currently we use simple donor cell advection. We may need to look
+ * into fancier advection methods to avoid getting strong shocks.
  */
 #include "hydro.h"
 
 
 
-/* void donor_E_dir(hydro_fields f, hydro_params p, int dir)
+/** Donor cell advection for `f.E` in direction `dir`.
  *
- * Donor cell advection for E in direction dir
+ * Does nothing ifdef `SCALAR`. 
+ *
+ * Simple donor cell i.e the value of `f.E` at the boundary is taken
+ * to be the same as the value in the body of the cell. It may be more
+ * consistent to swap to piecewise-linear advection.
  */
 void donor_E_dir(hydro_fields f, hydro_params p, int dir) {
 
@@ -63,9 +72,21 @@ void donor_E_dir(hydro_fields f, hydro_params p, int dir) {
 }
 
 
-/* void donor_Z_dir(hydro_fields f, hydro_params p, int dir)
+/** Donor cell advection for `f.Z` in direction `dir`.
  *
- * Donor cell advection for Z in direction dir
+ * Does nothing ifdef `SCALAR`. 
+ *
+ * 
+ * Simple donor cell i.e the value of `f.Z` at the boundary is taken
+ * to be the same as the value in the body of the cell. It may be more
+ * consistent to swap to piecewise-linear advection.
+ *
+ * Needs to calculate velocity in the body of the cell as that is
+ * where the interfaces for the momentum flux live.
+ *
+ * Note here that `dir` corresponds to the directional component \f$ i
+ * \f$ of the momentum density \f$ Z_i \f$, not the direction that we
+ * perform advection. This is perhaps confusing and could be changed.
  */
 void donor_Z_dir(hydro_fields f, hydro_params p, int dir) {
 
@@ -148,9 +169,13 @@ void donor_Z_dir(hydro_fields f, hydro_params p, int dir) {
 
 
 
-/* void advect_E(hydro_fields f, hydro_params p)
+/** Donor cell advection for `E` in all directions.
  *
- * Donor cell advection for E in all directions
+ * Currently the order in which each direction is advected is
+ * fixed. This can be changed to be random by switching to the code in
+ * the comment. Note that this is not what the Grant and Wilson
+ * suggest, rather they state the update should be split into two half
+ * steps, and the order should be reversed for each half.
  */
 void advect_E(hydro_fields f, hydro_params p) {
 
@@ -165,9 +190,13 @@ void advect_E(hydro_fields f, hydro_params p) {
 
 
 
-/* void advect_Z(hydro_fields f, hydro_params p)
+/** Donor cell advection for `f.Z` in all directions.
  *
- * Donor cell advection for Z in all directions
+ * Currently the order in which component of `f.Z` is advected is
+ * fixed. This can be changed to be random by switching to the code in
+ * the comment. Note that this is not what the Grant and Wilson
+ * suggest, rather they state the update should be split into two half
+ * steps, and the order of advection should be reversed for each half.
  */
 void advect_Z(hydro_fields f, hydro_params p) {
 
