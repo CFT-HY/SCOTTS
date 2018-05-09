@@ -51,16 +51,30 @@ void find_Ta(hydro_fields f, hydro_params p) {
   for(x=1; x<=p.slicex; x++) {
     for(y=1; y<=p.slicey; y++) {
       for(z=0; z<p.Lz; z++) {
+
+#ifdef TINDEP
+    // Second term in power is just the potential,
+    // should we just create an array here?
+	f.T[x][y][z]=pow((f.E[x][y][z]/f.W[x][y][z]
+			  - (0.5*p.gamma*(p.Tconst*p.Tconst - p.T0*p.T0)
+			     *f.phi[x][y][z]*f.phi[x][y][z]
+			     - p.alpha*p.Tconst
+			     *f.phi[x][y][z]*f.phi[x][y][z]*f.phi[x][y][z]/3.0
+			     + 0.25*p.lambda
+			     *f.phi[x][y][z]*f.phi[x][y][z]
+			     *f.phi[x][y][z]*f.phi[x][y][z]
+			     + p.V0))/(3.*p.gdeg) , 0.25);
+#else
+
 	/*
 	 * NaN's happen when Tfix goes negative,
 	 * they then spread out from here.
-	 */
-
+	 */ 
 	Tfix = 0.25*p.gamma*p.gamma*f.phi[x][y][z]*f.phi[x][y][z]
 	  *f.phi[x][y][z]*f.phi[x][y][z]
 	  - 12.0*p.gdeg*(0.25*p.lambda*f.phi[x][y][z]*f.phi[x][y][z]
 		      *f.phi[x][y][z]*f.phi[x][y][z]
-			 + 0.25*p.gamma*p.gamma*p.T0*p.T0*p.T0*p.T0/p.lambda
+			 + p.V0
 			 - 0.5*p.gamma*p.T0*p.T0*f.phi[x][y][z]*f.phi[x][y][z]
 			 - f.E[x][y][z]/f.W[x][y][z]);
 
@@ -74,7 +88,7 @@ void find_Ta(hydro_fields f, hydro_params p) {
 	f.T[x][y][z] = sqrt((1.0/(6.0*p.gdeg))
 			    * (0.5*p.gamma*f.phi[x][y][z]*f.phi[x][y][z]
 			       + sqrt(Tfix)));
-
+#endif // TINDEP
       }
     }
   }

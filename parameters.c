@@ -620,13 +620,31 @@ void set_bubble_parameters(hydro_params *p){
 			  *(p->Tconst*p->Tconst - p->T0*p->T0))
 		   )/(2.0*p->lambda);
   
-  p->R_critical = -2.0*p->surface_tension/Vf(*p, p->Tconst, p->phimin);
+  p->R_critical = 2.0*p->surface_tension/(Vf(*p,p->Tconst,0.0)
+					   - Vf(*p, p->Tconst, p->phimin));
   
   p->R_scaled = p->scale*p->R_critical;
 
+#ifdef TINDEP
+  p->V0=(1./(96.*p->lambda*p->lambda*p->lambda)
+	*pow(p->alpha*p->Tconst + sqrt(p->alpha*p->alpha*p->Tconst*p->Tconst
+				     - 4*(p->Tconst*p->Tconst-p->T0*p->T0)
+				     *p->lambda*p->gamma),2.)
+	*(p->alpha*p->alpha*p->Tconst*p->Tconst
+	  - 6*(p->Tconst*p->Tconst-p->T0*p->T0)*p->lambda*p->gamma
+	  + p->alpha*p->Tconst*sqrt(p->alpha*p->alpha*p->Tconst*p->Tconst
+				  - 4*(p->Tconst*p->Tconst-p->T0*p->T0)
+				  *p->lambda*p->gamma)));
+#else
+  p->V0=0.25*p->gamma*p->gamma*p->T0*p->T0*p->T0*p->T0/p->lambda;
+#endif // TINDEP
+
   printf0(*p, "-- Calculated bubble profile parameters: \n"
 	  "-- surface_tension %g, phimin %g \n" 
-          "-- R_critical %g, R_scaled %g \n",
-	  p->surface_tension, p->phimin, p->R_critical, p->R_scaled);
+          "-- R_critical %g, R_scaled %g \n"
+	  "Constant potential term found \n" 
+	  "-- V0 %g \n",
+	  p->surface_tension, p->phimin, p->R_critical, p->R_scaled,
+	  p->V0);
 
 }

@@ -348,6 +348,14 @@ typedef struct {
    */
   float R_scaled;
 
+  /** Constant in potential term.
+   *
+   * Calculated s.t either $V(\phi_b,T=0)=0$ or if `TINDEP` flag
+   * declared $V(\phi_b)=0$.
+   */
+  float V0;
+
+  
 } hydro_params;
 
 
