@@ -4,7 +4,7 @@
  */
 #include "hydro.h"
 
-
+#ifndef SCALAR
 
 
 float get_momtot(hydro_fields f, hydro_params p) {
@@ -687,6 +687,6 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 
 
 
-
+#endif // !SCALAR
 
 

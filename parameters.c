@@ -70,6 +70,8 @@ void get_parameters(char *infile, hydro_params *p)
 
   int set_beta = 0;
 
+  int set_R_critical = 0;
+  int set_phimin = 0;
   int set_scale = 0;
 
   int set_seed = 0;
@@ -233,6 +235,14 @@ void get_parameters(char *infile, hydro_params *p)
     else if(!strcasecmp(key,"beta")) {
       p->beta = strtof(value,NULL);
       set_beta = 1;
+    }
+    else if(!strcasecmp(key,"R_critical")) {
+      p->scale = strtof(value,NULL);
+      set_scale = 1;
+    }
+    else if(!strcasecmp(key,"phimin")) {
+      p->scale = strtof(value,NULL);
+      set_scale = 1;
     }
     else if(!strcasecmp(key,"scale")) {
       p->scale = strtof(value,NULL);
@@ -610,19 +620,22 @@ void get_parameters(char *infile, hydro_params *p)
 void set_bubble_parameters(hydro_params *p){
 
   p->surface_tension = (2.0*sqrt(2.0)/81.0)*(
-						p->alpha*p->alpha*p->alpha
-						/(p->lambda*p->lambda
-						  *sqrt(p->lambda)));
-
-  p->phimin =  (p->alpha*p->Tconst
-		   + sqrt((p->alpha*p->Tconst)*(p->alpha*p->Tconst)
-			  - 4.0*p->lambda*p->gamma
-			  *(p->Tconst*p->Tconst - p->T0*p->T0))
-		   )/(2.0*p->lambda);
-  
-  p->R_critical = 2.0*p->surface_tension/(Vf(*p,p->Tconst,0.0)
-					   - Vf(*p, p->Tconst, p->phimin));
-  
+					     p->alpha*p->alpha*p->alpha
+					     /(p->lambda*p->lambda
+					       *sqrt(p->lambda)));
+  if(p->phimin <= 0.){
+    printf0(*p, "phimin not set, defaulting to broken phase value. \n");
+    p->phimin =  (p->alpha*p->Tconst
+		  + sqrt((p->alpha*p->Tconst)*(p->alpha*p->Tconst)
+			 - 4.0*p->lambda*p->gamma
+			 *(p->Tconst*p->Tconst - p->T0*p->T0))
+		  )/(2.0*p->lambda);
+  }
+  if(p->R_critical <= 0.){
+    printf0(*p, "R_critical not set, defaulting to gaussian ansatz. \n");
+    p->R_critical = 2.0*p->surface_tension/(Vf(*p,p->Tconst,0.0)
+					 - Vf(*p, p->Tconst, p->phimin));
+  }
   p->R_scaled = p->scale*p->R_critical;
 
 #ifdef TINDEP

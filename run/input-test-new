@@ -72,6 +72,14 @@ silodir silage/
 # How much the gaussian ansatz for the initial bubble is enlarged by
 scale 1.0
 
+# Size of the critical bubble radius,
+# if less than zero default to gaussian ansatz:
+R_critical -1
+
+# Value of phi at the centre of the nucleated bubble,
+# if less than 0 default to broken phase value.
+phimin -1
+
 # Nucleation procedure; choices are "off", "exp", "list" or "file" 
 # - "off" does nothing (the number of bubbles given above as 'bubbles' is
 #   still created at the start however)

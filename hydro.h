@@ -330,12 +330,16 @@ typedef struct {
    */
   float surface_tension;
 
-  /** Value of `phi` in the broken phase \f$ \phi_b \f$.
+  /** Value of `phi` at the center of the nucleated bubble.
+   *
+   * Read from the parameter file, if given as <=0 default to broken 
+   * phase value.
    */
   float phimin;
 
   /** Critical radius of the bubble \f$ R_c \f$.
    *
+   * Read from the parameter file, if given as <=0 default to:
    * \f[
    * R_c= -\dfrac{2\sigma}{-V(\phi_b,T_N)}
    * \f]
