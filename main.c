@@ -149,6 +149,7 @@ int main(int argc, char *argv[]) {
     printf0(p, "- Zeroed fields.\n");
 
     if(p.initial==INIT_PS){
+#ifndef SCALAR
       // If initial is INIT_PS then initialise velocity power spec.
       // Then no bubbles nucleated.
 
@@ -166,7 +167,15 @@ int main(int argc, char *argv[]) {
 	  */
 	// init_ps(f, p, f.V);
 	//    init_ps(f, p, f.Z);
+#else
+	
+	printf0(p,"INIT_PS initial conditions invalid with SCALAR compiler flag.",
+		"Exiting... \n");
+	die(100);
+	
+#endif // !SCALAR	
 
+	
     } else if(p.initial==INIT_BUBBLE){
       //Bubble initial conditions:
       if(p.bubbles > 1){
@@ -373,7 +382,7 @@ int main(int argc, char *argv[]) {
 #ifndef SCALAR
       // Velocity power spectrum
       fft_vel(f, p, step, f.V);
-#endif // !SCALAR
+#endif //!SCALAR
 
       // Gravitational wave power spectrum (returns GW energy)
       gwen = fft_tensor(f, p, step, 0.0);
