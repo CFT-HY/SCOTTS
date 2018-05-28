@@ -15,6 +15,7 @@
 
 #ifdef SILO
 
+#ifndef SCALAR
 /** Populate an array with kinetic energy density.
  *
  */
@@ -60,6 +61,7 @@ void make_vel(hydro_fields f, hydro_params p, float ***temp) {
   halo_field(temp, p);
 }
 
+#endif // !SCALAR
 
 /** Populate an array with a slice through `temp`.
  *
@@ -235,6 +237,8 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step)
   float ***temp = make_field(p);
   float *slice = (float *)malloc(p.Ly*p.Lz*sizeof(float));
 
+#ifndef SCALAR
+  
   make_kinetic(f, p, temp);
 
   make_slice(f, p, slice, temp);
@@ -259,34 +263,19 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step)
 
   make_slice(f, p, slice, temp);
 
-  //// write kinetic slice ///
+  //// write fluid velocity slice ///
 
 
   if(!p.rank) {
     DBPutQuadvar1(dbfile, "V", "quadmesh", slice, meshsize, 2,
          NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
   }
-  ///
+
 
   
   free_field(p, temp);
 
-
-  
-  //// make phi slice ///
-
-  make_slice(f, p, slice, f.phi);
-
-  //// write phi slice ///
-
-
-  if(!p.rank) {
-    DBPutQuadvar1(dbfile, "phi", "quadmesh", slice, meshsize, 2,
-		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
-  }
-
-
-  //// make T slice ///
+    //// make T slice ///
 
   make_slice(f, p, slice, f.T);
 
@@ -312,6 +301,21 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step)
   }
 
   
+  
+#endif // !SCALAR
+  
+  //// make phi slice ///
+
+  make_slice(f, p, slice, f.phi);
+
+  //// write phi slice ///
+
+
+  if(!p.rank) {
+    DBPutQuadvar1(dbfile, "phi", "quadmesh", slice, meshsize, 2,
+		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+  }
+
   
   free(slice);
  
