@@ -237,12 +237,12 @@ void get_parameters(char *infile, hydro_params *p)
       set_beta = 1;
     }
     else if(!strcasecmp(key,"R_critical")) {
-      p->scale = strtof(value,NULL);
-      set_scale = 1;
+      p->R_critical = strtof(value,NULL);
+      set_R_critical = 1;
     }
     else if(!strcasecmp(key,"phimin")) {
-      p->scale = strtof(value,NULL);
-      set_scale = 1;
+      p->phimin = strtof(value,NULL);
+      set_phimin = 1;
     }
     else if(!strcasecmp(key,"scale")) {
       p->scale = strtof(value,NULL);
