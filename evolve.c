@@ -32,7 +32,7 @@ void evolve_field(hydro_fields f, hydro_params p) {
 	
 	pi_old = f.pi[x][y][z];
 
-#ifndef SCALAR
+
 	/* First-order viscosity term:
 	 * Factor of 0.5 comes from Crank-Nicolson method and
 	 * leapfrog: pi lives on boundary between timesteps but need
@@ -40,11 +40,16 @@ void evolve_field(hydro_fields f, hydro_params p) {
 	 * (1+s)*pi from last timestep on RHS and have (1-s)*pi on
 	 * current step on LHS, then divide through by (1-s).
 	 */
+#ifndef SCALAR
 	s = -0.5*p.dt*(p.C*f.phi[x][y][z]*f.phi[x][y][z]
-		       /f.T[x][y][z])*f.W[x][y][z];	
-	
+		       /f.T[x][y][z])*f.W[x][y][z];
+#else
+	s = -0.5*p.dt*(p.C*f.phi[x][y][z]*f.phi[x][y][z]
+		       /p.Tconst);
+#endif //!SCALAR
 	f.pi[x][y][z] = (1+s)*f.pi[x][y][z]/(1-s);
-	
+
+#ifndef SCALAR
 	/* Gradient term:
 	 * Gradients and velocities live on cell boundaries, but we
 	 * want the values in the body of the cell so we average the
@@ -85,7 +90,7 @@ void evolve_field(hydro_fields f, hydro_params p) {
 #ifndef SCALAR
 	    - Vdf(p, f.T[x][y][z], f.phi[x][y][z]))/(1-s);
 #else	
-	- Vdf(p, p.Tconst, f.phi[x][y][z]));
+	- Vdf(p, p.Tconst, f.phi[x][y][z]))/(1-s);
 #endif // !SCALAR	
 
 
