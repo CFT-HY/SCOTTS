@@ -40,7 +40,45 @@ float get_gamma_max(hydro_fields f, hydro_params p) {
 #endif
 }
 
+/* float get_s_max(hydro_fields f, hydro_params p)
+ *
+ * Returns the largest zone-centred damping factor s found anywhere
+ * in the simulation box.
+ */
+float get_s_max(hydro_fields f, hydro_params p) {
+  int x, y, z;
+  float smax = 0;
+  float stest;
 
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+#ifdef DIMENSIONLESS
+#ifndef SCALAR
+	stest = 0.5*p.dt*(p.C*f.phi[x][y][z]*f.phi[x][y][z]
+		       /f.T[x][y][z])*f.W[x][y][z];
+#else
+	stest = 0.5*p.dt*(p.C*f.phi[x][y][z]*f.phi[x][y][z]
+		       /f.Tconst);
+#endif //!SCALAR
+#else
+#ifndef SCALAR
+	stest = -0.5*p.dt*p.C*f.W[x][y][z];
+#else
+	stest = -0.5*p.dt*p.C;
+#endif //!SCALAR
+#endif //DIMENSIONLESS
+	if(stest>smax) {
+	  smax = stest;
+	}
+      }
+    }
+  }
+
+  return smax;
+	
+}
+  
 /* float get_veltot(hydro_fields f, hydro_params p)
  *
  * The sum of the fluid (3-)velocity everywhere. A strange quantity

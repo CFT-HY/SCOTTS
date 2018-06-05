@@ -570,6 +570,7 @@ void init_profile(hydro_fields *f, hydro_params *p);
 
 // output.c
 float get_gamma_max(hydro_fields f, hydro_params p);
+float get_s_max(hydro_fields f, hydro_params p);
 float get_veltot(hydro_fields f, hydro_params p);
 void dump(float *field, hydro_params p);
 void histo_field(float ***field, hydro_params p, int step);
