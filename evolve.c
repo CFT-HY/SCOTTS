@@ -40,6 +40,7 @@ void evolve_field(hydro_fields f, hydro_params p) {
 	 * (1+s)*pi from last timestep on RHS and have (1-s)*pi on
 	 * current step on LHS, then divide through by (1-s).
 	 */
+#ifdef DIMENSIONLESS
 #ifndef SCALAR
 	s = -0.5*p.dt*(p.C*f.phi[x][y][z]*f.phi[x][y][z]
 		       /f.T[x][y][z])*f.W[x][y][z];
@@ -47,8 +48,15 @@ void evolve_field(hydro_fields f, hydro_params p) {
 	s = -0.5*p.dt*(p.C*f.phi[x][y][z]*f.phi[x][y][z]
 		       /p.Tconst);
 #endif //!SCALAR
+#else
+#ifndef SCALAR
+	s = -0.5*p.dt*p.C*f.W[x][y][z];
+#else
+	s = -0.5*p.dt*p.C;
+#endif //!SCALAR
+#endif // DIMENSIONLESS
 	f.pi[x][y][z] = (1+s)*f.pi[x][y][z]/(1-s);
-
+	
 #ifndef SCALAR
 	/* Gradient term:
 	 * Gradients and velocities live on cell boundaries, but we
@@ -57,25 +65,23 @@ void evolve_field(hydro_fields f, hydro_params p) {
 	 */
 
 	
-	f.pi[x][y][z] = f.pi[x][y][z]
-	                - p.dt*(p.C*f.phi[x][y][z]*f.phi[x][y][z]/f.T[x][y][z]) \
-	  *f.W[x][y][z] \
-	  *(
-	    0.5*(f.V[0][x][y][z]*(f.phi[x][y][z]
-				  - f.phi[x-1][y][z])
-		 + f.V[0][x+1][y][z]*(f.phi[x+1][y][z]
-				      - f.phi[x][y][z]))/p.dx
-	    
-	    + 0.5*(f.V[1][x][y][z]*(f.phi[x][y][z]
-				    - f.phi[x][y-1][z])
-		   + f.V[1][x][y+1][z]*(f.phi[x][y+1][z]
-					- f.phi[x][y][z]))/p.dx
-					  
-	    + 0.5*(f.V[2][x][y][z]*(f.phi[x][y][z]
-				    - f.phi[x][y][((z-1+p.Lz)%p.Lz)])
-		   + f.V[2][x][y][((z+1)%p.Lz)]*(f.phi[x][y][((z+1)%p.Lz)]
-						 - f.phi[x][y][z]))/p.dx
-	    )/(1-s);
+	f.pi[x][y][z] = f.pi[x][y][z] \
+	  + 2*s*(
+		 0.5*(f.V[0][x][y][z]*(f.phi[x][y][z]
+				       - f.phi[x-1][y][z])
+		      + f.V[0][x+1][y][z]*(f.phi[x+1][y][z]
+					   - f.phi[x][y][z]))/p.dx
+		 
+		 + 0.5*(f.V[1][x][y][z]*(f.phi[x][y][z]
+					 - f.phi[x][y-1][z])
+			+ f.V[1][x][y+1][z]*(f.phi[x][y+1][z]
+					     - f.phi[x][y][z]))/p.dx
+		 
+		 + 0.5*(f.V[2][x][y][z]*(f.phi[x][y][z]
+					 - f.phi[x][y][((z-1+p.Lz)%p.Lz)])
+			+ f.V[2][x][y][((z+1)%p.Lz)]*(f.phi[x][y][((z+1)%p.Lz)]
+						      - f.phi[x][y][z]))/p.dx
+		 )/(1-s);
 
 #endif // !SCALAR
 	// scalar field gradient and potential terms
@@ -188,9 +194,12 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
 
   float ubarx, ubary, ubarz, W;
 
-  float vdnb, pinb, phinb, wnb, Tnb, dxphinb0, dxphinb1, dxphinb2;
+#ifdef DIMENSIONLESS
+  float phinb, Tnb;
+#endif //DIMENSIONLESS
+  float vdnb, pinb, wnb, dxphinb0, dxphinb1, dxphinb2;
 
-
+  
   // Find quantities needed on half timesteps but defined on whole steps
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
@@ -252,7 +261,7 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
 		      + f.pi[x-1][y][((z+p.Lz-1)%p.Lz)]
 		      + f.pi[x-1][y-1][((z+p.Lz-1)%p.Lz)]);
 
-
+#ifdef DIMENSIONLESS
 	Tnb = 0.125*(f.T[x-1][y][z]
 		      + f.T[x][y][z]
 		      + f.T[x][y-1][z]
@@ -270,7 +279,7 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
 		      + f.phi[x][y-1][((z+p.Lz-1)%p.Lz)]
 		      + f.phi[x-1][y][((z+p.Lz-1)%p.Lz)]
 		      + f.phi[x-1][y-1][((z+p.Lz-1)%p.Lz)]);
-
+#endif //DIMENSIONLESS
 	
 	
 	wnb = 0.125*(f.W[x-1][y][z]
@@ -299,7 +308,7 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
 			 + dxphi[2][x-1][y-1][((z+p.Lz-1)%p.Lz)]);
 
 
-	
+#ifdef DIMENSIONLESS	
 	// this is the one that causes trouble       
 	f.Z[0][x][y][z] = f.Z[0][x][y][z] - p.dt*(p.C*phinb*phinb/Tnb)*wnb*pinb*dxphinb0;
 	f.Z[1][x][y][z] = f.Z[1][x][y][z] - p.dt*(p.C*phinb*phinb/Tnb)*wnb*pinb*dxphinb1;
@@ -339,8 +348,46 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
 				   *dxphi[2][x][y][z]));
       
 	f.E[x][y][z] = f.E[x][y][z] + p.dt*((p.C*phiav[x][y][z]*phiav[x][y][z]/f.T[x][y][z])*gpi*gpi + gpi*Vdmid[x][y][z]);
-
-    
+#else
+	f.Z[0][x][y][z] = f.Z[0][x][y][z] - p.dt*p.C*wnb*pinb*dxphinb0;
+	f.Z[1][x][y][z] = f.Z[1][x][y][z] - p.dt*p.C*wnb*pinb*dxphinb1;
+	f.Z[2][x][y][z] = f.Z[2][x][y][z] - p.dt*p.C*wnb*pinb*dxphinb2;
+	
+	f.Z[1][x][y][z] = f.Z[1][x][y][z] 
+	  - p.dt*p.C*wnb*(f.V[1][x][y][z]*dxphinb1
+			  + f.V[0][x][y][z]*dxphinb0
+			  + f.V[2][x][y][z]*dxphinb2)*dxphinb1;
+	
+	f.Z[0][x][y][z] = f.Z[0][x][y][z] 
+	  - p.dt*p.C*wnb*(f.V[1][x][y][z]*dxphinb1
+			  + f.V[0][x][y][z]*dxphinb0
+			  + f.V[2][x][y][z]*dxphinb2)*dxphinb0;    
+	
+	f.Z[2][x][y][z] = f.Z[2][x][y][z]
+	  - p.dt*p.C*wnb*(f.V[1][x][y][z]*dxphinb1
+			  + f.V[0][x][y][z]*dxphinb0
+			  + f.V[2][x][y][z]*dxphinb2)*dxphinb2;
+	
+	f.Z[0][x][y][z] = f.Z[0][x][y][z] - p.dt*vdnb*dxphinb0;     
+	f.Z[1][x][y][z] = f.Z[1][x][y][z] - p.dt*vdnb*dxphinb1;
+	f.Z[2][x][y][z] = f.Z[2][x][y][z] - p.dt*vdnb*dxphinb2;
+	
+	gpi = f.W[x][y][z]*(f.pi[x][y][z]
+			    + 0.5*(f.V[0][x][y][z]
+				   *dxphi[0][x-1][y][z]
+				   + f.V[0][x+1][y][z]
+				   *dxphi[0][x][y][z])
+			    + 0.5*(f.V[1][x][y][z]
+				   *dxphi[1][x][y-1][z]
+				   + f.V[1][x][y+1][z]
+				   *dxphi[1][x][y][z])
+			    + 0.5*(f.V[2][x][y][z]
+				   *dxphi[2][x][y][((z-1+p.Lz)%p.Lz)]
+				   + f.V[2][x][y][((z+1)%p.Lz)]
+				   *dxphi[2][x][y][z]));
+      
+	f.E[x][y][z] = f.E[x][y][z] + p.dt*(p.C*gpi*gpi + gpi*Vdmid[x][y][z]);
+#endif //DIMENSIONLESS
       }
     }
   }

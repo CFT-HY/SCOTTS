@@ -115,6 +115,7 @@ int main(int argc, char *argv[]) {
   float current_avgpress;
   float current_veltot;
   float gwen;
+  float s_max;
 
   // Timing counters
   float cpu_time_used;
@@ -401,7 +402,6 @@ int main(int argc, char *argv[]) {
     }
 #endif // FFT
 
-
     // Measurements
     if((p.interval > 0) && (step % p.interval == 0)) {
 
@@ -413,9 +413,10 @@ int main(int argc, char *argv[]) {
       current_gradient_energy = reduce_sum(gradient_energy(f, p), p);
       current_veltot = reduce_sum(get_veltot(f, p), p)
 	/((float)(p.Lx*p.Ly*p.Lz));
+      s_max = reduce_max(get_s_max(f, p), p);
       
       if(!p.rank) {
-	printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf\t%6lf\n",
+	printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf\t%6lf\n",
 	       step,
 	       t,
 	       current_energy,
@@ -426,7 +427,8 @@ int main(int argc, char *argv[]) {
 	       gwen,
 	       bcount,
 	       current_rest,
-	       current_avgpress);
+	       current_avgpress,
+	       s_max);
       }
 
       // Statement of energy violation (not shown; better to use KE)
