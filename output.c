@@ -63,9 +63,9 @@ float get_s_max(hydro_fields f, hydro_params p) {
 #endif //!SCALAR
 #else
 #ifndef SCALAR
-	stest = -0.5*p.dt*p.C*f.W[x][y][z];
+	stest = 0.5*p.dt*p.C*f.W[x][y][z];
 #else
-	stest = -0.5*p.dt*p.C;
+	stest = 0.5*p.dt*p.C;
 #endif //!SCALAR
 #endif //DIMENSIONLESS
 	if(stest>smax) {
