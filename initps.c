@@ -5,7 +5,6 @@
 #include "hydro.h"
 
 
-#ifdef INITPS
 
 
 float get_momtot(hydro_fields f, hydro_params p) {
@@ -41,7 +40,7 @@ void norm_power(hydro_fields f, hydro_params p, float ****field) {
     for(x=1; x<=p.slicex; x++) {
       for(y=1; y<=p.slicey; y++) {
         for(z=0; z<p.Lz; z++) {
-          field[i][x][y][z] = p.initps*field[i][x][y][z]/momtot;
+          field[i][x][y][z] = p.initnorm*field[i][x][y][z]/momtot;
         }
       }
     }
@@ -231,8 +230,8 @@ void spectrum(float ksq, hydro_params p, fftwf_complex *res)
   } else {
 
 
-    //  (*res)[0] = p.initps*exp(-0.25*sqrt(ksq)*p.dx*((float)L));    
-    //    (*res)[0] = get_normal(0.0, p.initps*exp(-0.25*sqrt(ksq)*p.dx*((float)L)));
+    //  (*res)[0] = p.initnorm*exp(-0.25*sqrt(ksq)*p.dx*((float)L));    
+    //    (*res)[0] = get_normal(0.0, p.initnorm*exp(-0.25*sqrt(ksq)*p.dx*((float)L)));
     (*res)[0] = get_normal(0.0, exp(-1.0*sqrt(ksq)*p.dx*p.initlength));
 
 
@@ -691,4 +690,3 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 
 
 
-#endif // INITPS

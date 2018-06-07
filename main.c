@@ -148,74 +148,80 @@ int main(int argc, char *argv[]) {
 
     printf0(p, "- Zeroed fields.\n");
 
-    // Shock tube style initial conditions for fluid only (not used)
-#ifdef INITPS
-    initial_blank(f,p);
-    init_ps(f, p, f.Z);
-    norm_power(f, p, f.Z);
+    if(p.initial==INIT_PS){
+      // If initial is INIT_PS then initialise velocity power spec.
+      // Then no bubbles nucleated.
 
-    /*
-    memcpy(f.V[0][0][0], f.U[0][0][0], (p.slicex+2)*(p.slicey+2)
-	   *(p.Lz)*sizeof(float));
-    memcpy(f.V[1][0][0], f.U[1][0][0], (p.slicex+2)*(p.slicey+2)
-	   *(p.Lz)*sizeof(float));
-    memcpy(f.V[2][0][0], f.U[2][0][0], (p.slicex+2)*(p.slicey+2)
-	   *(p.Lz)*sizeof(float));
-	   */
-    // init_ps(f, p, f.V);
-    //    init_ps(f, p, f.Z);
-#else // INITPS
+	initial_blank(f,p);
+	init_ps(f, p, f.Z);
+	norm_power(f, p, f.Z);
 
+	/*
+	  memcpy(f.V[0][0][0], f.U[0][0][0], (p.slicex+2)*(p.slicey+2)
+	  *(p.Lz)*sizeof(float));
+	  memcpy(f.V[1][0][0], f.U[1][0][0], (p.slicex+2)*(p.slicey+2)
+	  *(p.Lz)*sizeof(float));
+	  memcpy(f.V[2][0][0], f.U[2][0][0], (p.slicex+2)*(p.slicey+2)
+	  *(p.Lz)*sizeof(float));
+	  */
+	// init_ps(f, p, f.V);
+	//    init_ps(f, p, f.Z);
 
-    // do random nucleation process
-    if(p.bubbles > 1) {
-      // Instead, start off with an empty box
-      initial_blank(f, p);
-
-      start = clock();
-      printf0(p, "Nucleating first bubble\n");
-      nucleate_at(f,p,0,0,0);
-      halo_field(f.phi,p);
-
-
-      end = clock();
-      if(!p.rank)
-	fprintf(stderr,"Nucleation attempt took %lf\n",
-		((float) (end - start)) / CLOCKS_PER_SEC);
-      bcount+=1;
+    } else if(p.initial==INIT_BUBBLE){
+      //Bubble initial conditions:
+      if(p.bubbles > 1){
+	// Instead, start off with an empty box
+	initial_blank(f, p);
       
-      // p.bubbles is how many bubbles to make at the start (usually 1)
-      for(step=1;step<p.bubbles;step++) {
 	start = clock();
-	still_nucleate = try_nucleate(f, p);
+	printf0(p, "Nucleating first bubble\n");
+	nucleate_at(f,p,0,0,0);
+	halo_field(f.phi,p);
+      
+	
 	end = clock();
 	if(!p.rank)
 	  fprintf(stderr,"Nucleation attempt took %lf\n",
 		  ((float) (end - start)) / CLOCKS_PER_SEC);
+	bcount+=1;
+	
+	// p.bubbles is how many bubbles to make at the start (usually 1)
+	for(step=1;step<p.bubbles;step++) {
+	  start = clock();
+	  still_nucleate = try_nucleate(f, p);
+	  end = clock();
+	  if(!p.rank)
+	    fprintf(stderr,"Nucleation attempt took %lf\n",
+		    ((float) (end - start)) / CLOCKS_PER_SEC);
+	  
+	  bcount += still_nucleate;
       
-	bcount += still_nucleate;
-      
-	// Each is an independent attempt, do not disable!
-	//      if(!still_nucleate)
-	//	break;
-
+	  // Each is an independent attempt, do not disable!
+	  //      if(!still_nucleate)
+	  //	break;
+	  
+	}
+      } else if(p.bubbles == 1){
+	// One bubble only (not normally used)
+	initial_blank(f, p);
+	
+	printf0(p, "Nucleating just one bubble\n");
+	nucleate_at(f,p,0,0,0);
+	halo_field(f.phi,p);
+      } else{
+	// Empty system
+	initial_blank(f, p);
       }
-    } else if(p.bubbles == 1) {
-      // One bubble only (not normally used)
-      initial_blank(f, p);
-
-      printf0(p, "Nucleating just one bubble\n");
-      nucleate_at(f,p,0,0,0);
-      halo_field(f.phi,p);
-    } else {
-      // Empty system
-      initial_blank(f, p);
+    }else if(p.initial==INIT_SHOCK_TUBE){
+      fprintf(stderr,"Sorry, shocktube is not implemented! Exiting... \n");
+      die(100);
+    }else{
+      fprintf(stderr,"Invalid initial condition option! Exiting... \n");
+      die(100);
     }
-    // TODO: Make INITPS just another parameter choice rather than
-    // dependent on conditional compilation...
-
-#endif // INITPS
-
+	
+  
+      
     // (don't) turn off nucleation after initial stage
     //  still_nucleate = 0;
 
@@ -295,8 +301,6 @@ int main(int argc, char *argv[]) {
 
   for(step = step_start; step < p.steps; step++) {
 
-
-
     /*
     if(!p.rank) {
       fprintf(press, "%d %g\n", step, f.p[1][1][1]);
@@ -310,6 +314,7 @@ int main(int argc, char *argv[]) {
     srandom(p.seed + step);
 
     // How many bubbles do we (try to) nucleate this timestep?
+    // (Always 0 if initial condition not set to "bubble")
     howmany = bubbles_at_step(f, p, t, step);
 
     i = 0;
@@ -435,18 +440,8 @@ int main(int argc, char *argv[]) {
     // Do the hydro bits
     evolve_hydro(f, p);
 
-#ifdef CUTOFF
-    float cutoff = 0.5*(1.0-tanh(10.0*(t/p.tcutoff - 0.9)));
-
-    if((p.interval > 0) && (step % p.interval == 0)) {
-      printf0(p,"cutoff is %lf\n", cutoff);
-    }
-
     // Evolve metric perturbations
-    evolve_uij(f, p, cutoff);
-#else // not cutoff
     evolve_uij(f, p);
-#endif
 
     // Advection of state variables
     advect_E(f, p);

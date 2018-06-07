@@ -1,4 +1,4 @@
-/* gw.c
+/** @file gw.c
  *
  * Fourier transform and GW power spectrum calculation.
  *
@@ -16,10 +16,14 @@
 #ifdef FFT
 
 
-/* proj(int T, float kx, float ky, float kz);
+/** Projector \f$ P_{ij} \f$, where `T` corresponds to a combination
+ * of \f$ i \f$ and \f$ j \f$.
  *
- * Projector P_{ij}, where ij is parameterised by T
- * Given above eq. 20 in the paper.
+ * \f[
+ * P_{ij}=\delta_{ij} -\hat{k}_{i}\hat{k}_{j}
+ * \f]
+ * 
+ * 
  */
 float proj(int T, float kx, float ky, float kz) {
 
@@ -65,11 +69,16 @@ float proj(int T, float kx, float ky, float kz) {
 }
 
 
-/* lambda(int i, int j, int l, int m, float kx, float ky, float kz)
+/** The lambda projector object.
  *
- * the lambda projector object
- * i, j, l, m are the indices (NB: one-based)
- * and kx, ky, kz are momentum components
+ * `i`, `j`, `l`, `m` are the indices (NB: one-based)
+ * and `kx`, `ky`, `kz` are momentum components.
+ * 
+ * The lambda projector object is given by
+ * \f[ 
+ * \Lambda_{ij,lm}(\mathbf{k}) = P_{im}(\mathbf{k}) P_{jl}(\mathbf{k}) - 
+ *                             \dfrac{1}{2} P_{im}(\mathbf{k})P_{jl}(\mathbf{k})
+ * \f]
  */
 float lambda(int i, int j, int l, int m, float kx, float ky, float kz) {
   
@@ -79,28 +88,35 @@ float lambda(int i, int j, int l, int m, float kx, float ky, float kz) {
 
 
 
-  if(i > j)
+  if(i > j){
     cpt1 = i*10 + j;
-  else
+  }
+  else{
     cpt1 = j*10 + i;
-
-  if(l > m)
+  }
+  if(l > m){
     cpt2 = l*10 + m;
-  else
+  }
+  else{
     cpt2 = m*10 + l;
+  }
 
   total -= 0.5*proj(cpt1, kx, ky, kz)*proj(cpt2, kx, ky, kz);
 
 
-  if(i > l)
+  if(i > l){
     cpt1 = i*10 + l;
-  else
+  }
+  else{
     cpt1 = l*10 + i;
+  }
 
-  if(j > m)
+  if(j > m){
     cpt2 = j*10 + m;
-  else
+  }
+  else{
     cpt2 = m*10 + j;
+  }
 
   total += proj(cpt1, kx, ky, kz)*proj(cpt2, kx, ky, kz);
 
@@ -109,10 +125,9 @@ float lambda(int i, int j, int l, int m, float kx, float ky, float kz) {
 }
 
 
-/* indexof(int i, int j)
+/** Helper function to map indices `i` and `j` to the unique degrees of
+ * encoded in our tensor object.
  *
- * For individual indices i and j associated with a single tensor,
- * map back to the six unique degrees of freedom encoded in our tensor object.
  */
 int indexof(int i, int j)
 {
@@ -150,17 +165,19 @@ int indexof(int i, int j)
 
 
 
-/* void gwproject(hydro_params p, int x_start, int slab,
- *              float *product, fftwf_complex **udot); 
+/** Used to obtain \f$ |\dot{h}_{ij}|^2 \f$ in momentum space from `udot`.
  *
- * Project from the six unique degrees of freedom in udot,
- * (obtained here in momentum space from a distributed shared memory
- * FFT) to obtain |hij|^2 in momentum space, cf eq. 30 in the
+ *
+ * Project from the six unique degrees of freedom in `udot`, (obtained
+ * here in momentum space from a distributed shared memory FFT) to
+ * obtain \f$ |\dot{h}_{ij}|^2 \f$ in momentum space, cf eq. 30 in the
  * paper cited at the start.
  *
- * slab is the thickness in the x-direction of the local domain
- * x_start is the physical start of this region
- * y and z have the full spatial extent p.Ly and p.Lz
+ * `slab` is the thickness in the x-direction of the local domain
+ *
+ * `x_start` is the physical start of this region
+ *
+ * `y` and `z` have the full spatial extent `p.Ly` and `p.Lz`
  */ 
 void gwproject(hydro_params p, int x_start, int slab,
 	       float *product, fftwf_complex **udot) {
@@ -247,15 +264,17 @@ void gwproject(hydro_params p, int x_start, int slab,
 
 
 
-/* fft_tensor(hydro_fields f, hydro_params p)
+/** Calculates the gravitational wave power spectrum from `udotij`.
  *
- * Take the udotij's, which are the un-projected linearised
- * metric perturbations, FFT them, project them in momentum space
- * and then calculate a power spectrum for them.
+ * Take the `udotij`'s, which are the un-projected
+ * linearised metric perturbations, FFT them, project them in momentum
+ * space and then calculate a power spectrum for them.
  *
- * The projector calculations (above) are slightly fiddly, so if
- * you decide to calculate the power spectrum several times during the
+ * The projector calculations (above) are slightly fiddly, so if you
+ * decide to calculate the power spectrum several times during the
  * simulation be prepared to pre-calculate the above.
+ *
+ * Question: how is the output normalised, what exactly is this?
  */
 float fft_tensor(hydro_fields f, hydro_params p, int step,
 		float energydensity) {
