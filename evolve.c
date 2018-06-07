@@ -16,13 +16,14 @@
 /** Evolve the scalar field forward one timestep.
  * 
  * Taken more or less straight from the 1+1 spherical fortran code.
+ * Uses leapfrog and Crank-Nicolson method to perform the update.
  */
 void evolve_field(hydro_fields f, hydro_params p) {
   
   int x, y, z;
 
   float pi_old, s;
-
+  
   // Move conjugate momentum (leapfrog)
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
@@ -40,17 +41,19 @@ void evolve_field(hydro_fields f, hydro_params p) {
 	 * current step on LHS, then divide through by (1-s).
 	 */
 	s = -0.5*p.dt*(p.C*f.phi[x][y][z]*f.phi[x][y][z]
-		       /f.T[x][y][z])*f.W[x][y][z];
-
+		       /f.T[x][y][z])*f.W[x][y][z];	
+	
 	f.pi[x][y][z] = (1+s)*f.pi[x][y][z]/(1-s);
 	
 	/* Gradient term:
 	 * Gradients and velocities live on cell boundaries, but we
 	 * want the values in the body of the cell so we average the
 	 * two boundaries.
-	 */ 
+	 */
+
+	
 	f.pi[x][y][z] = f.pi[x][y][z]
-	  - p.dt*(p.C*f.phi[x][y][z]*f.phi[x][y][z]/f.T[x][y][z]) \
+	                - p.dt*(p.C*f.phi[x][y][z]*f.phi[x][y][z]/f.T[x][y][z]) \
 	  *f.W[x][y][z] \
 	  *(
 	    0.5*(f.V[0][x][y][z]*(f.phi[x][y][z]
@@ -68,8 +71,8 @@ void evolve_field(hydro_fields f, hydro_params p) {
 		   + f.V[2][x][y][((z+1)%p.Lz)]*(f.phi[x][y][((z+1)%p.Lz)]
 						 - f.phi[x][y][z]))/p.dx
 	    )/(1-s);
+
 #endif // !SCALAR
-	
 	// scalar field gradient and potential terms
 	f.pi[x][y][z] = f.pi[x][y][z]
 	  + p.dt
@@ -82,22 +85,22 @@ void evolve_field(hydro_fields f, hydro_params p) {
 #ifndef SCALAR
 	    - Vdf(p, f.T[x][y][z], f.phi[x][y][z]))/(1-s);
 #else	
-	    - Vdf(p, p.Tconst, f.phi[x][y][z]));
+	- Vdf(p, p.Tconst, f.phi[x][y][z]));
 #endif // !SCALAR	
 
-        /* In the leapfrog/Verlet method, pi lives half a timestep behind
+
+	   
+	/* In the leapfrog/Verlet method, pi lives half a timestep behind
 	 * phi. Evolving by an additional half-interval between the new and
 	 * old pi's gives an approximation to the value of pi on the same
 	 * timestep as phi. This is useful for outputting energies, etc., but
 	 * is not used in the evolution code.
 	 */
-         f.pi_future[x][y][z] = f.pi[x][y][z] + 0.5*(f.pi[x][y][z] - pi_old);
-
+	f.pi_future[x][y][z] = f.pi[x][y][z] + 0.5*(f.pi[x][y][z] - pi_old);
       }
     }
   }
 
-  
   // Move field (leapfrog)
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
@@ -106,10 +109,11 @@ void evolve_field(hydro_fields f, hydro_params p) {
 	f.phi_old[x][y][z] = f.phi[x][y][z];
 	
 	f.phi[x][y][z] = f.phi[x][y][z] + p.dt*f.pi[x][y][z];
+
       }
     }
   }
-  
+
   halo_field(f.pi, p);
   halo_field(f.pi_future, p);
   
@@ -121,12 +125,26 @@ void evolve_field(hydro_fields f, hydro_params p) {
 
 
 
-/* void evolve_hydro(hydro_fields f, hydro_params p)
+/** Evolve the hydro forward one step except for transport.
+ *
+ * This follows chapters 2 and 3 in Wilson and Mathews, though in a different
+ * order.
+ * Update is performed in the following order within the function:
+ * -# Update \f$ E\f$ and \f$ Z \f$ with Field-fluid interaction terms 
+ *    (potential and dissapitve term)
+ * -# Update \f$ Z \f$ with pressure acceleration
+ * -# Update covariant 4 velocity spatial terms \f$ U_i \f$.
+ * -# Update contravariant 3 velocity \f$ V^i \f$.
+ * -# Update Lorentz factor \f$ W \f$.
+ * -# Update \f$ E \f$ with PdV work terms.
+ *
+ * Grid velocity is 0, lapse vector 0 and flat space.
  *
  * Basically straight from fortran. Original comment:
  *
  *   --  Does hydro except transport.  E  and  Z evolved.  v  and W
  *       obtained.  Uses artificial viscosity  Q,  adjusted with  Cav.
+ *
  *   --  The order chosen is not unique, but is what I used in
  *       dissertation.  Should experiment with different orders,
  *       especially with position of field-fluid interaction,
@@ -139,18 +157,19 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
 
   int x, y, z;
   
-  float ***Vdmid = make_field(p);
+  float ***Vdmid = make_field(p); // dV/dphi between timesteps in zone.
   float ***Wold = make_field(p);
-  float ***phiav = make_field(p);
+  float ***phiav = make_field(p); // phi between timesteps in zone.
 
-  float ****dxphi = make_vector(p);
+  //d(phi)/dx_i between timesteps on appropriate spatial boundary.
+  float ****dxphi = make_vector(p); 
 
   float ***Wfacex =  make_field(p);
   float ***Wfacey =  make_field(p);
   float ***Wfacez =  make_field(p);
 
   
-  float gpi, dv, gv, s;
+  float gpi, dv, s;
 
   float p_bar_x_plus, p_bar_x_minus;
   float p_bar_y_plus, p_bar_y_minus;
@@ -167,7 +186,7 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
   float vdnb, pinb, phinb, wnb, Tnb, dxphinb0, dxphinb1, dxphinb2;
 
 
-
+  // Find quantities needed on half timesteps but defined on whole steps
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
@@ -201,12 +220,14 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
 
   halo_field(Vdmid, p);
 
-
-
+  // Field-fluid interaction through friction term and potential term:
+  
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
 
+	// Averaging to get variables at the corners of the zone. 
+	
 	vdnb = 0.125*(Vdmid[x-1][y][z]
 		      + Vdmid[x][y][z]
 		      + Vdmid[x][y-1][z]
@@ -397,11 +418,10 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
 
 
   // update velocity v; denominator is W&M eq (2.85)
-  // but note grid is Eulerian and D=0
-  // then gv is the four-velocity (2.84)
-  // (what we call kappa they call sigma, ish?)
-  //
+  // but note grid is Eulerian, see readme for conversion 
+  // between gamma and kappa and D.
   // Section 3.4.5, equations 3.57, 3.58
+  // Updates spatial comps of covariant 4 velocity
 
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
@@ -450,6 +470,7 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
 
 
   // section 3.4.5 continued
+  // Update contravariant 3-velocity (lives on faces)
   // face-centred x-cpt of 3-velocity
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
@@ -560,6 +581,7 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
   //  getchar();
 
   // Section 3.4.6
+  // Update Lorentz factor f.W, then update E with first pressure work term.
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
@@ -604,14 +626,7 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
 			    + utildex*utildex 
 			    + utildey*utildey 
 			    + utildez*utildez);
-	
-	// sort of E*exp(-2.0*s)	
-	//	s = (f.kappa[iix(x,y,z,p)] - 1)*(f.W[iix(x,y,z,p)]
-	//					 - Wold[iix(x,y,z,p)])
-	//	  /(f.W[iix(x,y,z,p)] + Wold[iix(x,y,z,p)]);
-	//	f.E[iix(x,y,z,p)] = f.E[iix(x,y,z,p)]*(1-s)/(1+s);
-    
-    
+	        
 	// Top of p90 ch 3
 	f.E[x][y][z] = f.E[x][y][z]*pow(Wold[x][y][z]/f.W[x][y][z],
 					f.kappa[x][y][z]-1.0);
@@ -629,7 +644,7 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
   halo_field(Wfacey, p);
   halo_field(Wfacez, p);
 
-  // Section 3.4.4 -- pressure terms
+  // Section 3.4.4 -- Update E with another pressure work term
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
@@ -639,16 +654,7 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
 	qz = (f.V[2][x][y][((z+1)%p.Lz)] - f.V[2][x][y][z])/p.dx;
 	
 	divv = qx + qy + qz;
-
-		
-	// s = 0.5*(f.kappa[x] - 1.0)*divv*p.dt/2.0;
-	// f.E[x] = f.E[x]*(1-s)/(1+s);
-	
-
-	// Is it 1.0 or 0.5? -- not the major problem I think
-	// also note that dx=1.0 still get problems
-	// so it is not some factor of dx somewhere
-	// nor is it this particular expression:
+			
 	f.E[x][y][z] = f.E[x][y][z]
 	  *exp(-1.0*(f.kappa[x][y][z] - 1.0)*divv*p.dt);
 
@@ -662,7 +668,7 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
 
 
 
-  // Last bit of 3.4.6
+  // Last bit of 3.4.6 -- last pressure work term
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
@@ -678,8 +684,6 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
 	
 	gradv = (qx+qy+qz)/f.W[x][y][z];
 	
-	//	s = (f.kappa[x] - 1.0)*gradv/2.0;
-	//	f.E[iix(x,y,z,p)] = f.E[iix(x,y,z,p)]*(1-s)/(1+s);
 	f.E[x][y][z] = f.E[x][y][z]*exp(-1.0*(f.kappa[x][y][z]-1.0)*gradv);
       }
     }      
@@ -711,21 +715,14 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
 
 
 
-/* void evolve_uij(hydro_fields f, hydro_params p)
+/** Evolve the metric perturbations and conjugate momenta using
+ * the field+fluid system as a source.
  *
- * Evolve the metric perturbations and conjugate momenta
- * using the field+fluid system as a source. The cutoff parameter (and
- * conditional compilation) was used to decouple the metric perturbations
- * after a certain time and is no longer in use. Eventually it should
- * be removed.
+ * Calculation of the stress energy tensor \f$ T^{ij} \f$ is performed in
+ * stress_energy().
+ *
  */
-#ifdef CUTOFF
-void evolve_uij(hydro_fields f, hydro_params p, float cutoff) {
-#else
 void evolve_uij(hydro_fields f, hydro_params p) {
-
-  const float cutoff = 1.0;
-#endif
 
   int x, y, z, i;
 
@@ -768,7 +765,7 @@ void evolve_uij(hydro_fields f, hydro_params p) {
 	  
 	  
 	  f.udotij[i][x][y][z] = f.udotij[i][x][y][z]
-	    + p.dt*16.0*M_PI*G*Tij[i][x][y][z]*cutoff;
+	    + p.dt*16.0*M_PI*G*Tij[i][x][y][z];
 
 	}
       }
