@@ -268,10 +268,6 @@ typedef struct {
    */
   int n_nucsteps;
 
-  /** Parameter for exponential nucleation rate.
-   */
-  float beta;
-
   /** Used to rescale bubble size
    */
   float scale;

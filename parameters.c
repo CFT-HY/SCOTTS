@@ -68,8 +68,6 @@ void get_parameters(char *infile, hydro_params *p)
 
   int set_bubbles = 0;
 
-  int set_beta = 0;
-
   int set_R_critical = 0;
   int set_phimin = 0;
   int set_scale = 0;
@@ -231,10 +229,6 @@ void get_parameters(char *infile, hydro_params *p)
     else if(!strcasecmp(key,"bubbles")) {
       p->bubbles = strtol(value,NULL,10);
       set_bubbles = 1;
-    }
-    else if(!strcasecmp(key,"beta")) {
-      p->beta = strtof(value,NULL);
-      set_beta = 1;
     }
     else if(!strcasecmp(key,"R_critical")) {
       p->R_critical = strtof(value,NULL);
@@ -496,9 +490,6 @@ void get_parameters(char *infile, hydro_params *p)
   } else if(!set_bubbles) {
     printf0(*p, "Did not set parameter \'bubbles\'\n");
     die(100);
-  } else if(!set_beta) {
-    printf0(*p, "Did not set parameter \'beta\'\n");
-    die(100);
   } else if(!set_scale) {
     printf0(*p, "Did not set parameter \'scale\'\n");
     die(100);
@@ -545,7 +536,7 @@ void get_parameters(char *infile, hydro_params *p)
 	    "-- interval %d, fftinterval %d\n"
 	    "-- silointerval %d, silosliceinterval %d,checkpointinterval %d\n"
 	    "-- uetcstart %d\n"
-	    "-- bubbles %d, beta %g, scale %g\n"
+	    "-- bubbles %d, scale %g\n"
 	    "-- initnorm %g\n"
             "-- initcutoff %g\n"
             "-- initlength %g\n"
@@ -562,7 +553,7 @@ void get_parameters(char *infile, hydro_params *p)
 	    p->interval, p->fftinterval,
 	    p->silointerval, p->silosliceinterval, p->checkpointinterval,
 	    p->uetcstart,
-	    p->bubbles, p->beta, p->scale,
+	    p->bubbles, p->scale,
 	    p->initnorm,
             p->initcutoff,
             p->initlength,

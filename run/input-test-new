@@ -80,11 +80,9 @@ R_critical -1
 # if less than 0 default to broken phase value.
 phimin -1
 
-# Nucleation procedure; choices are "off", "exp", "list" or "file" 
+# Nucleation procedure; choices are "off", "list" or "file" 
 # - "off" does nothing (the number of bubbles given above as 'bubbles' is
 #   still created at the start however)
-# - "exp" is currently broken (seeded incorrectly), but would be
-#   exponential nucleation implemented at runtime
 # - "list" is a comma-separated list without spaces of timesteps
 #   at which bubbles should be nucleated, eg:
 #   "nucleation list 1,2,100,200" (maximum length >2500 chars)
@@ -94,9 +92,6 @@ phimin -1
 #   one nucleation attempt per timestep.
 #   The program utils/nucproc.py produces output in this format.
 nucleation off
-
-# If nucleation is "exp" then this is the rate; otherwise not used
-beta 1.0
 
 # The checkpoint directory is always checked for a valid checkpoint
 # (assuming it exists; if it does not then the code will run anyway)
