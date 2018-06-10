@@ -52,6 +52,16 @@ int main(int argc, char *argv[]) {
   // Parse parameters from the filename specified on the command line
   get_parameters(argv[1], &p);
 
+  // Specify output filename
+
+  if(!p.rank){
+    if(strcmp(p.output_fname,"stdout") == 0) {
+      p.outputdest = stdout;
+    }
+    else {
+      p.outputdest = fopen(p.output_fname,"w");
+    }
+  }
   // Seed - make sure everyone gets the same one (if necessary)
   srandom(p.seed);
 
@@ -416,7 +426,8 @@ int main(int argc, char *argv[]) {
       s_max = reduce_max(get_s_max(f, p), p);
       
       if(!p.rank) {
-	printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf\t%6lf\n",
+	fprintf(p.outputdest,
+		"%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf\t%6lf\t%6lf\n",
 	       step,
 	       t,
 	       current_energy,
@@ -499,7 +510,8 @@ int main(int argc, char *argv[]) {
     /((float)(p.Lx*p.Ly*p.Lz));
       
   if(!p.rank) {
-    printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf\t%6lf\n",
+	fprintf(p.outputdest,
+	   "%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf\t%6lf\n",
 	   step,
 	   t,
 	   current_energy,
@@ -513,6 +525,13 @@ int main(int argc, char *argv[]) {
 	   current_avgpress);
   }
 
+
+  // Close output file
+  if(!p.rank){
+    if(strcmp(p.output_fname,"stdout") != 0) {
+      fclose(p.outputdest);
+    }
+  }
   
   // End time, for walltime calculation
   end = clock();
@@ -560,6 +579,9 @@ int main(int argc, char *argv[]) {
 
   // Clean up memory
   free_fields(&f, p);
+  
+  
+
   
   return 0;
 

@@ -179,9 +179,7 @@ typedef struct {
 
   /** Initial conditions type (see #defines above)
    */
-  int initial;
-
-
+  int initial;  
 
   /** Scale factor.
    */
@@ -239,7 +237,18 @@ typedef struct {
    */
   int shifty;
 
+  /** Global output filename.
+   *
+   * Either a filename or "stdout".
+   */
+  char output_fname[500];
 
+  /** Global output destination.
+   *
+   * Points to a file specified at runtime, either a filename or stdout.
+   */
+  FILE *outputdest;
+  
   /** Where the silo files go.
    */
   char silodir[500];
@@ -267,10 +276,6 @@ typedef struct {
    * NB: If a step is repeated it is counted multiple times.
    */
   int n_nucsteps;
-
-  /** Parameter for exponential nucleation rate.
-   */
-  float beta;
 
   /** Used to rescale bubble size
    */
