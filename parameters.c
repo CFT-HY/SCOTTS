@@ -61,6 +61,7 @@ void get_parameters(char *infile, hydro_params *p)
 
   int set_gwsource = 0;
 
+  int set_output_fname = 0;
   int set_silodir = 0;
   int set_checkpointdir = 0;
 
@@ -391,6 +392,17 @@ void get_parameters(char *infile, hydro_params *p)
       }
       set_nucleation = 1;
     }
+    else if(!strcasecmp(key,"output_fname")) {
+     
+      if(strlen(value) > 500)
+	printf0(*p,
+		"Warning: output_fname \"%s\" may be too long!\n",
+		value);
+
+      strncpy(p->output_fname, value, 500);
+      
+      set_output_fname = 1;
+    }
     else if(!strcasecmp(key,"silodir")) {
      
       if(strlen(value) > 500)
@@ -610,6 +622,20 @@ void get_parameters(char *infile, hydro_params *p)
  */
 void set_bubble_parameters(hydro_params *p){
 
+#ifdef TINDEP
+  p->V0=(1./(96.*p->lambda*p->lambda*p->lambda)
+	*pow(p->alpha*p->Tconst + sqrt(p->alpha*p->alpha*p->Tconst*p->Tconst
+				     - 4*(p->Tconst*p->Tconst-p->T0*p->T0)
+				     *p->lambda*p->gamma),2.)
+	*(p->alpha*p->alpha*p->Tconst*p->Tconst
+	  - 6*(p->Tconst*p->Tconst-p->T0*p->T0)*p->lambda*p->gamma
+	  + p->alpha*p->Tconst*sqrt(p->alpha*p->alpha*p->Tconst*p->Tconst
+				  - 4*(p->Tconst*p->Tconst-p->T0*p->T0)
+				  *p->lambda*p->gamma)));
+#else
+  p->V0=0.25*p->gamma*p->gamma*p->T0*p->T0*p->T0*p->T0/p->lambda;
+#endif // TINDEP
+
   p->surface_tension = (2.0*sqrt(2.0)/81.0)*(
 					     p->alpha*p->alpha*p->alpha
 					     /(p->lambda*p->lambda
@@ -628,21 +654,7 @@ void set_bubble_parameters(hydro_params *p){
 					 - Vf(*p, p->Tconst, p->phimin));
   }
   p->R_scaled = p->scale*p->R_critical;
-
-#ifdef TINDEP
-  p->V0=(1./(96.*p->lambda*p->lambda*p->lambda)
-	*pow(p->alpha*p->Tconst + sqrt(p->alpha*p->alpha*p->Tconst*p->Tconst
-				     - 4*(p->Tconst*p->Tconst-p->T0*p->T0)
-				     *p->lambda*p->gamma),2.)
-	*(p->alpha*p->alpha*p->Tconst*p->Tconst
-	  - 6*(p->Tconst*p->Tconst-p->T0*p->T0)*p->lambda*p->gamma
-	  + p->alpha*p->Tconst*sqrt(p->alpha*p->alpha*p->Tconst*p->Tconst
-				  - 4*(p->Tconst*p->Tconst-p->T0*p->T0)
-				  *p->lambda*p->gamma)));
-#else
-  p->V0=0.25*p->gamma*p->gamma*p->T0*p->T0*p->T0*p->T0/p->lambda;
-#endif // TINDEP
-
+  
   printf0(*p, "-- Calculated bubble profile parameters: \n"
 	  "-- surface_tension %g, phimin %g \n" 
           "-- R_critical %g, R_scaled %g \n"
