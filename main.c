@@ -443,6 +443,7 @@ int main(int argc, char *argv[]) {
 		current_avgpress,
 		s_max,
 		gamma_max);
+	fflush(p.outputdest);
       }
 
       // Statement of energy violation (not shown; better to use KE)
@@ -531,6 +532,7 @@ int main(int argc, char *argv[]) {
 	    current_avgpress,
 	    s_max,
 	    gamma_max);
+    fflush(p.outputdest);
   }
 
 
