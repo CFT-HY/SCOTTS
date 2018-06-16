@@ -111,25 +111,25 @@ int main(int argc, char *argv[]) {
 
   // time iterates: count steps and t separately
   int step;
-  float t = 0.0;
+  Real t = 0.0;
 
   // Struct that stores the fields
   hydro_fields f;
 
   // Storage of measurements of average stress-energy tensor (not used)
-  //  float cpts[TENSOR_CPTS];
+  //  Real cpts[TENSOR_CPTS];
 
-  float initial_energy, current_energy;
-  float initial_field_energy, current_field_energy;
-  float current_kinetic, current_gradient_energy, current_rest;
-  float current_avgpress;
-  float current_veltot;
-  float gwen;
-  float s_max;
-  float gamma_max;
+  Real initial_energy, current_energy;
+  Real initial_field_energy, current_field_energy;
+  Real current_kinetic, current_gradient_energy, current_rest;
+  Real current_avgpress;
+  Real current_veltot;
+  Real gwen;
+  Real s_max;
+  Real gamma_max;
   
   // Timing counters
-  float cpu_time_used;
+  Real cpu_time_used;
 
   clock_t start, end;
 
@@ -171,11 +171,11 @@ int main(int argc, char *argv[]) {
 
 	/*
 	  memcpy(f.V[0][0][0], f.U[0][0][0], (p.slicex+2)*(p.slicey+2)
-	  *(p.Lz)*sizeof(float));
+	  *(p.Lz)*sizeof(Real));
 	  memcpy(f.V[1][0][0], f.U[1][0][0], (p.slicex+2)*(p.slicey+2)
-	  *(p.Lz)*sizeof(float));
+	  *(p.Lz)*sizeof(Real));
 	  memcpy(f.V[2][0][0], f.U[2][0][0], (p.slicex+2)*(p.slicey+2)
-	  *(p.Lz)*sizeof(float));
+	  *(p.Lz)*sizeof(Real));
 	  */
 	// init_ps(f, p, f.V);
 	//    init_ps(f, p, f.Z);
@@ -203,7 +203,7 @@ int main(int argc, char *argv[]) {
 	end = clock();
 	if(!p.rank)
 	  fprintf(stderr,"Nucleation attempt took %lf\n",
-		  ((float) (end - start)) / CLOCKS_PER_SEC);
+		  ((Real) (end - start)) / CLOCKS_PER_SEC);
 	bcount+=1;
 	
 	// p.bubbles is how many bubbles to make at the start (usually 1)
@@ -213,7 +213,7 @@ int main(int argc, char *argv[]) {
 	  end = clock();
 	  if(!p.rank)
 	    fprintf(stderr,"Nucleation attempt took %lf\n",
-		    ((float) (end - start)) / CLOCKS_PER_SEC);
+		    ((Real) (end - start)) / CLOCKS_PER_SEC);
 	  
 	  bcount += still_nucleate;
       
@@ -267,7 +267,7 @@ int main(int argc, char *argv[]) {
   initial_field_energy = reduce_sum(field_energy(f, p), p);
 
   printf0(p, "Initial avg energy per site: %g\n", 
-	  initial_energy/((float)p.N));
+	  initial_energy/((Real)p.N));
 
 
 #ifdef SILO
@@ -423,7 +423,7 @@ int main(int argc, char *argv[]) {
       current_field_energy = reduce_sum(field_energy(f, p), p);
       current_gradient_energy = reduce_sum(gradient_energy(f, p), p);
       current_veltot = reduce_sum(get_veltot(f, p), p)
-	/((float)(p.Lx*p.Ly*p.Lz));
+	/((Real)(p.Lx*p.Ly*p.Lz));
       s_max = reduce_max(get_s_max(f, p), p);
       gamma_max = reduce_max(get_gamma_max(f, p), p);
       
@@ -511,7 +511,7 @@ int main(int argc, char *argv[]) {
   current_field_energy = reduce_sum(field_energy(f, p), p);
   current_gradient_energy = reduce_sum(gradient_energy(f, p), p);
   current_veltot = reduce_sum(get_veltot(f, p), p)
-    /((float)(p.Lx*p.Ly*p.Lz));
+    /((Real)(p.Lx*p.Ly*p.Lz));
   s_max = reduce_max(get_s_max(f, p), p);
   gamma_max = reduce_max(get_gamma_max(f, p), p);
 
@@ -574,7 +574,7 @@ int main(int argc, char *argv[]) {
 
 
   // Time spent running
-  cpu_time_used = ((float) (end - start)) / CLOCKS_PER_SEC;
+  cpu_time_used = ((Real) (end - start)) / CLOCKS_PER_SEC;
 
   printf0(p, "On master node, CPU time in main loop was %lfs,\n"
 	  "of which %lfs was comms\n",

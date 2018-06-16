@@ -36,89 +36,89 @@ int load_checkpoint(hydro_fields f, hydro_params p)
 
 
   qvptr = DBGetQuadvar(dbfile, "phi");
-  memcpy(f.phi[0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(float));
+  memcpy(f.phi[0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(Real));
   free(qvptr);
 
   qvptr = DBGetQuadvar(dbfile, "pi_future");
-  memcpy(f.pi_future[0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(float));
+  memcpy(f.pi_future[0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(Real));
   free(qvptr);
 
   qvptr = DBGetQuadvar(dbfile, "pi");
-  memcpy(f.pi[0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(float));
+  memcpy(f.pi[0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(Real));
   free(qvptr);
 
   qvptr = DBGetQuadvar(dbfile, "phi_old");
-  memcpy(f.phi_old[0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(float));
+  memcpy(f.phi_old[0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(Real));
   free(qvptr);
 
 
 
 #ifndef SCALAR
   qvptr = DBGetQuadvar(dbfile, "T");
-  memcpy(f.T[0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(float));
+  memcpy(f.T[0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(Real));
   free(qvptr);
 
   qvptr = DBGetQuadvar(dbfile, "E");
-  memcpy(f.E[0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(float));
+  memcpy(f.E[0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(Real));
   free(qvptr);
 
   qvptr = DBGetQuadvar(dbfile, "W");
-  memcpy(f.W[0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(float));
+  memcpy(f.W[0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(Real));
   free(qvptr);
 
   qvptr = DBGetQuadvar(dbfile, "kappa");
-  memcpy(f.kappa[0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(float));
+  memcpy(f.kappa[0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(Real));
   free(qvptr);
 
   qvptr = DBGetQuadvar(dbfile, "p");
-  memcpy(f.p[0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(float));
+  memcpy(f.p[0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(Real));
   free(qvptr);
 
 
 
   qvptr = DBGetQuadvar(dbfile, "V");
-  memcpy(f.V[0][0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(float));
-  memcpy(f.V[1][0][0], qvptr->vals[1], sizex*sizey*sizez*sizeof(float));
-  memcpy(f.V[2][0][0], qvptr->vals[2], sizex*sizey*sizez*sizeof(float));
+  memcpy(f.V[0][0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(Real));
+  memcpy(f.V[1][0][0], qvptr->vals[1], sizex*sizey*sizez*sizeof(Real));
+  memcpy(f.V[2][0][0], qvptr->vals[2], sizex*sizey*sizez*sizeof(Real));
   free(qvptr);
 
   qvptr = DBGetQuadvar(dbfile, "Z");
-  memcpy(f.Z[0][0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(float));
-  memcpy(f.Z[1][0][0], qvptr->vals[1], sizex*sizey*sizez*sizeof(float));
-  memcpy(f.Z[2][0][0], qvptr->vals[2], sizex*sizey*sizez*sizeof(float));
+  memcpy(f.Z[0][0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(Real));
+  memcpy(f.Z[1][0][0], qvptr->vals[1], sizex*sizey*sizez*sizeof(Real));
+  memcpy(f.Z[2][0][0], qvptr->vals[2], sizex*sizey*sizez*sizeof(Real));
   free(qvptr);
 
   qvptr = DBGetQuadvar(dbfile, "U");
-  memcpy(f.U[0][0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(float));
-  memcpy(f.U[1][0][0], qvptr->vals[1], sizex*sizey*sizez*sizeof(float));
-  memcpy(f.U[2][0][0], qvptr->vals[2], sizex*sizey*sizez*sizeof(float));
+  memcpy(f.U[0][0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(Real));
+  memcpy(f.U[1][0][0], qvptr->vals[1], sizex*sizey*sizez*sizeof(Real));
+  memcpy(f.U[2][0][0], qvptr->vals[2], sizex*sizey*sizez*sizeof(Real));
   free(qvptr);
 
   qvptr = DBGetQuadvar(dbfile, "F");
-  memcpy(f.F[0][0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(float));
-  memcpy(f.F[1][0][0], qvptr->vals[1], sizex*sizey*sizez*sizeof(float));
-  memcpy(f.F[2][0][0], qvptr->vals[2], sizex*sizey*sizez*sizeof(float));
+  memcpy(f.F[0][0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(Real));
+  memcpy(f.F[1][0][0], qvptr->vals[1], sizex*sizey*sizez*sizeof(Real));
+  memcpy(f.F[2][0][0], qvptr->vals[2], sizex*sizey*sizez*sizeof(Real));
   free(qvptr);
 #endif // SCALAR
 
 
 
   qvptr = DBGetQuadvar(dbfile, "uij");
-  memcpy(f.uij[0][0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(float));
-  memcpy(f.uij[1][0][0], qvptr->vals[1], sizex*sizey*sizez*sizeof(float));
-  memcpy(f.uij[2][0][0], qvptr->vals[2], sizex*sizey*sizez*sizeof(float));
-  memcpy(f.uij[3][0][0], qvptr->vals[3], sizex*sizey*sizez*sizeof(float));
-  memcpy(f.uij[4][0][0], qvptr->vals[4], sizex*sizey*sizez*sizeof(float));
-  memcpy(f.uij[5][0][0], qvptr->vals[5], sizex*sizey*sizez*sizeof(float));
+  memcpy(f.uij[0][0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(Real));
+  memcpy(f.uij[1][0][0], qvptr->vals[1], sizex*sizey*sizez*sizeof(Real));
+  memcpy(f.uij[2][0][0], qvptr->vals[2], sizex*sizey*sizez*sizeof(Real));
+  memcpy(f.uij[3][0][0], qvptr->vals[3], sizex*sizey*sizez*sizeof(Real));
+  memcpy(f.uij[4][0][0], qvptr->vals[4], sizex*sizey*sizez*sizeof(Real));
+  memcpy(f.uij[5][0][0], qvptr->vals[5], sizex*sizey*sizez*sizeof(Real));
   free(qvptr);
 
   qvptr = DBGetQuadvar(dbfile, "udotij");
-  memcpy(f.udotij[0][0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(float));
-  memcpy(f.udotij[1][0][0], qvptr->vals[1], sizex*sizey*sizez*sizeof(float));
-  memcpy(f.udotij[2][0][0], qvptr->vals[2], sizex*sizey*sizez*sizeof(float));
-  memcpy(f.udotij[3][0][0], qvptr->vals[3], sizex*sizey*sizez*sizeof(float));
-  memcpy(f.udotij[4][0][0], qvptr->vals[4], sizex*sizey*sizez*sizeof(float));
-  memcpy(f.udotij[5][0][0], qvptr->vals[5], sizex*sizey*sizez*sizeof(float));
+  memcpy(f.udotij[0][0][0], qvptr->vals[0], sizex*sizey*sizez*sizeof(Real));
+  memcpy(f.udotij[1][0][0], qvptr->vals[1], sizex*sizey*sizez*sizeof(Real));
+  memcpy(f.udotij[2][0][0], qvptr->vals[2], sizex*sizey*sizez*sizeof(Real));
+  memcpy(f.udotij[3][0][0], qvptr->vals[3], sizex*sizey*sizez*sizeof(Real));
+  memcpy(f.udotij[4][0][0], qvptr->vals[4], sizex*sizey*sizez*sizeof(Real));
+  memcpy(f.udotij[5][0][0], qvptr->vals[5], sizex*sizey*sizez*sizeof(Real));
   free(qvptr);
 
   // No checkpointing support for UETCs
@@ -228,7 +228,7 @@ void checkpoint(hydro_fields f, hydro_params p, int step)
 
   MPI_Barrier(MPI_COMM_WORLD);
 
-  float start = clock();
+  Real start = clock();
 
 
   if(!p.rank) {
@@ -277,22 +277,22 @@ void checkpoint(hydro_fields f, hydro_params p, int step)
   meshsize[1] = sizey;
   meshsize[2] = sizez;
 
-  float **mesh = (float **)malloc(3*sizeof(float *));
+  Real **mesh = (Real **)malloc(3*sizeof(Real *));
 
 
-  mesh[0] = (float *)malloc(sizex*sizeof(float));
-  mesh[1] = (float *)malloc(sizey*sizeof(float));
-  mesh[2] = (float *)malloc(sizez*sizeof(float));
+  mesh[0] = (Real *)malloc(sizex*sizeof(Real));
+  mesh[1] = (Real *)malloc(sizey*sizeof(Real));
+  mesh[2] = (Real *)malloc(sizez*sizeof(Real));
 
 
   for(x=0; x<sizex; x++) {
-    mesh[0][x] = p.dx*((float)(x + p.shiftx - 1));
+    mesh[0][x] = p.dx*((Real)(x + p.shiftx - 1));
   }
   for(x=0; x<sizey; x++) {
-    mesh[1][x] = p.dx*((float)(x + p.shifty - 1));
+    mesh[1][x] = p.dx*((Real)(x + p.shifty - 1));
   }
   for(x=0; x<sizez; x++) {
-    mesh[2][x] = p.dx*((float)x);
+    mesh[2][x] = p.dx*((Real)x);
   }
 
   DBPutQuadmesh(dbfile, "quadmesh", NULL, mesh, meshsize, 3,
@@ -351,7 +351,7 @@ void checkpoint(hydro_fields f, hydro_params p, int step)
   v_names[1] = vy_name;
   v_names[2] = vz_name;
 
-  float **Vtemp = (float **)malloc(3*sizeof(float *));
+  Real **Vtemp = (Real **)malloc(3*sizeof(Real *));
   Vtemp[0] = f.V[0][0][0];
   Vtemp[1] = f.V[1][0][0];
   Vtemp[2] = f.V[2][0][0];
@@ -372,7 +372,7 @@ void checkpoint(hydro_fields f, hydro_params p, int step)
   z_names[1] = zy_name;
   z_names[2] = zz_name;
 
-  float **Ztemp = (float **)malloc(3*sizeof(float *));
+  Real **Ztemp = (Real **)malloc(3*sizeof(Real *));
   Ztemp[0] = f.Z[0][0][0];
   Ztemp[1] = f.Z[1][0][0];
   Ztemp[2] = f.Z[2][0][0];
@@ -392,7 +392,7 @@ void checkpoint(hydro_fields f, hydro_params p, int step)
   U_names[1] = uy_name;
   U_names[2] = uz_name;
 
-  float **Utemp = (float **)malloc(3*sizeof(float *));
+  Real **Utemp = (Real **)malloc(3*sizeof(Real *));
   Utemp[0] = f.U[0][0][0];
   Utemp[1] = f.U[1][0][0];
   Utemp[2] = f.U[2][0][0];
@@ -412,7 +412,7 @@ void checkpoint(hydro_fields f, hydro_params p, int step)
   f_names[1] = fy_name;
   f_names[2] = fz_name;
 
-  float **Ftemp = (float **)malloc(3*sizeof(float *));
+  Real **Ftemp = (Real **)malloc(3*sizeof(Real *));
   Ftemp[0] = f.F[0][0][0];
   Ftemp[1] = f.F[1][0][0];
   Ftemp[2] = f.F[2][0][0];
@@ -439,7 +439,7 @@ void checkpoint(hydro_fields f, hydro_params p, int step)
   u_names[4] = u32_name;
   u_names[5] = u33_name;
 
-  float **utemp = (float **)malloc(6*sizeof(float *));
+  Real **utemp = (Real **)malloc(6*sizeof(Real *));
   utemp[0] = f.uij[0][0][0];
   utemp[1] = f.uij[1][0][0];
   utemp[2] = f.uij[2][0][0];
@@ -470,7 +470,7 @@ void checkpoint(hydro_fields f, hydro_params p, int step)
   udot_names[4] = udot32_name;
   udot_names[5] = udot33_name;
 
-  float **udottemp = (float **)malloc(6*sizeof(float *));
+  Real **udottemp = (Real **)malloc(6*sizeof(Real *));
   udottemp[0] = f.udotij[0][0][0];
   udottemp[1] = f.udotij[1][0][0];
   udottemp[2] = f.udotij[2][0][0];
@@ -489,10 +489,10 @@ void checkpoint(hydro_fields f, hydro_params p, int step)
 
   // write ghost overlap details?
 
-  float end = clock();
+  Real end = clock();
 
   printf0(p, "checkpointing took %lf\n",
-            ((float) (end - start)) / CLOCKS_PER_SEC);
+            ((Real) (end - start)) / CLOCKS_PER_SEC);
 
 
   if(!p.rank) {

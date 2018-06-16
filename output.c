@@ -6,19 +6,19 @@
 #include "hydro.h"
 
 
-/* float get_gamma_max(hydro_fields f, hydro_params p)
+/* Real get_gamma_max(hydro_fields f, hydro_params p)
  *
  * Returns the largest zone-centred gamma factor found anywhere
  * in the simulation box.
  */
-float get_gamma_max(hydro_fields f, hydro_params p) {
+Real get_gamma_max(hydro_fields f, hydro_params p) {
 #ifndef SCALAR
 
   int x, y, z, xmax;
 
-  float gmax = f.W[0][0][0];
+  Real gmax = f.W[0][0][0];
   
-  float gtest;
+  Real gtest;
 
   // Just search for maxmimum
   for(x = 1; x <= p.slicex; x++) {
@@ -40,15 +40,15 @@ float get_gamma_max(hydro_fields f, hydro_params p) {
 #endif
 }
 
-/* float get_s_max(hydro_fields f, hydro_params p)
+/* Real get_s_max(hydro_fields f, hydro_params p)
  *
  * Returns the largest zone-centred damping factor s found anywhere
  * in the simulation box.
  */
-float get_s_max(hydro_fields f, hydro_params p) {
+Real get_s_max(hydro_fields f, hydro_params p) {
   int x, y, z;
-  float smax = 0;
-  float stest;
+  Real smax = 0;
+  Real stest;
 
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
@@ -79,18 +79,18 @@ float get_s_max(hydro_fields f, hydro_params p) {
 	
 }
   
-/* float get_veltot(hydro_fields f, hydro_params p)
+/* Real get_veltot(hydro_fields f, hydro_params p)
  *
  * The sum of the fluid (3-)velocity everywhere. A strange quantity
  * on its own, but allows calculation of average fluid velocity.
  */
-float get_veltot(hydro_fields f, hydro_params p) {
+Real get_veltot(hydro_fields f, hydro_params p) {
 
 #ifndef SCALAR
   int x, y, z, xmax;
 
   
-  float veltot = 0.0;
+  Real veltot = 0.0;
 
   // Just search for maxmimum
   for(x = 1; x <= p.slicex; x++) {
@@ -111,12 +111,12 @@ float get_veltot(hydro_fields f, hydro_params p) {
 }
 
 
-/* void dump(float *field, hydro_params p) 
+/* void dump(Real *field, hydro_params p) 
  *
  * Dumps a field to stderr. Expects field to have N entries.
  * For debugging purposes...
  */
-void dump(float *field, hydro_params p) {
+void dump(Real *field, hydro_params p) {
   int x;
 
   fprintf(stderr,"%g", field[0]);
@@ -128,20 +128,20 @@ void dump(float *field, hydro_params p) {
 
 
 
-/* void histo_field(float ***field, hydro_params p, int step)
+/* void histo_field(Real ***field, hydro_params p, int step)
  *
  * Calculate a histogram of the field, and store in a file
  * labelled by the timestep.
  */
-void histo_field(float ***field, hydro_params p, int step) {
+void histo_field(Real ***field, hydro_params p, int step) {
   int x, y, z;
 
-  float fmax = 0.0;
-  float fmin = 0.0;
+  Real fmax = 0.0;
+  Real fmin = 0.0;
 
-  float ftest;
+  Real ftest;
 
-  float start = clock();
+  Real start = clock();
 
 
   fmax = field[0][0][0];
@@ -162,7 +162,7 @@ void histo_field(float ***field, hydro_params p, int step) {
     }
   }
 
-  float overall_max, overall_min;
+  Real overall_max, overall_min;
 
   overall_max = reduce_max(fmax, p);
   overall_min = reduce_min(fmin, p);
@@ -178,7 +178,7 @@ void histo_field(float ***field, hydro_params p, int step) {
 
   int nbins = 100;
 
-  float df = (overall_max - overall_min)/((float)nbins);
+  Real df = (overall_max - overall_min)/((Real)nbins);
 
   if(fabs(df) < 0.001) {
     printf0(p, "Max: %lf, Min: %lf, df: %lf\n",
@@ -228,30 +228,30 @@ void histo_field(float ***field, hydro_params p, int step) {
     fp = fopen(histodest, "w");
 
     for(i=0; i<nbins; i++) {
-      fprintf(fp, "%lf %d\n", overall_min + df*((float)i), count[i]);
+      fprintf(fp, "%lf %d\n", overall_min + df*((Real)i), count[i]);
     }
 
     fclose(fp);
   }
 
-  float end = clock();
+  Real end = clock();
 
   printf0(p, "Histogram stuff took %lf\n",
-	  ((float) (end - start)) / CLOCKS_PER_SEC);
+	  ((Real) (end - start)) / CLOCKS_PER_SEC);
 
 
   free(count);
 }
 
 
-/* void didj(float *cpts, hydro_fields f, hydro_params p)
+/* void didj(Real *cpts, hydro_fields f, hydro_params p)
  *
  * *Average* components of the stress-energy tensor for the scalar
  * field to leading order in the metric perturbation.
  */
-void didj(float *cpts, hydro_fields f, hydro_params p) {
+void didj(Real *cpts, hydro_fields f, hydro_params p) {
 
-  float cpts_here[TENSOR_CPTS];
+  Real cpts_here[TENSOR_CPTS];
 
   int x, y, z;
   int i;
@@ -298,7 +298,7 @@ void didj(float *cpts, hydro_fields f, hydro_params p) {
 
 
   for(i=0; i<TENSOR_CPTS; i++) {
-    cpts[i] = reduce_sum(cpts_here[i], p)/((float)(p.Lx*p.Ly*p.Lz));
+    cpts[i] = reduce_sum(cpts_here[i], p)/((Real)(p.Lx*p.Ly*p.Lz));
   }
 
 }
