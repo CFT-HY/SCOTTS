@@ -19,8 +19,8 @@
 /** Populate an array with kinetic energy density.
  *
  */
-void make_kinetic(hydro_fields f, hydro_params p, float ***temp) {
-  float vol = p.dx*p.dx*p.dx;
+void make_kinetic(hydro_fields f, hydro_params p, Real ***temp) {
+  Real vol = p.dx*p.dx*p.dx;
 
   int x, y, z;
 
@@ -41,8 +41,8 @@ void make_kinetic(hydro_fields f, hydro_params p, float ***temp) {
 /** Populate an array with velocity magnitude.
  *
  */
-void make_vel(hydro_fields f, hydro_params p, float ***temp) {
-  float vol = p.dx*p.dx*p.dx;
+void make_vel(hydro_fields f, hydro_params p, Real ***temp) {
+  Real vol = p.dx*p.dx*p.dx;
 
   int x, y, z;
 
@@ -85,7 +85,7 @@ void make_vel(hydro_fields f, hydro_params p, float ***temp) {
  *
  */
 
-void make_slice(hydro_fields f, hydro_params p, float *slice, float ***temp)
+void make_slice(hydro_fields f, hydro_params p, Real *slice, Real ***temp)
 {
 
   
@@ -93,7 +93,7 @@ void make_slice(hydro_fields f, hydro_params p, float *slice, float ***temp)
 
   x=p.siloslicecoord;
   
-  float *trim = (float *)malloc(p.slicey*p.Lz*sizeof(float));
+  Real *trim = (Real *)malloc(p.slicey*p.Lz*sizeof(Real));
   
   if(x/p.slicex == p.myposx){
     int localx=x%p.slicex+1;
@@ -121,7 +121,7 @@ void make_slice(hydro_fields f, hydro_params p, float *slice, float ***temp)
 
 	  memcpy(&slice[ry*p.slicey*p.Lz],
 		 &trim[0],
-		 p.slicey*p.Lz*sizeof(float));
+		 p.slicey*p.Lz*sizeof(Real));
 	  continue;
 	}
 
@@ -181,7 +181,7 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step)
 
   DBfile *dbfile = NULL;
   int *meshsize = NULL;
-  float **mesh = NULL;
+  Real **mesh = NULL;
   DBoptlist *dboptlist = NULL;
 
   //// set up silage ////
@@ -214,16 +214,16 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step)
     meshsize[0] = sizey;
     meshsize[1] = sizez;
 
-    mesh = (float **)malloc(2*sizeof(float *));
+    mesh = (Real **)malloc(2*sizeof(Real *));
 
-    mesh[0] = (float *)malloc(sizey*sizeof(float));
-    mesh[1] = (float *)malloc(sizez*sizeof(float));
+    mesh[0] = (Real *)malloc(sizey*sizeof(Real));
+    mesh[1] = (Real *)malloc(sizez*sizeof(Real));
 
     for(x=0; x<sizey; x++) {
-      mesh[0][x] = p.dx*((float)(x));
+      mesh[0][x] = p.dx*((Real)(x));
     }
     for(x=0; x<sizez; x++) {
-      mesh[1][x] = p.dx*((float)(x));
+      mesh[1][x] = p.dx*((Real)(x));
     }
 
     DBPutQuadmesh(dbfile, "quadmesh", NULL, mesh, meshsize, 2,
@@ -234,8 +234,8 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step)
 
   /////// prepare slice ///////
 
-  float ***temp = make_field(p);
-  float *slice = (float *)malloc(p.Ly*p.Lz*sizeof(float));
+  Real ***temp = make_field(p);
+  Real *slice = (Real *)malloc(p.Ly*p.Lz*sizeof(Real));
 
 #ifndef SCALAR
   

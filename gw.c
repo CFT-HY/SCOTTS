@@ -25,9 +25,9 @@
  * 
  * 
  */
-float proj(int T, float kx, float ky, float kz) {
+Real proj(int T, Real kx, Real ky, Real kz) {
 
-  float mag = sqrt(kx*kx + ky*ky + kz*kz);
+  Real mag = sqrt(kx*kx + ky*ky + kz*kz);
 
   // Avoid overflow
   if(fabs(mag) < 0.000001)
@@ -37,7 +37,7 @@ float proj(int T, float kx, float ky, float kz) {
   ky = ky/mag;
   kz = kz/mag;
 
-  float total = 0.0;
+  Real total = 0.0;
 
   switch(T) {
 
@@ -80,9 +80,9 @@ float proj(int T, float kx, float ky, float kz) {
  *                             \dfrac{1}{2} P_{im}(\mathbf{k})P_{jl}(\mathbf{k})
  * \f]
  */
-float lambda(int i, int j, int l, int m, float kx, float ky, float kz) {
+Real lambda(int i, int j, int l, int m, Real kx, Real ky, Real kz) {
   
-  float total = 0.0;
+  Real total = 0.0;
 
   int cpt1, cpt2;
 
@@ -180,16 +180,16 @@ int indexof(int i, int j)
  * `y` and `z` have the full spatial extent `p.Ly` and `p.Lz`
  */ 
 void gwproject(hydro_params p, int x_start, int slab,
-	       float *product, fftwf_complex **udot) {
+	       Real *product, fftwf_complex **udot) {
 
   int i, j, l, m;
   int x, y, z;
-  float kx, ky, kz;
+  Real kx, ky, kz;
 
 
   int true_x, true_y, true_z;
 
-  float s_x, s_y, s_z;
+  Real s_x, s_y, s_z;
 
   for(x=0; x<slab; x++) {
     for(y=0; y<p.Ly; y++) {
@@ -224,14 +224,14 @@ void gwproject(hydro_params p, int x_start, int slab,
 	}
 
 	/*
-	kx = ((float)(x+x_start))*2.0*M_PI/((float)p.Lx);
-	ky = ((float)y)*2.0*M_PI/((float)p.Ly);
-	kz = ((float)z)*2.0*M_PI/((float)p.Lz);
+	kx = ((Real)(x+x_start))*2.0*M_PI/((Real)p.Lx);
+	ky = ((Real)y)*2.0*M_PI/((Real)p.Ly);
+	kz = ((Real)z)*2.0*M_PI/((Real)p.Lz);
 	*/
 
-	kx = s_x*sqrt((2.0 - 2.0*cos(((float)(true_x))*2.0*M_PI/(((float)p.Lx))))/(p.dx*p.dx));
-	ky = s_y*sqrt((2.0 - 2.0*cos(((float)(true_y))*2.0*M_PI/(((float)p.Ly))))/(p.dx*p.dx));
-	kz = s_z*sqrt((2.0 - 2.0*cos(((float)(true_z))*2.0*M_PI/(((float)p.Lz))))/(p.dx*p.dx));
+	kx = s_x*sqrt((2.0 - 2.0*cos(((Real)(true_x))*2.0*M_PI/(((Real)p.Lx))))/(p.dx*p.dx));
+	ky = s_y*sqrt((2.0 - 2.0*cos(((Real)(true_y))*2.0*M_PI/(((Real)p.Ly))))/(p.dx*p.dx));
+	kz = s_z*sqrt((2.0 - 2.0*cos(((Real)(true_z))*2.0*M_PI/(((Real)p.Lz))))/(p.dx*p.dx));
 
 
 	
@@ -276,8 +276,8 @@ void gwproject(hydro_params p, int x_start, int slab,
  *
  * Question: how is the output normalised, what exactly is this?
  */
-float fft_tensor(hydro_fields f, hydro_params p, int step,
-		float energydensity) {
+Real fft_tensor(hydro_fields f, hydro_params p, int step,
+		Real energydensity) {
 
   ptrdiff_t x_thickness, x_start, alloc_local;
 
@@ -289,20 +289,20 @@ float fft_tensor(hydro_fields f, hydro_params p, int step,
 
   MPI_Status status;
 
-  float kmode, modsq;
+  Real kmode, modsq;
 
   int x, y, z;
   int i;
 
-  float fft_norm = (1.0/(((float)p.Lx)*((float)p.Ly)*((float)p.Lz)))
+  Real fft_norm = (1.0/(((Real)p.Lx)*((Real)p.Ly)*((Real)p.Lz)))
     *(1.0/sqrt(32.0*M_PI));
   // *p.a*p.a*p.a*p.dx*p.dx*p.dx
 
-  float *trim = (float *)malloc(p.slicex*p.slicey*p.Lz*sizeof(float));
+  Real *trim = (Real *)malloc(p.slicex*p.slicey*p.Lz*sizeof(Real));
 
   printf0(p, "Starting GW FFT calculation.\n");
 
-  float start = clock();
+  Real start = clock();
 
   fftwf_mpi_init();
 
@@ -383,7 +383,7 @@ float fft_tensor(hydro_fields f, hydro_params p, int step,
     outcpts[i] = fftwf_alloc_complex(alloc_local);
   }
 
-  float *slice = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
+  Real *slice = (Real *)malloc(x_thickness*p.Ly*p.Lz*sizeof(Real));
 
 
   int nx = p.Lx/p.slicex;
@@ -398,7 +398,7 @@ float fft_tensor(hydro_fields f, hydro_params p, int step,
 
   for(i = 0; i < TENSOR_CPTS; i++) {
 
-    float check = 0.0;    
+    Real check = 0.0;    
     
     for(x=1; x<=p.slicex; x++) {
       for(y=1; y<=p.slicey; y++) {
@@ -423,7 +423,7 @@ float fft_tensor(hydro_fields f, hydro_params p, int step,
 	    
 	    memcpy(&slice[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
 		   &trim[(x-p.shiftx)*p.slicey*p.Lz],
-		   p.slicey*p.Lz*sizeof(float));
+		   p.slicey*p.Lz*sizeof(Real));
 	    continue;
 	  }
 	  
@@ -460,7 +460,7 @@ float fft_tensor(hydro_fields f, hydro_params p, int step,
 
     printf0(p, "GW: Done slicing for cpt %d\n", i);
 
-    float total = 0.0;
+    Real total = 0.0;
 
     for(x=0;x<x_thickness;x++) {
       for(y=0;y<p.Ly;y++) {
@@ -523,7 +523,7 @@ float fft_tensor(hydro_fields f, hydro_params p, int step,
 
   printf0(p, "Calculating total energy\n");
 
-  float rhogw = 0.0;
+  Real rhogw = 0.0;
 
   for(x=0; x<x_thickness; x++) {
     for(y=0; y<p.Ly; y++) {
@@ -537,8 +537,8 @@ float fft_tensor(hydro_fields f, hydro_params p, int step,
 
   // we take G=1.0...
 
-  float gwen = reduce_sum(rhogw, p);
-  //    /(1.0*((float)(p.Lx*p.Ly*p.Lz*p.dx*p.dx*p.dx)));
+  Real gwen = reduce_sum(rhogw, p);
+  //    /(1.0*((Real)(p.Lx*p.Ly*p.Lz*p.dx*p.dx*p.dx)));
 
   // To get energy density expect to have to divide by V again
   // as it seems that keeping p.Lx*p.Ly*p.Lz*p.dx*p.dx*p.dx constant
@@ -551,12 +551,12 @@ float fft_tensor(hydro_fields f, hydro_params p, int step,
   // Bin the power spectrum on the fly
 
   int nbins = minof3_int(p.Lx, p.Ly, p.Lz);
-  float mink = 0.0;
-  float maxk = 2.0*M_PI;
+  Real mink = 0.0;
+  Real maxk = 2.0*M_PI;
 
-  float dk = (maxk-mink)/((float)nbins);
+  Real dk = (maxk-mink)/((Real)nbins);
 
-  float *bins = (float *)malloc(nbins*sizeof(float));
+  Real *bins = (Real *)malloc(nbins*sizeof(Real));
   int *counts = (int *)malloc(nbins*sizeof(int));
 
   for(i=0;i<nbins;i++) {
@@ -593,9 +593,9 @@ float fft_tensor(hydro_fields f, hydro_params p, int step,
 	  true_z = z;
 
 	kmode = sqrt(
-		     ((float)(true_x*true_x))/((float)(p.Lx*p.Lx))
-		     + ((float)(true_y*true_y))/((float)(p.Ly*p.Ly))
-		     + ((float)(true_z*true_z))/((float)(p.Lz*p.Lz))
+		     ((Real)(true_x*true_x))/((Real)(p.Lx*p.Lx))
+		     + ((Real)(true_y*true_y))/((Real)(p.Ly*p.Ly))
+		     + ((Real)(true_z*true_z))/((Real)(p.Lz*p.Lz))
 		     )*2.0*M_PI;
 
 	whichbin = (int)floor(kmode/dk);
@@ -607,7 +607,7 @@ float fft_tensor(hydro_fields f, hydro_params p, int step,
   }
 
 
-  float red_value;
+  Real red_value;
   int red_count;
 
   for(i=0;i<nbins;i++) {
@@ -620,13 +620,13 @@ float fft_tensor(hydro_fields f, hydro_params p, int step,
   }
 
 
-  float thisk = dk/2.0;
-  //  float comovingk, thisf, thisdiff, thisomega;
+  Real thisk = dk/2.0;
+  //  Real comovingk, thisf, thisdiff, thisomega;
 
   // not sure (includes h^2)
-  //  float omegarad = 3.5e-5;
+  //  Real omegarad = 3.5e-5;
 
-  //  float doffrac = pow(1.0/100.0,1.0/3.0);
+  //  Real doffrac = pow(1.0/100.0,1.0/3.0);
 
   // spokesman does the final analysis
   if(!p.rank) {
@@ -660,7 +660,7 @@ float fft_tensor(hydro_fields f, hydro_params p, int step,
       //      thisomega = omegarad*doffrac*(1.0/energydensity)*thisdiff;
 
       fprintf(fp, "%lf %g %d\n",
-	      thisk/(p.dx*p.a), ((float)(i+1))*bins[i], counts[i]);
+	      thisk/(p.dx*p.a), ((Real)(i+1))*bins[i], counts[i]);
 
       thisk = thisk + dk;
     }
@@ -690,10 +690,10 @@ float fft_tensor(hydro_fields f, hydro_params p, int step,
 
   fftwf_mpi_cleanup();
 
-  float end = clock();
+  Real end = clock();
 
   printf0(p, "GW FFT calculation took %lf\n",
-	  ((float) (end - start)) / CLOCKS_PER_SEC);
+	  ((Real) (end - start)) / CLOCKS_PER_SEC);
 
   return gwen;
 }

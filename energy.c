@@ -10,17 +10,17 @@
  * Separately computes the kinetic, gradient and potential energy of
  * the scalar field and returns the total, summed over all sites.
  */
-float field_energy(hydro_fields f, hydro_params p) {
+Real field_energy(hydro_fields f, hydro_params p) {
 
   int x, y, z;
 
-  float vol;
+  Real vol;
 
-  float Etot = 0.0;
+  Real Etot = 0.0;
 
-  float a = 0.0;
-  float b = 0.0;
-  float c = 0.0;
+  Real a = 0.0;
+  Real b = 0.0;
+  Real c = 0.0;
 
   vol = p.dx*p.dx*p.dx;
 
@@ -50,9 +50,9 @@ float field_energy(hydro_fields f, hydro_params p) {
     }
   }
   
-  float atot = reduce_sum(a, p);
-  float btot = reduce_sum(b, p);
-  float ctot = reduce_sum(c, p);
+  Real atot = reduce_sum(a, p);
+  Real btot = reduce_sum(b, p);
+  Real ctot = reduce_sum(c, p);
 
 #ifdef SCALAR
   printf0(p,"Totals: momentum %g gradient %g potential %g\n", atot, btot, ctot);
@@ -68,13 +68,13 @@ float field_energy(hydro_fields f, hydro_params p) {
  * Note that this does _not_ currently sum over all sites, only those
  * on the current node.
  */
-float gradient_energy(hydro_fields f, hydro_params p) {
+Real gradient_energy(hydro_fields f, hydro_params p) {
 
   int x, y, z;
 
-  float vol;
+  Real vol;
 
-  float Etot = 0.0;
+  Real Etot = 0.0;
 
 
   vol = p.dx*p.dx*p.dx;
@@ -111,17 +111,17 @@ float gradient_energy(hydro_fields f, hydro_params p) {
  * NB: This function currently does _not_ sum over all sites, only
  * those on the current node.
  */
-float total_energy(hydro_fields f, hydro_params p) {
+Real total_energy(hydro_fields f, hydro_params p) {
 
   int x, y, z;
 
-  float vol;
+  Real vol;
 
-  float Etot = 0.0;
-  float restE = 0.0;
-  float kinE = 0.0;
-  float kinphi = 0.0;
-  float grdphi = 0.0;
+  Real Etot = 0.0;
+  Real restE = 0.0;
+  Real kinE = 0.0;
+  Real kinphi = 0.0;
+  Real grdphi = 0.0;
 
   vol = p.dx*p.dx*p.dx;
 
@@ -174,13 +174,13 @@ float total_energy(hydro_fields f, hydro_params p) {
  *
  * NB: This function does _not_ currently sum over all sites.
  */
-float kinetic_energy(hydro_fields f, hydro_params p) {
+Real kinetic_energy(hydro_fields f, hydro_params p) {
 
   int x, y, z;
 
-  float vol;
+  Real vol;
 
-  float kinE = 0.0;
+  Real kinE = 0.0;
 
   vol = p.dx*p.dx*p.dx;
 
@@ -210,13 +210,13 @@ float kinetic_energy(hydro_fields f, hydro_params p) {
  *
  * NB: This function does _not_ currently sum over all sites.
  */
-float rest_energy(hydro_fields f, hydro_params p) {
+Real rest_energy(hydro_fields f, hydro_params p) {
 
   int x, y, z;
 
-  float vol;
+  Real vol;
 
-  float restE = 0.0;
+  Real restE = 0.0;
 
   vol = p.dx*p.dx*p.dx;
 
@@ -248,13 +248,13 @@ float rest_energy(hydro_fields f, hydro_params p) {
  *
  * NB: This function does _not_ currently sum over all sites.
  */
-float avg_pressure(hydro_fields f, hydro_params p) {
+Real avg_pressure(hydro_fields f, hydro_params p) {
 
   int x, y, z;
 
-  float vol;
+  Real vol;
 
-  float press;
+  Real press;
 
   vol = p.dx*p.dx*p.dx;
 
@@ -288,13 +288,13 @@ float avg_pressure(hydro_fields f, hydro_params p) {
  * basically just a different way of calculating total_energy(), and
  * therefore serves as a cross-check.
  */
-float tzerozero(hydro_fields f, hydro_params p) {
+Real tzerozero(hydro_fields f, hydro_params p) {
 
-  float total = 0.0;
+  Real total = 0.0;
 
   int x, y, z;
 
-  float vol;
+  Real vol;
 
   vol = p.dx*p.dx*p.dx;
 
@@ -358,7 +358,7 @@ float tzerozero(hydro_fields f, hydro_params p) {
  * Terms in the stress-energy tensor that are *LINEAR* in the metric,
  * and therefore source metric perturbations.
  */
-void stress_energy(hydro_fields f, hydro_params p, float ****Tij) {
+void stress_energy(hydro_fields f, hydro_params p, Real ****Tij) {
 
   int x, y, z;
 
@@ -462,11 +462,11 @@ void stress_energy(hydro_fields f, hydro_params p, float ****Tij) {
  * As for total_energy() but calculated on a per-lattice-site
  * basis and then stored in en.
  */
-void energy_density(hydro_fields f, hydro_params p, float ***en) {
+void energy_density(hydro_fields f, hydro_params p, Real ***en) {
 
   int x, y, z;
 
-  float vol;
+  Real vol;
 
   vol = p.dx*p.dx*p.dx;
 

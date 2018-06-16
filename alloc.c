@@ -19,17 +19,17 @@
  *
  * Use free_field() to free this memory again.
  */
-float ***make_field(hydro_params p) {
+Real ***make_field(hydro_params p) {
    
-  float *true_field = malloc((p.slicex+2)*(p.slicey+2)
-			      *(p.Lz)*sizeof(float));
+  Real *true_field = malloc((p.slicex+2)*(p.slicey+2)
+			      *(p.Lz)*sizeof(Real));
 
 
-  float ***field = (float ***)malloc((p.slicex+2)*sizeof(float **));
+  Real ***field = (Real ***)malloc((p.slicex+2)*sizeof(Real **));
   int x, y;
 
   for(x=0;x<(p.slicex+2);x++) {
-    field[x] = (float **)malloc((p.slicey+2)*sizeof(float *));
+    field[x] = (Real **)malloc((p.slicey+2)*sizeof(Real *));
     for(y=0;y<(p.slicey+2);y++) {
       field[x][y] = &true_field[x*(p.slicey+2)*(p.Lz) + y*(p.Lz)];
     }
@@ -49,20 +49,20 @@ float ***make_field(hydro_params p) {
  *
  * Use free_vector() to free memory allocated with this function.
  */
-float ****make_vector(hydro_params p) {
+Real ****make_vector(hydro_params p) {
    
-  float *true_field = malloc(3*(p.slicex+2)*(p.slicey+2)
-			      *(p.Lz)*sizeof(float));
+  Real *true_field = malloc(3*(p.slicex+2)*(p.slicey+2)
+			      *(p.Lz)*sizeof(Real));
 
   int x, y, i;
 
-  float ****vector = (float ****) malloc(3*sizeof(float***));
+  Real ****vector = (Real ****) malloc(3*sizeof(Real***));
 
   for(i=0;i<3;i++) {
-    vector[i] = (float ***)malloc((p.slicex+2)*sizeof(float **));
+    vector[i] = (Real ***)malloc((p.slicex+2)*sizeof(Real **));
 
     for(x=0;x<(p.slicex+2);x++) {
-      vector[i][x] = (float **)malloc((p.slicey+2)*sizeof(float *));
+      vector[i][x] = (Real **)malloc((p.slicey+2)*sizeof(Real *));
       for(y=0;y<(p.slicey+2);y++) {
 	vector[i][x][y]
 	  = &true_field[i*(p.slicex+2)*(p.slicey+2)*(p.Lz) 
@@ -87,20 +87,20 @@ float ****make_vector(hydro_params p) {
  *
  * Use free_tensor() to free memory allocated with this function.
  */
-float ****make_tensor(hydro_params p) {
+Real ****make_tensor(hydro_params p) {
    
-  float *true_field = malloc(TENSOR_CPTS*(p.slicex+2)*(p.slicey+2)
-			      *(p.Lz)*sizeof(float));
+  Real *true_field = malloc(TENSOR_CPTS*(p.slicex+2)*(p.slicey+2)
+			      *(p.Lz)*sizeof(Real));
 
   int x, y, i;
 
-  float ****tensor = (float ****) malloc(TENSOR_CPTS*sizeof(float***));
+  Real ****tensor = (Real ****) malloc(TENSOR_CPTS*sizeof(Real***));
 
   for(i=0;i<TENSOR_CPTS;i++) {
-    tensor[i] = (float ***)malloc((p.slicex+2)*sizeof(float **));
+    tensor[i] = (Real ***)malloc((p.slicex+2)*sizeof(Real **));
 
     for(x=0;x<(p.slicex+2);x++) {
-      tensor[i][x] = (float **)malloc((p.slicey+2)*sizeof(float *));
+      tensor[i][x] = (Real **)malloc((p.slicey+2)*sizeof(Real *));
       for(y=0;y<(p.slicey+2);y++) {
 	tensor[i][x][y]
 	  = &true_field[i*(p.slicex+2)*(p.slicey+2)*(p.Lz) 
@@ -123,7 +123,7 @@ float ****make_tensor(hydro_params p) {
  * first frees the contiguous blob, then the 'shortcut' arrays, and
  * finally the outermost layer.
  */
-void free_field(hydro_params p, float ***field) {
+void free_field(hydro_params p, Real ***field) {
 
   int x;
   
@@ -144,7 +144,7 @@ void free_field(hydro_params p, float ***field) {
  * make_vector(): first frees the contiguous blob, then the 'shortcut'
  * arrays and finally the outermost layer.
  */
-void free_vector(hydro_params p, float ****vector) {
+void free_vector(hydro_params p, Real ****vector) {
 
   int x, i;
   
@@ -168,7 +168,7 @@ void free_vector(hydro_params p, float ****vector) {
  * make_tensor(): first frees the contiguous blob, then the 'shortcut'
  * arrays and finally the outermost layer.
  */
-void free_tensor(hydro_params p, float ****tensor) {
+void free_tensor(hydro_params p, Real ****tensor) {
 
   int x, i;
   

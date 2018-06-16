@@ -20,7 +20,7 @@
  *
  * Unlike velps.c and gw.c there is no normalisation done here.
  */
-void fft_field(hydro_fields f, hydro_params p, float ***field, int step) {
+void fft_field(hydro_fields f, hydro_params p, Real ***field, int step) {
 
   ptrdiff_t x_thickness, x_start, alloc_local;
 
@@ -32,20 +32,20 @@ void fft_field(hydro_fields f, hydro_params p, float ***field, int step) {
 
   MPI_Status status;
 
-  float kmode, modsq;
+  Real kmode, modsq;
 
   int x, y, z;
   int i;
 
   
 
-  float *trim_field = (float *)malloc(p.slicex*p.slicey*p.Lz*sizeof(float));
+  Real *trim_field = (Real *)malloc(p.slicex*p.slicey*p.Lz*sizeof(Real));
 
-  float start = clock();
+  Real start = clock();
 
   fftwf_mpi_init();
 
-  float checken = 0.0;
+  Real checken = 0.0;
   for(x=1; x<=p.slicex; x++) {
     for(y=1; y<=p.slicey; y++) {
       for(z=0; z<p.Lz; z++) {
@@ -126,7 +126,7 @@ void fft_field(hydro_fields f, hydro_params p, float ***field, int step) {
   fftwf_complex *in = fftwf_alloc_complex(alloc_local);
   fftwf_complex *out = fftwf_alloc_complex(alloc_local);
 
-  float *slice = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
+  Real *slice = (Real *)malloc(x_thickness*p.Ly*p.Lz*sizeof(Real));
 
   int nx = p.Lx/p.slicex;
   int ny = p.Ly/p.slicey;
@@ -151,7 +151,7 @@ void fft_field(hydro_fields f, hydro_params p, float ***field, int step) {
 	if((x/p.slicex == p.myposx) && (ry == p.myposy)) {
 	  memcpy(&slice[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
 		 &trim_field[(x-p.shiftx)*p.slicey*p.Lz],
-		 p.slicey*p.Lz*sizeof(float));
+		 p.slicey*p.Lz*sizeof(Real));
 	  continue;
 	}
 
@@ -211,12 +211,12 @@ void fft_field(hydro_fields f, hydro_params p, float ***field, int step) {
 
 
   int nbins = minof3_int(p.Lx, p.Ly, p.Lz);
-  float mink = 0.0;
-  float maxk = 2.0*M_PI;
+  Real mink = 0.0;
+  Real maxk = 2.0*M_PI;
 
-  float dk = (maxk-mink)/((float)nbins);
+  Real dk = (maxk-mink)/((Real)nbins);
 
-  float *bins = (float *)malloc(nbins*sizeof(float));
+  Real *bins = (Real *)malloc(nbins*sizeof(Real));
   int *counts = (int *)malloc(nbins*sizeof(int));
 
   for(i=0;i<nbins;i++) {
@@ -254,9 +254,9 @@ void fft_field(hydro_fields f, hydro_params p, float ***field, int step) {
           true_z = z;
 
         kmode = sqrt(
-                     ((float)(true_x*true_x))/((float)(p.Lx*p.Lx))
-                     + ((float)(true_y*true_y))/((float)(p.Ly*p.Ly))
-                     + ((float)(true_z*true_z))/((float)(p.Lz*p.Lz))
+                     ((Real)(true_x*true_x))/((Real)(p.Lx*p.Lx))
+                     + ((Real)(true_y*true_y))/((Real)(p.Ly*p.Ly))
+                     + ((Real)(true_z*true_z))/((Real)(p.Lz*p.Lz))
                      )*2.0*M_PI;
 
 	modsq = out[x*p.Ly*p.Lz + y*p.Lz + z][0]
@@ -273,7 +273,7 @@ void fft_field(hydro_fields f, hydro_params p, float ***field, int step) {
   }
 
 
-  float red_value;
+  Real red_value;
   int red_count;
 
   for(i=0;i<nbins;i++) {
@@ -286,7 +286,7 @@ void fft_field(hydro_fields f, hydro_params p, float ***field, int step) {
   }
 
 
-  float thisk = dk/2.0;
+  Real thisk = dk/2.0;
 
   if(!p.rank) {
 

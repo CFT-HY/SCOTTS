@@ -49,6 +49,11 @@
 #include <fftw3-mpi.h>
 #endif // FFT
 
+#ifdef DOUBLE
+typedef double Real;
+#else
+typedef float Real;
+#endif
 
 /*
  * Not sure these are useful in 3D, but a way of enumerating choices of the
@@ -94,11 +99,11 @@ typedef struct {
 
   /** Lattice spacing.
    */
-  float dx;
+  Real dx;
 
   /** Timestep interval.
    */
-  float dt;
+  Real dt;
 
   /** Number of lattice points in `x` direction.
    */
@@ -118,37 +123,37 @@ typedef struct {
    *
    * NB: artificial viscosity not implemented yet!
    */
-  float Cav;
+  Real Cav;
 
   /** C aka \f$ \eta \f$, the field viscosity
    */
-  float C;
+  Real C;
 
   /** Cubic potential parameter \f$ A \f$.
    */
-  float alpha;
+  Real alpha;
 
   /** Quartic potential parameter \f$ \lambda \f$.
    */
-  float lambda;
+  Real lambda;
 
   /** Quadratic potential parameter \f$ \gamma \f$.
    */
-  float gamma;
+  Real gamma;
   
   /** Nucleation temperature \f$ T_N \f$ used to initialise the
    *  simulation.
    */
-  float Tconst;
+  Real Tconst;
 
   /** Potential parameter \f$ T_0 \f$ which corresponds to the
    *  temperature at which the transition is no longer first order.
    */
-  float T0;
+  Real T0;
 
-  float initnorm;
-  float initcutoff;
-  float initlength;
+  Real initnorm;
+  Real initcutoff;
+  Real initlength;
 
   /** How frequently to write global outputs to stderr.
    */
@@ -183,15 +188,15 @@ typedef struct {
 
   /** Scale factor.
    */
-  float a;
+  Real a;
 
   /** Effective degrees of freedom.
    */
-  float gstar;
+  Real gstar;
 
   /** `gdeg` is `gstar` scaled by \f$ (\pi^2/90) \f$.
    */
-  float gdeg;
+  Real gdeg;
 
   /** Number of physical sites in volume.
    */
@@ -209,7 +214,7 @@ typedef struct {
    */
   int rank;
 
-  //  float comms_time;
+  //  Real comms_time;
 
   /** How many sites in the `x` direction are unique to us.
    *
@@ -279,7 +284,7 @@ typedef struct {
 
   /** Used to rescale bubble size
    */
-  float scale;
+  Real scale;
 
   /** Random seed so it is kept the same across nodes.
    */
@@ -333,14 +338,14 @@ typedef struct {
    *  \sigma=\frac{2\sqrt{2}}{81}\frac{A^3}{\lambda^{5/2}}T_c^3
    *  \f]
    */
-  float surface_tension;
+  Real surface_tension;
 
   /** Value of `phi` at the center of the nucleated bubble.
    *
    * Read from the parameter file, if given as <=0 default to broken 
    * phase value.
    */
-  float phimin;
+  Real phimin;
 
   /** Critical radius of the bubble \f$ R_c \f$.
    *
@@ -349,20 +354,20 @@ typedef struct {
    * R_c= -\dfrac{2\sigma}{-V(\phi_b,T_N)}
    * \f]
    */
-  float R_critical;
+  Real R_critical;
 
   /** Scaled version of the critical radius.
    *
    * Used to stop bubbles from collapsing when necessary.
    */
-  float R_scaled;
+  Real R_scaled;
 
   /** Constant in potential term.
    *
    * Calculated s.t either $V(\phi_b,T=0)=0$ or if `TINDEP` flag
    * declared $V(\phi_b)=0$.
    */
-  float V0;
+  Real V0;
 
   
 } hydro_params;
@@ -388,86 +393,86 @@ typedef struct {
  */
 typedef struct {
 
-  float *x_inv;
-  float *phi_inv;
-  float *V_inv;
+  Real *x_inv;
+  Real *phi_inv;
+  Real *V_inv;
 
   // Scalar field
 
   /** `phi` is the scalar field on the current timestep.
    */
-  float ***phi;
+  Real ***phi;
 
   /** `pi_future` is the value of `pi` on the same timestep as `phi`.
    */
-  float ***pi_future;
+  Real ***pi_future;
 
   /** `pi` is the conjugate momenta of the scalar field.
    */
-  float ***pi;
+  Real ***pi;
 
   /** `phi_old` is the scalar field on the last timestep.
    */
-  float ***phi_old;
+  Real ***phi_old;
 
 #ifndef SCALAR
   // Fluid
   
   /** `T` is the temperature of the fluid.
    */
-  float ***T;
+  Real ***T;
 
   /** `E` is the internal energy density of the fluid.
    */
-  float ***E;
+  Real ***E;
 
   /** `W` is the zone-centred boost.
    */
-  float ***W;
+  Real ***W;
 
   /** `kappa` is the adiabatic index for the system.
    */
-  float ***kappa;
+  Real ***kappa;
 
   /** `p` is the pressure of the fluid. Obtained by eq_of_state() and
    * used in hydro.
    */
-  float ***p;
+  Real ***p;
 
   /** `V` is the fluid 3-velocity.
    */
-  float ****V;
+  Real ****V;
 
   /** `Z` is the fluid momentum density.
    */
-  float ****Z;
+  Real ****Z;
 
   /** `U` is the fluid 4-velocity.
    */
-  float ****U;
+  Real ****U;
 
   /** `F` is a temporary variable used in advection.
    */
-  float ****F;
+  Real ****F;
 #endif // SCALAR
 
   // Gravity
 
   /** `uij` are the unprojected metric peturbations.
    */
-  float ****uij;
+  Real ****uij;
 
   /** `udotij` are the time derivative of the `uij` and are used for
    *    GW power spectrum.
    */
-  float ****udotij;
+  Real ****udotij;
 
   // (Only for UETCs)
 
   /** `initial_Tij` is only used for calculating unequal time
    *    correlators.
    */
-  float ****initial_Tij;
+  Real ****initial_Tij;
 
 
 } hydro_fields;
@@ -478,7 +483,7 @@ typedef struct {
  * lattice and the processor containing the lattice site.
  */
 typedef struct{
-  float value;
+  Real value;
   int rank;
 } value_rank;
 
@@ -486,14 +491,14 @@ typedef struct{
 
 
 // alloc.c
-float ***make_field(hydro_params p);
-float ****make_vector(hydro_params p);
-float ****make_tensor(hydro_params p);
+Real ***make_field(hydro_params p);
+Real ****make_vector(hydro_params p);
+Real ****make_tensor(hydro_params p);
 
 
-void free_field(hydro_params p, float ***field);
-void free_vector(hydro_params p, float ****vector);
-void free_tensor(hydro_params p, float ****tensor);
+void free_field(hydro_params p, Real ***field);
+void free_vector(hydro_params p, Real ****vector);
+void free_tensor(hydro_params p, Real ****tensor);
 
 void alloc_fields(hydro_fields *f, hydro_params p);
 void zero_fields(hydro_fields f, hydro_params p);
@@ -505,17 +510,17 @@ void layout(hydro_params *p);
 int get_x(int n, hydro_params p);
 int get_y(int n, hydro_params p);
 int get_z(int n, hydro_params p);
-void halo_field(float ***field, hydro_params p);
-float reduce_sum(float result, hydro_params p);
+void halo_field(Real ***field, hydro_params p);
+Real reduce_sum(Real result, hydro_params p);
 int reduce_sum_int(int result, hydro_params p);
-float reduce_max(float result, hydro_params p);
+Real reduce_max(Real result, hydro_params p);
 int reduce_max_int(int result, hydro_params p);
-float reduce_min(float result, hydro_params p);
+Real reduce_min(Real result, hydro_params p);
 int reduce_and(int result, hydro_params p);
-value_rank reduce_maxloc(float result, hydro_params p);
-value_rank reduce_minloc(float result, hydro_params p);
+value_rank reduce_maxloc(Real result, hydro_params p);
+value_rank reduce_minloc(Real result, hydro_params p);
 void init_comms_time(hydro_params *p);
-float get_comms_time(hydro_params *p);
+Real get_comms_time(hydro_params *p);
 void printf0(hydro_params p, char *msg, ...);
 void die(int howbad);
 
@@ -534,24 +539,24 @@ void evolve_uij(hydro_fields f, hydro_params p);
 void artificial_viscosity(hydro_fields f, int **nb, hydro_params p);
 
 // potential.c
-float Vf(hydro_params p, float T, float this_phi);
-float Vdf(hydro_params p, float T, float this_phi);
-float VTf(hydro_params p, float T, float this_phi);
-float VTTf(hydro_params p, float T, float this_phi);
-void Vpot(hydro_params p, float ***T, float ***phi, float ***Vprecalc);
-void Vdpot(hydro_params p, float ***T, float ***phi, float ***Vprecalc);
+Real Vf(hydro_params p, Real T, Real this_phi);
+Real Vdf(hydro_params p, Real T, Real this_phi);
+Real VTf(hydro_params p, Real T, Real this_phi);
+Real VTTf(hydro_params p, Real T, Real this_phi);
+void Vpot(hydro_params p, Real ***T, Real ***phi, Real ***Vprecalc);
+void Vdpot(hydro_params p, Real ***T, Real ***phi, Real ***Vprecalc);
 
 
 // energy.c
-float field_energy(hydro_fields f, hydro_params p);
-float gradient_energy(hydro_fields f, hydro_params p);
-float total_energy(hydro_fields f, hydro_params p);
-float kinetic_energy(hydro_fields f, hydro_params p);
-float rest_energy(hydro_fields f, hydro_params p);
-void energy_density(hydro_fields f, hydro_params p, float ***en);
-void stress_energy(hydro_fields f, hydro_params p, float ****Tij);
-float avg_pressure(hydro_fields f, hydro_params p);
-float tzerozero(hydro_fields f, hydro_params p);
+Real field_energy(hydro_fields f, hydro_params p);
+Real gradient_energy(hydro_fields f, hydro_params p);
+Real total_energy(hydro_fields f, hydro_params p);
+Real kinetic_energy(hydro_fields f, hydro_params p);
+Real rest_energy(hydro_fields f, hydro_params p);
+void energy_density(hydro_fields f, hydro_params p, Real ***en);
+void stress_energy(hydro_fields f, hydro_params p, Real ****Tij);
+Real avg_pressure(hydro_fields f, hydro_params p);
+Real tzerozero(hydro_fields f, hydro_params p);
 
 // eos.c
 
@@ -570,16 +575,16 @@ int can_nucleate(hydro_fields f, hydro_params p, int x0, int y0, int z0);
 void nucleate_at(hydro_fields f, hydro_params p, int x0, int y0, int z0);
 void initial_3D(hydro_fields f, hydro_params p);
 int try_nucleate(hydro_fields f, hydro_params p);
-int bubbles_at_step(hydro_fields f, hydro_params p, float t, int step);
+int bubbles_at_step(hydro_fields f, hydro_params p, Real t, int step);
 void init_profile(hydro_fields *f, hydro_params *p);
 
 // output.c
-float get_gamma_max(hydro_fields f, hydro_params p);
-float get_s_max(hydro_fields f, hydro_params p);
-float get_veltot(hydro_fields f, hydro_params p);
-void dump(float *field, hydro_params p);
-void histo_field(float ***field, hydro_params p, int step);
-void didj(float *cpts, hydro_fields f, hydro_params p);
+Real get_gamma_max(hydro_fields f, hydro_params p);
+Real get_s_max(hydro_fields f, hydro_params p);
+Real get_veltot(hydro_fields f, hydro_params p);
+void dump(Real *field, hydro_params p);
+void histo_field(Real ***field, hydro_params p, int step);
+void didj(Real *cpts, hydro_fields f, hydro_params p);
 
 // papi.c
 #ifdef PAPI
@@ -601,38 +606,38 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step);
 
 
 // util.c
-float minof3(float a, float b, float c);
+Real minof3(Real a, Real b, Real c);
 int minof3_int(int a, int b, int c);
-float maxof3(float a, float b, float c);
-float minof2(float a, float b);
+Real maxof3(Real a, Real b, Real c);
+Real minof2(Real a, Real b);
 
 
 #ifdef FFT
 // fft.c
-void fft_field(hydro_fields f, hydro_params p, float ***field, int step);
+void fft_field(hydro_fields f, hydro_params p, Real ***field, int step);
 
 // uetc.c
 void init_uetc(hydro_fields f, hydro_params p);
 void fft_uetc(hydro_fields f, hydro_params p, int step);
 
 // gw.c
-float proj(int T, float kx, float ky, float kz);
-float fft_tensor(hydro_fields f, hydro_params p, int step,
-		  float energydensity);
+Real proj(int T, Real kx, Real ky, Real kz);
+Real fft_tensor(hydro_fields f, hydro_params p, int step,
+		  Real energydensity);
 int indexof(int i, int j);
-float lambda(int i, int j, int l, int m, float kx, float ky, float kz);
+Real lambda(int i, int j, int l, int m, Real kx, Real ky, Real kz);
 
 // velps.c
-float vel_proj(int T, float kx, float ky, float kz);
-void fft_vel(hydro_fields f, hydro_params p, int step, float ****vectorfield);
+Real vel_proj(int T, Real kx, Real ky, Real kz);
+void fft_vel(hydro_fields f, hydro_params p, int step, Real ****vectorfield);
 
 #endif // FFT
 
 
 #ifndef SCALAR
 // initps.c
-void init_ps(hydro_fields f, hydro_params p, float ****field);
-void norm_power(hydro_fields f, hydro_params p, float ****field);
-float get_momtot(hydro_fields f, hydro_params p);
+void init_ps(hydro_fields f, hydro_params p, Real ****field);
+void norm_power(hydro_fields f, hydro_params p, Real ****field);
+Real get_momtot(hydro_fields f, hydro_params p);
 
 #endif // !SCALAR
