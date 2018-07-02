@@ -65,8 +65,9 @@ typedef float Real;
 #define INIT_PS 3
 
 #define NUC_OFF 0
-#define NUC_LIST 2
-#define NUC_FILE 3
+#define NUC_LIST 1
+#define NUC_FILE 2
+#define NUC_FILE_LOC 3
 
 #define GW_BOTH 1
 #define GW_FIELD 2
@@ -276,6 +277,13 @@ typedef struct {
    * nucleate multiple bubbles on that timestep.
    */
   int *nucsteps;
+
+  /** Bubble nucleation center locations on the lattice. 
+   *
+   * NB: Only used if nucleation type is `NUC_FILE_LOC`.  
+   */
+  int **nuclocs;
+  
   /** Total number of steps on which we perform nucleation. 
    *
    * NB: If a step is repeated it is counted multiple times.
@@ -477,6 +485,7 @@ typedef struct {
 
 } hydro_fields;
 
+
 /** Helper struct for performing MPI_MAXLOC and MPI_MINLOC operations.
  *
  * Useful for debugging, e.g finding max/min value of something on the
@@ -634,10 +643,10 @@ void fft_vel(hydro_fields f, hydro_params p, int step, Real ****vectorfield);
 #endif // FFT
 
 
-#ifndef SCALAR
+#if defined(FFT) && ! defined(SCALAR)
 // initps.c
 void init_ps(hydro_fields f, hydro_params p, Real ****field);
 void norm_power(hydro_fields f, hydro_params p, Real ****field);
 Real get_momtot(hydro_fields f, hydro_params p);
 
-#endif // !SCALAR
+#endif // FFT && !SCALAR

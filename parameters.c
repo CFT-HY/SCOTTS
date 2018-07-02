@@ -385,7 +385,77 @@ void get_parameters(char *infile, hydro_params *p)
 	    }
 	  }
 	}
-      }else {
+      }
+      else if(!strncasecmp(value, "locfile", 4)) {
+	p->nucleation = NUC_FILE_LOC;
+
+	if(access(option,R_OK) != 0) {
+	  printf0(*p ,"Unable to read nucleation file \"%s\", giving up!\n",
+		  option);
+	  die(123);
+	}
+
+	FILE *nucfile = fopen(option,"r");
+
+	p->n_nucsteps = 0;
+	int temp_time, temp_x, temp_y, temp_z;
+	int still_reading = 1;
+	while(!feof(nucfile) && still_reading) {
+	  still_reading = fscanf(nucfile,"%d %d %d %d\n", &temp_time,
+				 &temp_x, &temp_y, &temp_z);
+	  if(still_reading == 4) {
+	    p->n_nucsteps++;
+	  }
+	}
+
+	printf0(*p, "Looks like there are %d bubbles in %s\n",
+		p->n_nucsteps, option);
+
+	rewind(nucfile);
+
+	p->nucsteps = (int *)malloc((p->n_nucsteps)*sizeof(int));
+	p->nuclocs = (int **)malloc((p->n_nucsteps)*sizeof(int *));
+	p->nuclocs[0] = (int *)malloc(p->n_nucsteps*3*sizeof(int));
+	
+	int i;
+
+	for(i=0; i<p->n_nucsteps; i++)
+	  p->nuclocs[i] = (*p->nuclocs + i * 3);
+
+	
+	for(i=0; i<p->n_nucsteps; i++)
+	  still_reading = fscanf(nucfile,"%d %d %d %d\n",
+				 &p->nucsteps[i], &p->nuclocs[i][0],
+				 &p->nuclocs[i][1], &p->nuclocs[i][2]);
+       
+
+	fclose(nucfile);
+	
+	
+	// Just in case, bubble sort the list
+	int sorted = 0;
+
+	while(!sorted) {
+	  sorted = 1;
+
+	  for(i = 0; i < (p->n_nucsteps-1); i++) {
+	    if(p->nucsteps[i+1] < p->nucsteps[i]) {
+	      int temp = p->nucsteps[i+1];
+	      p->nucsteps[i+1] = p->nucsteps[i];
+	      p->nucsteps[i] = temp;
+	      for(int j = 0; j < 3; j++){
+		temp = p->nuclocs[i][j];
+		p->nuclocs[i+1][j] = p->nuclocs[i][j]; 
+		p->nuclocs[i][j] = temp;
+	      }
+	      printf0(*p, "Bubble sort iteration necessary!\n");
+
+	      sorted = 0;
+	    }
+	  }
+	}
+      }
+      else {
 	printf0(*p ,"Unrecognised nucleation type (%s), giving up!\n",
 		value);
 	  die(123);
@@ -593,7 +663,9 @@ void get_parameters(char *infile, hydro_params *p)
       printf0(*p, "-- warning, somehow have unknown gwsource param\n");
     }
 
-    if((p->nucleation == NUC_LIST) || (p->nucleation == NUC_FILE)) {
+    if((p->nucleation == NUC_LIST) ||
+       (p->nucleation == NUC_FILE) ||
+       (p->nucleation == NUC_FILE_LOC)) {
       printf0(*p, "<List nucleation\n");
       printf0(*p, "At steps: [%d,...%d]", p->nucsteps[0],
 	      p->nucsteps[p->n_nucsteps-1]);

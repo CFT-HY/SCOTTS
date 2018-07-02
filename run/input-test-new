@@ -94,6 +94,11 @@ phimin -1
 #   "nucleation file nucleation-list". There may be more than
 #   one nucleation attempt per timestep.
 #   The program utils/nucproc.py produces output in this format.
+# - "locfile" is a file containing the timesteps and lattice locations
+#    to nucleate bubbles in the following format:
+#    "step x y z\n"
+#    with each nucleation specified on a new line.
+#    Specify locfile location as above.
 nucleation off
 
 # The checkpoint directory is always checked for a valid checkpoint
