@@ -161,7 +161,7 @@ int main(int argc, char *argv[]) {
     printf0(p, "- Zeroed fields.\n");
 
     if(p.initial==INIT_PS){
-#ifndef SCALAR
+#if defined (FFT) && ! defined(SCALAR)
       // If initial is INIT_PS then initialise velocity power spec.
       // Then no bubbles nucleated.
 
@@ -185,7 +185,7 @@ int main(int argc, char *argv[]) {
 		"Exiting... \n");
 	die(100);
 	
-#endif // !SCALAR	
+#endif // FFT && !SCALAR	
 
 	
     } else if(p.initial==INIT_BUBBLE){
@@ -318,7 +318,8 @@ int main(int argc, char *argv[]) {
   // Wall time measurement
   start = clock();
 
-
+  // Next index in list of bubble locations for NUC_LOC_FILE option.
+  int bub_loc_ind = 0;
 
   for(step = step_start; step < p.steps; step++) {
 
@@ -342,10 +343,23 @@ int main(int argc, char *argv[]) {
 
     while(i < howmany) {
 
-      still_nucleate = try_nucleate(f, p);
+      if(p.nucleation==NUC_FILE_LOC){
+	printf0(p, "Nucleating a bubble on step %d at (%d, %d, %d)"
+		" without any checks.\n", step, p.nuclocs[bub_loc_ind][0],
+		p.nuclocs[bub_loc_ind][0], p.nuclocs[bub_loc_ind][0]);
+		
+	nucleate_at(f, p, p.nuclocs[bub_loc_ind][0], p.nuclocs[bub_loc_ind][0],
+		    p.nuclocs[bub_loc_ind][0]);
+	bub_loc_ind++;
+	bcount++;
+	i++;
+      }
+      else{
+	still_nucleate = try_nucleate(f, p);
 
-      bcount += still_nucleate;
-      i++;
+	bcount += still_nucleate;
+	i++;
+      }
     }
 
 

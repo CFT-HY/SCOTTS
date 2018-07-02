@@ -4,7 +4,8 @@
  */
 #include "hydro.h"
 
-#ifndef SCALAR
+#if defined(FFT) && ! defined(SCALAR)
+
 
 
 Real get_momtot(hydro_fields f, hydro_params p) {
@@ -686,7 +687,6 @@ void init_ps(hydro_fields f, hydro_params p, Real ****field) {
 }
 
 
-
-#endif // !SCALAR
+#endif // FFT && !SCALAR
 
 
