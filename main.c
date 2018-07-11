@@ -346,10 +346,10 @@ int main(int argc, char *argv[]) {
       if(p.nucleation==NUC_FILE_LOC){
 	printf0(p, "Nucleating a bubble on step %d at (%d, %d, %d)"
 		" without any checks.\n", step, p.nuclocs[bub_loc_ind][0],
-		p.nuclocs[bub_loc_ind][0], p.nuclocs[bub_loc_ind][0]);
+		p.nuclocs[bub_loc_ind][1], p.nuclocs[bub_loc_ind][2]);
 		
-	nucleate_at(f, p, p.nuclocs[bub_loc_ind][0], p.nuclocs[bub_loc_ind][0],
-		    p.nuclocs[bub_loc_ind][0]);
+	nucleate_at(f, p, p.nuclocs[bub_loc_ind][0], p.nuclocs[bub_loc_ind][1],
+		    p.nuclocs[bub_loc_ind][2]);
 	bub_loc_ind++;
 	bcount++;
 	i++;
