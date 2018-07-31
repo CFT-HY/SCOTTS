@@ -20,7 +20,7 @@ void init_uetc(hydro_fields f, hydro_params p) {
 
   int i, x, y, z;
 
-  Real ****Tij = make_tensor(p);
+  float ****Tij = make_tensor(p);
   stress_energy(f, p, Tij);
 
 
@@ -41,23 +41,23 @@ void init_uetc(hydro_fields f, hydro_params p) {
 
 
 /* void uetc_project(hydro_params p, int x_start, int slab,
- *                 Real *product_re, Real *product_im,
+ *                 float *product_re, float *product_im,
  *                 fftwf_complex **Tij_then, fftwf_complex **Tij_now)
  *
  * Like gwproject (see gw.c), but for two separate timesteps, and takes two
  * different tensors.
  */
 void uetc_project(hydro_params p, int x_start, int slab,
-		  Real *product_re, Real *product_im,
+		  float *product_re, float *product_im,
 		  fftwf_complex **Tij_then, fftwf_complex **Tij_now) {
 
   int i, j, l, m;
   int x, y, z;
-  Real kx, ky, kz;
+  float kx, ky, kz;
 
   int true_x, true_y, true_z;
 
-  Real s_x, s_y, s_z;
+  float s_x, s_y, s_z;
 
   for(x=0; x<slab; x++) {
     for(y=0; y<p.Ly; y++) {
@@ -92,15 +92,15 @@ void uetc_project(hydro_params p, int x_start, int slab,
         }
 
 	/*
-	kx = ((Real)(x+x_start))*2.0*M_PI/((Real)p.Lx);
-	ky = ((Real)y)*2.0*M_PI/((Real)p.Ly);
-	kz = ((Real)z)*2.0*M_PI/((Real)p.Lz);
+	kx = ((float)(x+x_start))*2.0*M_PI/((float)p.Lx);
+	ky = ((float)y)*2.0*M_PI/((float)p.Ly);
+	kz = ((float)z)*2.0*M_PI/((float)p.Lz);
 	*/
 	
 
-        kx = s_x*sqrt((2.0 - 2.0*cos(((Real)(true_x))*2.0*M_PI/(((Real)p.Lx))))/(p.dx*p.dx));
-	ky = s_y*sqrt((2.0 - 2.0*cos(((Real)(true_y))*2.0*M_PI/(((Real)p.Ly))))/(p.dx*p.dx));
-	kz = s_z*sqrt((2.0 - 2.0*cos(((Real)(true_z))*2.0*M_PI/(((Real)p.Lz))))/(p.dx*p.dx));
+        kx = s_x*sqrt((2.0 - 2.0*cos(((float)(true_x))*2.0*M_PI/(((float)p.Lx))))/(p.dx*p.dx));
+	ky = s_y*sqrt((2.0 - 2.0*cos(((float)(true_y))*2.0*M_PI/(((float)p.Ly))))/(p.dx*p.dx));
+	kz = s_z*sqrt((2.0 - 2.0*cos(((float)(true_z))*2.0*M_PI/(((float)p.Lz))))/(p.dx*p.dx));
 
 	product_re[x*p.Ly*p.Lz + y*p.Lz + z] = 0.0;
 	product_im[x*p.Ly*p.Lz + y*p.Lz + z] = 0.0;
@@ -154,21 +154,21 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
 
   MPI_Status status;
 
-  Real kmode, modsq;
+  float kmode, modsq;
 
   int x, y, z;
   int i;
 
-  Real fft_norm = (1.0/(((Real)p.Lx)*((Real)p.Ly)*((Real)p.Lz)))
+  float fft_norm = (1.0/(((float)p.Lx)*((float)p.Ly)*((float)p.Lz)))
     *(1.0/sqrt(32.0*M_PI));
   // *p.a*p.a*p.a*p.dx*p.dx*p.dx
 
-  Real *trim_then = (Real *)malloc(p.slicex*p.slicey*p.Lz*sizeof(Real));
-  Real *trim_now = (Real *)malloc(p.slicex*p.slicey*p.Lz*sizeof(Real));
+  float *trim_then = (float *)malloc(p.slicex*p.slicey*p.Lz*sizeof(float));
+  float *trim_now = (float *)malloc(p.slicex*p.slicey*p.Lz*sizeof(float));
 
   printf0(p, "Starting UETC calculation.\n");
 
-  Real start = clock();
+  float start = clock();
 
   fftwf_mpi_init();
 
@@ -235,7 +235,7 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
 
   /////////////// here compute other thing to be squished ////////////////
 
-  Real ****Tij = make_tensor(p);
+  float ****Tij = make_tensor(p);
   stress_energy(f, p, Tij);
 
   printf0(p,"generated stress-energy\n");
@@ -256,11 +256,11 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
     outcpts_now[i] = fftwf_alloc_complex(alloc_local);
   }
 
-  Real *slice_then = (Real *)malloc(x_thickness*p.Ly*p.Lz*sizeof(Real));
-  Real *slice_now = (Real *)malloc(x_thickness*p.Ly*p.Lz*sizeof(Real));
+  float *slice_then = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
+  float *slice_now = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
 
-  Real *slice_re = (Real *)malloc(x_thickness*p.Ly*p.Lz*sizeof(Real));
-  Real *slice_im = (Real *)malloc(x_thickness*p.Ly*p.Lz*sizeof(Real));
+  float *slice_re = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
+  float *slice_im = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
 
 
   int nx = p.Lx/p.slicex;
@@ -275,7 +275,7 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
 
   for(i = 0; i < TENSOR_CPTS; i++) {
 
-    Real check = 0.0;    
+    float check = 0.0;    
     
     for(x=1; x<=p.slicex; x++) {
       for(y=1; y<=p.slicey; y++) {
@@ -301,11 +301,11 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
 	    
 	    memcpy(&slice_then[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
 		   &trim_then[(x-p.shiftx)*p.slicey*p.Lz],
-		   p.slicey*p.Lz*sizeof(Real));
+		   p.slicey*p.Lz*sizeof(float));
 
 	    memcpy(&slice_now[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
 		   &trim_now[(x-p.shiftx)*p.slicey*p.Lz],
-		   p.slicey*p.Lz*sizeof(Real));
+		   p.slicey*p.Lz*sizeof(float));
 	    continue;
 	  }
 	  
@@ -348,7 +348,7 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
       
     }
 
-    Real total = 0.0;
+    float total = 0.0;
 
     for(x=0;x<x_thickness;x++) {
       for(y=0;y<p.Ly;y++) {
@@ -418,13 +418,13 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
     printf0(p,"binning\n");
 
     int nbins = minof3_int(p.Lx, p.Ly, p.Lz);
-    Real mink = 0.0;
-    Real maxk = 2.0*M_PI;
+    float mink = 0.0;
+    float maxk = 2.0*M_PI;
 
-    Real dk = (maxk-mink)/((Real)nbins);
+    float dk = (maxk-mink)/((float)nbins);
 
-    Real *bins_re = (Real *)malloc(nbins*sizeof(Real));
-    Real *bins_im = (Real *)malloc(nbins*sizeof(Real));
+    float *bins_re = (float *)malloc(nbins*sizeof(float));
+    float *bins_im = (float *)malloc(nbins*sizeof(float));
     int *counts = (int *)malloc(nbins*sizeof(int));
 
     for(i=0;i<nbins;i++) {
@@ -462,9 +462,9 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
 	
 
 	  kmode = sqrt(
-		       ((Real)(true_x*true_x))/((Real)(p.Lx*p.Lx))
-		       + ((Real)(true_y*true_y))/((Real)(p.Ly*p.Ly))
-		       + ((Real)(true_z*true_z))/((Real)(p.Lz*p.Lz))
+		       ((float)(true_x*true_x))/((float)(p.Lx*p.Lx))
+		       + ((float)(true_y*true_y))/((float)(p.Ly*p.Ly))
+		       + ((float)(true_z*true_z))/((float)(p.Lz*p.Lz))
 		       )*2.0*M_PI;
 	  
 	  whichbin = (int)floor(kmode/dk);
@@ -477,7 +477,7 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
     }
 
 
-    Real red_value;
+    float red_value;
     int red_count;
 
     for(i=0;i<nbins;i++) {
@@ -493,7 +493,7 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
     }
 
 
-    Real thisk = dk/2.0;
+    float thisk = dk/2.0;
 
     // spokesman does the final analysis
     if(!p.rank) {
@@ -533,13 +533,13 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
     printf0(p,"binning for equal time\n");
 
     int nbins = minof3_int(p.Lx, p.Ly, p.Lz);
-    Real mink = 0.0;
-    Real maxk = 2.0*M_PI;
+    float mink = 0.0;
+    float maxk = 2.0*M_PI;
 
-    Real dk = (maxk-mink)/((Real)nbins);
+    float dk = (maxk-mink)/((float)nbins);
 
-    Real *bins_re = (Real *)malloc(nbins*sizeof(Real));
-    Real *bins_im = (Real *)malloc(nbins*sizeof(Real));
+    float *bins_re = (float *)malloc(nbins*sizeof(float));
+    float *bins_im = (float *)malloc(nbins*sizeof(float));
     int *counts = (int *)malloc(nbins*sizeof(int));
 
     for(i=0;i<nbins;i++) {
@@ -577,9 +577,9 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
 	
 
 	  kmode = sqrt(
-		       ((Real)(true_x*true_x))/((Real)(p.Lx*p.Lx))
-		       + ((Real)(true_y*true_y))/((Real)(p.Ly*p.Ly))
-		       + ((Real)(true_z*true_z))/((Real)(p.Lz*p.Lz))
+		       ((float)(true_x*true_x))/((float)(p.Lx*p.Lx))
+		       + ((float)(true_y*true_y))/((float)(p.Ly*p.Ly))
+		       + ((float)(true_z*true_z))/((float)(p.Lz*p.Lz))
 		       )*2.0*M_PI;
 	  
 	  whichbin = (int)floor(kmode/dk);
@@ -592,7 +592,7 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
     }
 
 
-    Real red_value;
+    float red_value;
     int red_count;
 
     for(i=0;i<nbins;i++) {
@@ -608,7 +608,7 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
     }
 
 
-    Real thisk = dk/2.0;
+    float thisk = dk/2.0;
 
     // spokesman does the final analysis
     if(!p.rank) {
@@ -661,10 +661,10 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
 
   fftwf_mpi_cleanup();
 
-  Real end = clock();
+  float end = clock();
 
   printf0(p, "UETC FFT calculation took %lf\n",
-	  ((Real) (end - start)) / CLOCKS_PER_SEC);
+	  ((float) (end - start)) / CLOCKS_PER_SEC);
 
 }
 
