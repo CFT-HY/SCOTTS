@@ -22,7 +22,7 @@ void evolve_field(hydro_fields f, hydro_params p) {
   
   int x, y, z;
 
-  Real pi_old, s;
+  float pi_old, s;
   
   // Move conjugate momentum (leapfrog)
   for(x = 1; x <= p.slicex; x++) {
@@ -168,36 +168,36 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
 
   int x, y, z;
   
-  Real ***Vdmid = make_field(p); // dV/dphi between timesteps in zone.
-  Real ***Wold = make_field(p);
-  Real ***phiav = make_field(p); // phi between timesteps in zone.
+  float ***Vdmid = make_field(p); // dV/dphi between timesteps in zone.
+  float ***Wold = make_field(p);
+  float ***phiav = make_field(p); // phi between timesteps in zone.
 
   //d(phi)/dx_i between timesteps on appropriate spatial boundary.
-  Real ****dxphi = make_vector(p); 
+  float ****dxphi = make_vector(p); 
 
-  Real ***Wfacex =  make_field(p);
-  Real ***Wfacey =  make_field(p);
-  Real ***Wfacez =  make_field(p);
+  float ***Wfacex =  make_field(p);
+  float ***Wfacey =  make_field(p);
+  float ***Wfacez =  make_field(p);
 
   
-  Real gpi, dv, s;
+  float gpi, dv, s;
 
-  Real p_bar_x_plus, p_bar_x_minus;
-  Real p_bar_y_plus, p_bar_y_minus;
-  Real p_bar_z_plus, p_bar_z_minus;
+  float p_bar_x_plus, p_bar_x_minus;
+  float p_bar_y_plus, p_bar_y_minus;
+  float p_bar_z_plus, p_bar_z_minus;
 
-  Real utildex, utildey, utildez;
-  Real qx, qy, qz, gradv;
-  Real divv;
+  float utildex, utildey, utildez;
+  float qx, qy, qz, gradv;
+  float divv;
 
-  Real sigmabar;
+  float sigmabar;
 
-  Real ubarx, ubary, ubarz, W;
+  float ubarx, ubary, ubarz, W;
 
 #ifdef DIMENSIONLESS
-  Real phinb, Tnb;
+  float phinb, Tnb;
 #endif //DIMENSIONLESS
-  Real vdnb, pinb, wnb, dxphinb0, dxphinb1, dxphinb2;
+  float vdnb, pinb, wnb, dxphinb0, dxphinb1, dxphinb2;
 
   
   // Find quantities needed on half timesteps but defined on whole steps
@@ -778,11 +778,11 @@ void evolve_uij(hydro_fields f, hydro_params p) {
 
   int x, y, z, i;
 
-  Real ****Tij = make_tensor(p);
+  float ****Tij = make_tensor(p);
 
 
   // c = hbar = mpl = G = 1
-  const Real G = 1.0;
+  const float G = 1.0;
 
 
   stress_energy(f, p, Tij);

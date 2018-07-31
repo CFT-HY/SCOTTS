@@ -76,22 +76,22 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
   meshsize[1] = sizey;
   meshsize[2] = sizez;
 
-  Real **mesh = (Real **)malloc(3*sizeof(Real *));
+  float **mesh = (float **)malloc(3*sizeof(float *));
 
   
-  mesh[0] = (Real *)malloc(sizex*sizeof(Real));
-  mesh[1] = (Real *)malloc(sizey*sizeof(Real));
-  mesh[2] = (Real *)malloc(sizez*sizeof(Real));
+  mesh[0] = (float *)malloc(sizex*sizeof(float));
+  mesh[1] = (float *)malloc(sizey*sizeof(float));
+  mesh[2] = (float *)malloc(sizez*sizeof(float));
 
 
   for(x=0; x<sizex; x++) {
-    mesh[0][x] = p.dx*((Real)(x + p.shiftx - 1));
+    mesh[0][x] = p.dx*((float)(x + p.shiftx - 1));
   }
   for(x=0; x<sizey; x++) {
-    mesh[1][x] = p.dx*((Real)(x + p.shifty - 1));
+    mesh[1][x] = p.dx*((float)(x + p.shifty - 1));
   }
   for(x=0; x<sizez; x++) {
-      mesh[2][x] = p.dx*((Real)x);
+      mesh[2][x] = p.dx*((float)x);
   }
 
   
@@ -108,9 +108,9 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
 		NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
 #endif
   
-  Real ***temp = make_field(p);
+  float ***temp = make_field(p);
 
-  Real vol = p.dx*p.dx*p.dx;
+  float vol = p.dx*p.dx*p.dx;
 
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
@@ -191,7 +191,7 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
   v_names[2] = vz_name;
 
 
-  Real **Vtemp = (Real **)malloc(3*sizeof(Real *));
+  float **Vtemp = (float **)malloc(3*sizeof(float *));
   Vtemp[0] = f.V[0][0][0];
   Vtemp[1] = f.V[1][0][0];
   Vtemp[2] = f.V[2][0][0];

@@ -29,7 +29,7 @@
  * \frac{1}{3}\alpha T \phi^3 + \frac{1}{4}\lambda\phi^4 + 
  * \frac{1}{4}\frac{\gamma^2 T_0^4}{\lambda} \text.  \f]
  */
-Real Vf(hydro_params p, Real T, Real this_phi) {
+float Vf(hydro_params p, float T, float this_phi) {
 #ifdef TINDEP
   return 0.5*p.gamma*(p.Tconst*p.Tconst - p.T0*p.T0)*this_phi*this_phi
     - p.alpha*p.Tconst*this_phi*this_phi*this_phi/3.0
@@ -54,7 +54,7 @@ Real Vf(hydro_params p, Real T, Real this_phi) {
  * \f[ \dfrac{\partial V(\phi,T)}{\partial \phi} = \gamma(T^2 -
  * T_0^2)\phi - \alpha T \phi^2 + \lambda\phi^3\text.  \f]
  */
-Real Vdf(hydro_params p, Real T, Real this_phi) {
+float Vdf(hydro_params p, float T, float this_phi) {
 #ifdef TINDEP
   return p.gamma*(p.Tconst*p.Tconst - p.T0*p.T0)*this_phi
     - p.alpha*p.Tconst*this_phi*this_phi
@@ -76,7 +76,7 @@ Real Vdf(hydro_params p, Real T, Real this_phi) {
  * \f[ V(\phi,T) = \gamma T \phi^2 - \frac{1}{3}\alpha \phi^3 \text.
  * \f]
  */
-Real VTf(hydro_params p, Real T, Real this_phi) {
+float VTf(hydro_params p, float T, float this_phi) {
 #ifdef TINDEP
   return 0.;
 #else
@@ -95,7 +95,7 @@ Real VTf(hydro_params p, Real T, Real this_phi) {
  *
  * \f[ V(\phi,T) = \gamma \phi^2 \text.  \f]
  */
-Real VTTf(hydro_params p, Real T, Real this_phi) {
+float VTTf(hydro_params p, float T, float this_phi) {
 #ifdef TINDEP
   return 0.;
 #else
@@ -113,9 +113,9 @@ Real VTTf(hydro_params p, Real T, Real this_phi) {
  * using `T` and `phi` arrays.
  */
 void Vpot(hydro_params p,
-	  Real ***T,
-	  Real ***phi,
-	  Real ***Vprecalc) {
+	  float ***T,
+	  float ***phi,
+	  float ***Vprecalc) {
 
   int x, y, z;
 
@@ -138,9 +138,9 @@ void Vpot(hydro_params p,
  * using `T` and `phi` arrays.
  */
 void Vdpot(hydro_params p,
-	   Real ***T,
-	   Real ***phi,
-	   Real ***Vprecalc) {
+	   float ***T,
+	   float ***phi,
+	   float ***Vprecalc) {
 
   int x, y, z;
 
