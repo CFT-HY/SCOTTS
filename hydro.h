@@ -248,6 +248,14 @@ typedef struct {
    */
   char checkpointdir[500];
 
+  /** Where to find the initial power spectrum
+   */
+  char initpsfile[500];
+
+  /** Number of bins.
+   */
+  int initpsbins;
+
   /** Number of bubbles to spawn on the first timestep.
    */
   int bubbles;

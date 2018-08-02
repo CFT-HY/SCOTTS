@@ -213,6 +213,52 @@ float get_normal(float mean, float dev) {
   return dev*(sqrt(-2.0*log(u1))*sin(2.0*M_PI*u2)-mean);
 }
 
+void spectrum_interp(float ksq, hydro_params p, fftwf_complex *res,
+		     float *k_bins, float *pow_bins, int n_bins) {
+
+  float phase;
+
+  float L = p.Lx;
+
+
+  float amp;
+  int i;
+
+
+  amp = 0.0;
+
+  // bin coordinates are midpoints
+  float dk = 2.0*k_bins[0];
+
+  float kmode = sqrt(fabs(ksq));
+  int whichbin = (int)floor(kmode/dk);
+  if(whichbin < n_bins) {
+    amp = sqrt(pow_bins[whichbin]);
+  }
+  
+  /*
+  for(i = 0; i < n_bins; i++) {
+    if((k_bins[i] - dk/2.0) <= sqrt(fabs(ksq)) && (k_bins[i] + dk/2.0) > sqrt(fabs(ksq))) {
+      amp = sqrt(pow_bins[i]);
+      break;
+    }
+  }
+  */
+
+  (*res)[0] = get_normal(0.0, amp);
+  (*res)[1] = (*res)[0];
+
+  phase = drand48();
+
+  // Random phase
+  (*res)[0] = (*res)[0]*cos(2.0*M_PI*phase);
+  (*res)[1] = (*res)[1]*sin(2.0*M_PI*phase);
+
+}
+
+
+
+
 /* spectrum
  * 
  */
@@ -224,7 +270,7 @@ void spectrum(float ksq, hydro_params p, fftwf_complex *res)
   float L = p.Lx;
 
 
-  if(fabs(ksq) < 0.000001 || fabs(ksq) < p.initcutoff) {
+  if(fabs(ksq) < 0.000001 || fabs(ksq) > p.initcutoff) {
     (*res)[0] = 0.0;
     (*res)[1] = 0.0;
   } else {
@@ -259,6 +305,8 @@ void spectrum(float ksq, hydro_params p, fftwf_complex *res)
  * Used to convince reluctant referees.
  */
 void init_ps(hydro_fields f, hydro_params p, float ****field) {
+
+  printf0(p, "Loading initial power spectrum from %s\n", p.initpsfile);
 
 
   ptrdiff_t x_thickness, x_start, alloc_local;
@@ -340,6 +388,47 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 
   int true_x, true_y, true_z;
 
+  //  int n_bins = p.Lx;
+  float *k_bins = (float *)malloc(p.initpsbins*sizeof(float));
+  float *pow_bins = (float *)malloc(p.initpsbins*sizeof(float));
+  int in_bin;
+  int items_read;
+  float fudge;
+
+  FILE *fp = fopen(p.initpsfile, "r");
+
+  for(i = 0; i < p.initpsbins; i++) {
+
+    if(feof(fp)) {
+      printf0(p, "Fewer bins in file (%d) than initpsbins suggested (%d)\n",
+	      i, p.initpsbins);
+      die(100);
+    }
+
+    items_read = fscanf(fp, "%f%f%d", &k_bins[i], &pow_bins[i], &in_bin);
+
+    if(items_read != 3) {
+      printf0(p,
+	      "Initpsfile %s: row %d: did not read a full line (3 items), "
+	      "just %d\n",
+	      p.initpsfile, i, items_read);
+      die(100);
+    }
+
+    pow_bins[i] /= ((float)(in_bin*(i+1)));
+  }
+  fclose(fp);
+
+  fudge = (2.0*M_PI/((float)p.Lx))/(k_bins[1]-k_bins[0]);
+  if(fabs(fudge - 1.0) > 1e-6) {
+    printf0(p, "Applying fudge factor %g^3 to power spectrum: "
+	    "seems like dk or volume or dx is different\n",
+	    fudge);
+
+    for(i = 0; i < p.initpsbins; i++) {
+      pow_bins[i] *= fudge*fudge*fudge;
+    }
+  }
 
   for(x=x_start;x<x_start+x_thickness;x++) {
     for(y=0;y<p.Ly;y++) {
@@ -363,12 +452,23 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 	  true_z = z;
 	}
 
+	/*
 	ksq = (2.0 - 2.0*cos(((float)true_x)*2.0*M_PI/(((float)p.Lx))))/(p.dx*p.dx);
 	ksq += (2.0 - 2.0*cos(((float)true_y)*2.0*M_PI/(((float)p.Ly))))/(p.dx*p.dx);
 	ksq += (2.0 - 2.0*cos(((float)true_z)*2.0*M_PI/(((float)p.Lz))))/(p.dx*p.dx);
+	*/
+
+	ksq = (
+	       ((float)(true_x*true_x))/((float)(p.Lx*p.Lx))
+	       + ((float)(true_y*true_y))/((float)(p.Ly*p.Ly))
+	       + ((float)(true_z*true_z))/((float)(p.Lz*p.Lz))
+	       )*(2.0*M_PI)*(2.0*M_PI);
 
 	for(i=0; i<3; i++) {
-	  spectrum(ksq, p, &(in[i][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z]));
+	  // spectrum(ksq, p, &(in[i][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z]));
+	  spectrum_interp(ksq, p,
+			  &(in[i][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z]),
+			  k_bins, pow_bins, p.initpsbins);
 	}
 
       }
@@ -463,6 +563,8 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
     for(y=0;y<p.Ly;y++) {
       for(z=0;z<p.Lz;z++) {
 	for(i=0; i<3; i++) {
+
+
 
 	  // Conjugate the system. Treat special cases first.
 
