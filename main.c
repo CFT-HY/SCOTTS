@@ -54,6 +54,7 @@ int main(int argc, char *argv[]) {
 
   // Seed - make sure everyone gets the same one (if necessary)
   srandom(p.seed);
+  srand48(p.seed);
 
   // How big is the system
   p.N = p.Lx*p.Ly*p.Lz;
@@ -153,6 +154,8 @@ int main(int argc, char *argv[]) {
       // Then no bubbles nucleated.
 
 	initial_blank(f,p);
+	init_ps(f, p, f.V);
+	fft_vel(f, p, -1, f.V);
 	init_ps(f, p, f.Z);
 	norm_power(f, p, f.Z);
 

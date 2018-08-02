@@ -64,6 +64,9 @@ void get_parameters(char *infile, hydro_params *p)
   int set_silodir = 0;
   int set_checkpointdir = 0;
 
+  int set_initpsfile = 0;
+  int set_initpsbins = 0;
+
   int set_nucleation = 0;
 
   int set_bubbles = 0;
@@ -409,13 +412,39 @@ void get_parameters(char *infile, hydro_params *p)
      
       set_checkpointdir = 1;
     }
+    else if(!strcasecmp(key,"initpsfile")) {
+     
+      if(strlen(value) > 500)
+	printf0(*p,
+		"Warning: initpsfile name \"%s\" may be too long!\n",
+		value);
+
+      strncpy(p->initpsfile, value, 500);
+     
+      set_initpsfile = 1;
+    }
+    else if(!strcasecmp(key,"initpsbins")) {
+      p->initpsbins = strtol(value,NULL,10);
+      set_initpsbins = 1;
+    }
     else if(!strcasecmp(key,"seed")) {
-      p->seed = strtol(value,NULL,10);
+      if(!strcasecmp(value,"time")) {
+        p->seed = time(NULL);
+      } else if(!strcasecmp(value,"device")) {
+        FILE *ran = fopen("/dev/random","r");
+        if(fread(&(p->seed),sizeof(int),1,ran) != 1) {
+          fprintf(stderr,"Unable to read from /dev/random, using seed 0!\n");
+          p->seed = 0;
+        }
+        fclose(ran);
+      } else {
+        p->seed = strtol(value,NULL,10);
+      }
+
       p->seed = abs(p->seed);
 
       set_seed = 1;
-    } 
-
+    }
 
   }
   
@@ -519,8 +548,13 @@ void get_parameters(char *infile, hydro_params *p)
   } else if(!set_seed) {
     printf0(*p, "Did not set parameter \'seed\'\n");
     die(100);
+  } else if(p->initial == INIT_PS && !set_initpsfile) {
+    printf0(*p, "Did not set parameter \'initpsfile\' but initps used\n");
+    die(100);
+  } else if(p->initial == INIT_PS && !set_initpsbins) {
+    printf0(*p, "Did not set parameter \'initpsbins\' but initps used\n");
+    die(100);
   }
-
 
 
   if(!p->rank) {
