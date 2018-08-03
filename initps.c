@@ -4,8 +4,18 @@
  */
 #include "hydro.h"
 
+// http://people.math.sc.edu/kellerlv/Quadratic_Interpolation.pdf 
+// Lagrange Interp formula
+float quadratic(float x1, float x2, float x3,
+		float y1, float y2, float y3, float x) {
 
+  return y1*((x - x2)*(x - x3))/((x1 - x2)*(x1 - x3)) 
+	     + y2*((x - x1)*(x - x3))/((x2 - x1)*(x2 - x3))
+	     + y3*((x - x1)*(x - x2))/((x3 - x1)*(x3 - x2));
 
+  
+
+}
 
 float get_momtot(hydro_fields f, hydro_params p) {
 
@@ -213,6 +223,23 @@ float get_normal(float mean, float dev) {
   return dev*(sqrt(-2.0*log(u1))*sin(2.0*M_PI*u2)-mean);
 }
 
+
+/** Do a linear interpolation to compute the initial power spectrum.
+ *
+ * A key assumption is that the k-modes are _evenly distributed_ throughout
+ * each bin, which isn't true! And increasing the order of the interpolation
+ * will not really deal with this systematic error (I have tried quadratic).
+ *
+ * If this causes undue concern, there are two options as to how to fix it:
+ * 1) When saving power spectrums, store the mean $k$ in each bin
+ *    as well as the central $k$ for each bin, and use the mean $k$ (at least)
+ *    when using power spectra as inputs.
+ * 2) Recompute the mean $k$ here when building out the power spectrum again.
+ *    That would make it harder to change lattice volumes between runs, as
+ *    the relevant mode counts per bin for making the interpolation
+ *    of the spectral density are for the original simulation
+ *    that generated the input PS.
+ */
 void spectrum_interp(float ksq, hydro_params p, fftwf_complex *res,
 		     float *k_bins, float *pow_bins, int n_bins) {
 
@@ -221,10 +248,13 @@ void spectrum_interp(float ksq, hydro_params p, fftwf_complex *res,
   float L = p.Lx;
 
 
-  float amp;
+  float amp, amp_last, amp_this, amp_next, grad;
   int i;
 
 
+  amp_last = 0.0;
+  amp_this = 0.0;
+  amp_next = 0.0;
   amp = 0.0;
 
   // bin coordinates are midpoints
@@ -232,9 +262,38 @@ void spectrum_interp(float ksq, hydro_params p, fftwf_complex *res,
 
   float kmode = sqrt(fabs(ksq));
   int whichbin = (int)floor(kmode/dk);
-  if(whichbin < n_bins) {
+
+  /*
+  if(whichbin < (n_bins-1)) {
     amp = sqrt(pow_bins[whichbin]);
   }
+  */
+
+
+  if(whichbin > 0 && whichbin < (n_bins-1)) {
+    // amp_last = sqrt(pow_bins[whichbin-1]);
+    amp_this = sqrt(pow_bins[whichbin]);
+    amp_next = sqrt(pow_bins[whichbin+1]);
+    grad = (amp_next - amp_this)/dk;
+    amp = amp_this + (kmode - ((float)(whichbin))*dk)*grad;
+
+    // quadratic interpolation isn't any better!
+    // amp = quadratic(((float)(whichbin-1))*dk, ((float)(whichbin))*dk,
+    //		    ((float)(whichbin+1))*dk, amp_last, amp_this, amp_next,
+    //		    kmode);
+
+
+    /*
+
+    if(isnan(amp)) {
+      fprintf(stderr, "Our AMP IS A NAN!\n");
+      fprintf(stderr, "kmode: %g, this: %g, bin %d, next: %g, grad: %g, amp: %g\n",
+	      kmode, amp_this, whichbin, amp_next, grad, amp);
+    }
+    */
+
+  }
+
   
   /*
   for(i = 0; i < n_bins; i++) {
@@ -245,6 +304,7 @@ void spectrum_interp(float ksq, hydro_params p, fftwf_complex *res,
   }
   */
 
+
   (*res)[0] = get_normal(0.0, amp);
   (*res)[1] = (*res)[0];
 
@@ -253,6 +313,7 @@ void spectrum_interp(float ksq, hydro_params p, fftwf_complex *res,
   // Random phase
   (*res)[0] = (*res)[0]*cos(2.0*M_PI*phase);
   (*res)[1] = (*res)[1]*sin(2.0*M_PI*phase);
+
 
 }
 
@@ -415,7 +476,11 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
       die(100);
     }
 
-    pow_bins[i] /= ((float)(in_bin*(i+1)));
+    if(in_bin == 0) {
+      pow_bins[i] = 0.0;
+    } else {
+      pow_bins[i] /= ((float)(in_bin*(i+1)));
+    }
   }
   fclose(fp);
 
