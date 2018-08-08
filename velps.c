@@ -14,9 +14,9 @@
 /** Calculate the projector for the transverse component of the
  * velocity.
  */
-Real vel_proj(int T, Real kx, Real ky, Real kz) {
+float vel_proj(int T, float kx, float ky, float kz) {
 
-  Real mag = sqrt(kx*kx + ky*ky + kz*kz);
+  float mag = sqrt(kx*kx + ky*ky + kz*kz);
 
   // Avoid overflow
   if(fabs(mag) < 0.000001)
@@ -26,7 +26,7 @@ Real vel_proj(int T, Real kx, Real ky, Real kz) {
   ky = ky/mag;
   kz = kz/mag;
 
-  Real total = 0.0;
+  float total = 0.0;
 
   switch(T) {
 
@@ -72,20 +72,20 @@ Real vel_proj(int T, Real kx, Real ky, Real kz) {
  * components.
  */
 void split_and_power(hydro_params p, int x_start, int slab,
-		     Real *product, Real *product_div, Real *product_tot,
+		     float *product, float *product_div, float *product_tot,
 		     fftwf_complex **vk) {
 
   int i, j;
   int x, y, z;
-  Real kx, ky, kz;
+  float kx, ky, kz;
 
-  Real res_r, res_i;
-  Real resid_r, resid_i;
-  Real tot_r, tot_i;
+  float res_r, res_i;
+  float resid_r, resid_i;
+  float tot_r, tot_i;
 
   int true_x, true_y, true_z;
 
-  Real s_x, s_y, s_z;
+  float s_x, s_y, s_z;
 
   for(x=0; x<slab; x++) {
     for(y=0; y<p.Ly; y++) {
@@ -120,15 +120,15 @@ void split_and_power(hydro_params p, int x_start, int slab,
 	}
 
 
-        kx = s_x*sqrt((2.0 - 2.0*cos(((Real)(true_x))*2.0*M_PI/(((Real)p.Lx))))/(p.dx*p.dx));
-	ky = s_y*sqrt((2.0 - 2.0*cos(((Real)(true_y))*2.0*M_PI/(((Real)p.Ly))))/(p.dx*p.dx));
-        kz = s_z*sqrt((2.0 - 2.0*cos(((Real)(true_z))*2.0*M_PI/(((Real)p.Lz))))/(p.dx*p.dx));
+        kx = s_x*sqrt((2.0 - 2.0*cos(((float)(true_x))*2.0*M_PI/(((float)p.Lx))))/(p.dx*p.dx));
+	ky = s_y*sqrt((2.0 - 2.0*cos(((float)(true_y))*2.0*M_PI/(((float)p.Ly))))/(p.dx*p.dx));
+        kz = s_z*sqrt((2.0 - 2.0*cos(((float)(true_z))*2.0*M_PI/(((float)p.Lz))))/(p.dx*p.dx));
 
 
 	/*
-	kx = ((Real)true_x)*2.0*M_PI/((Real)p.Lx);
-	ky = ((Real)true_y)*2.0*M_PI/((Real)p.Ly);
-	kz = ((Real)true_z)*2.0*M_PI/((Real)p.Lz);
+	kx = ((float)true_x)*2.0*M_PI/((float)p.Lx);
+	ky = ((float)true_y)*2.0*M_PI/((float)p.Ly);
+	kz = ((float)true_z)*2.0*M_PI/((float)p.Lz);
 	*/
 
         product[x*p.Ly*p.Lz + y*p.Lz + z] = 0.0;
@@ -191,21 +191,21 @@ void split_and_power(hydro_params p, int x_start, int slab,
 /** Combine the data from each slice (supplied separately by each
  * rank to this function), bin, compute the histogram and output.
  */
-void histogram(hydro_params p, Real *slice, char *filename,
+void histogram(hydro_params p, float *slice, char *filename,
 	       int slab, int x_start) {
   // The rest proceeds as in gw.c
 
   int i, x, y, z;
 
-  Real kmode;
+  float kmode;
 
   int nbins = minof3_int(p.Lx, p.Ly, p.Lz);
-  Real mink = 0.0;
-  Real maxk = 2.0*M_PI;
+  float mink = 0.0;
+  float maxk = 2.0*M_PI;
 
-  Real dk = (maxk-mink)/((Real)nbins);
+  float dk = (maxk-mink)/((float)nbins);
 
-  Real *bins = (Real *)malloc(nbins*sizeof(Real));
+  float *bins = (float *)malloc(nbins*sizeof(float));
   int *counts = (int *)malloc(nbins*sizeof(int));
 
   for(i=0;i<nbins;i++) {
@@ -243,9 +243,9 @@ void histogram(hydro_params p, Real *slice, char *filename,
           true_z = z;
 
 	kmode = sqrt(
-		     ((Real)(true_x*true_x))/((Real)(p.Lx*p.Lx))
-		      + ((Real)(true_y*true_y))/((Real)(p.Ly*p.Ly))
-		      + ((Real)(true_z*true_z))/((Real)(p.Lz*p.Lz))
+		     ((float)(true_x*true_x))/((float)(p.Lx*p.Lx))
+		      + ((float)(true_y*true_y))/((float)(p.Ly*p.Ly))
+		      + ((float)(true_z*true_z))/((float)(p.Lz*p.Lz))
 		     )*2.0*M_PI;
 
 	whichbin = (int)floor(kmode/dk);
@@ -257,7 +257,7 @@ void histogram(hydro_params p, Real *slice, char *filename,
   }
 
 
-  Real red_value;
+  float red_value;
   int red_count;
 
   for(i=0;i<nbins;i++) {
@@ -270,7 +270,7 @@ void histogram(hydro_params p, Real *slice, char *filename,
   }
 
 
-  Real thisk = dk/2.0;
+  float thisk = dk/2.0;
 
   // spokesman does the final analysis
   if(!p.rank) {
@@ -282,7 +282,7 @@ void histogram(hydro_params p, Real *slice, char *filename,
 
 
       fprintf(fp, "%lf %g %d\n",
-	      thisk/(p.a*p.dx), ((Real)(i+1))*bins[i], counts[i]);
+	      thisk/(p.a*p.dx), ((float)(i+1))*bins[i], counts[i]);
 
       thisk = thisk + dk;
     }
@@ -302,7 +302,7 @@ void histogram(hydro_params p, Real *slice, char *filename,
 /** Main method. Calculate the velocity power spectrum.
  *
  */
-void fft_vel(hydro_fields f, hydro_params p, int step, Real ****vectorfield) {
+void fft_vel(hydro_fields f, hydro_params p, int step, float ****vectorfield) {
 
 #ifndef SCALAR
   ptrdiff_t x_thickness, x_start, alloc_local;
@@ -315,19 +315,19 @@ void fft_vel(hydro_fields f, hydro_params p, int step, Real ****vectorfield) {
 
   MPI_Status status;
 
-  Real modsq;
+  float modsq;
 
   int x, y, z;
   int i;
 
-  Real fft_norm = (1.0/(((Real)p.Lx)*((Real)p.Ly)*((Real)p.Lz)));
+  float fft_norm = (1.0/(((float)p.Lx)*((float)p.Ly)*((float)p.Lz)));
   // *p.a*p.a*p.a*p.dx*p.dx*p.dx
 
-  Real *trim = (Real *)malloc(p.slicex*p.slicey*p.Lz*sizeof(Real));
+  float *trim = (float *)malloc(p.slicex*p.slicey*p.Lz*sizeof(float));
 
   printf0(p, "Starting velocity power spectrum FFT calculation.\n");
 
-  Real start = clock();
+  float start = clock();
 
   fftwf_mpi_init();
 
@@ -407,9 +407,9 @@ void fft_vel(hydro_fields f, hydro_params p, int step, Real ****vectorfield) {
     outcpts[i] = fftwf_alloc_complex(alloc_local);
   }
 
-  Real *slice = (Real *)malloc(x_thickness*p.Ly*p.Lz*sizeof(Real));
-  Real *slice_div = (Real *)malloc(x_thickness*p.Ly*p.Lz*sizeof(Real));
-  Real *slice_tot = (Real *)malloc(x_thickness*p.Ly*p.Lz*sizeof(Real));
+  float *slice = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
+  float *slice_div = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
+  float *slice_tot = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
 
 
   int nx = p.Lx/p.slicex;
@@ -424,7 +424,7 @@ void fft_vel(hydro_fields f, hydro_params p, int step, Real ****vectorfield) {
 
   for(i = 0; i < 3; i++) {
 
-    Real check = 0.0;    
+    float check = 0.0;    
     
     for(x=1; x<=p.slicex; x++) {
       for(y=1; y<=p.slicey; y++) {
@@ -450,7 +450,7 @@ void fft_vel(hydro_fields f, hydro_params p, int step, Real ****vectorfield) {
 	    
 	    memcpy(&slice[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
 		   &trim[(x-p.shiftx)*p.slicey*p.Lz],
-		   p.slicey*p.Lz*sizeof(Real));
+		   p.slicey*p.Lz*sizeof(float));
 	    continue;
 	  }
 	  
@@ -485,7 +485,7 @@ void fft_vel(hydro_fields f, hydro_params p, int step, Real ****vectorfield) {
       
     }
 
-    Real total = 0.0;
+    float total = 0.0;
 
     printf0(p, "Vel FFT: Done slicing for cpt %d\n", i);
 
@@ -559,10 +559,10 @@ void fft_vel(hydro_fields f, hydro_params p, int step, Real ****vectorfield) {
 
   fftwf_mpi_cleanup();
 
-  Real end = clock();
+  float end = clock();
 
   printf0(p, "Velocity power spectrum FFT calculation took %lf\n",
-	  ((Real) (end - start)) / CLOCKS_PER_SEC);
+	  ((float) (end - start)) / CLOCKS_PER_SEC);
 
 #endif // SCALAR
 }
