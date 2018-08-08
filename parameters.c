@@ -434,7 +434,7 @@ void get_parameters(char *infile, hydro_params *p)
 	
 	// Just in case, bubble sort the list
 	int sorted = 0;
-
+	int j = 0;
 	while(!sorted) {
 	  sorted = 1;
 
@@ -443,7 +443,7 @@ void get_parameters(char *infile, hydro_params *p)
 	      int temp = p->nucsteps[i+1];
 	      p->nucsteps[i+1] = p->nucsteps[i];
 	      p->nucsteps[i] = temp;
-	      for(int j = 0; j < 3; j++){
+	      for(j = 0; j < 3; j++){
 		temp = p->nuclocs[i][j];
 		p->nuclocs[i+1][j] = p->nuclocs[i][j]; 
 		p->nuclocs[i][j] = temp;
