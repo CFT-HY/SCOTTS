@@ -366,11 +366,14 @@ typedef struct {
 
   /** Constant in potential term.
    *
-   * Calculated s.t either $V(\phi_b,T=0)=0$ or if `TINDEP` flag
-   * declared $V(\phi_b)=0$.
+   * Calculated s.t $V(\phi_b,T=0)=0$ 
    */
   float V0;
-
+#ifdef BAG
+  /** Broken phase value of phi in the bag model.
+   */
+  double phi_0;
+#endif //BAG
   
 } hydro_params;
 
