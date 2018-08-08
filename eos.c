@@ -52,18 +52,19 @@ void find_Ta(hydro_fields f, hydro_params p) {
     for(y=1; y<=p.slicey; y++) {
       for(z=0; z<p.Lz; z++) {
 
-#ifdef TINDEP
+#ifdef BAG
     // Second term in power is just the potential,
     // should we just create an array here?
-	f.T[x][y][z]=pow((f.E[x][y][z]/f.W[x][y][z]
-			  - (0.5*p.gamma*(p.Tconst*p.Tconst - p.T0*p.T0)
-			     *f.phi[x][y][z]*f.phi[x][y][z]
-			     - p.alpha*p.Tconst
-			     *f.phi[x][y][z]*f.phi[x][y][z]*f.phi[x][y][z]/3.0
-			     + 0.25*p.lambda
-			     *f.phi[x][y][z]*f.phi[x][y][z]
-			     *f.phi[x][y][z]*f.phi[x][y][z]
-			     + p.V0))/(3.*p.gdeg) , 0.25);
+    f.T[x][y][z]=pow((f.E[x][y][z]/f.W[x][y][z]
+		      - ( 0.5*p.gamma*f.phi[x][y][z]*f.phi[x][y][z]
+			  - (p.alpha*f.phi[x][y][z]*f.phi[x][y][z]
+			     *f.phi[x][y][z]/3.0)
+			  + (0.25*p.lambda*f.phi[x][y][z]*f.phi[x][y][z]
+			     *f.phi[x][y][z]*f.phi[x][y][z])
+			  + p.V0))
+		     /(3.*(p.gdeg + p.V0*f.phi[x][y][z]*f.phi[x][y][z]
+			   *(2*f.phi[x][y][z]/p.phi_0 - 3.)
+			   /(p.phi_0*p.phi_0))) , 0.25);
 #else
 
 	/*

@@ -199,7 +199,6 @@ int main(int argc, char *argv[]) {
 	nucleate_at(f,p,0,0,0);
 	halo_field(f.phi,p);
       
-	
 	end = clock();
 	if(!p.rank)
 	  fprintf(stderr,"Nucleation attempt took %lf\n",
@@ -229,6 +228,7 @@ int main(int argc, char *argv[]) {
 	printf0(p, "Nucleating just one bubble\n");
 	nucleate_at(f,p,0,0,0);
 	halo_field(f.phi,p);
+	bcount+=1;
       } else{
 	// Empty system
 	initial_blank(f, p);
