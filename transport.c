@@ -91,11 +91,11 @@ void donor_E_dir(hydro_fields f, hydro_params p, int dir) {
 void donor_Z_dir(hydro_fields f, hydro_params p, int dir) {
 
 #ifndef SCALAR
-  Real vc;
+  float vc;
   int x, y, z;
 
 
-  Real ***Vbody = make_field(p);
+  float ***Vbody = make_field(p);
 
 
 

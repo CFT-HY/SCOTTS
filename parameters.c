@@ -694,31 +694,44 @@ void get_parameters(char *infile, hydro_params *p)
  */
 void set_bubble_parameters(hydro_params *p){
 
-#ifdef TINDEP
-  p->V0=(1./(96.*p->lambda*p->lambda*p->lambda)
-	*pow(p->alpha*p->Tconst + sqrt(p->alpha*p->alpha*p->Tconst*p->Tconst
-				     - 4*(p->Tconst*p->Tconst-p->T0*p->T0)
-				     *p->lambda*p->gamma),2.)
-	*(p->alpha*p->alpha*p->Tconst*p->Tconst
-	  - 6*(p->Tconst*p->Tconst-p->T0*p->T0)*p->lambda*p->gamma
-	  + p->alpha*p->Tconst*sqrt(p->alpha*p->alpha*p->Tconst*p->Tconst
-				  - 4*(p->Tconst*p->Tconst-p->T0*p->T0)
-				  *p->lambda*p->gamma)));
+#ifdef BAG
+  p->V0 = (1./(96.*p->lambda*p->lambda*p->lambda)
+	 *(p->alpha + sqrt(p->alpha*p->alpha - 4.*p->gamma*p->lambda))
+	 *(p->alpha + sqrt(p->alpha*p->alpha - 4.*p->gamma*p->lambda))
+	 *(-6*p->gamma*p->lambda
+	   + p->alpha*(p->alpha + sqrt(p->alpha*p->alpha
+				       - 4.*p->gamma*p->lambda))));
+  
+  p->phi_0 = (p->alpha + sqrt(p->alpha*p->alpha
+			      - 4.*p->gamma*p->lambda))/(2.*p->lambda);
 #else
-  p->V0=0.25*p->gamma*p->gamma*p->T0*p->T0*p->T0*p->T0/p->lambda;
-#endif // TINDEP
+  p->V0 = 0.25*p->gamma*p->gamma*p->T0*p->T0*p->T0*p->T0/p->lambda;
+#endif // BAG
+
+
+#ifdef BAG
+  p->surface_tension = (pow(p->alpha*(p->alpha + sqrt(p->alpha*p->alpha
+						  - 4.*p->gamma*p->lambda))
+			   - 2*p->gamma*p->lambda, 3/2.)
+		       /(24.*p->lambda*p->lambda*sqrt(p->lambda)));
+#else
 
   p->surface_tension = (2.0*sqrt(2.0)/81.0)*(
 					     p->alpha*p->alpha*p->alpha
 					     /(p->lambda*p->lambda
 					       *sqrt(p->lambda)));
+#endif // BAG
   if(p->phimin <= 0.){
     printf0(*p, "phimin not set, defaulting to broken phase value. \n");
+#ifdef BAG
+    p->phimin = p->phi_0;
+#else
     p->phimin =  (p->alpha*p->Tconst
 		  + sqrt((p->alpha*p->Tconst)*(p->alpha*p->Tconst)
 			 - 4.0*p->lambda*p->gamma
 			 *(p->Tconst*p->Tconst - p->T0*p->T0))
 		  )/(2.0*p->lambda);
+#endif // BAG
   }
   if(p->R_critical <= 0.){
     printf0(*p, "R_critical not set, defaulting to gaussian ansatz. \n");

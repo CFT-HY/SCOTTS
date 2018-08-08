@@ -8,12 +8,12 @@
 
 
 
-Real get_momtot(hydro_fields f, hydro_params p) {
+float get_momtot(hydro_fields f, hydro_params p) {
 
   int x, y, z, xmax;
 
 
-  Real momtot = 0.0;
+  float momtot = 0.0;
 
   // Just search for maxmimum
   for(x = 1; x <= p.slicex; x++) {
@@ -30,11 +30,11 @@ Real get_momtot(hydro_fields f, hydro_params p) {
   return momtot;
 }
 
-void norm_power(hydro_fields f, hydro_params p, Real ****field) {
+void norm_power(hydro_fields f, hydro_params p, float ****field) {
 
   int i, x, y, z;
   // should be normalised to volume, this makes it okay
-  Real momtot = reduce_sum(get_momtot(f, p),p)/((Real)p.Lx*p.Ly*p.Lz);
+  float momtot = reduce_sum(get_momtot(f, p),p)/((float)p.Lx*p.Ly*p.Lz);
 
   printf0(p, "momtot per site is %g\n", momtot);
   for(i=0; i<3; i++) {
@@ -56,24 +56,24 @@ void norm_power(hydro_fields f, hydro_params p, Real ****field) {
 void project_down(hydro_params p, fftwf_complex **in, int shift_x, int x_thickness, int times) {
 
   int x, y, z;
-  Real kx, ky, kz;
+  float kx, ky, kz;
 
-  Real in_proj_re[3];
-  Real in_proj_im[3];
+  float in_proj_re[3];
+  float in_proj_im[3];
 
-  Real res_re, res_im;
+  float res_re, res_im;
 
   int i, j;
 
-  Real resid, stuff;
+  float resid, stuff;
 
-  Real tdx = 0.5;
+  float tdx = 0.5;
 
   int reruns;
 
   int true_x, true_y, true_z;
 
-  Real s_x, s_y, s_z;
+  float s_x, s_y, s_z;
 
   for(reruns = 0; reruns < times; reruns++) {
     resid = 0.0;
@@ -114,14 +114,14 @@ void project_down(hydro_params p, fftwf_complex **in, int shift_x, int x_thickne
 
 
 	  /*	  
-	  kx = sqrt((2.0 - 2.0*cos(((Real)(x+shift_x))*2.0*M_PI/(((Real)p.Lx))))/(tdx*tdx));
-	  ky = sqrt((2.0 - 2.0*cos(((Real)y)*2.0*M_PI/(((Real)p.Ly))))/(tdx*tdx));
-	  kz = sqrt((2.0 - 2.0*cos(((Real)z)*2.0*M_PI/(((Real)p.Lz))))/(tdx*tdx));
+	  kx = sqrt((2.0 - 2.0*cos(((float)(x+shift_x))*2.0*M_PI/(((float)p.Lx))))/(tdx*tdx));
+	  ky = sqrt((2.0 - 2.0*cos(((float)y)*2.0*M_PI/(((float)p.Ly))))/(tdx*tdx));
+	  kz = sqrt((2.0 - 2.0*cos(((float)z)*2.0*M_PI/(((float)p.Lz))))/(tdx*tdx));
 	  */
 
-	  kx = s_x*sqrt((2.0 - 2.0*cos(((Real)(true_x))*2.0*M_PI/(((Real)p.Lx))))/(p.dx*p.dx));
-	  ky = s_y*sqrt((2.0 - 2.0*cos(((Real)(true_y))*2.0*M_PI/(((Real)p.Ly))))/(p.dx*p.dx));
-	  kz = s_z*sqrt((2.0 - 2.0*cos(((Real)(true_z))*2.0*M_PI/(((Real)p.Lz))))/(p.dx*p.dx));
+	  kx = s_x*sqrt((2.0 - 2.0*cos(((float)(true_x))*2.0*M_PI/(((float)p.Lx))))/(p.dx*p.dx));
+	  ky = s_y*sqrt((2.0 - 2.0*cos(((float)(true_y))*2.0*M_PI/(((float)p.Ly))))/(p.dx*p.dx));
+	  kz = s_z*sqrt((2.0 - 2.0*cos(((float)(true_z))*2.0*M_PI/(((float)p.Lz))))/(p.dx*p.dx));
 	  
 	  in_proj_re[0] = 0.0;
 	  in_proj_re[1] = 0.0;
@@ -205,8 +205,8 @@ void project_down(hydro_params p, fftwf_complex **in, int shift_x, int x_thickne
  * Lazy and inefficient way of getting gaussian
  * random number
  */
-Real get_normal(Real mean, Real dev) {
-  Real u1, u2;
+float get_normal(float mean, float dev) {
+  float u1, u2;
   
   u1 = drand48();
   u2 = drand48();
@@ -217,12 +217,12 @@ Real get_normal(Real mean, Real dev) {
 /* spectrum
  * 
  */
-void spectrum(Real ksq, hydro_params p, fftwf_complex *res) 
+void spectrum(float ksq, hydro_params p, fftwf_complex *res) 
 { 
 
-  Real phase;
+  float phase;
 
-  Real L = p.Lx;
+  float L = p.Lx;
 
 
   if(fabs(ksq) < 0.000001 || fabs(ksq) < p.initcutoff) {
@@ -231,8 +231,8 @@ void spectrum(Real ksq, hydro_params p, fftwf_complex *res)
   } else {
 
 
-    //  (*res)[0] = p.initnorm*exp(-0.25*sqrt(ksq)*p.dx*((Real)L));    
-    //    (*res)[0] = get_normal(0.0, p.initnorm*exp(-0.25*sqrt(ksq)*p.dx*((Real)L)));
+    //  (*res)[0] = p.initnorm*exp(-0.25*sqrt(ksq)*p.dx*((float)L));    
+    //    (*res)[0] = get_normal(0.0, p.initnorm*exp(-0.25*sqrt(ksq)*p.dx*((float)L)));
     (*res)[0] = get_normal(0.0, exp(-1.0*sqrt(ksq)*p.dx*p.initlength));
 
 
@@ -254,12 +254,12 @@ void spectrum(Real ksq, hydro_params p, fftwf_complex *res)
 
 
 
-/* init_ps(hydro_fields f, hydro_params p, Real ***field)
+/* init_ps(hydro_fields f, hydro_params p, float ***field)
  *
  * Initialises the field with a power spectrum.
  * Used to convince reluctant referees.
  */
-void init_ps(hydro_fields f, hydro_params p, Real ****field) {
+void init_ps(hydro_fields f, hydro_params p, float ****field) {
 
 
   ptrdiff_t x_thickness, x_start, alloc_local;
@@ -273,12 +273,12 @@ void init_ps(hydro_fields f, hydro_params p, Real ****field) {
 
   MPI_Status status;
 
-  Real kmode, modsq;
+  float kmode, modsq;
 
   int x, y, z;
   int i, j;
 
-  Real *trim = (Real *)malloc(p.slicex*p.slicey*p.Lz*sizeof(Real));
+  float *trim = (float *)malloc(p.slicex*p.slicey*p.Lz*sizeof(float));
 
 
   fftwf_mpi_init();
@@ -335,7 +335,7 @@ void init_ps(hydro_fields f, hydro_params p, Real ****field) {
    * Set up modes with desired power spectrum...
    */
 
-  Real ksq;
+  float ksq;
 
   //  int i;
 
@@ -364,9 +364,9 @@ void init_ps(hydro_fields f, hydro_params p, Real ****field) {
 	  true_z = z;
 	}
 
-	ksq = (2.0 - 2.0*cos(((Real)true_x)*2.0*M_PI/(((Real)p.Lx))))/(p.dx*p.dx);
-	ksq += (2.0 - 2.0*cos(((Real)true_y)*2.0*M_PI/(((Real)p.Ly))))/(p.dx*p.dx);
-	ksq += (2.0 - 2.0*cos(((Real)true_z)*2.0*M_PI/(((Real)p.Lz))))/(p.dx*p.dx);
+	ksq = (2.0 - 2.0*cos(((float)true_x)*2.0*M_PI/(((float)p.Lx))))/(p.dx*p.dx);
+	ksq += (2.0 - 2.0*cos(((float)true_y)*2.0*M_PI/(((float)p.Ly))))/(p.dx*p.dx);
+	ksq += (2.0 - 2.0*cos(((float)true_z)*2.0*M_PI/(((float)p.Lz))))/(p.dx*p.dx);
 
 	for(i=0; i<3; i++) {
 	  spectrum(ksq, p, &(in[i][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z]));
@@ -412,7 +412,7 @@ void init_ps(hydro_fields f, hydro_params p, Real ****field) {
 	      //	      fprintf(stderr, " (c)\n");
 	    } else {
 	      //	      fprintf(stderr, " (m)\n");
-	      MPI_Send(&(((Real *)in[i])[((j-x_start)%p.Lx)*p.Ly*p.Lz*2]), 2*p.Ly*p.Lz, MPI_FLOAT, ((p.Lx-j))/x_thickness % p.size, j, MPI_COMM_WORLD);
+	      MPI_Send(&(((float *)in[i])[((j-x_start)%p.Lx)*p.Ly*p.Lz*2]), 2*p.Ly*p.Lz, MPI_FLOAT, ((p.Lx-j))/x_thickness % p.size, j, MPI_COMM_WORLD);
 	    }
 	  }
 
@@ -429,7 +429,7 @@ void init_ps(hydro_fields f, hydro_params p, Real ****field) {
 	      //	      fprintf(stderr, "rank %d copy is %g %g\n", p.rank, swap_in[i][(j-min_needed)*p.Ly*p.Lz][0], swap_in[i][(j-min_needed)*p.Ly*p.Lz][1]);
 	    } else {	     
 	      //	      fprintf(stderr, " (m)\n");
-	      MPI_Recv(&(((Real *)swap_in[i])[(j-min_needed)*p.Ly*p.Lz*2]), 2*p.Ly*p.Lz, MPI_FLOAT, (j % p.Lx)/x_thickness, j, MPI_COMM_WORLD, &status);
+	      MPI_Recv(&(((float *)swap_in[i])[(j-min_needed)*p.Ly*p.Lz*2]), 2*p.Ly*p.Lz, MPI_FLOAT, (j % p.Lx)/x_thickness, j, MPI_COMM_WORLD, &status);
 	    }
 	  }
 
@@ -561,10 +561,10 @@ void init_ps(hydro_fields f, hydro_params p, Real ****field) {
 
   */
 
-  Real *slice = (Real *)malloc(slab*p.Ly*p.Lz*sizeof(Real));
+  float *slice = (float *)malloc(slab*p.Ly*p.Lz*sizeof(float));
 
 
-  Real maximag = 0.0;
+  float maximag = 0.0;
 
   for(i=0; i<3; i++) {
 
@@ -599,7 +599,7 @@ void init_ps(hydro_fields f, hydro_params p, Real ****field) {
 
 	    memcpy(&trim[(x-p.shiftx)*p.slicey*p.Lz],
 		   &slice[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
-		   p.slicey*p.Lz*sizeof(Real));
+		   p.slicey*p.Lz*sizeof(float));
 
 	    continue;
 	  }

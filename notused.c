@@ -15,24 +15,24 @@ void initial_3D(hydro_fields f, hydro_params p) {
   
   int x, y, z, i; 
 
-  Real surface_tension = 2.0*sqrt(2.0)/81.0*p.alpha*p.alpha*p.alpha
+  float surface_tension = 2.0*sqrt(2.0)/81.0*p.alpha*p.alpha*p.alpha
     /(p.lambda*p.lambda*sqrt(p.lambda));
 
-  Real phimin =  ( p.alpha*p.Tconst 
+  float phimin =  ( p.alpha*p.Tconst 
 		     + sqrt((p.alpha*p.Tconst)*(p.alpha*p.Tconst)
 			    - 4*p.lambda*p.gamma
 			    *(p.Tconst*p.Tconst - p.T0*p.T0)) )/ (2*p.lambda);
 
 
-  Real R_critical = 2.0*surface_tension/(-1.0*Vf(p, p.Tconst, phimin));
+  float R_critical = 2.0*surface_tension/(-1.0*Vf(p, p.Tconst, phimin));
 
-  Real R_scaled = p.scale*R_critical;
+  float R_scaled = p.scale*R_critical;
 
   printf0(p,
 	  "** phimin %g, R_critical %g, R_scaled %g\n",
 	  phimin, R_critical, R_scaled);
   
-  Real Er, El, rE;
+  float Er, El, rE;
 
   rE = 50.0;
 
@@ -85,7 +85,7 @@ void initial_3D(hydro_fields f, hydro_params p) {
  * Based on my Q-ball code. Not currently in use.
  */
 void init_profile(hydro_fields *f, hydro_params *p) {
-  Real xdummy, phidummy, vdummy;
+  float xdummy, phidummy, vdummy;
 
   printf0(*p, "Loading invariant profile (may be slow)!\n");
 
@@ -115,12 +115,12 @@ void init_profile(hydro_fields *f, hydro_params *p) {
 
   int imax;
 
-  Real dist;
+  float dist;
 
   p->Linv = lines;
-  f->x_inv = (Real *) malloc(lines*sizeof(Real));
-  f->phi_inv = (Real *) malloc(lines*sizeof(Real));
-  f->V_inv = (Real *) malloc(lines*sizeof(Real));
+  f->x_inv = (float *) malloc(lines*sizeof(float));
+  f->phi_inv = (float *) malloc(lines*sizeof(float));
+  f->V_inv = (float *) malloc(lines*sizeof(float));
 
   while(i < lines) {
     if(fscanf(fp, "%f%f%f", &(f->x_inv[i]), &(f->phi_inv[i]),

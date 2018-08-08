@@ -32,7 +32,7 @@
 /** Nasty global to track how much walltime is spent doing
  *  communications
  */
-Real comms_time;
+float comms_time;
 
 
 /* There is one copy of everything here done properly for MPI, and then
@@ -151,7 +151,7 @@ void layout(hydro_params *p) {
 
 
 
-  // sites on a node = number of sites + halos + Real halos
+  // sites on a node = number of sites + halos + float halos
   p->fieldN = ((p->slicex+2)*(p->slicey+2)*p->Lz);
 
   printf0(*p, "Each node will need %d = %d + %d entries to store halo\n",
@@ -203,7 +203,7 @@ void layout(hydro_params *p) {
  * each node knows which rank is its up/down neighbour in the x/y
  * directions and also the four corners (`p.rank_[xy][MP]` etc).
  */
-void halo_field(Real ***field, hydro_params p) {
+void halo_field(float ***field, hydro_params p) {
 
   MPI_Request request;
   MPI_Status stat;
@@ -346,19 +346,19 @@ void halo_field(Real ***field, hydro_params p) {
 
 
   // Update the comms_time counter
-  comms_time += ((Real) (end - start)) / CLOCKS_PER_SEC;
+  comms_time += ((float) (end - start)) / CLOCKS_PER_SEC;
 }
 
 
 // Reduction routines, for when we want to combine things    
 
-/** Add together Reals from each node.
+/** Add together floats from each node.
  *
  * See reduce_sum_int() for an integer version.
  */
-Real reduce_sum(Real result, hydro_params p) {
+float reduce_sum(float result, hydro_params p) {
 
-  Real total = 0.0;
+  float total = 0.0;
   MPI_Allreduce(&result, &total, 1, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
   return total;
 
@@ -367,7 +367,7 @@ Real reduce_sum(Real result, hydro_params p) {
 
 /** Add together integers from each node.
  *
- * See reduce_sum() for the Realing-point version.
+ * See reduce_sum() for the floating-point version.
  */
 int reduce_sum_int(int result, hydro_params p) {
 
@@ -382,9 +382,9 @@ int reduce_sum_int(int result, hydro_params p) {
  *
  * See reduce_max_int() for an integer version.
  */
-Real reduce_max(Real result, hydro_params p) {
+float reduce_max(float result, hydro_params p) {
 
-  Real total = 0.0;
+  float total = 0.0;
   MPI_Allreduce(&result, &total, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD);
   return total;
 
@@ -394,7 +394,7 @@ Real reduce_max(Real result, hydro_params p) {
 /** Return the maximum of all the values submitted by each node;
  * integer version.
  *
- * See reduce_max() for the Realing-point version.
+ * See reduce_max() for the floating-point version.
  */
 int reduce_max_int(int result, hydro_params p) {
 
@@ -407,9 +407,9 @@ int reduce_max_int(int result, hydro_params p) {
 
 /** Return the minimum of all the values submitted by each node.
  */
-Real reduce_min(Real result, hydro_params p) {
+float reduce_min(float result, hydro_params p) {
 
-  Real total = 0.0;
+  float total = 0.0;
   MPI_Allreduce(&result, &total, 1, MPI_FLOAT, MPI_MIN, MPI_COMM_WORLD);
   return total;
 
@@ -432,7 +432,7 @@ int reduce_and(int result, hydro_params p) {
  *  The maximum result is contained out.value and the rank of the
  *  processor containing it is in out.rank.
  */
-value_rank reduce_maxloc(Real result, hydro_params p) {
+value_rank reduce_maxloc(float result, hydro_params p) {
   value_rank in, out;
   in.value=result;
   in.rank=p.rank;
@@ -446,7 +446,7 @@ value_rank reduce_maxloc(Real result, hydro_params p) {
  *  The minimum result is contained out.value and the rank of the
  *  processor containing it is in out.rank.
  */
-value_rank reduce_minloc(Real result, hydro_params p) {
+value_rank reduce_minloc(float result, hydro_params p) {
   value_rank in, out;
   in.value=result;
   in.rank=p.rank;
@@ -463,7 +463,7 @@ void init_comms_time(hydro_params *p) {
 
 /** Returns the current value of the global variable comms_time.
  */
-Real get_comms_time(hydro_params *p) {
+float get_comms_time(hydro_params *p) {
   return comms_time;
 }
 
@@ -515,7 +515,7 @@ void layout(hydro_params *p) {
 }
 
 
-void halo_field(Real ***field, hydro_params p) {
+void halo_field(float ***field, hydro_params p) {
 
 
   clock_t start, end;
@@ -649,11 +649,11 @@ void halo_field(Real ***field, hydro_params p) {
 
   end = clock();
 
-  comms_time += ((Real) (end - start)) / CLOCKS_PER_SEC;
+  comms_time += ((float) (end - start)) / CLOCKS_PER_SEC;
   
 }
 
-Real reduce_sum(Real result, hydro_params p) {
+float reduce_sum(float result, hydro_params p) {
   // do nothing
   return result;
 }
@@ -664,12 +664,12 @@ int reduce_sum_int(int result, hydro_params p) {
 }
 
 
-Real reduce_max(Real result, hydro_params p) {
+float reduce_max(float result, hydro_params p) {
   // do nothing
   return result;
 }
 
-Real reduce_min(Real result, hydro_params p) {
+float reduce_min(float result, hydro_params p) {
   // do nothing
   return result;
 }
@@ -681,14 +681,14 @@ int reduce_and(int result, hydro_params p) {
 
 }
 
-value_rank reduce_maxloc(Real result, hydro_params p) {
+value_rank reduce_maxloc(float result, hydro_params p) {
   value_rank out;
   out.value=result;
   out.rank=p.rank;
   return out;
 }
 
-value_rank reduce_minloc(Real result, hydro_params p) {
+value_rank reduce_minloc(float result, hydro_params p) {
   value_rank out;
   out.value=result;
   out.rank=p.rank;
@@ -699,7 +699,7 @@ void init_comms_time(hydro_params *p) {
   comms_time = 0.0;
 }
 
-Real get_comms_time(hydro_params *p) {
+float get_comms_time(hydro_params *p) {
   return comms_time;
 }
 

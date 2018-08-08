@@ -10,9 +10,9 @@ void artificial_viscosity(hydro_fields f, hydro_params p) {
   int x, y, z;
 
   /*  
-  Real ***gradu = make_field(p);
+  float ***gradu = make_field(p);
 
-  Real Ux, Uxp, Uy, Uyp, Uz, Uzp;
+  float Ux, Uxp, Uy, Uyp, Uz, Uzp;
 
 
   for(x = 1; x <= p.slicex; x++) {
@@ -46,7 +46,7 @@ void artificial_viscosity(hydro_fields f, hydro_params p) {
   }
 
 
-  Real Umin, Umax, Udix, Udiv;
+  float Umin, Umax, Udix, Udiv;
 
 
   for(x = 1; x <= p.slicex; x++) {
@@ -65,9 +65,9 @@ void artificial_viscosity(hydro_fields f, hydro_params p) {
 	}
   */
 
-  Real dvx, dvy, dvz;
+  float dvx, dvy, dvz;
 
-  Real ****Q = make_vector(p);
+  float ****Q = make_vector(p);
 
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
