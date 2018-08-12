@@ -623,5 +623,6 @@ void fft_vel(hydro_fields f, hydro_params p, int step, float ****vectorfield);
 // initps.c
 void init_ps(hydro_fields f, hydro_params p, float ****field);
 void norm_power(hydro_fields f, hydro_params p, float ****field);
+void VtoZ(hydro_fields f, hydro_params p);
 float get_momtot(hydro_fields f, hydro_params p);
 

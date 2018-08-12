@@ -58,6 +58,105 @@ void norm_power(hydro_fields f, hydro_params p, float ****field) {
   }
 }
 
+
+void VtoZ(hydro_fields f, hydro_params p) {
+
+  int i, x, y, z;
+
+  // This assumes V has been initialised (but not necessarily haloed)
+
+  // First, then, halo V
+  halo_field(f.V[0], p);
+  halo_field(f.V[1], p);
+  halo_field(f.V[2], p);
+ 
+  // Work out U from V (approximately)
+  // (this can be made more precise by adopting what is in evolve.c)
+  for(x=1; x<=p.slicex; x++) {
+    for(y=1; y<=p.slicey; y++) {
+      for(z=0; z<p.Lz; z++) {
+	  f.W[x][y][z] = 1.0/sqrt(1 - (f.V[0][x][y][z]*f.V[0][x][y][z] +
+				       f.V[1][x][y][z]*f.V[1][x][y][z] +
+				       f.V[2][x][y][z]*f.V[2][x][y][z]));
+	  
+	  f.U[0][x][y][z] = f.W[x][y][z]*f.V[0][x][y][z];
+	  f.U[1][x][y][z] = f.W[x][y][z]*f.V[1][x][y][z];
+	  f.U[2][x][y][z] = f.W[x][y][z]*f.V[2][x][y][z];
+      }
+    }
+  }
+
+  // Halo W and U
+  halo_field(f.W, p);
+  halo_field(f.U[0], p);
+  halo_field(f.U[1], p);
+  halo_field(f.U[2], p);
+
+  float eps = 1.0;
+  float kappa = 1.0;
+
+
+  // Work out Z and E from U and W (approximately)
+  // (this can be made more precise by adopting what is in evolve.c)
+  for(x=1; x<=p.slicex; x++) {
+    for(y=1; y<=p.slicey; y++) {
+      for(z=0; z<p.Lz; z++) {
+	  
+	f.E[x][y][z] = f.W[x][y][z]*eps;
+	  
+	f.kappa[x][y][z] = kappa;
+      }
+    }
+  }
+  
+
+  // halo E and kappa
+  halo_field(f.E, p);
+  halo_field(f.kappa, p);
+
+
+
+
+  float sigmabar;
+
+  for(x=1; x<=p.slicex; x++) {
+    for(y=1; y<=p.slicey; y++) {
+      for(z=0; z<p.Lz; z++) {
+
+	sigmabar = (f.kappa[x][y][z]
+                    *f.E[x][y][z]
+                    + f.kappa[x-1][y][z]
+                    *f.E[x-1][y][z]
+                    + f.kappa[x-1][y-1][z]
+                    *f.E[x-1][y-1][z]
+                    + f.kappa[x-1][y-1][((z+p.Lz-1)%p.Lz)]
+                    *f.E[x-1][y-1][((z+p.Lz-1)%p.Lz)]
+                    + f.kappa[x][y-1][((z+p.Lz-1)%p.Lz)]
+                    *f.E[x][y-1][((z+p.Lz-1)%p.Lz)]
+                    + f.kappa[x-1][y][((z+p.Lz-1)%p.Lz)]
+                    *f.E[x-1][y][((z+p.Lz-1)%p.Lz)]
+                    + f.kappa[x][y-1][z]
+                    *f.E[x][y-1][z]
+                    + f.kappa[x][y][((z-1+p.Lz)%p.Lz)]
+                    *f.E[x][y][((z-1+p.Lz)%p.Lz)]
+		    )/8.0;
+
+	f.Z[0][x][y][z] = f.U[0][x][y][z]*sigmabar;
+	f.Z[1][x][y][z] = f.U[1][x][y][z]*sigmabar;
+	f.Z[2][x][y][z] = f.U[2][x][y][z]*sigmabar;
+      }
+    }
+  }
+  
+  halo_field(f.Z[0], p);
+  halo_field(f.Z[1], p);
+  halo_field(f.Z[2], p);
+
+
+
+}
+
+
 /* project_down
  *
  * Project out rotational or divergent bits
