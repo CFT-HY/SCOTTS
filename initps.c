@@ -476,7 +476,7 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
   ptrdiff_t n1 = p.Ly;
   ptrdiff_t n2 = p.Lz;
 
-  int slab;
+  //  int slab;
 
   MPI_Status status;
 
@@ -495,40 +495,61 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
                                        &x_thickness, &x_start);
 
 
+  int *thicknesses = malloc(p.size*sizeof(int));
+  int *starts = malloc(p.size*sizeof(int));
+  int *map = malloc(p.Lx*sizeof(int));
 
-  slab = (int) x_thickness;
+  if(p.rank) {
+    MPI_Send(&x_thickness, 1, MPI_INTEGER, 0, p.rank, MPI_COMM_WORLD);
+    MPI_Send(&x_start, 1, MPI_INTEGER, 0, p.rank, MPI_COMM_WORLD);
 
-  if(((int)x_thickness) != p.Lx/p.size) {
-    fprintf(stderr,
-            "Giving up in FFT: FFTW told me to use a silly layout!\n");
-    die(-42);
+  } else {
+    thicknesses[0] = x_thickness;
+    starts[0] = x_start;
+
+    for(i=1; i<p.size; i++) {
+      MPI_Recv(&thicknesses[i], 1, MPI_INTEGER, i, i, MPI_COMM_WORLD, &status);
+      MPI_Recv(&starts[i], 1, MPI_INTEGER, i, i, MPI_COMM_WORLD, &status);
+
+      //      fprintf(stderr,"rank %d, thickness %d, start %d\n", i, thicknesses[i], starts[i]);
+    }
+    for(x=0; x<p.Lx; x++) {
+      map[x] = -1;
+      for(i=0; i<p.size; i++) {
+        if(starts[i] <= x && (starts[i] + thicknesses[i]) > x) {
+          map[x] = i;
+          //      fprintf(stderr, "therefore node %d is responsible for x=%d\n", i, x);
+          break;
+        }
+      }
+      if(map[x] == -1) {
+        fprintf(stderr,"cannot find a node responsible for x=%d!\n", x);
+        die(-99);
+      }
+
+    }
   }
 
-  if(((int)x_thickness) == 0) {
-    fprintf(stderr, "Giving up in FFT: dx=0!\n");
-    die(-43);
-  }
+  printf0(p, "broadcasting our results\n");
+  MPI_Bcast(map, p.Lx, MPI_INTEGER, 0, MPI_COMM_WORLD);
+  printf0(p, "now to layout\n");
+
 
 
   fftwf_complex **in = (fftwf_complex **)malloc(3*sizeof(fftwf_complex *));
+  in[0] = fftwf_alloc_complex(alloc_local);
+  in[1] = fftwf_alloc_complex(alloc_local);
+  in[2] = fftwf_alloc_complex(alloc_local);
+
   fftwf_complex **swap_in = (fftwf_complex **)malloc(3*sizeof(fftwf_complex *));
-
-  fftwf_complex **out = (fftwf_complex **)malloc(3*sizeof(fftwf_complex *));
-
-  in[0] = fftwf_alloc_complex(x_thickness*p.Ly*p.Lz);
   swap_in[0] = fftwf_alloc_complex(x_thickness*p.Ly*p.Lz);
-
-  out[0] = fftwf_alloc_complex(x_thickness*p.Ly*p.Lz);
-
-  in[1] = fftwf_alloc_complex(x_thickness*p.Ly*p.Lz);
   swap_in[1] = fftwf_alloc_complex(x_thickness*p.Ly*p.Lz);
-
-  out[1] = fftwf_alloc_complex(x_thickness*p.Ly*p.Lz);
-
-  in[2] = fftwf_alloc_complex(x_thickness*p.Ly*p.Lz);
   swap_in[2] = fftwf_alloc_complex(x_thickness*p.Ly*p.Lz);
 
-  out[2] = fftwf_alloc_complex(x_thickness*p.Ly*p.Lz);
+  fftwf_complex **out = (fftwf_complex **)malloc(3*sizeof(fftwf_complex *));
+  out[0] = fftwf_alloc_complex(alloc_local);
+  out[1] = fftwf_alloc_complex(alloc_local);
+  out[2] = fftwf_alloc_complex(alloc_local);
 
 
 
@@ -657,6 +678,144 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
   int min_needed = p.Lx-(x_start+x_thickness)+1;
   int max_needed = p.Lx-x_start;
 
+
+
+  for(i=0; i<3; i++) {
+
+    printf0(p, "Direction %d being handled\n", i);
+
+    // At this point each node knows what it ought to have, but we need to 'hermitianise' it
+    // Need to do swapping
+
+
+
+
+
+
+    for(j=0; j<=p.Lx; j++) {
+
+      if(j>= x_start && j < x_start+x_thickness) {
+
+
+
+
+	if(map[((p.Lx-j) % p.Lx)] == p.rank) {
+	} else {
+	  MPI_Send(&(((double *)in[i])[((j-x_start)%p.Lx)*p.Ly*p.Lz*2]),
+		   2*p.Ly*p.Lz, MPI_DOUBLE,
+		   map[((p.Lx-j) % p.Lx)], j, MPI_COMM_WORLD);
+	}
+      }
+
+
+      if(j>=min_needed && j<=max_needed) {
+
+	if(map[(j % p.Lx)] == p.rank) {
+
+
+	  memcpy(&(((fftw_complex *)swap_in[i])[(j-min_needed)*p.Ly*p.Lz]),
+		 &(((fftw_complex *)in[i])[((j-x_start)%p.Lx)*p.Ly*p.Lz]),
+		 p.Ly*p.Lz*sizeof(fftw_complex));
+
+
+	} else {
+	  MPI_Recv(&(((double *)swap_in[i])[(j-min_needed)*p.Ly*p.Lz*2]),
+		   2*p.Ly*p.Lz, MPI_DOUBLE,
+		   map[(j % p.Lx)], j, MPI_COMM_WORLD, &status);
+
+	}
+      }
+
+
+
+    }
+      
+
+
+    // at this point swap_in has the stuff needed to do the conjugate properly
+
+
+    printf0(p, "Starting swap\n");
+
+
+    for(x=x_start; x < x_start+x_thickness; x++) {
+
+
+      // This is the row in the swap_in where one can find (p.Lx-x)
+      //      int swap_row = (((p.Lx-x) % x_thickness) + x_thickness - 1) % x_thickness;
+      int swap_row = (((p.Lx-x) - min_needed));
+
+      for(y=0;y<p.Ly;y++) {
+	for(z=0;z<p.Lz;z++) {
+
+	  // Conjugate the system. Treat special cases first.
+
+	  if((x == 0 || x == p.Lx/2)
+	     && (y == 0 || y == p.Ly/2)
+	     && (z == 0 || z == p.Lz/2)) {
+	    
+
+	    /* These sites need to be pure real.
+	     */	    
+	    in[i][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0] \
+	      = sqrt(swap_in[i][swap_row*p.Ly*p.Lz
+				  + ((p.Ly-y)%p.Ly)*p.Lz + ((p.Lz-z)%p.Lz)][0]
+		     *swap_in[i][swap_row*p.Ly*p.Lz
+				   + ((p.Ly-y)%p.Ly)*p.Lz + ((p.Lz-z)%p.Lz)][0]
+		     + swap_in[i][swap_row*p.Ly*p.Lz
+				    + ((p.Ly-y)%p.Ly)*p.Lz + ((p.Lz-z)%p.Lz)][1]
+		     *swap_in[i][swap_row*p.Ly*p.Lz
+				   + ((p.Ly-y)%p.Ly)*p.Lz + ((p.Lz-z)%p.Lz)][1]);
+	  
+	    in[i][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] = 0.0;
+	    
+
+	  } 
+
+	  else if((x == 0 || x == p.Lx/2)) {
+
+
+
+	    /* need local mirror image on these slices, so ignore swap rows
+	     * if we used swap_in we'd not end up with something that is
+	     * hermitian because otherwise:
+	     * [<>          []]
+	     * initially would be swapped (and conjugated)
+	     * to become:
+	     * [[]          <>]
+	     */
+	    in[i][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0] = \
+	      in[i][(x-x_start)*p.Ly*p.Lz
+		      + ((p.Ly-y)%p.Ly)*p.Lz + ((p.Lz-z)%p.Lz)][0];
+	    in[i][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] = \
+	      -1.0*in[i][(x-x_start)*p.Ly*p.Lz
+			   + ((p.Ly-y)%p.Ly)*p.Lz + ((p.Lz-z)%p.Lz)][1];
+
+
+	  } else if(x >= p.Lx/2) {
+	    /* in this case we conjugate the stuff in the lower
+	       slices, using swap_row to work out where it was put.
+	    */
+
+	    in[i][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0] = \
+	      1.0*swap_in[i][swap_row*p.Ly*p.Lz
+			       + ((p.Ly-y)%p.Ly)*p.Lz + ((p.Lz-z)%p.Lz)][0];
+	    in[i][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] = \
+	      -1.0*swap_in[i][swap_row*p.Ly*p.Lz
+				+ ((p.Ly-y)%p.Ly)*p.Lz + ((p.Lz-z)%p.Lz)][1];
+
+	  } 
+	  // otherwise do nothing
+
+
+	}
+      }
+    }
+
+
+  }
+
+
   for(i=0; i<3; i++) {
 
       
@@ -704,22 +863,8 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 
   // at this point swap_in has the stuff needed to do the conjugate properly
 
-  //  MPI_Barrier(MPI_COMM_WORLD);
-
-  // Debug messages
-  //  printf0(p, "Done swap_in initialisation\n", in[0][4][0], in[0][4][1], swap_in[0][4][0], swap_in[0][4][1]);
-  //  int swap_x_start = p.Lx - x_start - x_thickness;
-  //  printf0(p, "Swap_x_start is %d, x_start is %d, x_thickness is %d\n", swap_x_start, x_start, x_thickness);
-
 
   for(x=x_start; x < x_start+x_thickness; x++) {
-
-    /*
-    // Debug message
-    fprintf(stderr, "Rank %d: USE Row %d has dual row %d which is swap row %d\n",
-	    p.rank, x, (p.Lx-x)%p.Lx,
-	    ((((p.Lx-x)  )% x_thickness) + x_thickness - 1) % x_thickness );
-    */
 
     // This is the row in the swap_in where one can find (p.Lx-x)
     int swap_row = (((p.Lx-x) % x_thickness) + x_thickness - 1) % x_thickness;
@@ -787,8 +932,8 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 
 
 
-  //  MPI_Barrier(MPI_COMM_WORLD);
-  //  printf0(p, "Done swapping\n");
+  MPI_Barrier(MPI_COMM_WORLD);
+  printf0(p, "Done swapping\n");
 
 
   // Now planning  
@@ -826,7 +971,7 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 
   */
 
-  float *slice = (float *)malloc(slab*p.Ly*p.Lz*sizeof(float));
+  float *slice = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
 
 
   float maximag = 0.0;
@@ -835,7 +980,7 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 
     // prepare slice
 
-    for(x=0; x<slab; x++) {
+    for(x=0; x<x_thickness; x++) {
       for(y=0; y<p.Ly; y++) {
 	for(z=0; z<p.Lz; z++) {
 	  if(fabs(out[i][x*p.Ly*p.Lz + y*p.Lz + z][1]) > fabs(maximag)) {
@@ -846,74 +991,58 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
       }
     }
 
-    //    fprintf(stderr,"maximag is %g\n", maximag);
-
-
+    fprintf(stderr,"maximag is %g\n", maximag);
+    MPI_Barrier(MPI_COMM_WORLD);
+    
 
     // segfault error below here
 
     for(x=0; x<p.Lx; x++) {
 
       // Check whether we are the source node for this slab                                                                                                                                                                                  
-      if((x >= x_start) && ( x < (x_start + x_thickness))) {
+      if(map[x] == p.rank) {
+	
+        for(ry = 0; ry < ny; ry++) {
+	  
+          if((x/p.slicex == p.myposx) && (ry == p.myposy)) {
+                  fprintf(stderr, "rank %d: doing memcpy and local thickness is %d\n",
+                          p.rank, x_thickness);
 
-	for(ry = 0; ry < ny; ry++) {
+            memcpy(&trim[(x-p.shiftx)*p.slicey*p.Lz],
+                   &slice[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
+                   p.slicey*p.Lz*sizeof(double));
 
-	  if((x/p.slicex == p.myposx) && (ry == p.myposy)) {
-
-
-	    memcpy(&trim[(x-p.shiftx)*p.slicey*p.Lz],
-		   &slice[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
-		   p.slicey*p.Lz*sizeof(float));
-
-	    continue;
-	  }
+            continue;
+          }
 
 
-	  MPI_Send(&slice[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
-		   p.slicey*p.Lz,
-		   MPI_FLOAT,
-		   ry*nx + x/p.slicex,
-		   x*ny + ry,
-		   MPI_COMM_WORLD);
+          MPI_Send(&slice[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
+                   p.slicey*p.Lz,
+                   MPI_DOUBLE,
+                   ry*nx + x/p.slicex,
+                   x*ny + ry,
+                   MPI_COMM_WORLD);
 
 	}
-
-
       } else if((x >= p.shiftx) && (x < (p.shiftx + p.slicex))) {
 
 
+        fprintf(stderr, "rank %d: receiving into location %p\n", p.rank,
+		&trim[(x-p.shiftx)*p.slicey*p.Lz]);
+
 	MPI_Recv(&trim[(x-p.shiftx)*p.slicey*p.Lz],
-		 p.slicey*p.Lz,
-		 MPI_FLOAT,
-		 x/slab,
-		 x*ny + p.myposy,
-		 MPI_COMM_WORLD,
-		 &status);
+                 p.slicey*p.Lz,
+                 MPI_DOUBLE,
+                 map[x],
+                 x*ny + p.myposy,
+                 MPI_COMM_WORLD,
+                 &status);
 
       }
     }
 
 
     // untrim
-    
-    /*
-    for(x=1;x<=p.slicex;x++) {
-      for(y=1;y<=p.slicey;y++) {
-	for(z=0;z<p.Lz;z++) {	
-	  for(i=0;i<3;i++) {
-
-	    if(p.Lx > p.Lx) {
-	      field[i][x][y][z] = out[i][2*(x+p.shiftx-1)*p.Ly*p.Lz + 2*(y+p.shifty-1)*p.Lz + 2*z][0];
-	    } else {
-	      field[i][x][y][z] = out[i][(x+p.shiftx-1)*p.Ly*p.Lz + (y+p.shifty-1)*p.Lz + z][0];
-	    }
-
-	  }
-	}
-      }
-
-    */
     
     for(x=1; x<=p.slicex; x++) {
       for(y=1; y<=p.slicey; y++) {
