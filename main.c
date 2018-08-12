@@ -156,8 +156,11 @@ int main(int argc, char *argv[]) {
 	initial_blank(f,p);
 	init_ps(f, p, f.V);
 	fft_vel(f, p, -1, f.V);
-	init_ps(f, p, f.Z);
-	norm_power(f, p, f.Z);
+	VtoZ(f, p);
+	//	init_ps(f, p, f.Z);
+	//	fft_vel(f, p, -3, f.Z);
+	//	norm_power(f, p, f.Z);
+	fft_vel(f, p, -2, f.Z);
 
 	/*
 	  memcpy(f.V[0][0][0], f.U[0][0][0], (p.slicex+2)*(p.slicey+2)
@@ -167,7 +170,7 @@ int main(int argc, char *argv[]) {
 	  memcpy(f.V[2][0][0], f.U[2][0][0], (p.slicex+2)*(p.slicey+2)
 	  *(p.Lz)*sizeof(float));
 	  */
-	// init_ps(f, p, f.V);
+	//	init_ps(f, p, f.V);
 	//    init_ps(f, p, f.Z);
 
     } else if(p.initial==INIT_BUBBLE){
