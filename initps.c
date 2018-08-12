@@ -701,8 +701,8 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 
 	if(map[((p.Lx-j) % p.Lx)] == p.rank) {
 	} else {
-	  MPI_Send(&(((double *)in[i])[((j-x_start)%p.Lx)*p.Ly*p.Lz*2]),
-		   2*p.Ly*p.Lz, MPI_DOUBLE,
+	  MPI_Send(&(((float *)in[i])[((j-x_start)%p.Lx)*p.Ly*p.Lz*2]),
+		   2*p.Ly*p.Lz, MPI_FLOAT,
 		   map[((p.Lx-j) % p.Lx)], j, MPI_COMM_WORLD);
 	}
       }
@@ -713,14 +713,14 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 	if(map[(j % p.Lx)] == p.rank) {
 
 
-	  memcpy(&(((fftw_complex *)swap_in[i])[(j-min_needed)*p.Ly*p.Lz]),
-		 &(((fftw_complex *)in[i])[((j-x_start)%p.Lx)*p.Ly*p.Lz]),
-		 p.Ly*p.Lz*sizeof(fftw_complex));
+	  memcpy(&(((fftwf_complex *)swap_in[i])[(j-min_needed)*p.Ly*p.Lz]),
+		 &(((fftwf_complex *)in[i])[((j-x_start)%p.Lx)*p.Ly*p.Lz]),
+		 p.Ly*p.Lz*sizeof(fftwf_complex));
 
 
 	} else {
-	  MPI_Recv(&(((double *)swap_in[i])[(j-min_needed)*p.Ly*p.Lz*2]),
-		   2*p.Ly*p.Lz, MPI_DOUBLE,
+	  MPI_Recv(&(((float *)swap_in[i])[(j-min_needed)*p.Ly*p.Lz*2]),
+		   2*p.Ly*p.Lz, MPI_FLOAT,
 		   map[(j % p.Lx)], j, MPI_COMM_WORLD, &status);
 
 	}
@@ -1010,7 +1010,7 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 
             memcpy(&trim[(x-p.shiftx)*p.slicey*p.Lz],
                    &slice[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
-                   p.slicey*p.Lz*sizeof(double));
+                   p.slicey*p.Lz*sizeof(float));
 
             continue;
           }
@@ -1018,7 +1018,7 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 
           MPI_Send(&slice[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
                    p.slicey*p.Lz,
-                   MPI_DOUBLE,
+                   MPI_FLOAT,
                    ry*nx + x/p.slicex,
                    x*ny + ry,
                    MPI_COMM_WORLD);
@@ -1032,7 +1032,7 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 
 	MPI_Recv(&trim[(x-p.shiftx)*p.slicey*p.Lz],
                  p.slicey*p.Lz,
-                 MPI_DOUBLE,
+                 MPI_FLOAT,
                  map[x],
                  x*ny + p.myposy,
                  MPI_COMM_WORLD,
