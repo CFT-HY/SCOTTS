@@ -812,123 +812,11 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
       }
     }
 
+    MPI_Barrier(MPI_COMM_WORLD);
 
   }
 
 
-  for(i=0; i<3; i++) {
-
-      
-    //	fprintf(stderr, "Node %d  for %d-%d needs %d-%d\n", p.rank, x_start, x_start+x_thickness-1,  min_needed, max_needed);
-
-
-	for(j=0; j<=p.Lx; j++) {
-
-	  if(j>= x_start && j < x_start+x_thickness) {
-
-
-	    //	    fprintf(stderr, "Rank %d: SEND row %02d to node %d (rank %d, size %d)", p.rank, j, ((p.Lx-j))/x_thickness % p.size, p.rank, p.size);
-
-	    if(((p.Lx-j))/x_thickness % p.size == p.rank) {
-	      // copy - done on recv side
-	      //	      fprintf(stderr, " (c)\n");
-	    } else {
-	      //	      fprintf(stderr, " (m)\n");
-	      MPI_Send(&(((float *)in[i])[((j-x_start)%p.Lx)*p.Ly*p.Lz*2]), 2*p.Ly*p.Lz, MPI_FLOAT, ((p.Lx-j))/x_thickness % p.size, j, MPI_COMM_WORLD);
-	    }
-	  }
-
-
-	  if(j>=min_needed && j<=max_needed) {
-	    //	    fprintf(stderr, "Rank %d: RECV row %02d from node %d and becomes swap row %d", p.rank, j % p.Lx, (j % p.Lx)/x_thickness, j-min_needed);
-
-	    if((j % p.Lx)/x_thickness == p.rank) {
-	      //	      fprintf(stderr, " (c)\n");
-	      // copy - need to check
-	      //	      fprintf(stderr,"rank %d copying row %d, (local row %d) %g %g to self\n", p.rank, j, (j-x_start)%p.Lx, in[i][((j-x_start)%p.Lx)*p.Ly*p.Lz][0], in[i][((j-x_start)%p.Lx)*p.Ly*p.Lz][1]);
-	      memcpy(&(((fftwf_complex *)swap_in[i])[(j-min_needed)*p.Ly*p.Lz]), &(((fftwf_complex *)in[i])[((j-x_start)%p.Lx)*p.Ly*p.Lz]), p.Ly*p.Lz*sizeof(fftwf_complex));
-
-	      //	      fprintf(stderr, "rank %d copy is %g %g\n", p.rank, swap_in[i][(j-min_needed)*p.Ly*p.Lz][0], swap_in[i][(j-min_needed)*p.Ly*p.Lz][1]);
-	    } else {	     
-	      //	      fprintf(stderr, " (m)\n");
-	      MPI_Recv(&(((float *)swap_in[i])[(j-min_needed)*p.Ly*p.Lz*2]), 2*p.Ly*p.Lz, MPI_FLOAT, (j % p.Lx)/x_thickness, j, MPI_COMM_WORLD, &status);
-	    }
-	  }
-
-
-
-    }
-      
-  }
-
-  // at this point swap_in has the stuff needed to do the conjugate properly
-
-
-  for(x=x_start; x < x_start+x_thickness; x++) {
-
-    // This is the row in the swap_in where one can find (p.Lx-x)
-    int swap_row = (((p.Lx-x) % x_thickness) + x_thickness - 1) % x_thickness;
-
-    for(y=0;y<p.Ly;y++) {
-      for(z=0;z<p.Lz;z++) {
-	for(i=0; i<3; i++) {
-
-
-
-	  // Conjugate the system. Treat special cases first.
-
-	  if((x == 0 || x == p.Lx/2) && (y == 0 || y == p.Ly/2) && (z == 0 || z == p.Lz/2)) {
-	    
-
-	    /* These sites need to be pure real.
-	     */	    
-	    in[i][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0] = sqrt(swap_in[i][swap_row*p.Ly*p.Lz
-						      + ((p.Ly-y)%p.Ly)*p.Lz + ((p.Lz-z)%p.Lz)][0]
-						      *swap_in[i][swap_row*p.Ly*p.Lz
-						       + ((p.Ly-y)%p.Ly)*p.Lz + ((p.Lz-z)%p.Lz)][0]
-						      + swap_in[i][swap_row*p.Ly*p.Lz
-							+ ((p.Ly-y)%p.Ly)*p.Lz + ((p.Lz-z)%p.Lz)][1]
-						      *swap_in[i][swap_row*p.Ly*p.Lz
-						      + ((p.Ly-y)%p.Ly)*p.Lz + ((p.Lz-z)%p.Lz)][1]);
-	  
-	    in[i][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] = 0.0;
-	    
-
-	     } 
-
-	  else if((x == 0 || x == p.Lx/2)) {
-
-
-
-	    /* need local mirror image on these slices, so ignore swap rows
-	     * if we used swap_in we'd not end up with something that is hermitian because otherwise
-	     * [<>          []] initially would be swapped (and conjugated) to become
-	     * [[]          <>]
-	     */
-	    in[i][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0] = in[i][(x-x_start)*p.Ly*p.Lz
-							 + ((p.Ly-y)%p.Ly)*p.Lz + ((p.Lz-z)%p.Lz)][0];
-	    in[i][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] = -1.0*in[i][(x-x_start)*p.Ly*p.Lz
-							 + ((p.Ly-y)%p.Ly)*p.Lz + ((p.Lz-z)%p.Lz)][1];
-
-
-	  } else if(x >= p.Lx/2) {
-	    /* in this case we conjugate the stuff in the lower
-	       slices, using swap_row to work out where it was put.
-	    */
-
-	    in[i][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0] = 1.0*swap_in[i][swap_row*p.Ly*p.Lz
-								      + ((p.Ly-y)%p.Ly)*p.Lz + ((p.Lz-z)%p.Lz)][0];
-	    in[i][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] = -1.0*swap_in[i][swap_row*p.Ly*p.Lz
-									   + ((p.Ly-y)%p.Ly)*p.Lz + ((p.Lz-z)%p.Lz)][1];
-
-	  } 
-	  // otherwise do nothing
-
-
-	}
-      }
-    }
-  }
 
 
 
@@ -1005,8 +893,8 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
         for(ry = 0; ry < ny; ry++) {
 	  
           if((x/p.slicex == p.myposx) && (ry == p.myposy)) {
-                  fprintf(stderr, "rank %d: doing memcpy and local thickness is %d\n",
-                          p.rank, x_thickness);
+            //      fprintf(stderr, "rank %d: doing memcpy and local thickness is %d\n",
+            //              p.rank, x_thickness);
 
             memcpy(&trim[(x-p.shiftx)*p.slicey*p.Lz],
                    &slice[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
@@ -1027,8 +915,8 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
       } else if((x >= p.shiftx) && (x < (p.shiftx + p.slicex))) {
 
 
-        fprintf(stderr, "rank %d: receiving into location %p\n", p.rank,
-		&trim[(x-p.shiftx)*p.slicey*p.Lz]);
+	//        fprintf(stderr, "rank %d: receiving into location %p\n", p.rank,
+	//		&trim[(x-p.shiftx)*p.slicey*p.Lz]);
 
 	MPI_Recv(&trim[(x-p.shiftx)*p.slicey*p.Lz],
                  p.slicey*p.Lz,
