@@ -586,7 +586,7 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
       die(100);
     }
 
-    items_read = fscanf(fp, "%f%f%d", &k_bins[i], &pow_bins[i], &in_bin);
+    items_read = fscanf(fp, "%f%g%d", &k_bins[i], &pow_bins[i], &in_bin);
 
     if(items_read != 3) {
       printf0(p,
@@ -599,7 +599,11 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
     if(in_bin == 0) {
       pow_bins[i] = 0.0;
     } else {
-      pow_bins[i] /= ((float)(in_bin*(i+1)));
+      pow_bins[i] /= ((float)(((long int)in_bin)*((long int)(i+1))));
+    }
+
+    if(isnan(pow_bins[i])) {
+      printf0(p, "Bin %d is a NaN\n", i);
     }
   }
   fclose(fp);
