@@ -470,24 +470,38 @@ int main(int argc, char *argv[]) {
       */
     }
 
-
+    //printf0(p,"step = %d \n", step);
     // Do field step
     evolve_field(f, p);
+    //printf0(p,"Evolved field \n");
+    //dump_max_min(f, p);
 
     // Calculate EOS
     eq_of_state(f, p);
+    //printf0(p,"Calculated eos \n");
+    //dump_max_min(f, p);
 
+    
     // Do the hydro bits
     evolve_hydro(f, p);
 
+    //printf0(p,"Evolved hydro \n");
+    //dump_max_min(f, p);
+    
     // Evolve metric perturbations
     evolve_uij(f, p);
 
     // Advection of state variables
     advect_E(f, p);
+    //printf0(p,"Advected E \n");
+    //dump_max_min(f, p);
+    
     // Advection of momentum
     advect_Z(f, p);
+    //printf0(p,"Advected Z \n");
+    //dump_max_min(f, p);
 
+    
     // Don't bother with art viscosity, yet
     //    artificial_viscosity(f, nb, p);
 
