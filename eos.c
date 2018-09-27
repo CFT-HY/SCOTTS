@@ -55,16 +55,24 @@ void find_Ta(hydro_fields f, hydro_params p) {
 #ifdef BAG
     // Second term in power is just the potential,
     // should we just create an array here?
-    f.T[x][y][z]=pow((f.E[x][y][z]/f.W[x][y][z]
-		      - ( 0.5*p.gamma*f.phi[x][y][z]*f.phi[x][y][z]
-			  - (p.alpha*f.phi[x][y][z]*f.phi[x][y][z]
-			     *f.phi[x][y][z]/3.0)
-			  + (0.25*p.lambda*f.phi[x][y][z]*f.phi[x][y][z]
-			     *f.phi[x][y][z]*f.phi[x][y][z])
-			  + p.V0))
-		     /(3.*(p.gdeg + p.V0*f.phi[x][y][z]*f.phi[x][y][z]
-			   *(2*f.phi[x][y][z]/p.phi_0 - 3.)
-			   /(p.phi_0*p.phi_0))) , 0.25);
+	Tfix=((f.E[x][y][z]/f.W[x][y][z]
+	       - ( 0.5*p.gamma*f.phi[x][y][z]*f.phi[x][y][z]
+		   - (p.alpha*f.phi[x][y][z]*f.phi[x][y][z]
+		      *f.phi[x][y][z]/3.0)
+		   + (0.25*p.lambda*f.phi[x][y][z]*f.phi[x][y][z]
+		      *f.phi[x][y][z]*f.phi[x][y][z])
+		   + p.V0))
+	      /(3.*(p.gdeg + p.V0*f.phi[x][y][z]*f.phi[x][y][z]
+		    *(2*f.phi[x][y][z]/p.phi_0 - 3.)
+		    /(p.phi_0*p.phi_0))));
+	if(Tfix < 0){
+	  fprintf(stderr,"Tfix -ve at (%d,%d,%d) \n"
+		  "Tfix = %f \n W = %f \n phi = %f \n E=%f \n",
+		  p.shiftx+x-1,p.shifty+y-1,z,Tfix,f.W[x][y][z],
+		  f.phi[x][y][z],f.E[x][y][z]);
+	}
+	
+	f.T[x][y][z]=pow(Tfix , 0.25);
 #else
 
 	/*
