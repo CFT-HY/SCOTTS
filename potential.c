@@ -80,8 +80,9 @@ float Vdf(hydro_params p, float T, float this_phi) {
  * \f]
  */
 float VTf(hydro_params p, float T, float this_phi) {
-#ifdef TINDEP
-  return 0.;
+#ifdef BAG
+  return 4*T*T*T*p.V0*this_phi*this_phi/(p.phi_0*p.phi_0)
+    *(3 - 2*this_phi/(p.phi_0));
 #else
   return p.gamma*T*this_phi*this_phi 
     - p.alpha*this_phi*this_phi*this_phi/3.0;
@@ -100,8 +101,8 @@ float VTf(hydro_params p, float T, float this_phi) {
  */
 float VTTf(hydro_params p, float T, float this_phi) {
 #ifdef BAG
-  return 12.*p.V0*this_phi*this_phi/(p.phi_0*p.phi_0)
-    *(3.-2.*this_phi/p.phi_0)*T*T;
+  return 12.*T*T*p.V0*this_phi*this_phi/(p.phi_0*p.phi_0)
+    *(3.-2.*this_phi/p.phi_0);
 #else
   return p.gamma*this_phi*this_phi;
 #endif // BAG
