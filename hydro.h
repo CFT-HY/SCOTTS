@@ -493,6 +493,16 @@ typedef struct{
   int rank;
 } value_rank;
 
+/** Helper struct for passing a value and array specifying its location.
+ *
+ * Useful for debugging, e.g finding max/min value of something on the
+ * lattice and the lattice site where it occurs.
+ */
+typedef struct{
+  float value;
+  int loc[3];
+} value_loc;
+
 // main.c just contains main()
 
 
@@ -574,6 +584,8 @@ void eq_of_state(hydro_fields f, hydro_params p);
 void advect_E(hydro_fields f, hydro_params p);
 void advect_Z(hydro_fields f, hydro_params p);
 
+
+
 // initial.c
 void initial_blank(hydro_fields f, hydro_params p);
 int safe_distance(hydro_fields f, hydro_params p);
@@ -591,6 +603,9 @@ float get_veltot(hydro_fields f, hydro_params p);
 void dump(float *field, hydro_params p);
 void histo_field(float ***field, hydro_params p, int step);
 void didj(float *cpts, hydro_fields f, hydro_params p);
+value_loc find_max_loc(float ***f, hydro_params p, int abs_max);
+value_loc find_min_loc(float ***f, hydro_params p, int abs_min);
+void dump_max_min(hydro_fields f, hydro_params p);
 
 // papi.c
 #ifdef PAPI
