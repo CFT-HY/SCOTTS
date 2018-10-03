@@ -57,6 +57,7 @@
 #define INIT_SHOCK_TUBE 1
 #define INIT_BUBBLE 2
 #define INIT_PS 3
+#define INIT_GAUSS_FLUID 4
 
 #define NUC_OFF 0
 #define NUC_LIST 1
@@ -260,6 +261,10 @@ typedef struct {
   /** Number of bubbles to spawn on the first timestep.
    */
   int bubbles;
+
+  float gauss_amp;
+
+  float gauss_sig;
 
   /** Nucleation type.
    */
@@ -600,6 +605,7 @@ void initial_3D(hydro_fields f, hydro_params p);
 int try_nucleate(hydro_fields f, hydro_params p);
 int bubbles_at_step(hydro_fields f, hydro_params p, float t, int step);
 void init_profile(hydro_fields *f, hydro_params *p);
+void gaussian_fluid(hydro_fields f, hydro_params p);
 
 // output.c
 float get_gamma_max(hydro_fields f, hydro_params p);

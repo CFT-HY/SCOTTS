@@ -69,6 +69,9 @@ void get_parameters(char *infile, hydro_params *p)
 
   int set_bubbles = 0;
 
+  int set_gauss_amp = 0;
+  int set_gauss_sig = 0;
+  
   int set_R_critical = 0;
   int set_phimin = 0;
   int set_scale = 0;
@@ -231,6 +234,14 @@ void get_parameters(char *infile, hydro_params *p)
       p->bubbles = strtol(value,NULL,10);
       set_bubbles = 1;
     }
+    else if(!strcasecmp(key,"gauss_amp")) {
+      p->gauss_amp = strtof(value,NULL);
+      set_gauss_amp = 1;
+    }
+    else if(!strcasecmp(key,"gauss_sig")) {
+      p->gauss_sig = strtof(value,NULL);
+      set_gauss_sig = 1;
+    }
     else if(!strcasecmp(key,"R_critical")) {
       p->R_critical = strtof(value,NULL);
       set_R_critical = 1;
@@ -260,6 +271,8 @@ void get_parameters(char *infile, hydro_params *p)
 	p->initial = INIT_BUBBLE;
       } else if(!strcasecmp(value, "initps")) {
 	p->initial= INIT_PS;
+      } else if(!strcasecmp(value, "gauss_fluid")) {
+	p->initial= INIT_GAUSS_FLUID;
       } else {
 	printf0(*p, "warning, unrecognised value for initial"
 		" (%s); defaulting to bubble.\n", value);
@@ -572,6 +585,12 @@ void get_parameters(char *infile, hydro_params *p)
   } else if(!set_bubbles) {
     printf0(*p, "Did not set parameter \'bubbles\'\n");
     die(100);
+  } else if(!set_gauss_amp) {
+    printf0(*p, "Did not set parameter \'gauss_amp\'\n");
+    die(100);
+  } else if(!set_gauss_sig) {
+    printf0(*p, "Did not set parameter \'gauss_sig\'\n");
+    die(100);
   } else if(!set_scale) {
     printf0(*p, "Did not set parameter \'scale\'\n");
     die(100);
@@ -649,6 +668,8 @@ void get_parameters(char *infile, hydro_params *p)
       printf0(*p, "-- bubble\n");
     } else if(p->initial == INIT_PS) {
       printf0(*p, "-- init_ps\n");
+    } else if(p->initial == INIT_GAUSS_FLUID) {
+      printf0(*p, "-- gauss_fluid\n");
     } else {
       printf0(*p, "-- warning, somehow have unknown initial conds.\n");
     }

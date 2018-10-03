@@ -239,6 +239,9 @@ int main(int argc, char *argv[]) {
     }else if(p.initial==INIT_SHOCK_TUBE){
       fprintf(stderr,"Sorry, shocktube is not implemented! Exiting... \n");
       die(100);
+    }else if(p.initial==INIT_GAUSS_FLUID){
+      initial_blank(f, p);
+      gaussian_fluid(f, p);
     }else{
       fprintf(stderr,"Invalid initial condition option! Exiting... \n");
       die(100);
