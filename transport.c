@@ -410,19 +410,23 @@ void van_leer_Z_dir(hydro_fields f, hydro_params p, int dir) {
  * suggest, rather they state the update should be split into two half
  * steps, and the order should be reversed for each half.
  */
-void advect_E(hydro_fields f, hydro_params p) {
+void advect_E(hydro_fields f, hydro_params p, int adv_order) {
 
-  int order; 
-  order = 0; // for deterministic results across sites: lrand48() % 3;
-
+  int directions[18] = {0,1,2,
+			2,1,0,
+			2,0,1,
+			1,0,2,
+			1,2,0,
+			0,2,1};
+  
 #ifdef VANLEER
-  van_leer_E_dir(f, p, order);
-  van_leer_E_dir(f, p, (order + 1) % 3);
-  van_leer_E_dir(f, p, (order + 2) % 3);
+  van_leer_E_dir(f, p, directions[(adv_order % 6)*3]);    
+  van_leer_E_dir(f, p, directions[(adv_order % 6)*3 + 1]);
+  van_leer_E_dir(f, p, directions[(adv_order % 6)*3 + 2]);
 #else
-  donor_E_dir(f, p, order);
-  donor_E_dir(f, p, (order + 1) % 3);
-  donor_E_dir(f, p, (order + 2) % 3);
+  donor_E_dir(f, p, directions[(adv_order % 6)*3]);    
+  donor_E_dir(f, p, directions[(adv_order % 6)*3 + 1]);
+  donor_E_dir(f, p, directions[(adv_order % 6)*3 + 2]);
 #endif //VANLEER
 }
 
@@ -436,19 +440,23 @@ void advect_E(hydro_fields f, hydro_params p) {
  * suggest, rather they state the update should be split into two half
  * steps, and the order of advection should be reversed for each half.
  */
-void advect_Z(hydro_fields f, hydro_params p) {
+void advect_Z(hydro_fields f, hydro_params p, int adv_order) {
 
-  int order; 
-  order = 0; // lrand48() % 3;
-
+  int directions[18] = {0,1,2,
+			2,1,0,
+			2,0,1,
+			1,0,2,
+			1,2,0,
+			0,2,1};
+  
 #ifdef VANLEER
-  van_leer_Z_dir(f, p, order);
-  van_leer_Z_dir(f, p, (order + 1) % 3);
-  van_leer_Z_dir(f, p, (order + 2) % 3);
+  van_leer_Z_dir(f, p, directions[(adv_order % 6)*3]);
+  van_leer_Z_dir(f, p, directions[(adv_order % 6)*3 + 1]);
+  van_leer_Z_dir(f, p, directions[(adv_order % 6)*3 + 2]);
 #else
-  donor_Z_dir(f, p, order);
-  donor_Z_dir(f, p, (order + 1) % 3);
-  donor_Z_dir(f, p, (order + 2) % 3);
+  donor_Z_dir(f, p, directions[(adv_order % 6)*3]);    
+  donor_Z_dir(f, p, directions[(adv_order % 6)*3 + 1]);
+  donor_Z_dir(f, p, directions[(adv_order % 6)*3 + 2]);
 #endif //VANLEER
 }
 
