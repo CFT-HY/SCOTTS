@@ -369,8 +369,6 @@ typedef struct {
    * Calculated s.t $V(\phi_b,T=0)=0$ 
    */
   float V0;
-
-
 #ifdef BAG
   /** Broken phase value of phi in the bag model.
    */
@@ -583,12 +581,9 @@ void eq_of_state(hydro_fields f, hydro_params p);
 
 // transport.c
 
-void advect_E(hydro_fields f, hydro_params p, int adv_order);
-void advect_Z(hydro_fields f, hydro_params p, int adv_order);
-void donor_E_dir(hydro_fields f, hydro_params p, int dir);
-void donor_Z_dir(hydro_fields f, hydro_params p, int dir);
-void van_leer_E(hydro_fields f, hydro_params p, int dir);
-void van_leer_Z(hydro_fields f, hydro_params p, int dir);
+void advect_E(hydro_fields f, hydro_params p);
+void advect_Z(hydro_fields f, hydro_params p);
+
 
 
 // initial.c
