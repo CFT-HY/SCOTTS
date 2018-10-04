@@ -116,9 +116,6 @@ int main(int argc, char *argv[]) {
   // Struct that stores the fields
   hydro_fields f;
 
-  // Counter to specify which order to perform advection
-  int adv_order = 0;
-  
   // Storage of measurements of average stress-energy tensor (not used)
   //  float cpts[TENSOR_CPTS];
 
@@ -495,16 +492,15 @@ int main(int argc, char *argv[]) {
     evolve_uij(f, p);
 
     // Advection of state variables
-    advect_E(f, p, adv_order);
+    advect_E(f, p);
     //printf0(p,"Advected E \n");
     //dump_max_min(f, p);
     
     // Advection of momentum
-    advect_Z(f, p, adv_order);
+    advect_Z(f, p);
     //printf0(p,"Advected Z \n");
     //dump_max_min(f, p);
 
-    adv_order += 1;
     
     // Don't bother with art viscosity, yet
     //    artificial_viscosity(f, nb, p);
