@@ -238,7 +238,7 @@ void van_leer_E_dir(hydro_fields f, hydro_params p, int dir) {
 	else{
 	  f.F[dir][x][y][z] = (f.V[dir][x][y][z]
 			       *(f.E[x][y][z]
-				 + 0.5*(p.dx + f.V[dir][x][y][z]*p.dt)
+				 - 0.5*(p.dx + f.V[dir][x][y][z]*p.dt)
 				 *delta[x][y][z]));
 	}
       }
