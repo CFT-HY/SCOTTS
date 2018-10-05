@@ -229,7 +229,7 @@ void van_leer_E_dir(hydro_fields f, hydro_params p, int dir) {
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
-	if(f.V[dir]>0){
+	if(f.V[dir][x][y][z]>0){
 	  f.F[dir][x][y][z] = (f.V[dir][x][y][z]
 			       *(f.E[x-dx][y-dy][(z-dz+p.Lz)%p.Lz]
 				 + 0.5*(p.dx - f.V[dir][x][y][z]*p.dt)
@@ -358,16 +358,18 @@ void van_leer_Z_dir(hydro_fields f, hydro_params p, int dir) {
 
 
 	for(i = 0; i < 3; i++){
-	  if(Vface[x][y][z] >= 0.0)
+	  if(Vface[x][y][z] >= 0.0){
 	    f.F[i][x][y][z] = (Vface[x][y][z]*
 			       (f.Z[i][x-dx][y-dy][(z-dz+p.Lz)%p.Lz]
 				+ 0.5*(p.dx - Vface[x][y][z]*p.dt)
 				*delta[i][x-dx][y-dy][(z-dz+p.Lz)%p.Lz]));
-	  else
+	  }
+	  else{
 	    f.F[i][x][y][z] = (Vface[x][y][z]*
 			       (f.Z[i][x][y][z]
 				- 0.5*(p.dx + Vface[x][y][z]*p.dt)
 				*delta[i][x][y][z]));
+	  }
 	}
       }
     }
