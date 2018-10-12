@@ -4,6 +4,7 @@
  */
 #include "hydro.h"
 
+#if defined(FFT) && ! defined(SCALAR)
 
 
 
@@ -686,7 +687,6 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 }
 
 
-
-
+#endif // FFT && !SCALAR
 
 

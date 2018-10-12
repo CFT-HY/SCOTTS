@@ -334,7 +334,9 @@ int bubbles_at_step(hydro_fields f, hydro_params p, float t, int step) {
     return 0;
   } else if(p.nucleation == NUC_OFF) {
     return 0;
-  } else if((p.nucleation == NUC_LIST) || (p.nucleation == NUC_FILE)) {
+  } else if((p.nucleation == NUC_LIST) ||
+	    (p.nucleation == NUC_FILE) ||
+	    (p.nucleation == NUC_FILE_LOC)) {
     
     int j;
 

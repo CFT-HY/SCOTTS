@@ -180,11 +180,7 @@ float kinetic_energy(hydro_fields f, hydro_params p) {
 
   float vol;
 
-  float Etot = 0.0;
-  float restE = 0.0;
   float kinE = 0.0;
-  float kinphi = 0.0;
-  float grdphi = 0.0;
 
   vol = p.dx*p.dx*p.dx;
 
@@ -202,11 +198,8 @@ float kinetic_energy(hydro_fields f, hydro_params p) {
       
     }
   }
-
-  Etot = kinE;
   
-  return Etot; // /vol;
-
+  return kinE;
 
 
 }
@@ -223,11 +216,7 @@ float rest_energy(hydro_fields f, hydro_params p) {
 
   float vol;
 
-  float Etot = 0.0;
   float restE = 0.0;
-  float kinE = 0.0;
-  float kinphi = 0.0;
-  float grdphi = 0.0;
 
   vol = p.dx*p.dx*p.dx;
 
@@ -237,8 +226,8 @@ float rest_energy(hydro_fields f, hydro_params p) {
 
 #ifndef SCALAR
 	// kinetic energy
-	kinE += f.kappa[x][y][z]*(f.E[x][y][z]/f.W[x][y][z])
-	  *vol;
+	restE += (f.E[x][y][z]/f.W[x][y][z])*vol;
+	  
 #endif // SCALAR
 
       }
@@ -246,9 +235,8 @@ float rest_energy(hydro_fields f, hydro_params p) {
     }
   }
 
-  Etot = kinE;
   
-  return Etot; // /vol;
+  return restE; // /vol;
 
 
 
