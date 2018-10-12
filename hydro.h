@@ -49,7 +49,6 @@
 #include <fftw3-mpi.h>
 #endif // FFT
 
-
 /*
  * Not sure these are useful in 3D, but a way of enumerating choices of the
  * initial conditions and communicating that between the parameter input
@@ -60,8 +59,9 @@
 #define INIT_PS 3
 
 #define NUC_OFF 0
-#define NUC_LIST 2
-#define NUC_FILE 3
+#define NUC_LIST 1
+#define NUC_FILE 2
+#define NUC_FILE_LOC 3
 
 #define GW_BOTH 1
 #define GW_FIELD 2
@@ -179,9 +179,7 @@ typedef struct {
 
   /** Initial conditions type (see #defines above)
    */
-  int initial;
-
-
+  int initial;  
 
   /** Scale factor.
    */
@@ -239,7 +237,18 @@ typedef struct {
    */
   int shifty;
 
+  /** Global output filename.
+   *
+   * Either a filename or "stdout".
+   */
+  char output_fname[500];
 
+  /** Global output destination.
+   *
+   * Points to a file specified at runtime, either a filename or stdout.
+   */
+  FILE *outputdest;
+  
   /** Where the silo files go.
    */
   char silodir[500];
@@ -262,15 +271,18 @@ typedef struct {
    * nucleate multiple bubbles on that timestep.
    */
   int *nucsteps;
+
+  /** Bubble nucleation center locations on the lattice. 
+   *
+   * NB: Only used if nucleation type is `NUC_FILE_LOC`.  
+   */
+  int **nuclocs;
+  
   /** Total number of steps on which we perform nucleation. 
    *
    * NB: If a step is repeated it is counted multiple times.
    */
   int n_nucsteps;
-
-  /** Parameter for exponential nucleation rate.
-   */
-  float beta;
 
   /** Used to rescale bubble size
    */
@@ -330,12 +342,16 @@ typedef struct {
    */
   float surface_tension;
 
-  /** Value of `phi` in the broken phase \f$ \phi_b \f$.
+  /** Value of `phi` at the center of the nucleated bubble.
+   *
+   * Read from the parameter file, if given as <=0 default to broken 
+   * phase value.
    */
   float phimin;
 
   /** Critical radius of the bubble \f$ R_c \f$.
    *
+   * Read from the parameter file, if given as <=0 default to:
    * \f[
    * R_c= -\dfrac{2\sigma}{-V(\phi_b,T_N)}
    * \f]
@@ -348,6 +364,17 @@ typedef struct {
    */
   float R_scaled;
 
+  /** Constant in potential term.
+   *
+   * Calculated s.t $V(\phi_b,T=0)=0$ 
+   */
+  float V0;
+#ifdef BAG
+  /** Broken phase value of phi in the bag model.
+   */
+  double phi_0;
+#endif //BAG
+  
 } hydro_params;
 
 
@@ -455,6 +482,7 @@ typedef struct {
 
 } hydro_fields;
 
+
 /** Helper struct for performing MPI_MAXLOC and MPI_MINLOC operations.
  *
  * Useful for debugging, e.g finding max/min value of something on the
@@ -464,6 +492,16 @@ typedef struct{
   float value;
   int rank;
 } value_rank;
+
+/** Helper struct for passing a value and array specifying its location.
+ *
+ * Useful for debugging, e.g finding max/min value of something on the
+ * lattice and the lattice site where it occurs.
+ */
+typedef struct{
+  float value;
+  int loc[3];
+} value_loc;
 
 // main.c just contains main()
 
@@ -546,6 +584,8 @@ void eq_of_state(hydro_fields f, hydro_params p);
 void advect_E(hydro_fields f, hydro_params p);
 void advect_Z(hydro_fields f, hydro_params p);
 
+
+
 // initial.c
 void initial_blank(hydro_fields f, hydro_params p);
 int safe_distance(hydro_fields f, hydro_params p);
@@ -558,10 +598,14 @@ void init_profile(hydro_fields *f, hydro_params *p);
 
 // output.c
 float get_gamma_max(hydro_fields f, hydro_params p);
+float get_s_max(hydro_fields f, hydro_params p);
 float get_veltot(hydro_fields f, hydro_params p);
 void dump(float *field, hydro_params p);
 void histo_field(float ***field, hydro_params p, int step);
 void didj(float *cpts, hydro_fields f, hydro_params p);
+value_loc find_max_loc(float ***f, hydro_params p, int abs_max);
+value_loc find_min_loc(float ***f, hydro_params p, int abs_min);
+void dump_max_min(hydro_fields f, hydro_params p);
 
 // papi.c
 #ifdef PAPI
@@ -611,9 +655,10 @@ void fft_vel(hydro_fields f, hydro_params p, int step, float ****vectorfield);
 #endif // FFT
 
 
-
+#if defined(FFT) && ! defined(SCALAR)
 // initps.c
 void init_ps(hydro_fields f, hydro_params p, float ****field);
 void norm_power(hydro_fields f, hydro_params p, float ****field);
 float get_momtot(hydro_fields f, hydro_params p);
 
+#endif // FFT && !SCALAR
