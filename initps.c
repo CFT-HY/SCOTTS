@@ -103,8 +103,15 @@ void VtoZ(hydro_fields f, hydro_params p) {
       for(z=0; z<p.Lz; z++) {
 	  
 	f.E[x][y][z] = f.W[x][y][z]*eps;
-	  
+
+	/*
 	f.kappa[x][y][z] = kappa;
+
+	f.p[x][y][z] = (f.kappa[x][y][z] - 1.0)*f.E[x][y][z]/f.W[x][y][z];
+	*/
+
+	f.p[x][y][z] = 1.0;
+	f.kappa[x][y][z] = 1.0 + f.W[x][y][z]*f.p[x][y][z]/f.E[x][y][z];
       }
     }
   }
@@ -175,8 +182,6 @@ void project_down(hydro_params p, fftwf_complex **in, int shift_x, int x_thickne
 
   float resid, stuff;
 
-  float tdx = 0.5;
-
   int reruns;
 
   int true_x, true_y, true_z;
@@ -221,12 +226,6 @@ void project_down(hydro_params p, fftwf_complex **in, int shift_x, int x_thickne
 	  }
 
 
-	  /*	  
-	  kx = sqrt((2.0 - 2.0*cos(((float)(x+shift_x))*2.0*M_PI/(((float)p.Lx))))/(tdx*tdx));
-	  ky = sqrt((2.0 - 2.0*cos(((float)y)*2.0*M_PI/(((float)p.Ly))))/(tdx*tdx));
-	  kz = sqrt((2.0 - 2.0*cos(((float)z)*2.0*M_PI/(((float)p.Lz))))/(tdx*tdx));
-	  */
-
 	  kx = s_x*sqrt((2.0 - 2.0*cos(((float)(true_x))*2.0*M_PI/(((float)p.Lx))))/(p.dx*p.dx));
 	  ky = s_y*sqrt((2.0 - 2.0*cos(((float)(true_y))*2.0*M_PI/(((float)p.Ly))))/(p.dx*p.dx));
 	  kz = s_z*sqrt((2.0 - 2.0*cos(((float)(true_z))*2.0*M_PI/(((float)p.Lz))))/(p.dx*p.dx));
@@ -248,12 +247,20 @@ void project_down(hydro_params p, fftwf_complex **in, int shift_x, int x_thickne
 	    for(j=1; j<=3; j++) {
 
 	      // #ifndef DIVPS	      
-	      /* Rot?
+	      //  Rot?
+	      // v_i^\perp = P_{ij} v_j
+	      // where P_{ij} = \delta_{ij} - \hat{k}_i \hat{k}_j
+	      // and $\hat{k}$ is a unit vector in the $k$ direction.
+	      /*
 	      in_proj_re[i-1] += vel_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
 	      in_proj_im[i-1] += vel_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 	      */
+
+
 	      // #else
 	      // #warning DIVPS enabled
+	      // Div?
+	      // v_i^\parallel = (\delta_{ij} - P_{ij}) v_j
 	      if(i == j) {
 		in_proj_re[i-1] += (1.0-vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
 		in_proj_im[i-1] += (1.0-vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
@@ -608,7 +615,7 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
   }
   fclose(fp);
 
-  fudge = (2.0*M_PI/((float)p.Lx))/(k_bins[1]-k_bins[0]);
+  fudge = (2.0*M_PI/((float)p.Lx))/((k_bins[1]-k_bins[0])*p.dx);
   if(fabs(fudge - 1.0) > 1e-6) {
     printf0(p, "Applying fudge factor %g^3 to power spectrum: "
 	    "seems like dk or volume or dx is different\n",
@@ -651,7 +658,7 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 	       ((float)(true_x*true_x))/((float)(p.Lx*p.Lx))
 	       + ((float)(true_y*true_y))/((float)(p.Ly*p.Ly))
 	       + ((float)(true_z*true_z))/((float)(p.Lz*p.Lz))
-	       )*(2.0*M_PI)*(2.0*M_PI);
+	       )*(2.0*M_PI)*(2.0*M_PI)/(p.dx*p.dx);
 
 	for(i=0; i<3; i++) {
 	  // spectrum(ksq, p, &(in[i][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z]));
