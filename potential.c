@@ -30,10 +30,18 @@
  * \frac{1}{4}\frac{\gamma^2 T_0^4}{\lambda} \text.  \f]
  */
 float Vf(hydro_params p, float T, float this_phi) {
+#ifdef BAG
+  return 0.5*p.gamma*this_phi*this_phi
+    - p.alpha*this_phi*this_phi*this_phi/3.0
+    + 0.25*p.lambda*this_phi*this_phi*this_phi*this_phi
+    + p.V0*this_phi*this_phi/(p.phi_0*p.phi_0)
+    *(3.-2.*this_phi/p.phi_0)*T*T*T*T + p.V0;
+#else
   return  0.5*p.gamma*(T*T - p.T0*p.T0)*this_phi*this_phi
     - p.alpha*T*this_phi*this_phi*this_phi/3.0
     + 0.25*p.lambda*this_phi*this_phi*this_phi*this_phi
-    + 0.25*p.gamma*p.gamma*p.T0*p.T0*p.T0*p.T0/p.lambda;
+    + p.V0;
+#endif // BAG
 }
 
 
@@ -48,9 +56,17 @@ float Vf(hydro_params p, float T, float this_phi) {
  * T_0^2)\phi - \alpha T \phi^2 + \lambda\phi^3\text.  \f]
  */
 float Vdf(hydro_params p, float T, float this_phi) {
+#ifdef BAG
+  return p.gamma*this_phi
+    - p.alpha*this_phi*this_phi
+    + p.lambda*this_phi*this_phi*this_phi
+    + p.V0*this_phi/(p.phi_0*p.phi_0)
+    *(6.-6.*this_phi/p.phi_0)*T*T*T*T;
+#else
   return p.gamma*(T*T - p.T0*p.T0)*this_phi
     - p.alpha*T*this_phi*this_phi
     + p.lambda*this_phi*this_phi*this_phi;
+#endif // BAG
 }
 
 
@@ -64,8 +80,13 @@ float Vdf(hydro_params p, float T, float this_phi) {
  * \f]
  */
 float VTf(hydro_params p, float T, float this_phi) {
+#ifdef BAG
+  return 4*T*T*T*p.V0*this_phi*this_phi/(p.phi_0*p.phi_0)
+    *(3 - 2*this_phi/(p.phi_0));
+#else
   return p.gamma*T*this_phi*this_phi 
     - p.alpha*this_phi*this_phi*this_phi/3.0;
+#endif // TINDEP
 }
 
 
@@ -79,7 +100,12 @@ float VTf(hydro_params p, float T, float this_phi) {
  * \f[ V(\phi,T) = \gamma \phi^2 \text.  \f]
  */
 float VTTf(hydro_params p, float T, float this_phi) {
+#ifdef BAG
+  return 12.*T*T*p.V0*this_phi*this_phi/(p.phi_0*p.phi_0)
+    *(3.-2.*this_phi/p.phi_0);
+#else
   return p.gamma*this_phi*this_phi;
+#endif // BAG
 }
 
 

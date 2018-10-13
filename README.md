@@ -91,3 +91,6 @@ FFTW.
 * `-DMPI`: compile with MPI support (necessary for parallelisation).
 
 * `-DSCALAR`: compile without the fluid.
+
+* `-DDIMENSIONLESS`: Switch between dimensionless and dimensionful
+  damping couplings.

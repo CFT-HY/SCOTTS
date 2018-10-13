@@ -4,6 +4,8 @@
  */
 #include "hydro.h"
 
+#if defined(FFT) && ! defined(SCALAR)
+
 // http://people.math.sc.edu/kellerlv/Quadratic_Interpolation.pdf 
 // Lagrange Interp formula
 float quadratic(float x1, float x2, float x3,
@@ -980,7 +982,6 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 }
 
 
-
-
+#endif // FFT && !SCALAR
 
 

@@ -52,6 +52,16 @@ int main(int argc, char *argv[]) {
   // Parse parameters from the filename specified on the command line
   get_parameters(argv[1], &p);
 
+  // Specify output filename
+
+  if(!p.rank){
+    if(strcmp(p.output_fname,"stdout") == 0) {
+      p.outputdest = stdout;
+    }
+    else {
+      p.outputdest = fopen(p.output_fname,"w");
+    }
+  }
   // Seed - make sure everyone gets the same one (if necessary)
   srandom(p.seed);
   srand48(p.seed);
@@ -116,7 +126,9 @@ int main(int argc, char *argv[]) {
   float current_avgpress;
   float current_veltot;
   float gwen;
-
+  float s_max;
+  float gamma_max;
+  
   // Timing counters
   float cpu_time_used;
 
@@ -150,6 +162,7 @@ int main(int argc, char *argv[]) {
     printf0(p, "- Zeroed fields.\n");
 
     if(p.initial==INIT_PS){
+#if defined (FFT) && ! defined(SCALAR)
       // If initial is INIT_PS then initialise velocity power spec.
       // Then no bubbles nucleated.
 
@@ -172,7 +185,15 @@ int main(int argc, char *argv[]) {
 	  */
 	//	init_ps(f, p, f.V);
 	//    init_ps(f, p, f.Z);
+#else
+	
+	printf0(p,"INIT_PS initial conditions invalid with SCALAR compiler flag.",
+		"Exiting... \n");
+	die(100);
+	
+#endif // FFT && !SCALAR	
 
+	
     } else if(p.initial==INIT_BUBBLE){
       //Bubble initial conditions:
       if(p.bubbles > 1){
@@ -184,7 +205,6 @@ int main(int argc, char *argv[]) {
 	nucleate_at(f,p,0,0,0);
 	halo_field(f.phi,p);
       
-	
 	end = clock();
 	if(!p.rank)
 	  fprintf(stderr,"Nucleation attempt took %lf\n",
@@ -214,6 +234,7 @@ int main(int argc, char *argv[]) {
 	printf0(p, "Nucleating just one bubble\n");
 	nucleate_at(f,p,0,0,0);
 	halo_field(f.phi,p);
+	bcount+=1;
       } else{
 	// Empty system
 	initial_blank(f, p);
@@ -303,7 +324,8 @@ int main(int argc, char *argv[]) {
   // Wall time measurement
   start = clock();
 
-
+  // Next index in list of bubble locations for NUC_LOC_FILE option.
+  int bub_loc_ind = 0;
 
   for(step = step_start; step < p.steps; step++) {
 
@@ -327,10 +349,23 @@ int main(int argc, char *argv[]) {
 
     while(i < howmany) {
 
-      still_nucleate = try_nucleate(f, p);
+      if(p.nucleation==NUC_FILE_LOC){
+	printf0(p, "Nucleating a bubble on step %d at (%d, %d, %d)"
+		" without any checks.\n", step, p.nuclocs[bub_loc_ind][0],
+		p.nuclocs[bub_loc_ind][1], p.nuclocs[bub_loc_ind][2]);
+		
+	nucleate_at(f, p, p.nuclocs[bub_loc_ind][0], p.nuclocs[bub_loc_ind][1],
+		    p.nuclocs[bub_loc_ind][2]);
+	bub_loc_ind++;
+	bcount++;
+	i++;
+      }
+      else{
+	still_nucleate = try_nucleate(f, p);
 
-      bcount += still_nucleate;
-      i++;
+	bcount += still_nucleate;
+	i++;
+      }
     }
 
 
@@ -379,7 +414,7 @@ int main(int argc, char *argv[]) {
 #ifndef SCALAR
       // Velocity power spectrum
       fft_vel(f, p, step, f.V);
-#endif // !SCALAR
+#endif //!SCALAR
 
       // Gravitational wave power spectrum (returns GW energy)
       gwen = fft_tensor(f, p, step, 0.0);
@@ -398,7 +433,6 @@ int main(int argc, char *argv[]) {
     }
 #endif // FFT
 
-
     // Measurements
     if((p.interval > 0) && (step % p.interval == 0)) {
 
@@ -410,20 +444,26 @@ int main(int argc, char *argv[]) {
       current_gradient_energy = reduce_sum(gradient_energy(f, p), p);
       current_veltot = reduce_sum(get_veltot(f, p), p)
 	/((float)(p.Lx*p.Ly*p.Lz));
+      s_max = reduce_max(get_s_max(f, p), p);
+      gamma_max = reduce_max(get_gamma_max(f, p), p);
       
       if(!p.rank) {
-	printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf\t%6lf\n",
-	       step,
-	       t,
-	       current_energy,
-	       current_kinetic,
-	       current_field_energy,
-	       current_gradient_energy,
-	       current_veltot,
-	       gwen,
-	       bcount,
-	       current_rest,
-	       current_avgpress);
+	fprintf(p.outputdest,
+		"%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf\t%6lf\t%6lf\t%6lf\n",
+		step,
+		t,
+		current_energy,
+		current_kinetic,
+		current_field_energy,
+		current_gradient_energy,
+		current_veltot,
+		gwen,
+		bcount,
+		current_rest,
+		current_avgpress,
+		s_max,
+		gamma_max);
+	fflush(p.outputdest);
       }
 
       // Statement of energy violation (not shown; better to use KE)
@@ -436,24 +476,38 @@ int main(int argc, char *argv[]) {
       */
     }
 
-
+    //printf0(p,"step = %d \n", step);
     // Do field step
     evolve_field(f, p);
+    //printf0(p,"Evolved field \n");
+    //dump_max_min(f, p);
 
     // Calculate EOS
     eq_of_state(f, p);
+    //printf0(p,"Calculated eos \n");
+    //dump_max_min(f, p);
 
+    
     // Do the hydro bits
     evolve_hydro(f, p);
 
+    //printf0(p,"Evolved hydro \n");
+    //dump_max_min(f, p);
+    
     // Evolve metric perturbations
     evolve_uij(f, p);
 
     // Advection of state variables
     advect_E(f, p);
+    //printf0(p,"Advected E \n");
+    //dump_max_min(f, p);
+    
     // Advection of momentum
     advect_Z(f, p);
+    //printf0(p,"Advected Z \n");
+    //dump_max_min(f, p);
 
+    
     // Don't bother with art viscosity, yet
     //    artificial_viscosity(f, nb, p);
 
@@ -492,22 +546,36 @@ int main(int argc, char *argv[]) {
   current_gradient_energy = reduce_sum(gradient_energy(f, p), p);
   current_veltot = reduce_sum(get_veltot(f, p), p)
     /((float)(p.Lx*p.Ly*p.Lz));
-      
+  s_max = reduce_max(get_s_max(f, p), p);
+  gamma_max = reduce_max(get_gamma_max(f, p), p);
+
+  
   if(!p.rank) {
-    printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf\t%6lf\n",
-	   step,
-	   t,
-	   current_energy,
-	   current_kinetic,
-	   current_field_energy,
-	   current_gradient_energy,
-	   current_veltot,
-	   gwen,
-	   bcount,
-	   current_rest,
-	   current_avgpress);
+    fprintf(p.outputdest,
+	    "%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf\t%6lf\t%6lf\t%6lf\n",
+	    step,
+	    t,
+	    current_energy,
+	    current_kinetic,
+	    current_field_energy,
+	    current_gradient_energy,
+	    current_veltot,
+	    gwen,
+	    bcount,
+	    current_rest,
+	    current_avgpress,
+	    s_max,
+	    gamma_max);
+    fflush(p.outputdest);
   }
 
+
+  // Close output file
+  if(!p.rank){
+    if(strcmp(p.output_fname,"stdout") != 0) {
+      fclose(p.outputdest);
+    }
+  }
   
   // End time, for walltime calculation
   end = clock();
@@ -555,6 +623,9 @@ int main(int argc, char *argv[]) {
 
   // Clean up memory
   free_fields(&f, p);
+  
+  
+
   
   return 0;
 
