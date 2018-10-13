@@ -4,13 +4,16 @@
 # there. This is represented below by the use of the environment
 # variable $(HOME) in the include and library paths.
 
+# Get VERSION from common makefile
+include makefiles/Makefile.common
+
 #### CC ####
 
 CC := mpicc -g -DMPI -DFFT -DSILO
 
 #### CFLAGS ####
 
-CFLAGS := -O3 -I$(HOME)/local/include/
+CFLAGS := -O3 -I$(HOME)/local/include/ -DVERSION=\"$(VERSION)\"
 
 #### LIBS ####
 

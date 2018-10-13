@@ -8,6 +8,9 @@
 # 1) intel/16.0.0   2) mkl/11.3.0  
 # 3) intelmpi/5.1.1   4) StdEnv
 
+# Get VERSION from common makefile
+include makefiles/Makefile.common
+
 #### CC ####
 
 CC := mpicc -DMPI -DFFT -DSILO
@@ -17,7 +20,8 @@ CC := mpicc -DMPI -DFFT -DSILO
 CFLAGS := -L$(HOME)/local_taito/lib \
         -I$(HOME)/local_taito/include \
         -O3 -opt-prefetch -unroll-aggressive -no-prec-div \
-        -fp-model fast=2 -align -fno-alias -fno-fnalias -ipo
+        -fp-model fast=2 -align -fno-alias -fno-fnalias -ipo \
+	-DVERSION=\"$(VERSION)\"
 
 
 #### LIBS ####

@@ -4,6 +4,14 @@
  */
 #include "hydro.h"
 
+/* Compile in version number based on tag and commit
+ * -- this is done in makefile. If VERSION is not defined in the makefile
+ * then we give a warning here and set it to "unknown".
+ */
+#ifndef VERSION
+#warning VERSION should be defined in makefile
+#define VERSION "unknown"
+#endif
 
 int main(int argc, char *argv[]) {
 
@@ -28,7 +36,8 @@ int main(int argc, char *argv[]) {
 
   // Note that this is when main.c was rebuilt, not the whole thing!
   printf0(p, "Built: %s %s\n", __DATE__, __TIME__);
-
+  printf0(p, "Version: %s\n", VERSION);
+  
   if(argc != 2) {
     printf0(p, "Usage: hydro <parameter file>\n");
     return 100;

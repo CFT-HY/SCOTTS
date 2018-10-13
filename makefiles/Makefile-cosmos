@@ -10,13 +10,16 @@
 # To use Silo, you may need to compile it yourself...
 #
 
+# Get VERSION from common makefile
+include makefiles/Makefile.common
+
 #### CC ####
 
 CC := mpicc -g -DMPI -DFFT
 
 #### CFLAGS ####
 
-CFLAGS := -O3 -I$(HOME)/include/
+CFLAGS := -O3 -I$(HOME)/include/ -DVERSION=\"$(VERSION)\"
 
 #### LIBS ####
 

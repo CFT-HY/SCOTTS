@@ -1,3 +1,6 @@
+# Get VERSION from common makefile
+include makefiles/Makefile.common
+
 #### CC ####
 
 CC := cc -DMPI -DFFT -DSILO
@@ -8,7 +11,8 @@ CFLAGS := -O3 -opt-prefetch -unroll-aggressive -no-prec-div \
        -fp-model fast=2 -align -fno-alias -fno-fnalias -ipo \
        -L/zhome/academic/HLRS/pri/iprdawei/local/lib \
        -I/zhome/academic/HLRS/pri/iprdawei/local/include \
-       -L/opt/cray/hdf5/1.8.11/INTEL/130/lib
+       -L/opt/cray/hdf5/1.8.11/INTEL/130/lib \
+       -DVERSION=\"$(VERSION)\"
 
 # csc gnu:
 #	-march=haswell -mtune=haswell -mavx2 -mfma \
