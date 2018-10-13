@@ -40,7 +40,45 @@ float get_gamma_max(hydro_fields f, hydro_params p) {
 #endif
 }
 
+/* float get_s_max(hydro_fields f, hydro_params p)
+ *
+ * Returns the largest zone-centred damping factor s found anywhere
+ * in the simulation box.
+ */
+float get_s_max(hydro_fields f, hydro_params p) {
+  int x, y, z;
+  float smax = 0;
+  float stest;
 
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+#ifdef DIMENSIONLESS
+#ifndef SCALAR
+	stest = 0.5*p.dt*(p.C*f.phi[x][y][z]*f.phi[x][y][z]
+		       /f.T[x][y][z])*f.W[x][y][z];
+#else
+	stest = 0.5*p.dt*(p.C*f.phi[x][y][z]*f.phi[x][y][z]
+		       /f.Tconst);
+#endif //!SCALAR
+#else
+#ifndef SCALAR
+	stest = 0.5*p.dt*p.C*f.W[x][y][z];
+#else
+	stest = 0.5*p.dt*p.C;
+#endif //!SCALAR
+#endif //DIMENSIONLESS
+	if(stest>smax) {
+	  smax = stest;
+	}
+      }
+    }
+  }
+
+  return smax;
+	
+}
+  
 /* float get_veltot(hydro_fields f, hydro_params p)
  *
  * The sum of the fluid (3-)velocity everywhere. A strange quantity
@@ -274,3 +312,278 @@ void didj(float *cpts, hydro_fields f, hydro_params p) {
 
 }
 
+/** Returns the maximum and its position of a specified field on the lattice.
+ *
+ * For debugging purposes. 
+ * Only ensures that the master node has the correct value.
+ * Additional boolean int to determine if we want to find maximum 
+ * of absolute value or just maximum.
+ */
+value_loc find_max_loc(float ***field, hydro_params p, int abs_max){
+  float field_max= -999999999999;
+  int x, y, z;
+  int max_loc[3] = {-1,-1,-1};
+  value_rank out;
+  value_loc max_and_loc;
+  
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+	if(fabs(field[x][y][z]) > field_max && abs_max){
+	  field_max = fabs(field[x][y][z]);
+	  max_loc[0] = x + p.shiftx - 1;
+	  max_loc[1] = y + p.shifty - 1;
+	  max_loc[2] = z;
+	}
+	else if(field[x][y][z] > field_max && !abs_max){
+	  field_max = field[x][y][z];
+	  max_loc[0] = x + p.shiftx - 1;
+	  max_loc[1] = y + p.shifty - 1;
+	  max_loc[2] = z;
+	}
+      }
+    }
+  }
+
+  out = reduce_maxloc(field_max, p);
+  if(!out.rank){
+  }
+  else if(p.rank == out.rank){
+    MPI_Send(max_loc, 3, MPI_INT, 0, p.rank, MPI_COMM_WORLD);
+  }
+  else if(!p.rank){
+    MPI_Recv(max_loc, 3, MPI_INT, out.rank, out.rank, MPI_COMM_WORLD,
+	     MPI_STATUS_IGNORE);
+  }
+
+  max_and_loc.value = out.value;
+  max_and_loc.loc[0] = max_loc[0];
+  max_and_loc.loc[1] = max_loc[1];
+  max_and_loc.loc[2] = max_loc[2];
+  
+  return max_and_loc;
+}
+
+/** Returns the minimum and its position of a specified field on the lattice.
+ *
+ * For debugging purposes. 
+ * Only ensures that the master node has the correct value.
+ * Additional boolean int to determine if we want to find minimum 
+ * of absolute value or just minimum.
+ */
+value_loc find_min_loc(float ***field, hydro_params p, int abs_min){
+  float field_min= +999999999999;
+  int x, y, z;
+  int min_loc[3] = {-1,-1,-1};
+  value_rank out;
+  value_loc min_and_loc;
+  
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+	if(fabs(field[x][y][z]) < field_min && abs_min){
+	  field_min = fabs(field[x][y][z]);
+	  min_loc[0] = x + p.shiftx - 1;
+	  min_loc[1] = y + p.shifty - 1;
+	  min_loc[2] = z;
+	}
+	else if(field[x][y][z] < field_min && !abs_min){
+	  field_min = field[x][y][z];
+	  min_loc[0] = x + p.shiftx - 1;
+	  min_loc[1] = y + p.shifty - 1;
+	  min_loc[2] = z;
+	}
+      }
+    }
+  }
+
+  out = reduce_minloc(field_min, p);
+  if(!out.rank){
+  }
+  else if(p.rank == out.rank){
+    MPI_Send(min_loc, 3, MPI_INT, 0, p.rank, MPI_COMM_WORLD);
+  }
+  else if(!p.rank){
+    MPI_Recv(min_loc, 3, MPI_INT, out.rank, out.rank, MPI_COMM_WORLD,
+	     MPI_STATUS_IGNORE);
+  }
+
+  min_and_loc.value = out.value;
+  min_and_loc.loc[0] = min_loc[0];
+  min_and_loc.loc[1] = min_loc[1];
+  min_and_loc.loc[2] = min_loc[2];
+  
+  return min_and_loc;
+}
+
+/** Dumps maximum and minimum values of all fields and their locations 
+ * on the lattice. 
+ *
+ * For debugging purposes only, very costly.
+ *
+ */
+void dump_max_min(hydro_fields f, hydro_params p){
+
+  value_loc val_loc;
+
+  val_loc = find_max_loc(f.phi, p, 0);
+
+  printf0(p,"Max of phi = %g at (%d, %d, %d) \n", val_loc.value,
+	  val_loc.loc[0], val_loc.loc[1], val_loc.loc[2]);
+
+  val_loc = find_min_loc(f.phi, p, 0);
+
+  printf0(p,"Min of phi = %g at (%d, %d, %d) \n", val_loc.value,
+	  val_loc.loc[0], val_loc.loc[1], val_loc.loc[2]);
+
+  val_loc = find_max_loc(f.pi, p, 0);
+
+  printf0(p,"Max of pi = %g at (%d, %d, %d) \n", val_loc.value,
+	  val_loc.loc[0], val_loc.loc[1], val_loc.loc[2]);
+
+  val_loc = find_min_loc(f.pi, p, 0);
+
+  printf0(p,"Min of pi = %g at (%d, %d, %d) \n", val_loc.value,
+	  val_loc.loc[0], val_loc.loc[1], val_loc.loc[2]);
+  
+  val_loc = find_max_loc(f.T, p, 0);
+
+  printf0(p,"Max of T = %g at (%d, %d, %d) \n", val_loc.value,
+	  val_loc.loc[0], val_loc.loc[1], val_loc.loc[2]);    
+
+  val_loc = find_min_loc(f.T, p, 0);
+
+  printf0(p,"Min of T = %g at (%d, %d, %d) \n", val_loc.value,
+	  val_loc.loc[0], val_loc.loc[1], val_loc.loc[2]);    
+
+  val_loc = find_max_loc(f.E, p, 0);
+  
+  printf0(p,"Max of E = %g at (%d, %d, %d) \n", val_loc.value,
+	  val_loc.loc[0], val_loc.loc[1], val_loc.loc[2]);
+
+  val_loc = find_min_loc(f.E, p, 0);
+    
+  printf0(p,"Min of E = %g at (%d, %d, %d) \n", val_loc.value,
+	  val_loc.loc[0], val_loc.loc[1], val_loc.loc[2]);
+  
+  val_loc = find_max_loc(f.W, p, 0);
+
+  printf0(p,"Max of W = %g at (%d, %d, %d) \n", val_loc.value,
+	  val_loc.loc[0], val_loc.loc[1], val_loc.loc[2]);
+
+  val_loc = find_min_loc(f.W, p, 0);
+
+  printf0(p,"Min of W = %g at (%d, %d, %d) \n", val_loc.value,
+	  val_loc.loc[0], val_loc.loc[1], val_loc.loc[2]);
+
+  val_loc = find_max_loc(f.kappa, p, 0);
+
+  printf0(p,"Max of kappa = %g at (%d, %d, %d) \n", val_loc.value,
+	  val_loc.loc[0], val_loc.loc[1], val_loc.loc[2]);
+
+  val_loc = find_min_loc(f.kappa, p, 0);
+
+  printf0(p,"Min of kappa = %g at (%d, %d, %d) \n", val_loc.value,
+	  val_loc.loc[0], val_loc.loc[1], val_loc.loc[2]);
+  
+  val_loc = find_max_loc(f.p, p, 0);
+
+  printf0(p,"Max of p = %g at (%d, %d, %d) \n", val_loc.value,
+	  val_loc.loc[0], val_loc.loc[1], val_loc.loc[2]);
+
+  val_loc = find_min_loc(f.p, p, 0);
+
+  printf0(p,"Min of p = %g at (%d, %d, %d) \n", val_loc.value,
+	  val_loc.loc[0], val_loc.loc[1], val_loc.loc[2]);
+
+  val_loc = find_max_loc(f.V[0], p, 1);
+
+  printf0(p,"Max of |V[0]| = %g at (%d, %d, %d) \n", val_loc.value,
+	  val_loc.loc[0], val_loc.loc[1], val_loc.loc[2]);
+
+  val_loc = find_max_loc(f.V[1], p, 1);
+
+  printf0(p,"Max of |V[1]| = %g at (%d, %d, %d) \n", val_loc.value,
+	  val_loc.loc[0], val_loc.loc[1], val_loc.loc[2]);
+
+  val_loc = find_max_loc(f.V[2], p, 1);
+
+  printf0(p,"Max of |V[2]| = %g at (%d, %d, %d) \n", val_loc.value,
+	  val_loc.loc[0], val_loc.loc[1], val_loc.loc[2]);
+
+  val_loc = find_min_loc(f.V[0], p, 1);
+
+  printf0(p,"Min of |V[0]| = %g at (%d, %d, %d) \n", val_loc.value,
+	  val_loc.loc[0], val_loc.loc[1], val_loc.loc[2]);
+
+  val_loc = find_min_loc(f.V[1], p, 1);
+
+  printf0(p,"Min of |V[1]| = %g at (%d, %d, %d) \n", val_loc.value,
+	  val_loc.loc[0], val_loc.loc[1], val_loc.loc[2]);
+
+  val_loc = find_min_loc(f.V[2], p, 1);
+
+  printf0(p,"Min of |V[2]| = %g at (%d, %d, %d) \n", val_loc.value,
+	  val_loc.loc[0], val_loc.loc[1], val_loc.loc[2]);
+
+  val_loc = find_max_loc(f.Z[0], p, 1);
+
+  printf0(p,"Max of |Z[0]| = %g at (%d, %d, %d) \n", val_loc.value,
+	  val_loc.loc[0], val_loc.loc[1], val_loc.loc[2]);
+
+  val_loc = find_max_loc(f.Z[1], p, 1);
+
+  printf0(p,"Max of |Z[1]| = %g at (%d, %d, %d) \n", val_loc.value,
+	  val_loc.loc[0], val_loc.loc[1], val_loc.loc[2]);
+
+  val_loc = find_max_loc(f.Z[2], p, 1);
+  
+  printf0(p,"Max of |Z[2]| = %g at (%d, %d, %d) \n", val_loc.value,
+	  val_loc.loc[0], val_loc.loc[1], val_loc.loc[2]);
+
+  val_loc = find_min_loc(f.Z[0], p, 1);
+
+  printf0(p,"Min of |Z[0]| = %g at (%d, %d, %d) \n", val_loc.value,
+	  val_loc.loc[0], val_loc.loc[1], val_loc.loc[2]);
+
+  val_loc = find_min_loc(f.Z[1], p, 1);
+
+  printf0(p,"Min of |Z[1]| = %g at (%d, %d, %d) \n", val_loc.value,
+	  val_loc.loc[0], val_loc.loc[1], val_loc.loc[2]);
+
+  val_loc = find_min_loc(f.Z[2], p, 1);
+
+  printf0(p,"Min of |Z[2]| = %g at (%d, %d, %d) \n", val_loc.value,
+	  val_loc.loc[0], val_loc.loc[1], val_loc.loc[2]);
+
+  val_loc = find_max_loc(f.U[0], p, 1);
+
+  printf0(p,"Max of |U[0]| = %g at (%d, %d, %d) \n", val_loc.value,
+	  val_loc.loc[0], val_loc.loc[1], val_loc.loc[2]);
+
+  val_loc = find_max_loc(f.U[1], p, 1);
+
+  printf0(p,"Max of |U[1]| = %g at (%d, %d, %d) \n", val_loc.value,
+	  val_loc.loc[0], val_loc.loc[1], val_loc.loc[2]);
+
+  val_loc = find_max_loc(f.U[2], p, 1);
+
+  printf0(p,"Max of |U[2]| = %g at (%d, %d, %d) \n", val_loc.value,
+	  val_loc.loc[0], val_loc.loc[1], val_loc.loc[2]);
+
+  val_loc = find_min_loc(f.U[0], p, 1);
+
+  printf0(p,"Min of |U[0]| = %g at (%d, %d, %d) \n", val_loc.value,
+	  val_loc.loc[0], val_loc.loc[1], val_loc.loc[2]);
+
+  val_loc = find_min_loc(f.U[1], p, 1);
+
+  printf0(p,"Min of |U[1]| = %g at (%d, %d, %d) \n", val_loc.value,
+	  val_loc.loc[0], val_loc.loc[1], val_loc.loc[2]);
+
+  val_loc = find_min_loc(f.U[2], p, 1);
+
+  printf0(p,"Min of |U[2]| = %g at (%d, %d, %d) \n", val_loc.value,
+	  val_loc.loc[0], val_loc.loc[1], val_loc.loc[2]);
+
+}

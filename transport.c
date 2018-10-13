@@ -95,7 +95,7 @@ void donor_Z_dir(hydro_fields f, hydro_params p, int dir) {
   int x, y, z;
 
 
-  float ***Vbody = make_field(p);
+  float ***Vface = make_field(p);
 
 
 
@@ -106,32 +106,46 @@ void donor_Z_dir(hydro_fields f, hydro_params p, int dir) {
       for(z = 0; z < p.Lz; z++) {
 
 
-	Vbody[x][y][z] =  0.5*(f.V[0][x][y][z] + f.V[0][x+1][y][z]);
+	Vface[x][y][z] =  0.125*(f.V[0][x][y][z] + f.V[0][x+1][y][z] +
+				 f.V[0][x][y-1][z] + f.V[0][x+1][y-1][z] +
+				 f.V[0][x][y][(z-1+p.Lz)%p.Lz]
+				 + f.V[0][x+1][y][(z-1+p.Lz)%p.Lz] +
+				 f.V[0][x][y-1][(z-1+p.Lz)%p.Lz]
+				 + f.V[0][x+1][y-1][(z-1+p.Lz)%p.Lz]);
 
 
-	  if(Vbody[x][y][z] >= 0.0)
-	    f.F[0][x][y][z] = Vbody[x][y][z]*f.Z[dir][x][y][z];
+	  if(Vface[x][y][z] >= 0.0)
+	    f.F[0][x][y][z] = Vface[x][y][z]*f.Z[dir][x][y][z];
 	  else
-	    f.F[0][x][y][z] = Vbody[x][y][z]*f.Z[dir][x+1][y][z];
+	    f.F[0][x][y][z] = Vface[x][y][z]*f.Z[dir][x+1][y][z];
 
 
 
-	  Vbody[x][y][z] =  0.5*(f.V[1][x][y][z] + f.V[1][x][y+1][z]);
+	  Vface[x][y][z] =  0.125*(f.V[1][x][y][z] + f.V[1][x][y+1][z] +
+				   f.V[1][x-1][y][z] + f.V[1][x-1][y+1][z] +
+				   f.V[1][x][y][(z-1+p.Lz)%p.Lz]
+				   + f.V[1][x][y+1][(z-1+p.Lz)%p.Lz] +
+				   f.V[1][x-1][y][(z-1+p.Lz)%p.Lz]
+				   + f.V[1][x-1][y+1][(z-1+p.Lz)%p.Lz]);
 
 
-	  if(Vbody[x][y][z] >= 0.0)
-	    f.F[1][x][y][z] = Vbody[x][y][z]*f.Z[dir][x][y][z];
+	  if(Vface[x][y][z] >= 0.0)
+	    f.F[1][x][y][z] = Vface[x][y][z]*f.Z[dir][x][y][z];
 	  else
-	    f.F[1][x][y][z] = Vbody[x][y][z]*f.Z[dir][x][y+1][z];
+	    f.F[1][x][y][z] = Vface[x][y][z]*f.Z[dir][x][y+1][z];
 
 
-	  Vbody[x][y][z] =  0.5*(f.V[2][x][y][z] + f.V[2][x][y][(z+1)%p.Lz]);
+	  Vface[x][y][z] =  0.125*(f.V[2][x][y][z] + f.V[2][x][y][(z+1)%p.Lz] +
+				 f.V[2][x-1][y][z] + f.V[2][x-1][y][(z+1)%p.Lz] +
+				 f.V[2][x][y-1][z] + f.V[2][x][y-1][(z+1)%p.Lz] +
+				 f.V[2][x-1][y-1][z]
+				 + f.V[2][x-1][y-1][(z+1)%p.Lz]);
 
 
-	  if(Vbody[x][y][z] >= 0.0)
-	    f.F[2][x][y][z] = Vbody[x][y][z]*f.Z[dir][x][y][z];
+	  if(Vface[x][y][z] >= 0.0)
+	    f.F[2][x][y][z] = Vface[x][y][z]*f.Z[dir][x][y][z];
 	  else
-	    f.F[2][x][y][z] = Vbody[x][y][z]*f.Z[dir][x][y][(z+1)%p.Lz];
+	    f.F[2][x][y][z] = Vface[x][y][z]*f.Z[dir][x][y][(z+1)%p.Lz];
 
 
 
@@ -162,7 +176,7 @@ void donor_Z_dir(hydro_fields f, hydro_params p, int dir) {
   }
   halo_field(f.Z[dir], p);
 
-  free_field(p, Vbody);
+  free_field(p, Vface);
 
 #endif
 }

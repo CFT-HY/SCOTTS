@@ -61,6 +61,7 @@ void get_parameters(char *infile, hydro_params *p)
 
   int set_gwsource = 0;
 
+  int set_output_fname = 0;
   int set_silodir = 0;
   int set_checkpointdir = 0;
 
@@ -71,8 +72,8 @@ void get_parameters(char *infile, hydro_params *p)
 
   int set_bubbles = 0;
 
-  int set_beta = 0;
-
+  int set_R_critical = 0;
+  int set_phimin = 0;
   int set_scale = 0;
 
   int set_seed = 0;
@@ -233,9 +234,13 @@ void get_parameters(char *infile, hydro_params *p)
       p->bubbles = strtol(value,NULL,10);
       set_bubbles = 1;
     }
-    else if(!strcasecmp(key,"beta")) {
-      p->beta = strtof(value,NULL);
-      set_beta = 1;
+    else if(!strcasecmp(key,"R_critical")) {
+      p->R_critical = strtof(value,NULL);
+      set_R_critical = 1;
+    }
+    else if(!strcasecmp(key,"phimin")) {
+      p->phimin = strtof(value,NULL);
+      set_phimin = 1;
     }
     else if(!strcasecmp(key,"scale")) {
       p->scale = strtof(value,NULL);
@@ -383,12 +388,93 @@ void get_parameters(char *infile, hydro_params *p)
 	    }
 	  }
 	}
-      }else {
+      }
+      else if(!strncasecmp(value, "locfile", 4)) {
+	p->nucleation = NUC_FILE_LOC;
+
+	if(access(option,R_OK) != 0) {
+	  printf0(*p ,"Unable to read nucleation file \"%s\", giving up!\n",
+		  option);
+	  die(123);
+	}
+
+	FILE *nucfile = fopen(option,"r");
+
+	p->n_nucsteps = 0;
+	int temp_time, temp_x, temp_y, temp_z;
+	int still_reading = 1;
+	while(!feof(nucfile) && still_reading) {
+	  still_reading = fscanf(nucfile,"%d %d %d %d\n", &temp_time,
+				 &temp_x, &temp_y, &temp_z);
+	  if(still_reading == 4) {
+	    p->n_nucsteps++;
+	  }
+	}
+
+	printf0(*p, "Looks like there are %d bubbles in %s\n",
+		p->n_nucsteps, option);
+
+	rewind(nucfile);
+
+	p->nucsteps = (int *)malloc((p->n_nucsteps)*sizeof(int));
+	p->nuclocs = (int **)malloc((p->n_nucsteps)*sizeof(int *));
+	p->nuclocs[0] = (int *)malloc(p->n_nucsteps*3*sizeof(int));
+	
+	int i;
+
+	for(i=0; i<p->n_nucsteps; i++)
+	  p->nuclocs[i] = (*p->nuclocs + i * 3);
+
+	
+	for(i=0; i<p->n_nucsteps; i++)
+	  still_reading = fscanf(nucfile,"%d %d %d %d\n",
+				 &p->nucsteps[i], &p->nuclocs[i][0],
+				 &p->nuclocs[i][1], &p->nuclocs[i][2]);
+       
+
+	fclose(nucfile);
+	
+	
+	// Just in case, bubble sort the list
+	int sorted = 0;
+	int j = 0;
+	while(!sorted) {
+	  sorted = 1;
+
+	  for(i = 0; i < (p->n_nucsteps-1); i++) {
+	    if(p->nucsteps[i+1] < p->nucsteps[i]) {
+	      int temp = p->nucsteps[i+1];
+	      p->nucsteps[i+1] = p->nucsteps[i];
+	      p->nucsteps[i] = temp;
+	      for(j = 0; j < 3; j++){
+		temp = p->nuclocs[i][j];
+		p->nuclocs[i+1][j] = p->nuclocs[i][j]; 
+		p->nuclocs[i][j] = temp;
+	      }
+	      printf0(*p, "Bubble sort iteration necessary!\n");
+
+	      sorted = 0;
+	    }
+	  }
+	}
+      }
+      else {
 	printf0(*p ,"Unrecognised nucleation type (%s), giving up!\n",
 		value);
 	  die(123);
       }
       set_nucleation = 1;
+    }
+    else if(!strcasecmp(key,"output_fname")) {
+     
+      if(strlen(value) > 500)
+	printf0(*p,
+		"Warning: output_fname \"%s\" may be too long!\n",
+		value);
+
+      strncpy(p->output_fname, value, 500);
+      
+      set_output_fname = 1;
     }
     else if(!strcasecmp(key,"silodir")) {
      
@@ -515,9 +601,6 @@ void get_parameters(char *infile, hydro_params *p)
   } else if(!set_bubbles) {
     printf0(*p, "Did not set parameter \'bubbles\'\n");
     die(100);
-  } else if(!set_beta) {
-    printf0(*p, "Did not set parameter \'beta\'\n");
-    die(100);
   } else if(!set_scale) {
     printf0(*p, "Did not set parameter \'scale\'\n");
     die(100);
@@ -569,7 +652,7 @@ void get_parameters(char *infile, hydro_params *p)
 	    "-- interval %d, fftinterval %d\n"
 	    "-- silointerval %d, silosliceinterval %d,checkpointinterval %d\n"
 	    "-- uetcstart %d\n"
-	    "-- bubbles %d, beta %g, scale %g\n"
+	    "-- bubbles %d, scale %g\n"
 	    "-- initnorm %g\n"
             "-- initcutoff %g\n"
             "-- initlength %g\n"
@@ -586,7 +669,7 @@ void get_parameters(char *infile, hydro_params *p)
 	    p->interval, p->fftinterval,
 	    p->silointerval, p->silosliceinterval, p->checkpointinterval,
 	    p->uetcstart,
-	    p->bubbles, p->beta, p->scale,
+	    p->bubbles, p->scale,
 	    p->initnorm,
             p->initcutoff,
             p->initlength,
@@ -614,7 +697,9 @@ void get_parameters(char *infile, hydro_params *p)
       printf0(*p, "-- warning, somehow have unknown gwsource param\n");
     }
 
-    if((p->nucleation == NUC_LIST) || (p->nucleation == NUC_FILE)) {
+    if((p->nucleation == NUC_LIST) ||
+       (p->nucleation == NUC_FILE) ||
+       (p->nucleation == NUC_FILE_LOC)) {
       printf0(*p, "<List nucleation\n");
       printf0(*p, "At steps: [%d,...%d]", p->nucsteps[0],
 	      p->nucsteps[p->n_nucsteps-1]);
@@ -643,24 +728,58 @@ void get_parameters(char *infile, hydro_params *p)
  */
 void set_bubble_parameters(hydro_params *p){
 
+#ifdef BAG
+  p->V0 = (1./(96.*p->lambda*p->lambda*p->lambda)
+	 *(p->alpha + sqrt(p->alpha*p->alpha - 4.*p->gamma*p->lambda))
+	 *(p->alpha + sqrt(p->alpha*p->alpha - 4.*p->gamma*p->lambda))
+	 *(-6*p->gamma*p->lambda
+	   + p->alpha*(p->alpha + sqrt(p->alpha*p->alpha
+				       - 4.*p->gamma*p->lambda))));
+  
+  p->phi_0 = (p->alpha + sqrt(p->alpha*p->alpha
+			      - 4.*p->gamma*p->lambda))/(2.*p->lambda);
+#else
+  p->V0 = 0.25*p->gamma*p->gamma*p->T0*p->T0*p->T0*p->T0/p->lambda;
+#endif // BAG
+
+
+#ifdef BAG
+  p->surface_tension = (pow(p->alpha*(p->alpha + sqrt(p->alpha*p->alpha
+						  - 4.*p->gamma*p->lambda))
+			   - 2*p->gamma*p->lambda, 3/2.)
+		       /(24.*p->lambda*p->lambda*sqrt(p->lambda)));
+#else
+
   p->surface_tension = (2.0*sqrt(2.0)/81.0)*(
-						p->alpha*p->alpha*p->alpha
-						/(p->lambda*p->lambda
-						  *sqrt(p->lambda)));
-
-  p->phimin =  (p->alpha*p->Tconst
-		   + sqrt((p->alpha*p->Tconst)*(p->alpha*p->Tconst)
-			  - 4.0*p->lambda*p->gamma
-			  *(p->Tconst*p->Tconst - p->T0*p->T0))
-		   )/(2.0*p->lambda);
-  
-  p->R_critical = -2.0*p->surface_tension/Vf(*p, p->Tconst, p->phimin);
-  
+					     p->alpha*p->alpha*p->alpha
+					     /(p->lambda*p->lambda
+					       *sqrt(p->lambda)));
+#endif // BAG
+  if(p->phimin <= 0.){
+    printf0(*p, "phimin not set, defaulting to broken phase value. \n");
+#ifdef BAG
+    p->phimin = p->phi_0;
+#else
+    p->phimin =  (p->alpha*p->Tconst
+		  + sqrt((p->alpha*p->Tconst)*(p->alpha*p->Tconst)
+			 - 4.0*p->lambda*p->gamma
+			 *(p->Tconst*p->Tconst - p->T0*p->T0))
+		  )/(2.0*p->lambda);
+#endif // BAG
+  }
+  if(p->R_critical <= 0.){
+    printf0(*p, "R_critical not set, defaulting to gaussian ansatz. \n");
+    p->R_critical = 2.0*p->surface_tension/(Vf(*p,p->Tconst,0.0)
+					 - Vf(*p, p->Tconst, p->phimin));
+  }
   p->R_scaled = p->scale*p->R_critical;
-
+  
   printf0(*p, "-- Calculated bubble profile parameters: \n"
 	  "-- surface_tension %g, phimin %g \n" 
-          "-- R_critical %g, R_scaled %g \n",
-	  p->surface_tension, p->phimin, p->R_critical, p->R_scaled);
+          "-- R_critical %g, R_scaled %g \n"
+	  "Constant potential term found \n" 
+	  "-- V0 %g \n",
+	  p->surface_tension, p->phimin, p->R_critical, p->R_scaled,
+	  p->V0);
 
 }
