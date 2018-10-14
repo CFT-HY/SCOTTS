@@ -507,6 +507,22 @@ void get_parameters(char *infile, hydro_params *p)
 
       strncpy(p->initpsfile, value, 500);
      
+      if(!strcasecmp(option,"rot")) {
+	  printf0(*p,
+		  "Treating initpsfile as ROT power\n");
+	  p->initpsfile_type = INITPSFILE_ROT;
+      } else if(!strcasecmp(option,"div")) {
+	printf0(*p,
+		"Treating initpsfile as DIV power\n");
+	p->initpsfile_type = INITPSFILE_DIV;
+      } else {
+	printf0(*p,
+		"Unrecognised option to initpsfile;"
+		"treating initpsfile as DIV power\n");
+	p->initpsfile_type = INITPSFILE_DIV;
+	  }
+      
+
       set_initpsfile = 1;
     }
     else if(!strcasecmp(key,"initpsbins")) {
@@ -622,10 +638,13 @@ void get_parameters(char *infile, hydro_params *p)
   } else if(!set_nucleation) {
     printf0(*p, "Did not set parameter \'nucleation\'\n");
     die(100);
+  } else if(!set_output_fname) {
+    printf0(*p, "Did not set parameter \'output_fname\'\n");
+    die(100);
   } else if(!set_silodir) {
     printf0(*p, "Did not set parameter \'silodir\'\n");
-    die(100);
-  } else if(!set_checkpointdir) {
+    die(100); 
+ } else if(!set_checkpointdir) {
     printf0(*p, "Did not set parameter \'checkpointdir\'\n");
     die(100);
   } else if(!set_seed) {

@@ -80,6 +80,8 @@
 #define CPT_33 5
 
 
+#define INITPSFILE_DIV 0
+#define INITPSFILE_ROT 1
 
 /** Struct containing parameters that are not changed during the
  * simulation.
@@ -260,6 +262,7 @@ typedef struct {
   /** Where to find the initial power spectrum
    */
   char initpsfile[500];
+  int initpsfile_type;
 
   /** Number of bins.
    */

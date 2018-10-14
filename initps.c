@@ -248,51 +248,50 @@ void project_down(hydro_params p, fftwf_complex **in, int shift_x, int x_thickne
 
 	    for(j=1; j<=3; j++) {
 
-	      // #ifndef DIVPS	      
-	      //  Rot?
-	      // v_i^\perp = P_{ij} v_j
-	      // where P_{ij} = \delta_{ij} - \hat{k}_i \hat{k}_j
-	      // and $\hat{k}$ is a unit vector in the $k$ direction.
-	      /*
-	      in_proj_re[i-1] += vel_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-	      in_proj_im[i-1] += vel_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
-	      */
+	      if(p.initpsfile_type == INITPSFILE_ROT) {
+		//  Rot?
+		// v_i^\perp = P_{ij} v_j
+		// where P_{ij} = \delta_{ij} - \hat{k}_i \hat{k}_j
+		// and $\hat{k}$ is a unit vector in the $k$ direction.
+		in_proj_re[i-1] += vel_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+		in_proj_im[i-1] += vel_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+
+		
+		// this is delta_{ij} - P_{ij}V_j
+		if(i == j) {
+		  res_re += (1.0-vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+		  res_im += (1.0-vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+		} else {
+		  res_re += (-1.0*vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+		  res_im += (-1.0*vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+		}
 
 
-	      // #else
-	      // #warning DIVPS enabled
-	      // Div?
-	      // v_i^\parallel = (\delta_{ij} - P_{ij}) v_j
-	      if(i == j) {
-		in_proj_re[i-1] += (1.0-vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-		in_proj_im[i-1] += (1.0-vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 	      } else {
-		in_proj_re[i-1] += (-1.0*vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-		in_proj_im[i-1] += (-1.0*vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+
+		// Div?
+		// v_i^\parallel = (\delta_{ij} - P_{ij}) v_j
+		if(i == j) {
+		  in_proj_re[i-1] += (1.0-vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+		  in_proj_im[i-1] += (1.0-vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+		} else {
+		  in_proj_re[i-1] += (-1.0*vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+		  in_proj_im[i-1] += (-1.0*vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+		}
+		// #endif
+
+		res_re += vel_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+		res_im += vel_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+
 	      }
-	      // #endif
 
-
-
-
-	      if(i == j) {
-		res_re += (1.0-vel_proj(i*10 + j, kx, ky, kz))
-		  *in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-		res_im += (1.0-vel_proj(i*10 + j, kx, ky, kz))
-		  *in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
-	      } else {
-		res_re += (-1.0*vel_proj(i*10 + j, kx, ky, kz))
-		  *in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-		res_im += (-1.0*vel_proj(i*10 + j, kx, ky, kz))
-		  *in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
-	      }
 
 	      
 			
 	    }
-	      stuff += in_proj_re[i-1]*in_proj_re[i-1] + in_proj_im[i-1]*in_proj_im[i-1];
-	      resid += res_re*res_re + res_im*res_im;
-
+	    stuff += in_proj_re[i-1]*in_proj_re[i-1] + in_proj_im[i-1]*in_proj_im[i-1];
+	    resid += res_re*res_re + res_im*res_im;
+	      
 
 
 	  }
@@ -875,7 +874,7 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
   float *slice = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
 
 
-  float maximag = 0.0;
+  //  float maximag = 0.0;
 
   for(i=0; i<3; i++) {
 
@@ -884,19 +883,17 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
     for(x=0; x<x_thickness; x++) {
       for(y=0; y<p.Ly; y++) {
 	for(z=0; z<p.Lz; z++) {
-	  if(fabs(out[i][x*p.Ly*p.Lz + y*p.Lz + z][1]) > fabs(maximag)) {
+	  /*	  if(fabs(out[i][x*p.Ly*p.Lz + y*p.Lz + z][1]) > fabs(maximag)) {
 	    maximag = out[i][x*p.Ly*p.Lz + y*p.Lz + z][1];
-	  }
+	    } */
 	  slice[x*p.Ly*p.Lz + y*p.Lz + z] = out[i][x*p.Ly*p.Lz + y*p.Lz + z][0];
 	}
       }
     }
 
-    fprintf(stderr,"maximag is %g\n", maximag);
+    //    fprintf(stderr,"maximag is %g\n", maximag);
     MPI_Barrier(MPI_COMM_WORLD);
     
-
-    // segfault error below here
 
     for(x=0; x<p.Lx; x++) {
 
