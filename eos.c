@@ -15,7 +15,8 @@
  * \f[
  * T^2= \dfrac{ \frac{1}{2} \gamma \phi^2 
  *              \pm \sqrt{\frac{1}{4} \gamma^2\phi^4 +12a(\epsilon + 
- *		    \frac{1}{2}\gamma T_0^2 \phi^2 -\frac{1}{4}\lambda\phi^4)}}
+ *		    \frac{1}{2}\gamma T_0^2 \phi^2 
+ *                   -\frac{1}{4}\lambda\phi^4 + V_0)}}
  *	{6a}\text.
  * \f]
  *
@@ -27,6 +28,19 @@
  * The adiabatic constant `f.kappa` is given by
  * \f[
  * \kappa= 1 + \frac{PW}{E}\text.
+ * \f]
+ *
+ * Alternatively in the BAG model we find `f.T` by solving 
+ * \f[
+ * \epsilon = 3 a(\phi) T^4 + V_B(\phi) 
+ * \f]
+ * and so
+ * \f[
+ *    T=\left( \dfrac{ \epsilon - V_B(\phi)}{3 a(\phi)}\right)^{1/4}
+ * \f]
+ * Then the pressure `f.p` is found from
+ * \f[
+ * P = a(\phi) T^4 - V_B(\phi)
  * \f]
  */
 #include "hydro.h"
@@ -61,8 +75,8 @@ void find_Ta(hydro_fields f, hydro_params p) {
 		      *f.phi[x][y][z]/3.0)
 		   + (0.25*p.lambda*f.phi[x][y][z]*f.phi[x][y][z]
 		      *f.phi[x][y][z]*f.phi[x][y][z])
-		   + p.V0))
-	      /(3.*(p.gdeg + p.V0*f.phi[x][y][z]*f.phi[x][y][z]
+		   - p.V0))
+	      /(3.*(p.gdeg - p.V0*f.phi[x][y][z]*f.phi[x][y][z]
 		    *(2*f.phi[x][y][z]/p.phi_0 - 3.)
 		    /(p.phi_0*p.phi_0))));
 	if(Tfix < 0){
@@ -83,7 +97,7 @@ void find_Ta(hydro_fields f, hydro_params p) {
 	  *f.phi[x][y][z]*f.phi[x][y][z]
 	  - 12.0*p.gdeg*(0.25*p.lambda*f.phi[x][y][z]*f.phi[x][y][z]
 		      *f.phi[x][y][z]*f.phi[x][y][z]
-			 + p.V0
+			 - p.V0
 			 - 0.5*p.gamma*p.T0*p.T0*f.phi[x][y][z]*f.phi[x][y][z]
 			 - f.E[x][y][z]/f.W[x][y][z]);
 
@@ -97,7 +111,7 @@ void find_Ta(hydro_fields f, hydro_params p) {
 	f.T[x][y][z] = sqrt((1.0/(6.0*p.gdeg))
 			    * (0.5*p.gamma*f.phi[x][y][z]*f.phi[x][y][z]
 			       + sqrt(Tfix)));
-#endif // TINDEP
+#endif // BAG
       }
     }
   }

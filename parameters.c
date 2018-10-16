@@ -683,17 +683,16 @@ void get_parameters(char *infile, hydro_params *p)
 void set_bubble_parameters(hydro_params *p){
 
 #ifdef BAG
-  p->V0 = (1./(96.*p->lambda*p->lambda*p->lambda)
-	 *(p->alpha + sqrt(p->alpha*p->alpha - 4.*p->gamma*p->lambda))
-	 *(p->alpha + sqrt(p->alpha*p->alpha - 4.*p->gamma*p->lambda))
-	 *(-6*p->gamma*p->lambda
-	   + p->alpha*(p->alpha + sqrt(p->alpha*p->alpha
-				       - 4.*p->gamma*p->lambda))));
-  
+
   p->phi_0 = (p->alpha + sqrt(p->alpha*p->alpha
 			      - 4.*p->gamma*p->lambda))/(2.*p->lambda);
+  p->V0 = (0.5*p->gamma*p->phi_0*p->phi_0
+	   - p->alpha*p->phi_0*p->phi_0*p->phi_0/3.
+	   + 0.25*p->lambda*p->phi_0*p->phi_0*p->phi_0*p->phi_0);
+  
+  
 #else
-  p->V0 = 0.25*p->gamma*p->gamma*p->T0*p->T0*p->T0*p->T0/p->lambda;
+  p->V0 = -0.25*p->gamma*p->gamma*p->T0*p->T0*p->T0*p->T0/p->lambda;
 #endif // BAG
 
 
