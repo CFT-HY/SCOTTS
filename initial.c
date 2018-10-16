@@ -20,15 +20,30 @@
  *  \sigma = \frac{2\sqrt{2}}{81} \frac{\alpha^3}{\lambda^{5/2}}
  * \f]
  *
+ * In the BAG model
+ * \f[
+ * \phi_\text{min} = \frac{\alpha + \sqrt{\alpha^2 
+ *                                      - 4 \lambda\gamma}}
+ *                         {2\lambda}
+ * \f]
+ * \f[
+ *  \sigma=\frac{\left(\alpha \left(\alpha + \sqrt{\alpha^2 - 4 \gamma \lambda}
+ *                                  \right) -2\gamma \lambda \right)^{3/2}}
+ *              {24 \lambda^{5/2}}
+ * \f]
  * The radius of the critical bubble is
  * \f[
- *  R_\text{crit} = - \frac{2 \sigma}{V(\phi,T_N)}
+ *  R_\text{crit} =  \frac{2 \sigma}{V(0,T_N)-V(\phi_b,T_N)}
  * \f]
  * This is scaled by `p.scale` to get the initial conditions for
  * a freshly-nucleated Gaussian blob. This scaling may be necessary
  * to get the bubbles to grow due to e.g. lattice artifacts.
  *
+ *
+ *
  * These expressions are used in various functions in this file.
+ *
+ * `phimin` and `Rcritical` can be specified in the parameters file.
  *
  * Contributors:
  * - 2010-2017 David Weir

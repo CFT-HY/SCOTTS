@@ -143,6 +143,7 @@ typedef struct {
 
   /** Potential parameter \f$ T_0 \f$ which corresponds to the
    *  temperature at which the transition is no longer first order.
+   *  (Not used in BAG model).
    */
   float T0;
 
@@ -327,13 +328,20 @@ typedef struct {
    *  \f[
    *  \sigma=\frac{2\sqrt{2}}{81}\frac{A^3}{\lambda^{5/2}}T_c^3
    *  \f]
+   *
+   *  For bag model
+   *  \f[
+   *  \sigma=\frac{\left(\alpha \left(\alpha + \sqrt{\alpha^2 - 4 \gamma \lambda}
+   *                                  \right) -2\gamma \lambda \right)^{3/2}}
+   *              {24 \lambda^{5/2}}
+   *  \f]
    */
   float surface_tension;
 
   /** Value of `phi` at the center of the nucleated bubble.
    *
    * Read from the parameter file, if given as <=0 default to broken 
-   * phase value.
+   * phase value at \f$T=T_N\f$.
    */
   float phimin;
 
@@ -354,7 +362,8 @@ typedef struct {
 
   /** Constant in potential term.
    *
-   * Calculated s.t $V(\phi_b,T=0)=0$ 
+   * Calculated s.t \f$V(\phi_b,T=0)=0\f$ 
+   * or s.t \f$ V_B(\phi_b)=0\f$ for BAG
    */
   float V0;
 #ifdef BAG
