@@ -52,16 +52,7 @@ int main(int argc, char *argv[]) {
   // Parse parameters from the filename specified on the command line
   get_parameters(argv[1], &p);
 
-  // Specify output filename
 
-  if(!p.rank){
-    if(strcmp(p.output_fname,"stdout") == 0) {
-      p.outputdest = stdout;
-    }
-    else {
-      p.outputdest = fopen(p.output_fname,"w");
-    }
-  }
   // Seed - make sure everyone gets the same one (if necessary)
   srandom(p.seed);
 
@@ -442,8 +433,7 @@ int main(int argc, char *argv[]) {
       gamma_max = reduce_max(get_gamma_max(f, p), p);
       
       if(!p.rank) {
-	fprintf(p.outputdest,
-		"%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf\t%6lf\t%6lf\t%6lf\n",
+	printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf\t%6lf\t%6lf\t%6lf\n",
 		step,
 		t,
 		current_energy,
@@ -457,7 +447,6 @@ int main(int argc, char *argv[]) {
 		current_avgpress,
 		s_max,
 		gamma_max);
-	fflush(p.outputdest);
       }
 
       // Statement of energy violation (not shown; better to use KE)
@@ -545,31 +534,23 @@ int main(int argc, char *argv[]) {
 
   
   if(!p.rank) {
-    fprintf(p.outputdest,
-	    "%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf\t%6lf\t%6lf\t%6lf\n",
-	    step,
-	    t,
-	    current_energy,
-	    current_kinetic,
-	    current_field_energy,
-	    current_gradient_energy,
-	    current_veltot,
-	    gwen,
-	    bcount,
-	    current_rest,
-	    current_avgpress,
-	    s_max,
-	    gamma_max);
-    fflush(p.outputdest);
+    printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf\t%6lf\t%6lf\t%6lf\n",
+	   step,
+	   t,
+	   current_energy,
+	   current_kinetic,
+	   current_field_energy,
+	   current_gradient_energy,
+	   current_veltot,
+	   gwen,
+	   bcount,
+	   current_rest,
+	   current_avgpress,
+	   s_max,
+	   gamma_max);
   }
 
 
-  // Close output file
-  if(!p.rank){
-    if(strcmp(p.output_fname,"stdout") != 0) {
-      fclose(p.outputdest);
-    }
-  }
   
   // End time, for walltime calculation
   end = clock();

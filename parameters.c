@@ -61,7 +61,6 @@ void get_parameters(char *infile, hydro_params *p)
 
   int set_gwsource = 0;
 
-  int set_output_fname = 0;
   int set_silodir = 0;
   int set_checkpointdir = 0;
 
@@ -461,17 +460,6 @@ void get_parameters(char *infile, hydro_params *p)
 	  die(123);
       }
       set_nucleation = 1;
-    }
-    else if(!strcasecmp(key,"output_fname")) {
-     
-      if(strlen(value) > 500)
-	printf0(*p,
-		"Warning: output_fname \"%s\" may be too long!\n",
-		value);
-
-      strncpy(p->output_fname, value, 500);
-      
-      set_output_fname = 1;
     }
     else if(!strcasecmp(key,"silodir")) {
      

@@ -236,18 +236,6 @@ typedef struct {
    * NB: the physical position of a site `y` is e.g. `(y+shifty-1)`
    */
   int shifty;
-
-  /** Global output filename.
-   *
-   * Either a filename or "stdout".
-   */
-  char output_fname[500];
-
-  /** Global output destination.
-   *
-   * Points to a file specified at runtime, either a filename or stdout.
-   */
-  FILE *outputdest;
   
   /** Where the silo files go.
    */

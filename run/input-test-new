@@ -16,7 +16,7 @@ dt     0.2
 # Viscosity terms. Cav is the artificial viscosity
 # and is not currently used. C is the 'eta' term that
 # takes energy out of the field and into the fluid.
-# C = 0.93 gives vW = 0.44 with the new parameters
+# C = 0.93 gives vW = 0.44 with the DIMENSIONLESS code path.
 Cav    0.0
 C      0.93
 
@@ -64,9 +64,6 @@ initlength -1
 
 # How many bubbles to start off with. May be zero.
 bubbles 1
-
-# Filename for where to write global outputs. Can be set to stdout.
-output_fname stdout
 
 # Where visualisation data gets stored. If silointerval is less than or
 # equal to zero then this is not accessed.
