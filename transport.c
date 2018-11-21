@@ -330,8 +330,8 @@ void van_leer_Z_dir(hydro_fields f, hydro_params p, int dir) {
 	// velocity on the appropriate 'face' between nodes.
 
 	if(dir == 0){
-	  Vface[x][y][z] =  0.125*((f.V[0][x][y][z] + f.V[1][x-1][y][z])
-				   + (f.V[0][x][y-1][z] + f.V[1][x-1][y-1][z])
+	  Vface[x][y][z] =  0.125*((f.V[0][x][y][z] + f.V[0][x-1][y][z])
+				   + (f.V[0][x][y-1][z] + f.V[0][x-1][y-1][z])
 				   + (f.V[0][x][y][(z-1+p.Lz)%p.Lz]
 				      + f.V[0][x-1][y][(z-1+p.Lz)%p.Lz])
 				   + (f.V[0][x][y-1][(z-1+p.Lz)%p.Lz]
