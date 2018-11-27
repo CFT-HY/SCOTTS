@@ -357,3 +357,68 @@ int bubbles_at_step(hydro_fields f, hydro_params p, float t, int step) {
   return 0;
 }
 
+/** Initialises a spherical overdensity of fluid in the origin of the simulation. 
+ *
+ * Keeps field in symmetric phase everywhere. Initialises a gaussian overdensity in T.
+ */
+void fluid_sphere(hydro_fields f, hydro_params p){
+
+  int x, y, z;
+  
+  int direct_x, direct_y, direct_z;
+  int wrap_x, wrap_y, wrap_z;
+  int delta_x, delta_y, delta_z;
+  
+  int x0 = 0;
+  int y0 = 0;
+  int z0 = 0;
+  
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+
+	direct_x = abs(p.shiftx + x - 1 - x0);
+	direct_y = abs(p.shifty + y - 1 - y0);
+	direct_z = abs(z - z0);
+
+	wrap_x = (p.Lx - direct_x);
+	wrap_y = (p.Ly - direct_y);
+	wrap_z = (p.Lz - direct_z);
+
+	if(direct_x < wrap_x)
+	  delta_x = direct_x;
+	else
+	  delta_x = wrap_x;
+
+	if(direct_y < wrap_y)
+	  delta_y = direct_y;
+	else
+	  delta_y = wrap_y;
+
+	if(direct_z < wrap_z)
+	  delta_z = direct_z;
+	else
+	  delta_z = wrap_z;
+
+	// Symmetric
+	f.phi[x][y][z] = 0;
+
+	
+	// Gaussian in T
+	f.T[x][y][z] = p.Tconst;
+	f.T[x][y][z] += (p.T_central - p.Tconst)*exp(-1.0*p.dx*p.dx*
+						   ((float)(delta_x*delta_x 
+							    + delta_y*delta_y
+							    + delta_z*delta_z))
+						     /(2.0*p.sphere_radius
+						     *p.sphere_radius));
+	
+	f.E[x][y][z] = (3.0*p.gdeg*f.T[x][y][z]*f.T[x][y][z]
+			*f.T[x][y][z]*f.T[x][y][z]
+			+ Vf(p, f.T[x][y][z], f.phi[x][y][z])
+			- f.T[x][y][z]*VTf(p, f.T[x][y][z], f.phi[x][y][z]));
+	
+      }
+    }
+  }
+}

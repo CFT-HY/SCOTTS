@@ -57,6 +57,7 @@
 #define INIT_SHOCK_TUBE 1
 #define INIT_BUBBLE 2
 #define INIT_PS 3
+#define INIT_FLUID_SPHERE 4
 
 #define NUC_OFF 0
 #define NUC_LIST 1
@@ -364,6 +365,16 @@ typedef struct {
    */
   float R_scaled;
 
+  /** Value of temperature in the centre of the fluid sphere, 
+   * used in INIT_FLUID_SPHERE ("initfs") only.
+   */
+  float T_central;
+
+  /** Radius of gaussian sphere of fluid, 
+   * used in INIT_FLUID_SPHERE ("initfs") only.
+   */
+  float sphere_radius;
+  
   /** Constant in potential term.
    *
    * Calculated s.t $V(\phi_b,T=0)=0$ 
@@ -600,6 +611,8 @@ void initial_3D(hydro_fields f, hydro_params p);
 int try_nucleate(hydro_fields f, hydro_params p);
 int bubbles_at_step(hydro_fields f, hydro_params p, float t, int step);
 void init_profile(hydro_fields *f, hydro_params *p);
+void fluid_sphere(hydro_fields f, hydro_params p);
+
 
 // output.c
 float get_gamma_max(hydro_fields f, hydro_params p);
