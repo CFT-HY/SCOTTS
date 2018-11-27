@@ -1,0 +1,117 @@
+# Example input file
+
+# How long the simulation takes: volume and number of timesteps
+# Note that if the simulation is checkpointed and restarts the cumulative
+# number of timesteps is counted, so 'steps' would (for example) need to
+# be increased if you wanted to run for longer.
+Lx      12
+Ly	12
+Lz	12
+steps  50
+
+# How big the simulation is: lattice spacing and timestep
+dx     1.0
+dt     0.1
+ 
+# Viscosity terms. Cav is the artificial viscosity
+# and is not currently used. C is the 'eta' term that
+# takes energy out of the field and into the fluid.
+# C = 0.93 gives vW = 0.44 with the new parameters
+Cav    0.0
+C      3.608
+
+# Example potential parameters (weak case, dimensionless eta).
+alpha 0.150797454
+gamma 0.0658749237857
+lambda 0.019805125
+T0 0.70710678118654757
+
+# Tconst is the initial temperature everywhere.
+# NB: cooling is faked by nucleating ready-made bubbles.
+Tconst 0.7577
+
+# How often to write data. "interval" is how often to write a line of
+# global quantities to output_fname, and do any FFTs/power spectra that are
+# compiled in. 
+interval 10
+
+# "silointerval" is the interval for writing visualisation data;
+# if it is 0 or -1 then nothing is done
+silointerval -1
+
+# "silosliceinterval" is the inteval for writing a *slice* of data for
+# visualisation, the slice is taken at the x-coordinate given by
+# "siloslicecoord"
+silosliceinterval -1
+siloslicecoord 0
+
+# Power spectra measurements. How often to write FFT's (i.e. field, fluid
+# velocity, and GW power spectra) - set to -1 to disable.
+fftinterval -1
+# .. and when to start writing UETC's
+uetcstart -1
+
+
+# Initial conditions; choices are "shocktube", "bubble" and "initps"; only
+# "bubble" should be currently used.
+initial bubble
+
+# If "initps" is used, we need to set some extra parameters
+initnorm -1
+initcutoff -1
+initlength -1
+
+# How many bubbles to start off with. May be zero.
+bubbles 1
+
+# Filename for where to write global outputs. Can be set to stdout.
+output_fname globals.txt
+
+# Where visualisation data gets stored. If silointerval is less than or
+# equal to zero then this is not accessed.
+silodir silage/
+
+# How much the gaussian ansatz for the initial bubble is enlarged by
+scale 1.5
+
+# Size of the critical bubble radius,
+# if less than zero default to gaussian ansatz:
+R_critical -1
+
+# Value of phi at the centre of the nucleated bubble,
+# if less than 0 default to broken phase value.
+phimin -1
+
+# Nucleation procedure; choices are "off", "list" or "file" 
+# - "off" does nothing (the number of bubbles given above as 'bubbles' is
+#   still created at the start however)
+# - "list" is a comma-separated list without spaces of timesteps
+#   at which bubbles should be nucleated, eg:
+#   "nucleation list 1,2,100,200" (maximum length >2500 chars)
+# - "file" (recommended) is a list of timesteps at which
+#    bubbles should be nucleated in a separate file, eg:
+#   "nucleation file nucleation-list". There may be more than
+#   one nucleation attempt per timestep.
+#   The program utils/nucproc.py produces output in this format.
+nucleation off
+
+# The checkpoint directory is always checked for a valid checkpoint
+# (assuming it exists; if it does not then the code will run anyway)
+# If checkpointinterval is 0 or -1 then no attempt will be made
+# to write a checkpoint. If it is unfeasably big then a final
+# checkpoint will still be made.
+checkpointdir cp/
+checkpointinterval -1
+
+# What the gravitational wave power spectrum is sourced by
+# choices are 'fluid', 'field' or 'both'. The default (if the choice
+# is unrecognisable) is 'both'.
+gwsource fluid
+
+# The random seed. This must be set. The seed is 'salted' with the
+# timestep every update so that results are reproducible across
+# simulations. The randomness is used for bubble locations only.
+seed 1234
+
+gstar 106.75
+

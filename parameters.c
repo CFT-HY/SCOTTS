@@ -73,6 +73,9 @@ void get_parameters(char *infile, hydro_params *p)
   int set_phimin = 0;
   int set_scale = 0;
 
+  int set_T_central = 0;
+  int set_sphere_radius = 0;
+
   int set_seed = 0;
 
   int set_initnorm = 0;
@@ -243,6 +246,14 @@ void get_parameters(char *infile, hydro_params *p)
       p->scale = strtof(value,NULL);
       set_scale = 1;
     }
+    else if(!strcasecmp(key,"T_central")) {
+      p->T_central = strtof(value,NULL);
+      set_T_central = 1;
+    }
+    else if(!strcasecmp(key,"sphere_radius")) {
+      p->sphere_radius = strtof(value,NULL);
+      set_sphere_radius = 1;
+    }
     else if(!strcasecmp(key,"initnorm")) {
       p->initnorm = strtof(value,NULL);
       set_initnorm = 1;
@@ -260,6 +271,8 @@ void get_parameters(char *infile, hydro_params *p)
 	p->initial = INIT_BUBBLE;
       } else if(!strcasecmp(value, "initps")) {
 	p->initial= INIT_PS;
+      }	else if(!strcasecmp(value, "initfs")) {
+	p->initial= INIT_FLUID_SPHERE;
       } else {
 	printf0(*p, "warning, unrecognised value for initial"
 		" (%s); defaulting to bubble.\n", value);
@@ -575,6 +588,15 @@ void get_parameters(char *infile, hydro_params *p)
   } else if(!set_scale) {
     printf0(*p, "Did not set parameter \'scale\'\n");
     die(100);
+  } else if(!set_R_critical) {
+    printf0(*p, "Did not set parameter \'R_critical\'\n");
+    die(100);
+  } else if(!set_T_central) {
+    printf0(*p, "Did not set parameter \'T_central\'\n");
+    die(100);
+  } else if(!set_sphere_radius) {
+    printf0(*p, "Did not set parameter \'sphere_radius\'\n");
+    die(100);
   }else if(!set_initial) {
     printf0(*p, "Did not set parameter \'initial\'\n");
     die(100);
@@ -649,6 +671,10 @@ void get_parameters(char *infile, hydro_params *p)
       printf0(*p, "-- bubble\n");
     } else if(p->initial == INIT_PS) {
       printf0(*p, "-- init_ps\n");
+    } else if(p->initial == INIT_FLUID_SPHERE) {
+      printf0(*p, "-- T_central %g, sphere_radius %g\n"
+	      "-- initfs\n",
+	      p->T_central,p->sphere_radius);
     } else {
       printf0(*p, "-- warning, somehow have unknown initial conds.\n");
     }

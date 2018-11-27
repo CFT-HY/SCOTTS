@@ -422,12 +422,12 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
 	
 	p_bar_y_plus = (f.p[x][y][z]
 			+ f.p[x-1][y][z] 
-			+ f.p[x][y][((z-1+p.Lz)%p.Lz)]
+			+ f.p[x][y][((z+p.Lz-1)%p.Lz)]
 			+ f.p[x-1][y][((z+p.Lz-1)%p.Lz)]
 			)/4.0;
 	
 	
-	p_bar_y_minus = (f.p[x][y-1][z]
+	p_bar_y_minus = (  f.p[x][y-1][z]
 			 + f.p[x-1][y-1][z] 
 			 + f.p[x][y-1][((z+p.Lz-1)%p.Lz)]
 			 + f.p[x-1][y-1][((z+p.Lz-1)%p.Lz)]
@@ -441,7 +441,7 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
 		    )/4.0;
 	
 	
-	p_bar_z_minus = (f.p[x][y][((z-1+p.Lz)%p.Lz)]
+	p_bar_z_minus = (f.p[x][y][((z+p.Lz-1)%p.Lz)]
 			 + f.p[x-1][y][((z+p.Lz-1)%p.Lz)] 
 			 + f.p[x][y-1][((z+p.Lz-1)%p.Lz)]
 			 + f.p[x-1][y-1][((z+p.Lz-1)%p.Lz)]
