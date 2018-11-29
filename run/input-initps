@@ -1,0 +1,69 @@
+# Example input file
+
+# How long the simulation takes
+Lx  64
+Ly	64
+Lz	64
+steps  300
+
+# How big the simulation is
+dx     2.0
+dt     0.2
+
+# Viscosity terms
+Cav    0.0
+C      0.35
+
+# Potential parameters
+# Lheat  0.1
+# sigma  0.1
+# lcorr  6.0
+
+alpha 0.19902
+gamma 0.2222
+lambda 0.079221
+
+T0 0.70710678
+Tconst 0.86
+
+# How often to write data
+interval 50
+silointerval -1
+
+# Initial conditions
+initial initps
+initpsfile div-ps-step20000.txt.input.dat div
+initpsbins 2400
+#initpsfile dogfood.dat
+#initpsbins 240
+
+initnorm 1.0
+initcutoff 1.0
+initlength 0.5
+
+
+bubbles 16
+
+silodir silage
+
+beta 1.0
+
+scale 1.0
+
+nucleation off
+
+checkpointinterval -1
+checkpointdir /wrk/weir/hydro/L1024-weak-0.2-Nb-640-dx2/
+
+gwsource fluid
+
+seed 90210
+
+gstar 106.75
+
+fftinterval 100
+uetcstart -1
+silosliceinterval -1
+siloslicecoord 0
+
+output_fname stdout
