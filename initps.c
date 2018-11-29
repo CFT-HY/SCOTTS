@@ -6,16 +6,16 @@
 
 #if defined(FFT) && ! defined(SCALAR)
 
-// http://people.math.sc.edu/kellerlv/Quadratic_Interpolation.pdf 
+// http://people.math.sc.edu/kellerlv/Quadratic_Interpolation.pdf
 // Lagrange Interp formula
 float quadratic(float x1, float x2, float x3,
 		float y1, float y2, float y3, float x) {
 
-  return y1*((x - x2)*(x - x3))/((x1 - x2)*(x1 - x3)) 
+  return y1*((x - x2)*(x - x3))/((x1 - x2)*(x1 - x3))
 	     + y2*((x - x1)*(x - x3))/((x2 - x1)*(x2 - x3))
 	     + y3*((x - x1)*(x - x2))/((x3 - x1)*(x3 - x2));
 
-  
+
 
 }
 
@@ -196,7 +196,7 @@ void VtoZ(hydro_fields f, hydro_params p) {
   halo_field(f.V[0], p);
   halo_field(f.V[1], p);
   halo_field(f.V[2], p);
- 
+
   // Work out U from V (approximately)
   // (this can be made more precise by adopting what is in evolve.c)
   for(x=1; x<=p.slicex; x++) {
@@ -205,7 +205,7 @@ void VtoZ(hydro_fields f, hydro_params p) {
 	  f.W[x][y][z] = 1.0/sqrt(1 - (f.V[0][x][y][z]*f.V[0][x][y][z] +
 				       f.V[1][x][y][z]*f.V[1][x][y][z] +
 				       f.V[2][x][y][z]*f.V[2][x][y][z]));
-	  
+
 	  f.U[0][x][y][z] = f.W[x][y][z]*f.V[0][x][y][z];
 	  f.U[1][x][y][z] = f.W[x][y][z]*f.V[1][x][y][z];
 	  f.U[2][x][y][z] = f.W[x][y][z]*f.V[2][x][y][z];
@@ -221,6 +221,7 @@ void VtoZ(hydro_fields f, hydro_params p) {
 
   float eps = 1.0;
   float kappa = 1.0;
+	float epsFull;
 
 
   // Work out Z and E from U and W (approximately)
@@ -228,8 +229,12 @@ void VtoZ(hydro_fields f, hydro_params p) {
   for(x=1; x<=p.slicex; x++) {
     for(y=1; y<=p.slicey; y++) {
       for(z=0; z<p.Lz; z++) {
-	  
-	f.E[x][y][z] = f.W[x][y][z]*eps;
+
+	epsFull = eps * (1 + 4/sqrt(3)
+						*f.V[0][x][y][z] +
+						 f.V[1][x][y][z] +
+						 f.V[2][x][y][z]);
+	f.E[x][y][z] = f.W[x][y][z]*epsFull;
 
 	/*
 	f.kappa[x][y][z] = kappa;
@@ -238,12 +243,12 @@ void VtoZ(hydro_fields f, hydro_params p) {
 	*/
 
 	// eps??? shouldn't it be one third of the rest energy
-	f.p[x][y][z] = (1.0/3.0)*f.E[x][y][z];
-	f.kappa[x][y][z] = 1.0 + f.W[x][y][z]*(1.0/3.0); // f.p[x][y][z]/f.E[x][y][z];
+	f.p[x][y][z] = (1.0/3.0)*epsFull;
+	f.kappa[x][y][z] = 1.0 + (1.0/3.0)/f.W[x][y][z]; // f.p[x][y][z]/f.E[x][y][z];
       }
     }
   }
-  
+
 
   // halo E and kappa
   halo_field(f.E, p);
@@ -282,7 +287,7 @@ void VtoZ(hydro_fields f, hydro_params p) {
       }
     }
   }
-  
+
   halo_field(f.Z[0], p);
   halo_field(f.Z[1], p);
   halo_field(f.Z[2], p);
@@ -331,18 +336,18 @@ void project_down(hydro_params p, fftwf_complex **in, int shift_x, int x_thickne
 	in[0][x*p.Ly*p.Lz + y*p.Lz + z][0] /= dofs;
 	in[1][x*p.Ly*p.Lz + y*p.Lz + z][0] /= dofs;
 	in[2][x*p.Ly*p.Lz + y*p.Lz + z][0] /= dofs;
-	
+
 	in[0][x*p.Ly*p.Lz + y*p.Lz + z][1] /= dofs;
 	in[1][x*p.Ly*p.Lz + y*p.Lz + z][1] /= dofs;
 	in[2][x*p.Ly*p.Lz + y*p.Lz + z][1] /= dofs;
       }
     }
-  }	
+  }
 
   for(reruns = 0; reruns < times; reruns++) {
     resid = 0.0;
     stuff = 0.0;
-    
+
     // Project out divergenceless bit!
     for(x=0;x<x_thickness;x++) {
       for(y=0;y<p.Ly;y++) {
@@ -380,11 +385,11 @@ void project_down(hydro_params p, fftwf_complex **in, int shift_x, int x_thickne
 	  kx = s_x*sqrt((2.0 - 2.0*cos(((float)(true_x))*2.0*M_PI/(((float)p.Lx))))/(p.dx*p.dx));
 	  ky = s_y*sqrt((2.0 - 2.0*cos(((float)(true_y))*2.0*M_PI/(((float)p.Ly))))/(p.dx*p.dx));
 	  kz = s_z*sqrt((2.0 - 2.0*cos(((float)(true_z))*2.0*M_PI/(((float)p.Lz))))/(p.dx*p.dx));
-	  
+
 	  in_proj_re[0] = 0.0;
 	  in_proj_re[1] = 0.0;
 	  in_proj_re[2] = 0.0;
-	  
+
 	  in_proj_im[0] = 0.0;
 	  in_proj_im[1] = 0.0;
 	  in_proj_im[2] = 0.0;
@@ -392,14 +397,14 @@ void project_down(hydro_params p, fftwf_complex **in, int shift_x, int x_thickne
 	  if(p.initpsfile_type == INITPSFILE_ALL) {
 	    // do nothing
 	  } else {
-	  
+
 	    for(i=1; i<=3; i++) {
-	      
+
 	      res_re = 0.0;
 	      res_im = 0.0;
 
 	      for(j=1; j<=3; j++) {
-		
+
 		if(p.initpsfile_type == INITPSFILE_ROT) {
 		  //  Rot?
 		  // v_i^\perp = P_{ij} v_j
@@ -408,7 +413,7 @@ void project_down(hydro_params p, fftwf_complex **in, int shift_x, int x_thickne
 		  in_proj_re[i-1] += vel_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
 		  in_proj_im[i-1] += vel_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 
-		
+
 		  // this is delta_{ij} - P_{ij}V_j
 		  if(i == j) {
 		    res_re += (1.0-vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
@@ -431,33 +436,33 @@ void project_down(hydro_params p, fftwf_complex **in, int shift_x, int x_thickne
 		    in_proj_im[i-1] += (-1.0*vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 		  }
 		  // #endif
-		  
+
 		  res_re += vel_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
 		  res_im += vel_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
-		  
-		}
-		
 
-	      
-			
+		}
+
+
+
+
 	      }
 	      stuff += in_proj_re[i-1]*in_proj_re[i-1] + in_proj_im[i-1]*in_proj_im[i-1];
 	      resid += res_re*res_re + res_im*res_im;
-	      
+
 
 
 	    }
-	    
+
 
 	    in[0][x*p.Ly*p.Lz + y*p.Lz + z][0] = in_proj_re[0];
 	    in[1][x*p.Ly*p.Lz + y*p.Lz + z][0] = in_proj_re[1];
 	    in[2][x*p.Ly*p.Lz + y*p.Lz + z][0] = in_proj_re[2];
-	    
+
 	    in[0][x*p.Ly*p.Lz + y*p.Lz + z][1] = in_proj_im[0];
 	    in[1][x*p.Ly*p.Lz + y*p.Lz + z][1] = in_proj_im[1];
 	    in[2][x*p.Ly*p.Lz + y*p.Lz + z][1] = in_proj_im[2];
 	  }
-	  
+
 	}
       }
     }
@@ -476,7 +481,7 @@ void project_down(hydro_params p, fftwf_complex **in, int shift_x, int x_thickne
  */
 float get_normal(float mean, float dev) {
   float u1, u2;
-  
+
   u1 = drand48();
   u2 = drand48();
 
@@ -554,7 +559,7 @@ void spectrum_interp(float ksq, hydro_params p, fftwf_complex *res,
 
   }
 
-  
+
   /*
   for(i = 0; i < n_bins; i++) {
     if((k_bins[i] - dk/2.0) <= sqrt(fabs(ksq)) && (k_bins[i] + dk/2.0) > sqrt(fabs(ksq))) {
@@ -581,10 +586,10 @@ void spectrum_interp(float ksq, hydro_params p, fftwf_complex *res,
 
 
 /* spectrum
- * 
+ *
  */
-void spectrum(float ksq, hydro_params p, fftwf_complex *res) 
-{ 
+void spectrum(float ksq, hydro_params p, fftwf_complex *res)
+{
 
   float phase;
 
@@ -597,7 +602,7 @@ void spectrum(float ksq, hydro_params p, fftwf_complex *res)
   } else {
 
 
-    //  (*res)[0] = p.initnorm*exp(-0.25*sqrt(ksq)*p.dx*((float)L));    
+    //  (*res)[0] = p.initnorm*exp(-0.25*sqrt(ksq)*p.dx*((float)L));
     //    (*res)[0] = get_normal(0.0, p.initnorm*exp(-0.25*sqrt(ksq)*p.dx*((float)L)));
     (*res)[0] = get_normal(0.0, exp(-1.0*sqrt(ksq)*p.dx*p.initlength));
 
@@ -610,7 +615,7 @@ void spectrum(float ksq, hydro_params p, fftwf_complex *res)
     (*res)[0] = (*res)[0]*cos(2.0*M_PI*phase);
     (*res)[1] = (*res)[1]*sin(2.0*M_PI*phase);
 
-  } 
+  }
 }
 
 
@@ -832,7 +837,7 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
   /*
   for(x=x_start; x<(x_start+x_thickness); x++) {
     fprintf(stderr, "** node %d, x %d:\t%10.3g %10.3g\t **\n", p.rank, x, in[0][(x-x_start)*p.Ly*p.Lz][0], in[0][(x-x_start)*p.Ly*p.Lz][1]);
-  } 
+  }
   */
 
   printf0(p, "Local spectrum initialisation done\n");
@@ -896,7 +901,7 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 
 
     }
-      
+
 
 
     // at this point swap_in has the stuff needed to do the conjugate properly
@@ -920,10 +925,10 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 	  if((x == 0 || x == p.Lx/2)
 	     && (y == 0 || y == p.Ly/2)
 	     && (z == 0 || z == p.Lz/2)) {
-	    
+
 
 	    /* These sites need to be pure real.
-	     */	    
+	     */
 	    in[i][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0] \
 	      = sqrt(swap_in[i][swap_row*p.Ly*p.Lz
 				  + ((p.Ly-y)%p.Ly)*p.Lz + ((p.Lz-z)%p.Lz)][0]
@@ -933,11 +938,11 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 				    + ((p.Ly-y)%p.Ly)*p.Lz + ((p.Lz-z)%p.Lz)][1]
 		     *swap_in[i][swap_row*p.Ly*p.Lz
 				   + ((p.Ly-y)%p.Ly)*p.Lz + ((p.Lz-z)%p.Lz)][1]);
-	  
-	    in[i][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] = 0.0;
-	    
 
-	  } 
+	    in[i][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] = 0.0;
+
+
+	  }
 
 	  else if((x == 0 || x == p.Lx/2)) {
 
@@ -971,7 +976,7 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 	      -1.0*swap_in[i][swap_row*p.Ly*p.Lz
 				+ ((p.Ly-y)%p.Ly)*p.Lz + ((p.Lz-z)%p.Lz)][1];
 
-	  } 
+	  }
 	  // otherwise do nothing
 
 
@@ -991,7 +996,7 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
   printf0(p, "Done swapping\n");
 
 
-  // Now planning  
+  // Now planning
   fftwf_plan plan = fftwf_mpi_plan_dft_3d(p.Lx, p.Ly, p.Lz,
 				    in[0], out[0], MPI_COMM_WORLD,
 				    FFTW_FORWARD, FFTW_ESTIMATE);
@@ -1008,21 +1013,21 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
   /*
   for(x=x_start; x<(x_start+x_thickness); x++) {
     fprintf(stderr, "node %d, x %d:\t%10.3g %10.3g\t ->\n", p.rank, x, in[0][(x-x_start)*p.Ly*p.Lz][0], in[0][(x-x_start)*p.Ly*p.Lz][1]);
-  } 
+  }
   */
 
   fftwf_mpi_execute_dft(plan, in[0], out[0]);
   fftwf_mpi_execute_dft(plan, in[1], out[1]);
   fftwf_mpi_execute_dft(plan, in[2], out[2]);
 
- 
+
   MPI_Barrier(MPI_COMM_WORLD);
   //  printf0(p, "Done FFTing, example value %g %g\n", out[0][0][0], out[0][0][1]);
 
   /*
   for(x=x_start; x<(x_start+x_thickness); x++) {
     fprintf(stderr, "node %d, x %d:\t->\t%10.3g %10.3g\t\n", p.rank, x, out[0][(x-x_start)*p.Ly*p.Lz][0], out[0][(x-x_start)*p.Ly*p.Lz][1]);
-  } 
+  }
 
   */
 
@@ -1048,15 +1053,15 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 
     //    fprintf(stderr,"maximag is %g\n", maximag);
     MPI_Barrier(MPI_COMM_WORLD);
-    
+
 
     for(x=0; x<p.Lx; x++) {
 
-      // Check whether we are the source node for this slab                                                                                                                                                                                  
+      // Check whether we are the source node for this slab
       if(map[x] == p.rank) {
-	
+
         for(ry = 0; ry < ny; ry++) {
-	  
+
           if((x/p.slicex == p.myposx) && (ry == p.myposy)) {
             //      fprintf(stderr, "rank %d: doing memcpy and local thickness is %d\n",
             //              p.rank, x_thickness);
@@ -1096,7 +1101,7 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 
 
     // untrim
-    
+
     for(x=1; x<=p.slicex; x++) {
       for(y=1; y<=p.slicey; y++) {
         for(z=0; z<p.Lz; z++) {
@@ -1104,7 +1109,7 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
         }
       }
     }
-    
+
 
 
     halo_field(field[i], p);
@@ -1115,7 +1120,7 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
   free(trim);
 
   fftwf_destroy_plan(plan);
-  
+
   fftwf_free(in[0]);
   fftwf_free(swap_in[0]);
   fftwf_free(out[0]);
@@ -1135,5 +1140,3 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 
 
 #endif // FFT && !SCALAR
-
-
