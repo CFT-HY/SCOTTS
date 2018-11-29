@@ -82,6 +82,7 @@
 
 #define INITPSFILE_DIV 0
 #define INITPSFILE_ROT 1
+#define INITPSFILE_ALL 2
 
 /** Struct containing parameters that are not changed during the
  * simulation.
@@ -662,7 +663,8 @@ float lambda(int i, int j, int l, int m, float kx, float ky, float kz);
 // velps.c
 float vel_proj(int T, float kx, float ky, float kz);
 void fft_vel(hydro_fields f, hydro_params p, int step, float ****vectorfield);
-
+void histogram(hydro_params p, float *slice, char *filename,
+               int slab, int x_start);
 #endif // FFT
 
 

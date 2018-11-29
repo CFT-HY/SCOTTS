@@ -515,6 +515,10 @@ void get_parameters(char *infile, hydro_params *p)
 	printf0(*p,
 		"Treating initpsfile as DIV power\n");
 	p->initpsfile_type = INITPSFILE_DIV;
+      } else if(!strcasecmp(option,"all")) {
+	printf0(*p,
+		"Treating initpsfile as ALL power\n");
+	p->initpsfile_type = INITPSFILE_ALL;
       } else {
 	printf0(*p,
 		"Unrecognised option to initpsfile;"
