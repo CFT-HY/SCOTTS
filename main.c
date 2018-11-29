@@ -396,7 +396,7 @@ int main(int argc, char *argv[]) {
 #ifdef FFT
     if((p.fftinterval > 0) && (step % p.fftinterval == 0)) {
 
-      histo_field(f.phi, p, step);
+      //      histo_field(f.phi, p, step);
 
 
       if(p.uetcstart >= 0 && step >= p.uetcstart) {
@@ -414,7 +414,9 @@ int main(int argc, char *argv[]) {
 #ifndef SCALAR
       // Velocity power spectrum
       fft_vel(f, p, step, f.V);
-#endif //!SCALAR
+      //      fft_vel(f, p, 100 + step, f.Z);
+
+#endif // !SCALAR
 
       // Gravitational wave power spectrum (returns GW energy)
       gwen = fft_tensor(f, p, step, 0.0);

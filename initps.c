@@ -41,6 +41,7 @@ float get_momtot(hydro_fields f, hydro_params p) {
   return momtot;
 }
 
+
 void norm_power(hydro_fields f, hydro_params p, float ****field) {
 
   int i, x, y, z;
@@ -58,6 +59,130 @@ void norm_power(hydro_fields f, hydro_params p, float ****field) {
     }
     halo_field(field[i], p);
   }
+}
+
+
+void debug_write_power(hydro_params p, fftwf_complex **in, ptrdiff_t x_start, ptrdiff_t x_thickness) {
+
+  int x, y, z;
+  int i, j;
+  int true_x, true_y, true_z;
+  float s_x, s_y, s_z;
+  float kx, ky, kz;
+
+  char fftdest[200];
+
+  // float *product = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
+  // float *product_div = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
+  float *product_tot = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
+
+  float res_r, res_i, resid_r, resid_i, tot_r, tot_i;
+
+  MPI_Barrier(MPI_COMM_WORLD);
+  fprintf(stderr,"rank: %d starting debug PS... (thickness %d, start %d)\n",
+	  p.rank, x_thickness, x_start);
+
+  MPI_Barrier(MPI_COMM_WORLD);
+
+  for(x=0; x<x_thickness; x++) {
+    for(y=0; y<p.Ly; y++) {
+      for(z=0; z<p.Lz; z++) {
+
+
+	s_x = 1.0;
+	s_y = 1.0;
+	s_z = 1.0;
+
+        if(x+x_start > p.Lx/2) {
+          true_x = -(p.Lx - (x+x_start));
+	  s_x = -1.0;
+        } else {
+          true_x = x+x_start;
+	  s_x = 1.0;
+	}
+
+        if(y > p.Ly/2) {
+          true_y = -(p.Ly - y);
+	  s_y = -1.0;
+	} else {
+          true_y = y;
+	  s_y = 1.0;
+	}
+
+        if(z > p.Lz/2) {
+          true_z = -(p.Lz - z);
+	  s_z = -1.0;
+	} else {
+          true_z = z;
+	  s_z = 1.0;
+	}
+
+        kx = s_x*sqrt((2.0 - 2.0*cos(((float)(true_x))*2.0*M_PI/(((float)p.Lx))))/(p.dx*p.dx));
+	ky = s_y*sqrt((2.0 - 2.0*cos(((float)(true_y))*2.0*M_PI/(((float)p.Ly))))/(p.dx*p.dx));
+        kz = s_z*sqrt((2.0 - 2.0*cos(((float)(true_z))*2.0*M_PI/(((float)p.Lz))))/(p.dx*p.dx));
+
+	//        product[x*p.Ly*p.Lz + y*p.Lz + z] = 0.0;
+	//        product_div[x*p.Ly*p.Lz + y*p.Lz + z] = 0.0;
+        product_tot[x*p.Ly*p.Lz + y*p.Lz + z] = 0.0;
+
+
+        for(i=1; i<=3; i++) {
+
+	  res_r = 0.0;
+	  res_i = 0.0;
+
+	  resid_r = 0.0;
+	  resid_i = 0.0;
+
+	  tot_r = in[i-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+	  tot_i = in[i-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+
+	  /*
+          for(j=1; j<=3; j++) {
+
+	    // Transverse components
+	    res_r += vel_proj(i*10 + j, kx, ky, kz)
+	      *in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+	    res_i += vel_proj(i*10 + j, kx, ky, kz)
+	      *in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+
+	    // And longitudinal...
+	    if(i == j) {
+	    resid_r += (1.0 - vel_proj(i*10 + j, kx, ky, kz))
+	      *in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+	    resid_i += (1.0 - vel_proj(i*10 + j, kx, ky, kz))
+	      *in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+	    } else {
+	    resid_r += (-1.0*vel_proj(i*10 + j, kx, ky, kz))
+	      *in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+	    resid_i += (-1.0*vel_proj(i*10 + j, kx, ky, kz))
+	      *in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+	    }
+	  }
+	  */
+
+	  /*
+	  product[x*p.Ly*p.Lz + y*p.Lz + z] +=
+	    res_r*res_r + res_i*res_i;
+
+	  product_div[x*p.Ly*p.Lz + y*p.Lz + z] +=
+	    resid_r*resid_r + resid_i*resid_i;
+	  */
+
+	  product_tot[x*p.Ly*p.Lz + y*p.Lz + z] +=
+	    tot_r*tot_r + tot_i*tot_i;
+
+	}
+
+      }
+    }
+  }
+
+  sprintf(fftdest, "test-ps-init.txt");
+  MPI_Barrier(MPI_COMM_WORLD);
+  if(!p.rank)
+    fprintf(stderr,"writing debug PS...\n");
+  histogram(p, product_tot, fftdest, x_thickness, x_start);
 }
 
 
@@ -112,8 +237,9 @@ void VtoZ(hydro_fields f, hydro_params p) {
 	f.p[x][y][z] = (f.kappa[x][y][z] - 1.0)*f.E[x][y][z]/f.W[x][y][z];
 	*/
 
-	f.p[x][y][z] = 1.0;
-	f.kappa[x][y][z] = 1.0 + f.W[x][y][z]*f.p[x][y][z]/f.E[x][y][z];
+	// eps??? shouldn't it be one third of the rest energy
+	f.p[x][y][z] = (1.0/3.0)*f.E[x][y][z];
+	f.kappa[x][y][z] = 1.0 + f.W[x][y][z]*(1.0/3.0); // f.p[x][y][z]/f.E[x][y][z];
       }
     }
   }
@@ -190,6 +316,29 @@ void project_down(hydro_params p, fftwf_complex **in, int shift_x, int x_thickne
 
   float s_x, s_y, s_z;
 
+  float dofs = sqrt(3.0);
+
+  if(p.initpsfile_type == INITPSFILE_ROT) {
+    dofs = sqrt(2.0);
+  } else if(p.initpsfile_type == INITPSFILE_DIV) {
+    dofs = sqrt(1.0);
+  }
+
+  // Project out divergenceless bit!
+  for(x=0;x<x_thickness;x++) {
+    for(y=0;y<p.Ly;y++) {
+      for(z=0;z<p.Lz;z++) {
+	in[0][x*p.Ly*p.Lz + y*p.Lz + z][0] /= dofs;
+	in[1][x*p.Ly*p.Lz + y*p.Lz + z][0] /= dofs;
+	in[2][x*p.Ly*p.Lz + y*p.Lz + z][0] /= dofs;
+	
+	in[0][x*p.Ly*p.Lz + y*p.Lz + z][1] /= dofs;
+	in[1][x*p.Ly*p.Lz + y*p.Lz + z][1] /= dofs;
+	in[2][x*p.Ly*p.Lz + y*p.Lz + z][1] /= dofs;
+      }
+    }
+  }	
+
   for(reruns = 0; reruns < times; reruns++) {
     resid = 0.0;
     stuff = 0.0;
@@ -240,71 +389,75 @@ void project_down(hydro_params p, fftwf_complex **in, int shift_x, int x_thickne
 	  in_proj_im[1] = 0.0;
 	  in_proj_im[2] = 0.0;
 
+	  if(p.initpsfile_type == INITPSFILE_ALL) {
+	    // do nothing
+	  } else {
 	  
-	  for(i=1; i<=3; i++) {
+	    for(i=1; i<=3; i++) {
+	      
+	      res_re = 0.0;
+	      res_im = 0.0;
 
-	    res_re = 0.0;
-	    res_im = 0.0;
-
-	    for(j=1; j<=3; j++) {
-
-	      if(p.initpsfile_type == INITPSFILE_ROT) {
-		//  Rot?
-		// v_i^\perp = P_{ij} v_j
-		// where P_{ij} = \delta_{ij} - \hat{k}_i \hat{k}_j
-		// and $\hat{k}$ is a unit vector in the $k$ direction.
-		in_proj_re[i-1] += vel_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-		in_proj_im[i-1] += vel_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+	      for(j=1; j<=3; j++) {
+		
+		if(p.initpsfile_type == INITPSFILE_ROT) {
+		  //  Rot?
+		  // v_i^\perp = P_{ij} v_j
+		  // where P_{ij} = \delta_{ij} - \hat{k}_i \hat{k}_j
+		  // and $\hat{k}$ is a unit vector in the $k$ direction.
+		  in_proj_re[i-1] += vel_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+		  in_proj_im[i-1] += vel_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 
 		
-		// this is delta_{ij} - P_{ij}V_j
-		if(i == j) {
-		  res_re += (1.0-vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-		  res_im += (1.0-vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
-		} else {
-		  res_re += (-1.0*vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-		  res_im += (-1.0*vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+		  // this is delta_{ij} - P_{ij}V_j
+		  if(i == j) {
+		    res_re += (1.0-vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+		    res_im += (1.0-vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+		  } else {
+		    res_re += (-1.0*vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+		    res_im += (-1.0*vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+		  }
+
+
+		} else if(p.initpsfile_type == INITPSFILE_DIV) {
+
+		  // Div?
+		  // v_i^\parallel = (\delta_{ij} - P_{ij}) v_j
+		  if(i == j) {
+		    in_proj_re[i-1] += (1.0-vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+		    in_proj_im[i-1] += (1.0-vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+		  } else {
+		    in_proj_re[i-1] += (-1.0*vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+		    in_proj_im[i-1] += (-1.0*vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+		  }
+		  // #endif
+		  
+		  res_re += vel_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+		  res_im += vel_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+		  
 		}
-
-
-	      } else {
-
-		// Div?
-		// v_i^\parallel = (\delta_{ij} - P_{ij}) v_j
-		if(i == j) {
-		  in_proj_re[i-1] += (1.0-vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-		  in_proj_im[i-1] += (1.0-vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
-		} else {
-		  in_proj_re[i-1] += (-1.0*vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-		  in_proj_im[i-1] += (-1.0*vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
-		}
-		// #endif
-
-		res_re += vel_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-		res_im += vel_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
-
-	      }
-
+		
 
 	      
 			
-	    }
-	    stuff += in_proj_re[i-1]*in_proj_re[i-1] + in_proj_im[i-1]*in_proj_im[i-1];
-	    resid += res_re*res_re + res_im*res_im;
+	      }
+	      stuff += in_proj_re[i-1]*in_proj_re[i-1] + in_proj_im[i-1]*in_proj_im[i-1];
+	      resid += res_re*res_re + res_im*res_im;
 	      
 
 
+	    }
+	    
+
+	    in[0][x*p.Ly*p.Lz + y*p.Lz + z][0] = in_proj_re[0];
+	    in[1][x*p.Ly*p.Lz + y*p.Lz + z][0] = in_proj_re[1];
+	    in[2][x*p.Ly*p.Lz + y*p.Lz + z][0] = in_proj_re[2];
+	    
+	    in[0][x*p.Ly*p.Lz + y*p.Lz + z][1] = in_proj_im[0];
+	    in[1][x*p.Ly*p.Lz + y*p.Lz + z][1] = in_proj_im[1];
+	    in[2][x*p.Ly*p.Lz + y*p.Lz + z][1] = in_proj_im[2];
 	  }
-
-
-	  in[0][x*p.Ly*p.Lz + y*p.Lz + z][0] = in_proj_re[0];
-	  in[1][x*p.Ly*p.Lz + y*p.Lz + z][0] = in_proj_re[1];
-	  in[2][x*p.Ly*p.Lz + y*p.Lz + z][0] = in_proj_re[2];
-
-	  in[0][x*p.Ly*p.Lz + y*p.Lz + z][1] = in_proj_im[0];
-	  in[1][x*p.Ly*p.Lz + y*p.Lz + z][1] = in_proj_im[1];
-	  in[2][x*p.Ly*p.Lz + y*p.Lz + z][1] = in_proj_im[2];
-
+	  
 	}
       }
     }
@@ -484,7 +637,6 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
   ptrdiff_t n1 = p.Ly;
   ptrdiff_t n2 = p.Lz;
 
-  //  int slab;
 
   MPI_Status status;
 
@@ -672,7 +824,10 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
     }
   }
 
-  project_down(p, in, x_start, x_thickness, 5);
+  project_down(p, in, x_start, x_thickness, 3);
+
+  debug_write_power(p, in, x_start, x_thickness);
+
 
   /*
   for(x=x_start; x<(x_start+x_thickness); x++) {
