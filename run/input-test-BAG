@@ -67,6 +67,9 @@ initlength -1
 # How many bubbles to start off with. May be zero.
 bubbles 1
 
+# Filename for where to write global outputs. Can be set to stdout.
+output_fname stdout
+
 # Where visualisation data gets stored. If silointerval is less than or
 # equal to zero then this is not accessed.
 silodir silage/
