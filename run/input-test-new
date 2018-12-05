@@ -52,9 +52,8 @@ fftinterval 100
 # .. and when to start writing UETC's
 uetcstart -1
 
-
-# Initial conditions; choices are "shocktube", "bubble" and "initps"; only
-# "bubble" should be currently used.
+# Initial conditions; choices are "shocktube", "bubble", "initfs" and "initps";
+# only "bubble" should be currently used. "initfs" is for debugging only.
 initial bubble
 
 # If "initps" is used, we need to set some extra parameters
@@ -79,6 +78,13 @@ R_critical -1
 # Value of phi at the centre of the nucleated bubble,
 # if less than 0 default to broken phase value.
 phimin -1
+
+# Value of T at centre of fluid sphere, used if initial is set to "initfs" only.
+T_central 1
+
+# Radius of gaussian fluid sphere, used if initial is set to "initfs" only.
+sphere_radius 10
+
 
 # Nucleation procedure; choices are "off", "list" or "file" 
 # - "off" does nothing (the number of bubbles given above as 'bubbles' is
