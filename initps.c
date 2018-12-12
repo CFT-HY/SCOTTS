@@ -211,7 +211,7 @@ float get_normal(float mean, float dev) {
   u1 = drand48();
   u2 = drand48();
 
-  return dev*(sqrt(-2.0*log(u1))*sin(2.0*M_PI*u2)-mean);
+  return dev*sqrt(-2.0*log(u1))*sin(2.0*M_PI*u2)+mean;
 }
 
 /* spectrum
