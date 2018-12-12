@@ -192,8 +192,13 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
 
   // Don't store vector quantities because they are huuuuge on 1024^3...  
 
+  /*
   fprintf(stderr, "Writing vectors\n");
-  
+
+  float **vec_temp = (float **)malloc(3*sizeof(float *));
+
+  #ifndef SCALAR
+
   char *ux_name = "Ux";
   char *uy_name = "Uy";
   char *uz_name = "Uz";
@@ -203,7 +208,7 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
   u_names[1] = uy_name;
   u_names[0] = uz_name;
 
-  float **vec_temp = (float **)malloc(3*sizeof(float *));
+  
   
   vec_temp[0] = f.U[2][0][0];
   vec_temp[1] = f.U[1][0][0];
@@ -236,6 +241,7 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
   	       NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
 
 
+
   
   char *zx_name = "Zx";
   char *zy_name = "Zy";
@@ -253,14 +259,56 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
 
   DBPutQuadvar(dbfile, "Z", "quadmesh", 3, z_names, vec_temp, meshsize, 3,
 	       NULL, 0, DB_FLOAT, DB_NODECENT, NULL);
+  */
+#endif //!SCALAR
+  /*
+  char *dphix_name = "dphix";
+  char *dphiy_name = "dphiy";
+  char *dphiz_name = "dphiz";
 
+  char *dphi_names[3];
+  dphi_names[2] = dphix_name;
+  dphi_names[1] = dphiy_name;
+  dphi_names[0] = dphiz_name;
+
+  float ***tempx = make_field(p);
+  float ***tempy = make_field(p);
+  float ***tempz = make_field(p);
   
+  
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+	
+	tempx[x][y][z] = ((f.phi[x+1][y][z] - f.phi[x][y][z])/p.dx);
+        tempy[x][y][z] = ((f.phi[x][y+1][z] - f.phi[x][y][z])/p.dx);
+	tempz[x][y][z] = ((f.phi[x][y][(z+1)%p.Lz] - f.phi[x][y][z])/p.dx);
+      }
+    }
+  }
+
+  halo_field(tempx, p);
+  halo_field(tempy, p);
+  halo_field(tempz, p);
+  
+  vec_temp[2] = tempx[0][0];
+  vec_temp[1] = tempy[0][0];
+  vec_temp[0] = tempz[0][0];
+
+  DBPutQuadvar(dbfile, "dphi", "quadmesh", 3, dphi_names, vec_temp, meshsize, 3,
+	       NULL, 0, DB_FLOAT, DB_NODECENT, NULL);
 
   DBClose(dbfile);
 
+  free_field(p, tempx);
+  free_field(p, tempy);
+  free_field(p, tempz);
+  
   // Only needed if we are recording the vector quantities.
   free(vec_temp);
+  */
   for(i=0;i<3;i++) {
+    
     free(mesh[i]);
   }
   free(meshsize);
@@ -392,14 +440,15 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
     }
 
     DBPutMultivar(dbfile, "kinetic", p.size, names, types, NULL);
-
+    /*
     for(i=0;i<p.size;i++) {
       types[i] = DB_QUADVAR;
       sprintf(names[i], "output-%d-%06d.silo:V", i, step);
     }
 
     DBPutMultivar(dbfile, "V", p.size, names, types, NULL);
-   
+
+
     for(i=0;i<p.size;i++) {
       types[i] = DB_QUADVAR;
       sprintf(names[i], "output-%d-%06d.silo:U", i, step);
@@ -413,10 +462,18 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
     }
 
     DBPutMultivar(dbfile, "Z", p.size, names, types, NULL);
+    */
     
 #endif
 
+    /*
+    for(i=0;i<p.size;i++) {
+      types[i] = DB_QUADVAR;
+      sprintf(names[i], "output-%d-%06d.silo:dphi", i, step);
+    }
 
+    DBPutMultivar(dbfile, "dphi", p.size, names, types, NULL);
+    */
     for(i=0;i<p.size;i++) {
       free(names[i]);
     }
