@@ -15,6 +15,8 @@
 #include <unistd.h>
 #include <stdarg.h>
 
+
+
 // Apple doesn't seem to believe in malloc.h
 #ifndef __APPLE__
 #include <malloc.h>
@@ -670,5 +672,6 @@ void fft_vel(hydro_fields f, hydro_params p, int step, float ****vectorfield);
 void init_ps(hydro_fields f, hydro_params p, float ****field);
 void norm_power(hydro_fields f, hydro_params p, float ****field);
 float get_momtot(hydro_fields f, hydro_params p);
+float get_normal(float mean, float dev);
 
 #endif // FFT && !SCALAR
