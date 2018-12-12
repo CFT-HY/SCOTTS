@@ -63,7 +63,7 @@ void make_vel(hydro_fields f, hydro_params p, float ***temp) {
 
 #endif // !SCALAR
 
-/** Populate an array with a slice through `temp`.
+/** Populate an array with a scalar quantity in a slice through `temp`.
  *
  * This function takes a 3 dimensional array `temp` 
  * which contains a quanitity defined over the simulation box
@@ -130,7 +130,7 @@ void make_slice(hydro_fields f, hydro_params p, float *slice, float ***temp)
 		 p.slicey*p.Lz,
 		 MPI_FLOAT,
 		 ry*nx + x/p.slicex,
-		 x*ny + ry,
+		 ry,
 		 MPI_COMM_WORLD,
 		 &status);
       }
@@ -143,7 +143,7 @@ void make_slice(hydro_fields f, hydro_params p, float *slice, float ***temp)
                p.slicey*p.Lz,
                MPI_FLOAT,
 	       0,
-               x*ny + p.myposy,
+               p.myposy,
 	       MPI_COMM_WORLD);
     }
 
@@ -152,6 +152,7 @@ void make_slice(hydro_fields f, hydro_params p, float *slice, float ***temp)
   free(trim);
 
 }
+
 
 /** Write a silo file containing slices through the simulation box.
  *
@@ -258,11 +259,12 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step)
 
 
   //// prepare fluid velocity ////
-
+  /*
   make_vel(f, p, temp);
 
   make_slice(f, p, slice, temp);
 
+  
   //// write fluid velocity slice ///
 
 
@@ -271,11 +273,59 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step)
          NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
   }
 
-
+  */
   
   free_field(p, temp);
 
-    //// make T slice ///
+  //// Write all vel components slice:
+
+  // Vx slice
+  make_slice(f, p, slice, f.V[0]);
+  if(!p.rank) {
+    DBPutQuadvar1(dbfile, "Vx", "quadmesh", slice, meshsize, 2,
+		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+  }
+
+  // Vy slice
+  make_slice(f, p, slice, f.V[1]);
+  if(!p.rank) {
+    DBPutQuadvar1(dbfile, "Vy", "quadmesh", slice, meshsize, 2,
+		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+  }
+
+  // Vz slice
+  make_slice(f, p, slice, f.V[2]);
+  if(!p.rank) {
+    DBPutQuadvar1(dbfile, "Vz", "quadmesh", slice, meshsize, 2,
+		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+  }
+
+  //// Write all Z components slice:
+
+  // Zx slice
+  make_slice(f, p, slice, f.Z[0]);
+  if(!p.rank) {
+    DBPutQuadvar1(dbfile, "Zx", "quadmesh", slice, meshsize, 2,
+		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+  }
+
+  // Zy slice
+  make_slice(f, p, slice, f.Z[1]);
+  if(!p.rank) {
+    DBPutQuadvar1(dbfile, "Zy", "quadmesh", slice, meshsize, 2,
+		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+  }
+
+  // Zz slice
+  make_slice(f, p, slice, f.Z[2]);
+  if(!p.rank) {
+    DBPutQuadvar1(dbfile, "Zz", "quadmesh", slice, meshsize, 2,
+		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+  }
+
+
+  
+  //// make T slice ///
 
   make_slice(f, p, slice, f.T);
 
