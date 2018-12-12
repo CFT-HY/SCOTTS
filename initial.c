@@ -74,21 +74,26 @@ void initial_blank(hydro_fields f, hydro_params p) {
 
 #ifndef SCALAR	
 
+
 	f.T[x][y][z] = p.Tconst;
+
 
 	// Note when the fluid is at rest, f.W = 1 and so
 	// f.E is just the internal rest-energy i.e. \epsilon.
+	
 	f.E[x][y][z] = 3.0*p.gdeg*f.T[x][y][z]*f.T[x][y][z]
 	  *f.T[x][y][z]*f.T[x][y][z]
 	  + Vf(p, f.T[x][y][z], f.phi[x][y][z])
 	  - f.T[x][y][z]*VTf(p, f.T[x][y][z], f.phi[x][y][z]);
 
+	
 	for(i = 0; i < 3; i++) {
 	  f.Z[i][x][y][z] = 0.0;
 	  f.V[i][x][y][z] = 0.0;
 	}
 
 	f.W[x][y][z] = 1.0;
+
 
 #endif // SCALAR
 
@@ -362,16 +367,20 @@ int bubbles_at_step(hydro_fields f, hydro_params p, float t, int step) {
  * Keeps field in symmetric phase everywhere. Initialises a gaussian overdensity in T.
  */
 void fluid_sphere(hydro_fields f, hydro_params p){
-
+#ifdef SCALAR
+  printf0(p, "Error - fluid sphere incompatible with SCALAR compiler flag,"
+	  "exiting...");
+  die(100);
+#else
   int x, y, z;
   
-  float direct_x, direct_y, direct_z;
-  float wrap_x, wrap_y, wrap_z;
-  float delta_x, delta_y, delta_z;
+  int direct_x, direct_y, direct_z;
+  int wrap_x, wrap_y, wrap_z;
+  int delta_x, delta_y, delta_z;
   
   float x0 = 0;
-  float y0 = 0;
-  float z0 = 0;
+  int y0 = 0;
+  int z0 = 0;
   
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
@@ -421,4 +430,6 @@ void fluid_sphere(hydro_fields f, hydro_params p){
       }
     }
   }
+#endif 
 }
+
