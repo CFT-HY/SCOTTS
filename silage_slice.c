@@ -61,6 +61,30 @@ void make_vel(hydro_fields f, hydro_params p, float ***temp) {
   halo_field(temp, p);
 }
 
+/** Populate an array with Z magnitude.
+ *
+ */
+void make_Z(hydro_fields f, hydro_params p, float ***temp) {
+  float vol = p.dx*p.dx*p.dx;
+
+  int x, y, z;
+
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+   
+   temp[x][y][z] = sqrt(f.Z[0][x][y][z]*f.Z[0][x][y][z]
+                + f.Z[1][x][y][z]*f.Z[1][x][y][z]
+                + f.Z[2][x][y][z]*f.Z[2][x][y][z]);
+        
+      }
+    }
+  }
+  
+  halo_field(temp, p);
+}
+
+
 #endif // !SCALAR
 
 /** Populate an array with a scalar quantity in a slice through `temp`.
@@ -259,7 +283,7 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step)
 
 
   //// prepare fluid velocity ////
-  /*
+  
   make_vel(f, p, temp);
 
   make_slice(f, p, slice, temp);
@@ -273,12 +297,27 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step)
          NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
   }
 
-  */
+
+  //// prepare Z magnitude slice ////
+
+  
+  make_Z(f, p, temp);
+
+  make_slice(f, p, slice, temp);
+
+  // write Z magnitude slice.
+
+  if(!p.rank) {
+    DBPutQuadvar1(dbfile, "Z", "quadmesh", slice, meshsize, 2,
+         NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+  }
+
   
   free_field(p, temp);
 
   //// Write all vel components slice:
-
+  
+  /*
   // Vx slice
   make_slice(f, p, slice, f.V[0]);
   if(!p.rank) {
@@ -322,7 +361,7 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step)
     DBPutQuadvar1(dbfile, "Zz", "quadmesh", slice, meshsize, 2,
 		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
   }
-
+  */
 
   
   //// make T slice ///
