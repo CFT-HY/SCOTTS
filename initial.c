@@ -383,7 +383,7 @@ int bubbles_at_step(hydro_fields f, hydro_params p, float t, int step) {
  */
 void fluid_sphere(hydro_fields f, hydro_params p){
 #ifdef SCALAR
-  printf0(p, "Error - fluid sphere incompatible with SCALAR compiler flag,"
+  printf0(p, "Error - fluid sphere incompatible with SCALAR compiler flag, "
 	  "exiting...");
   die(100);
 #else
