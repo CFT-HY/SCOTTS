@@ -172,8 +172,8 @@ int main(int argc, char *argv[]) {
 	//    init_ps(f, p, f.Z);
 #else
 	
-	printf0(p,"INIT_PS initial conditions invalid with SCALAR compiler flag.",
-		"Exiting... \n");
+	printf0(p,"INIT_PS initial conditions invalid with SCALAR compiler flag."
+		" Exiting... \n");
 	die(100);
 	
 #endif // FFT && !SCALAR	
@@ -183,7 +183,7 @@ int main(int argc, char *argv[]) {
       if(p.nucleation==NUC_FILE_LOC){
 	initial_blank(f,p);
 	if(p.bubbles > 0){
-	  printf0(p,"Using nucleation location file: \n",
+	  printf0(p,"Using nucleation location file: \n"
 		  "Ignoring initial bubbles parameter (bubbles %d). \n",
 		  p.bubbles);
 	}
