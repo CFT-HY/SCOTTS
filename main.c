@@ -180,8 +180,16 @@ int main(int argc, char *argv[]) {
 
 	
     } else if(p.initial==INIT_BUBBLE){
+      if(p.nucleation==NUC_FILE_LOC){
+	initial_blank(f,p);
+	if(p.bubbles > 0){
+	  printf0(p,"Using nucleation location file: \n",
+		  "Ignoring initial bubbles parameter (bubbles %d). \n",
+		  p.bubbles);
+	}
+      }
       //Bubble initial conditions:
-      if(p.bubbles > 1){
+      else if(p.bubbles > 1){
 	// Instead, start off with an empty box
 	initial_blank(f, p);
       
