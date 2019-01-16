@@ -404,9 +404,9 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
   }
 
 
-  // halo_field(f.Z[0], p);
-  // halo_field(f.Z[1], p);
-  // halo_field(f.Z[2], p);
+  halo_field(f.Z[0], p);
+  halo_field(f.Z[1], p);
+  halo_field(f.Z[2], p);
   //  halo_field(f.E, p);
 
 
@@ -474,9 +474,7 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
     }
   }
 
-  //  halo_field(f.Z[0], p);
-  //  halo_field(f.Z[1], p);
-  //  halo_field(f.Z[2], p);
+ 
 
 
 
@@ -701,7 +699,7 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
 
 
 
-  //  halo_field(f.W, p);
+  halo_field(f.W, p);
 
   halo_field(Wfacex, p);
   halo_field(Wfacey, p);
