@@ -634,6 +634,13 @@ void set_bubble_parameters(hydro_params *p);
 void silo_init(hydro_params p);
 void write_silo_step(hydro_fields f, hydro_params p, int step);
 
+// silage_slice.c
+void make_kinetic(hydro_fields f, hydro_params p, float ***temp);
+void make_slice(hydro_fields f, hydro_params p, float *slice, float ***temp);
+void make_curl(hydro_fields f, hydro_params p, float ****temp);
+void make_div(hydro_fields f, hydro_params p, float ***temp);
+void make_vel(hydro_fields f, hydro_params p, float ***temp);
+void make_Z(hydro_fields f, hydro_params p, float ***temp);
 void write_silo_slice_step(hydro_fields f, hydro_params p, int step);
 #endif // SILO
 
