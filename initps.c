@@ -229,12 +229,7 @@ void VtoZ(hydro_fields f, hydro_params p) {
     for(y=1; y<=p.slicey; y++) {
       for(z=0; z<p.Lz; z++) {
 
-
-	printf("%1.9f\n",f.E[x][y][z]);
 	f.E[x][y][z] = f.W[x][y][z]*eps*(1.0+f.E[x][y][z]);
-	printf("%1.9f\n\n",f.E[x][y][z]);
-
-
 	/*
 	f.kappa[x][y][z] = kappa;
 
@@ -484,7 +479,7 @@ float get_normal(float mean, float dev) {
   u1 = drand48();
   u2 = drand48();
 
-  return dev*(sqrt(-2.0*log(u1))*sin(2.0*M_PI*u2)-mean);
+  return mean + dev*(sqrt(-2.0*log(u1))*sin(2.0*M_PI*u2));
 }
 
 
@@ -1012,6 +1007,7 @@ for(x=x_start;x<x_start+x_thickness;x++) {
 
 			float s_x, s_y, s_z;
 		  float kx, ky, kz;
+			fftwf_complex kiVki;
 
 			s_x = 1.0;
 		  s_y = 1.0;
@@ -1047,22 +1043,13 @@ for(x=x_start;x<x_start+x_thickness;x++) {
 
 
 			ksq = kx*kx+ky*ky+kz*kz;
+			kiVki[0] = kx * in[0][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0] + ky * in[1][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0] + kz * in[2][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0];
+			kiVki[1] = kx * in[0][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] + ky * in[1][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] + kz * in[2][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1];
 
-			if (abs(true_x) > 0){
-				e_in[(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0] = 4 / sqrt(3) * in[0][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0] * sqrt(ksq) / kx;
-				e_in[(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] = 4 / sqrt(3) * in[0][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] * sqrt(ksq) / kx;
-			}
-			else if (abs(true_y) > 0){
-				e_in[(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0] = 4 / sqrt(3) * in[1][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0] * sqrt(ksq) / ky;
-				e_in[(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] = 4 / sqrt(3) * in[1][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] * sqrt(ksq) / ky;
-			}
-			else if (abs(true_z) > 0){
-				e_in[(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0] = 4 / sqrt(3) * in[2][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0] * sqrt(ksq) / kz;
-				e_in[(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] = 4 / sqrt(3) * in[2][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] * sqrt(ksq) / kz;
-			}
-			else {
-				e_in[(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0] = 4 / sqrt(3) * in[0][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0];
-				e_in[(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] = 4 / sqrt(3) * in[0][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1];
+			if (ksq != 0){
+				e_in[(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0] = 4 / sqrt(3) * kiVki[0] / sqrt(ksq);
+				e_in[(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] = 4 / sqrt(3) * kiVki[1] / sqrt(ksq);
+
 			}
 
 		}
@@ -1090,8 +1077,6 @@ for(x=x_start;x<x_start+x_thickness;x++) {
 
 	// Calculate the inverse fourier transform for the energy
 	fftwf_mpi_execute_dft(plan, e_in, e_out);
-	// Todo, put that input into the energy density field
-
 
   MPI_Barrier(MPI_COMM_WORLD);
   //  printf0(p, "Done FFTing, example value %g %g\n", out[0][0][0], out[0][0][1]);
@@ -1195,6 +1180,7 @@ for(x=0; x<x_thickness; x++) {
 	for(y=0; y<p.Ly; y++) {
 		for(z=0; z<p.Lz; z++) {
 			slice[x*p.Ly*p.Lz + y*p.Lz + z] = e_out[x*p.Ly*p.Lz + y*p.Lz + z][0];
+
 		}
 	}
 }
@@ -1251,7 +1237,7 @@ for(x=1; x<=p.slicex; x++) {
 		}
 	}
 }
-halo_field(f.E, p);
+// halo_field(f.E, p);
 
 
 

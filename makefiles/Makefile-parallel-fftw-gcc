@@ -4,12 +4,13 @@ CC := mpicc -g -DMPI -DFFT
 
 #### CFLAGS ####
 
-CFLAGS := -O3
+CFLAGS := -O3 -DSILO
 
 #### LIBS ####
 
-LIBS := -lfftw3f_mpi -lfftw3f -lm -lz
-
+LIBS := -L$(HOME)/local/lib/ \
+	-lsiloh5 -lhdf5 -lfftw3f_mpi -lfftw3f -lm -lstdc++ -lz
+	
 #### No user-serviceable parts below ####
 
 OBJECTS := main.o evolve.o potential.o energy.o eos.o \

@@ -4,7 +4,7 @@
 Lx  64
 Ly	64
 Lz	64
-steps  300
+steps  1000
 
 # How big the simulation is
 dx     2.0
@@ -27,8 +27,8 @@ T0 0.70710678
 Tconst 0.86
 
 # How often to write data
-interval 50
-silointerval -1
+interval 200
+silointerval 10
 
 # Initial conditions
 initial initps
@@ -44,7 +44,7 @@ initlength 0.5
 
 bubbles 16
 
-silodir silage
+silodir ./silage
 
 beta 1.0
 
@@ -64,6 +64,6 @@ gstar 106.75
 fftinterval 100
 uetcstart -1
 silosliceinterval -1
-siloslicecoord 0
+siloslicecoord 1
 
 output_fname stdout
