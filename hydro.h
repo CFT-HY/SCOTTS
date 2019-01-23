@@ -591,8 +591,12 @@ void eq_of_state(hydro_fields f, hydro_params p);
 
 // transport.c
 
-void advect_E(hydro_fields f, hydro_params p);
-void advect_Z(hydro_fields f, hydro_params p);
+void advect_E(hydro_fields f, hydro_params p, int adv_order);
+void advect_Z(hydro_fields f, hydro_params p, int adv_order);
+void donor_E_dir(hydro_fields f, hydro_params p, int dir);
+void donor_Z_dir(hydro_fields f, hydro_params p, int dir);
+void van_leer_E(hydro_fields f, hydro_params p, int dir);
+void van_leer_Z(hydro_fields f, hydro_params p, int dir);
 
 
 
