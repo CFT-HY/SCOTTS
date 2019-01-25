@@ -1,8 +1,10 @@
 # 3D hydro code
 
-## The model 
+Papers using/describing this code:
+https://arxiv.org/abs/1511.04527
+https://arxiv.org/abs/1704.05871
 
-[Include links to papers here]
+## The model 
 
 Under normal compliation the potential is
 \f[ V_B(\phi, T) = \frac{1}{2} \gamma(T^2 - T_0^2)\phi^2
@@ -120,6 +122,27 @@ In the code:
 * \f$ \dfrac{\partial V}{\partial T} \f$ is VTf()
 * \f$ a_0 \f$ is `p.gdeg` and \f$ g_* \f$ is `p.gstar`
 
+## Dimensionless vs dimensionful friction parameter
+
+The fluid is coupled to the field through a dissipative term proportional
+to field gradient.
+\f[
+\left[ \partial_\mu T^{\mu\nu}\right]_\text{field}=
+-\left[ \partial_\mu T^{\mu\nu}\right]_\text{fluid}=
+\eta U^\mu \partial_\mu \phi \partial^\nu \phi
+\f]
+with \f$ T^{\mu \nu} \f$ the energy momentum tensor and \f$ \eta \f$
+the friction parameter.
+
+The default choice for the friction parameter is that \f$ \eta \f$ is a
+dimensionful constant set by `C` in the input parameter file.
+
+This can be changed using the `-DDIMENSIONLESS` compiler flag. Then
+\f[
+\eta = \tilde{\eta} \frac{\phi^2}{T}
+\f]
+with \f$\tilde{\eta}\f$ a constant set by `C` in the input parameter file.
+
 
 ## Order of evolution:
 
@@ -171,3 +194,5 @@ damping couplings.
 
 * `-DBAG` : Use bag model for equation of state/potential instead of
 EIKR formalism.
+
+* `-DVANLEER` Use Van Leer advection insted of donor cell.

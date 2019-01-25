@@ -6,8 +6,9 @@
  * We have two versions, depending on whether the field being advected
  * lives on lattice sites or between them.
  *
- * Currently we use simple donor cell advection. We may need to look
- * into fancier advection methods to avoid getting strong shocks.
+ * Currently we use simple donor cell advection, with a compiler flag
+ * enabling Van Leer advection. We may need to look into fancier
+ * advection methods to avoid getting strong shocks.
  */
 #include "hydro.h"
 
