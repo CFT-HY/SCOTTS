@@ -68,6 +68,12 @@ bubbles 1
 # equal to zero then this is not accessed.
 silodir silage/
 
+# Value of T at centre of fluid sphere, used if initial is set to "initfs" only.
+T_central 1
+
+# Radius of gaussian fluid sphere, used if initial is set to "initfs" only.
+sphere_radius 10
+
 # How much the gaussian ansatz for the initial bubble is enlarged by
 scale 1.5
 

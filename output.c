@@ -59,7 +59,7 @@ float get_s_max(hydro_fields f, hydro_params p) {
 		       /f.T[x][y][z])*f.W[x][y][z];
 #else
 	stest = 0.5*p.dt*(p.C*f.phi[x][y][z]*f.phi[x][y][z]
-		       /f.Tconst);
+		       /p.Tconst);
 #endif //!SCALAR
 #else
 #ifndef SCALAR
