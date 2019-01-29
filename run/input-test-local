@@ -4,32 +4,31 @@
 # Note that if the simulation is checkpointed and restarts the cumulative
 # number of timesteps is counted, so 'steps' would (for example) need to
 # be increased if you wanted to run for longer.
-Lx      128
-Ly	128
-Lz	128
-steps  1000
+Lx      12
+Ly	12
+Lz	12
+steps  50
 
 # How big the simulation is: lattice spacing and timestep
-dx     2.0
-dt     0.2
+dx     1.0
+dt     0.1
  
 # Viscosity terms. Cav is the artificial viscosity
 # and is not currently used. C is the 'eta' term that
 # takes energy out of the field and into the fluid.
-# C = 0.93 gives vW = 0.44 with the DIMENSIONLESS code path.
+# C = 0.93 gives vW = 0.44 with the new parameters
 Cav    0.0
-C      0.93
+C      3.608
 
 # Example potential parameters (weak case, dimensionless eta).
-alpha 0.19902
-gamma 0.2222
-lambda 0.079221
+alpha 0.150797454
+gamma 0.0658749237857
+lambda 0.019805125
 T0 0.70710678118654757
 
 # Tconst is the initial temperature everywhere.
 # NB: cooling is faked by nucleating ready-made bubbles.
-Tconst 0.86
-
+Tconst 0.7577
 
 # How often to write data. "interval" is how often to write a line of
 # global quantities to output_fname, and do any FFTs/power spectra that are
@@ -48,12 +47,13 @@ siloslicecoord 0
 
 # Power spectra measurements. How often to write FFT's (i.e. field, fluid
 # velocity, and GW power spectra) - set to -1 to disable.
-fftinterval 100
+fftinterval -1
 # .. and when to start writing UETC's
 uetcstart -1
 
-# Initial conditions; choices are "shocktube", "bubble", "initfs" and "initps";
-# only "bubble" should be currently used. "initfs" is for debugging only.
+
+# Initial conditions; choices are "shocktube", "bubble" and "initps"; only
+# "bubble" should be currently used.
 initial bubble
 
 # If "initps" is used, we need to set some extra parameters
@@ -68,8 +68,14 @@ bubbles 1
 # equal to zero then this is not accessed.
 silodir silage/
 
+# Value of T at centre of fluid sphere, used if initial is set to "initfs" only.
+T_central 1
+
+# Radius of gaussian fluid sphere, used if initial is set to "initfs" only.
+sphere_radius 10
+
 # How much the gaussian ansatz for the initial bubble is enlarged by
-scale 1.0
+scale 1.5
 
 # Size of the critical bubble radius,
 # if less than zero default to gaussian ansatz:
@@ -78,13 +84,6 @@ R_critical -1
 # Value of phi at the centre of the nucleated bubble,
 # if less than 0 default to broken phase value.
 phimin -1
-
-# Value of T at centre of fluid sphere, used if initial is set to "initfs" only.
-T_central 1
-
-# Radius of gaussian fluid sphere, used if initial is set to "initfs" only.
-sphere_radius 10
-
 
 # Nucleation procedure; choices are "off", "list" or "file" 
 # - "off" does nothing (the number of bubbles given above as 'bubbles' is
@@ -97,11 +96,6 @@ sphere_radius 10
 #   "nucleation file nucleation-list". There may be more than
 #   one nucleation attempt per timestep.
 #   The program utils/nucproc.py produces output in this format.
-# - "locfile" is a file containing the timesteps and lattice locations
-#    to nucleate bubbles in the following format:
-#    "step x y z\n"
-#    with each nucleation specified on a new line.
-#    Specify locfile location as above.
 nucleation off
 
 # The checkpoint directory is always checked for a valid checkpoint

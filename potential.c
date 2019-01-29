@@ -26,21 +26,25 @@
  * \f$ \phi \f$.
  *
  * \f[ V(\phi,T) = \frac{1}{2} \gamma(T^2 - T_0^2)\phi^2 -
- * \frac{1}{3}\alpha T \phi^3 + \frac{1}{4}\lambda\phi^4 + 
- * \frac{1}{4}\frac{\gamma^2 T_0^4}{\lambda} \text.  \f]
+ * \frac{1}{3}\alpha T \phi^3 + \frac{1}{4}\lambda\phi^4  - V_0 \text.  \f]
+ *
+ * For bag model
+ *
+ * \f[ V(\phi,T) = \frac{1}{2}\gamma \phi^2 - \frac{1}{3}\alpha \phi^3 -
+ * \frac{1}{4} \lambda \phi^4 - (a(\phi) - a_0) T^4 - V_0 \text.  \f]
  */
 float Vf(hydro_params p, float T, float this_phi) {
 #ifdef BAG
   return 0.5*p.gamma*this_phi*this_phi
     - p.alpha*this_phi*this_phi*this_phi/3.0
     + 0.25*p.lambda*this_phi*this_phi*this_phi*this_phi
-    + p.V0*this_phi*this_phi/(p.phi_0*p.phi_0)
-    *(3.-2.*this_phi/p.phi_0)*T*T*T*T + p.V0;
+    - p.V0*this_phi*this_phi/(p.phi_0*p.phi_0)
+    *(3.-2.*this_phi/p.phi_0)*T*T*T*T - p.V0;
 #else
   return  0.5*p.gamma*(T*T - p.T0*p.T0)*this_phi*this_phi
     - p.alpha*T*this_phi*this_phi*this_phi/3.0
     + 0.25*p.lambda*this_phi*this_phi*this_phi*this_phi
-    + p.V0;
+    - p.V0;
 #endif // BAG
 }
 
@@ -54,13 +58,20 @@ float Vf(hydro_params p, float T, float this_phi) {
  *
  * \f[ \dfrac{\partial V(\phi,T)}{\partial \phi} = \gamma(T^2 -
  * T_0^2)\phi - \alpha T \phi^2 + \lambda\phi^3\text.  \f]
+ *
+ * For bag model
+ *
+ * \f[ \dfrac{\partial V(\phi,T)}{\partial \phi} 
+ *     = \gamma \phi - \alpha \phi^2 + \lambda \phi^4 
+ *        - \dfrac{\partial a(\phi)}{\partial \phi}
+ * \f]
  */
 float Vdf(hydro_params p, float T, float this_phi) {
 #ifdef BAG
   return p.gamma*this_phi
     - p.alpha*this_phi*this_phi
     + p.lambda*this_phi*this_phi*this_phi
-    + p.V0*this_phi/(p.phi_0*p.phi_0)
+    - p.V0*this_phi/(p.phi_0*p.phi_0)
     *(6.-6.*this_phi/p.phi_0)*T*T*T*T;
 #else
   return p.gamma*(T*T - p.T0*p.T0)*this_phi
@@ -78,10 +89,14 @@ float Vdf(hydro_params p, float T, float this_phi) {
  *
  * \f[ V(\phi,T) = \gamma T \phi^2 - \frac{1}{3}\alpha \phi^3 \text.
  * \f]
+ *
+ * For bag model
+ *
+ * \f[ \dfrac{\partial V(\phi,T)}{\partial T} = -4 (a(\phi) - a_0)T^3 \f]
  */
 float VTf(hydro_params p, float T, float this_phi) {
 #ifdef BAG
-  return 4*T*T*T*p.V0*this_phi*this_phi/(p.phi_0*p.phi_0)
+  return -4*T*T*T*p.V0*this_phi*this_phi/(p.phi_0*p.phi_0)
     *(3 - 2*this_phi/(p.phi_0));
 #else
   return p.gamma*T*this_phi*this_phi 
@@ -98,10 +113,14 @@ float VTf(hydro_params p, float T, float this_phi) {
  * \f$ and \f$ \phi \f$.
  *
  * \f[ V(\phi,T) = \gamma \phi^2 \text.  \f]
+ *
+ * For bag model
+ *
+ * \f[ \dfrac{\partial V(\phi,T)}{\partial T} = -12 (a(\phi) - a_0)T^2 \f]
  */
 float VTTf(hydro_params p, float T, float this_phi) {
 #ifdef BAG
-  return 12.*T*T*p.V0*this_phi*this_phi/(p.phi_0*p.phi_0)
+  return -12.*T*T*p.V0*this_phi*this_phi/(p.phi_0*p.phi_0)
     *(3.-2.*this_phi/p.phi_0);
 #else
   return p.gamma*this_phi*this_phi;
