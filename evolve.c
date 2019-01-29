@@ -198,6 +198,7 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
   float phinb, Tnb;
 #endif //DIMENSIONLESS
   float vdnb, pinb, wnb, dxphinb0, dxphinb1, dxphinb2;
+  float velxnb, velynb, velznb;
 
   
   // Find quantities needed on half timesteps but defined on whole steps
@@ -307,7 +308,17 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
 			 + dxphi[2][x][y-1][((z+p.Lz-1)%p.Lz)]
 			 + dxphi[2][x-1][y-1][((z+p.Lz-1)%p.Lz)]);
 
+	// Construct node based velocity components.
+	velxnb = 0.25*(f.V[0][x][y][z] + f.V[0][x][y-1][z]
+		       + f.V[0][x][y][(z-1+p.Lz)%p.Lz] + f.V[0][x][y-1][(z-1+p.Lz)%p.Lz]);
+	
+	velynb = 0.25*(f.V[1][x][y][z] + f.V[1][x-1][y][z]
+		       + f.V[1][x][y][(z-1+p.Lz)%p.Lz] + f.V[1][x-1][y][(z-1+p.Lz)%p.Lz]);
 
+	velznb = 0.25*(f.V[2][x][y][z] + f.V[2][x-1][y][z]
+		       + f.V[2][x][y-1][z] + f.V[2][x-1][y-1][z]);
+
+	
 #ifdef DIMENSIONLESS	
 	// this is the one that causes trouble       
 	f.Z[0][x][y][z] = f.Z[0][x][y][z] - p.dt*(p.C*phinb*phinb/Tnb)*wnb*pinb*dxphinb0;
@@ -315,19 +326,19 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
 	f.Z[2][x][y][z] = f.Z[2][x][y][z] - p.dt*(p.C*phinb*phinb/Tnb)*wnb*pinb*dxphinb2;
     
 	f.Z[1][x][y][z] = f.Z[1][x][y][z] 
-	  - p.dt*(p.C*phinb*phinb/Tnb)*wnb*(f.V[1][x][y][z]*dxphinb1
-					    + f.V[0][x][y][z]*dxphinb0
-					    + f.V[2][x][y][z]*dxphinb2)*dxphinb1;
+	  - p.dt*(p.C*phinb*phinb/Tnb)*wnb*(velynb*dxphinb1
+					    + velxnb*dxphinb0
+					    + velznb*dxphinb2)*dxphinb1;
 	
 	f.Z[0][x][y][z] = f.Z[0][x][y][z] 
-	  - p.dt*(p.C*phinb*phinb/Tnb)*wnb*(f.V[1][x][y][z]*dxphinb1
-					    + f.V[0][x][y][z]*dxphinb0
-					    + f.V[2][x][y][z]*dxphinb2)*dxphinb0;    
+	  - p.dt*(p.C*phinb*phinb/Tnb)*wnb*(velynb*dxphinb1
+					    + velxnb*dxphinb0
+					    + velznb*dxphinb2)*dxphinb0;    
     
 	f.Z[2][x][y][z] = f.Z[2][x][y][z]
-	  - p.dt*(p.C*phinb*phinb/Tnb)*wnb*(f.V[1][x][y][z]*dxphinb1
-					    + f.V[0][x][y][z]*dxphinb0
-					    + f.V[2][x][y][z]*dxphinb2)*dxphinb2;
+	  - p.dt*(p.C*phinb*phinb/Tnb)*wnb*(velynb*dxphinb1
+					    + velxnb*dxphinb0
+					    + velznb*dxphinb2)*dxphinb2;
 	
 	f.Z[0][x][y][z] = f.Z[0][x][y][z] - p.dt*vdnb*dxphinb0;     
 	f.Z[1][x][y][z] = f.Z[1][x][y][z] - p.dt*vdnb*dxphinb1;
@@ -354,19 +365,19 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
 	f.Z[2][x][y][z] = f.Z[2][x][y][z] - p.dt*p.C*wnb*pinb*dxphinb2;
 	
 	f.Z[1][x][y][z] = f.Z[1][x][y][z] 
-	  - p.dt*p.C*wnb*(f.V[1][x][y][z]*dxphinb1
-			  + f.V[0][x][y][z]*dxphinb0
-			  + f.V[2][x][y][z]*dxphinb2)*dxphinb1;
+	  - p.dt*p.C*wnb*(velynb*dxphinb1
+			  + velxnb*dxphinb0
+			  + velznb*dxphinb2)*dxphinb1;
 	
 	f.Z[0][x][y][z] = f.Z[0][x][y][z] 
-	  - p.dt*p.C*wnb*(f.V[1][x][y][z]*dxphinb1
-			  + f.V[0][x][y][z]*dxphinb0
-			  + f.V[2][x][y][z]*dxphinb2)*dxphinb0;    
+	  - p.dt*p.C*wnb*(velynb*dxphinb1
+			  + velxnb*dxphinb0
+			  + velznb*dxphinb2)*dxphinb0;    
 	
 	f.Z[2][x][y][z] = f.Z[2][x][y][z]
-	  - p.dt*p.C*wnb*(f.V[1][x][y][z]*dxphinb1
-			  + f.V[0][x][y][z]*dxphinb0
-			  + f.V[2][x][y][z]*dxphinb2)*dxphinb2;
+	  - p.dt*p.C*wnb*(velynb*dxphinb1
+			  + velxnb*dxphinb0
+			  + velznb*dxphinb2)*dxphinb2;
 	
 	f.Z[0][x][y][z] = f.Z[0][x][y][z] - p.dt*vdnb*dxphinb0;     
 	f.Z[1][x][y][z] = f.Z[1][x][y][z] - p.dt*vdnb*dxphinb1;
@@ -393,9 +404,9 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
   }
 
 
-  // halo_field(f.Z[0], p);
-  // halo_field(f.Z[1], p);
-  // halo_field(f.Z[2], p);
+  halo_field(f.Z[0], p);
+  halo_field(f.Z[1], p);
+  halo_field(f.Z[2], p);
   //  halo_field(f.E, p);
 
 
@@ -422,12 +433,12 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
 	
 	p_bar_y_plus = (f.p[x][y][z]
 			+ f.p[x-1][y][z] 
-			+ f.p[x][y][((z-1+p.Lz)%p.Lz)]
+			+ f.p[x][y][((z+p.Lz-1)%p.Lz)]
 			+ f.p[x-1][y][((z+p.Lz-1)%p.Lz)]
 			)/4.0;
 	
 	
-	p_bar_y_minus = (f.p[x][y-1][z]
+	p_bar_y_minus = (  f.p[x][y-1][z]
 			 + f.p[x-1][y-1][z] 
 			 + f.p[x][y-1][((z+p.Lz-1)%p.Lz)]
 			 + f.p[x-1][y-1][((z+p.Lz-1)%p.Lz)]
@@ -441,7 +452,7 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
 		    )/4.0;
 	
 	
-	p_bar_z_minus = (f.p[x][y][((z-1+p.Lz)%p.Lz)]
+	p_bar_z_minus = (f.p[x][y][((z+p.Lz-1)%p.Lz)]
 			 + f.p[x-1][y][((z+p.Lz-1)%p.Lz)] 
 			 + f.p[x][y-1][((z+p.Lz-1)%p.Lz)]
 			 + f.p[x-1][y-1][((z+p.Lz-1)%p.Lz)]
@@ -463,9 +474,7 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
     }
   }
 
-  //  halo_field(f.Z[0], p);
-  //  halo_field(f.Z[1], p);
-  //  halo_field(f.Z[2], p);
+ 
 
 
 
@@ -690,7 +699,7 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
 
 
 
-  //  halo_field(f.W, p);
+  halo_field(f.W, p);
 
   halo_field(Wfacex, p);
   halo_field(Wfacey, p);

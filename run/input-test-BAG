@@ -16,19 +16,21 @@ dt     0.2
 # Viscosity terms. Cav is the artificial viscosity
 # and is not currently used. C is the 'eta' term that
 # takes energy out of the field and into the fluid.
-# C = 0.93 gives vW = 0.44 with the DIMENSIONLESS code path.
+# C = 0.63 gives vW = 0.44 with the code path.
 Cav    0.0
-C      0.93
+C      0.63
 
-# Example potential parameters (weak case, dimensionless eta).
-alpha 0.19902
-gamma 0.2222
-lambda 0.079221
+# Example potential parameters (int BAG case, dimensionful eta).
+alpha 0.167705098312
+gamma 0.0427050983125
+lambda 0.0731762745781
+
+#Not used for BAG model
 T0 0.70710678118654757
 
 # Tconst is the initial temperature everywhere.
 # NB: cooling is faked by nucleating ready-made bubbles.
-Tconst 0.86
+Tconst 0.44538722
 
 
 # How often to write data. "interval" is how often to write a line of
@@ -52,6 +54,7 @@ fftinterval 100
 # .. and when to start writing UETC's
 uetcstart -1
 
+
 # Initial conditions; choices are "shocktube", "bubble", "initfs" and "initps";
 # only "bubble" should be currently used. "initfs" is for debugging only.
 initial bubble
@@ -69,7 +72,7 @@ bubbles 1
 silodir silage/
 
 # How much the gaussian ansatz for the initial bubble is enlarged by
-scale 1.0
+scale 2.0
 
 # Size of the critical bubble radius,
 # if less than zero default to gaussian ansatz:
@@ -85,6 +88,9 @@ T_central 1
 # Radius of gaussian fluid sphere, used if initial is set to "initfs" only.
 sphere_radius 10
 
+# Value of phi at the centre of the nucleated bubble,
+# if less than 0 default to broken phase value.
+phimin -1
 
 # Nucleation procedure; choices are "off", "list" or "file" 
 # - "off" does nothing (the number of bubbles given above as 'bubbles' is
