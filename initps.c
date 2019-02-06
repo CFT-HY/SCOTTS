@@ -479,7 +479,11 @@ float get_normal(float mean, float dev) {
   u1 = drand48();
   u2 = drand48();
 
+<<<<<<< HEAD
   return mean + dev*(sqrt(-2.0*log(u1))*sin(2.0*M_PI*u2));
+=======
+  return dev*sqrt(-2.0*log(u1))*sin(2.0*M_PI*u2)+mean;
+>>>>>>> master
 }
 
 
