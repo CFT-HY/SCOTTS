@@ -59,7 +59,7 @@ float get_s_max(hydro_fields f, hydro_params p) {
 		       /f.T[x][y][z])*f.W[x][y][z];
 #else
 	stest = 0.5*p.dt*(p.C*f.phi[x][y][z]*f.phi[x][y][z]
-		       /f.Tconst);
+		       /p.Tconst);
 #endif //!SCALAR
 #else
 #ifndef SCALAR
@@ -445,6 +445,8 @@ void dump_max_min(hydro_fields f, hydro_params p){
 
   printf0(p,"Min of pi = %g at (%d, %d, %d) \n", val_loc.value,
 	  val_loc.loc[0], val_loc.loc[1], val_loc.loc[2]);
+
+#ifndef SCALAR
   
   val_loc = find_max_loc(f.T, p, 0);
 
@@ -586,4 +588,6 @@ void dump_max_min(hydro_fields f, hydro_params p){
   printf0(p,"Min of |U[2]| = %g at (%d, %d, %d) \n", val_loc.value,
 	  val_loc.loc[0], val_loc.loc[1], val_loc.loc[2]);
 
+#endif //!SCALAR
+  
 }

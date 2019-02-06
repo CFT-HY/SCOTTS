@@ -15,6 +15,8 @@
 #include <unistd.h>
 #include <stdarg.h>
 
+
+
 // Apple doesn't seem to believe in malloc.h
 #ifndef __APPLE__
 #include <malloc.h>
@@ -57,6 +59,7 @@
 #define INIT_SHOCK_TUBE 1
 #define INIT_BUBBLE 2
 #define INIT_PS 3
+#define INIT_FLUID_SPHERE 4
 
 #define NUC_OFF 0
 #define NUC_LIST 1
@@ -146,6 +149,7 @@ typedef struct {
 
   /** Potential parameter \f$ T_0 \f$ which corresponds to the
    *  temperature at which the transition is no longer first order.
+   *  (Not used in BAG model).
    */
   float T0;
 
@@ -239,18 +243,6 @@ typedef struct {
    * NB: the physical position of a site `y` is e.g. `(y+shifty-1)`
    */
   int shifty;
-
-  /** Global output filename.
-   *
-   * Either a filename or "stdout".
-   */
-  char output_fname[500];
-
-  /** Global output destination.
-   *
-   * Points to a file specified at runtime, either a filename or stdout.
-   */
-  FILE *outputdest;
   
   /** Where the silo files go.
    */
@@ -351,13 +343,20 @@ typedef struct {
    *  \f[
    *  \sigma=\frac{2\sqrt{2}}{81}\frac{A^3}{\lambda^{5/2}}T_c^3
    *  \f]
+   *
+   *  For bag model
+   *  \f[
+   *  \sigma=\frac{\left(\alpha \left(\alpha + \sqrt{\alpha^2 - 4 \gamma \lambda}
+   *                                  \right) -2\gamma \lambda \right)^{3/2}}
+   *              {24 \lambda^{5/2}}
+   *  \f]
    */
   float surface_tension;
 
   /** Value of `phi` at the center of the nucleated bubble.
    *
    * Read from the parameter file, if given as <=0 default to broken 
-   * phase value.
+   * phase value at \f$T=T_N\f$.
    */
   float phimin;
 
@@ -376,9 +375,20 @@ typedef struct {
    */
   float R_scaled;
 
+  /** Value of temperature in the centre of the fluid sphere, 
+   * used in INIT_FLUID_SPHERE ("initfs") only.
+   */
+  float T_central;
+
+  /** Radius of gaussian sphere of fluid, 
+   * used in INIT_FLUID_SPHERE ("initfs") only.
+   */
+  float sphere_radius;
+  
   /** Constant in potential term.
    *
-   * Calculated s.t $V(\phi_b,T=0)=0$ 
+   * Calculated s.t \f$V(\phi_b,T=0)=0\f$ 
+   * or s.t \f$ V_B(\phi_b)=0\f$ for BAG
    */
   float V0;
 #ifdef BAG
@@ -593,8 +603,12 @@ void eq_of_state(hydro_fields f, hydro_params p);
 
 // transport.c
 
-void advect_E(hydro_fields f, hydro_params p);
-void advect_Z(hydro_fields f, hydro_params p);
+void advect_E(hydro_fields f, hydro_params p, int adv_order);
+void advect_Z(hydro_fields f, hydro_params p, int adv_order);
+void donor_E_dir(hydro_fields f, hydro_params p, int dir);
+void donor_Z_dir(hydro_fields f, hydro_params p, int dir);
+void van_leer_E(hydro_fields f, hydro_params p, int dir);
+void van_leer_Z(hydro_fields f, hydro_params p, int dir);
 
 
 
@@ -607,6 +621,8 @@ void initial_3D(hydro_fields f, hydro_params p);
 int try_nucleate(hydro_fields f, hydro_params p);
 int bubbles_at_step(hydro_fields f, hydro_params p, float t, int step);
 void init_profile(hydro_fields *f, hydro_params *p);
+void fluid_sphere(hydro_fields f, hydro_params p);
+
 
 // output.c
 float get_gamma_max(hydro_fields f, hydro_params p);
@@ -634,6 +650,13 @@ void set_bubble_parameters(hydro_params *p);
 void silo_init(hydro_params p);
 void write_silo_step(hydro_fields f, hydro_params p, int step);
 
+// silage_slice.c
+void make_kinetic(hydro_fields f, hydro_params p, float ***temp);
+void make_slice(hydro_fields f, hydro_params p, float *slice, float ***temp);
+void make_curl(hydro_fields f, hydro_params p, float ****temp);
+void make_div(hydro_fields f, hydro_params p, float ***temp);
+void make_vel(hydro_fields f, hydro_params p, float ***temp);
+void make_Z(hydro_fields f, hydro_params p, float ***temp);
 void write_silo_slice_step(hydro_fields f, hydro_params p, int step);
 #endif // SILO
 
@@ -674,5 +697,6 @@ void init_ps(hydro_fields f, hydro_params p, float ****field);
 void norm_power(hydro_fields f, hydro_params p, float ****field);
 void VtoZ(hydro_fields f, hydro_params p);
 float get_momtot(hydro_fields f, hydro_params p);
+float get_normal(float mean, float dev);
 
 #endif // FFT && !SCALAR

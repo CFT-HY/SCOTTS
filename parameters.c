@@ -61,7 +61,6 @@ void get_parameters(char *infile, hydro_params *p)
 
   int set_gwsource = 0;
 
-  int set_output_fname = 0;
   int set_silodir = 0;
   int set_checkpointdir = 0;
 
@@ -75,6 +74,9 @@ void get_parameters(char *infile, hydro_params *p)
   int set_R_critical = 0;
   int set_phimin = 0;
   int set_scale = 0;
+
+  int set_T_central = 0;
+  int set_sphere_radius = 0;
 
   int set_seed = 0;
 
@@ -246,6 +248,14 @@ void get_parameters(char *infile, hydro_params *p)
       p->scale = strtof(value,NULL);
       set_scale = 1;
     }
+    else if(!strcasecmp(key,"T_central")) {
+      p->T_central = strtof(value,NULL);
+      set_T_central = 1;
+    }
+    else if(!strcasecmp(key,"sphere_radius")) {
+      p->sphere_radius = strtof(value,NULL);
+      set_sphere_radius = 1;
+    }
     else if(!strcasecmp(key,"initnorm")) {
       p->initnorm = strtof(value,NULL);
       set_initnorm = 1;
@@ -263,6 +273,8 @@ void get_parameters(char *infile, hydro_params *p)
 	p->initial = INIT_BUBBLE;
       } else if(!strcasecmp(value, "initps")) {
 	p->initial= INIT_PS;
+      }	else if(!strcasecmp(value, "initfs")) {
+	p->initial= INIT_FLUID_SPHERE;
       } else {
 	printf0(*p, "warning, unrecognised value for initial"
 		" (%s); defaulting to bubble.\n", value);
@@ -465,17 +477,6 @@ void get_parameters(char *infile, hydro_params *p)
       }
       set_nucleation = 1;
     }
-    else if(!strcasecmp(key,"output_fname")) {
-     
-      if(strlen(value) > 500)
-	printf0(*p,
-		"Warning: output_fname \"%s\" may be too long!\n",
-		value);
-
-      strncpy(p->output_fname, value, 500);
-      
-      set_output_fname = 1;
-    }
     else if(!strcasecmp(key,"silodir")) {
      
       if(strlen(value) > 500)
@@ -624,6 +625,15 @@ void get_parameters(char *infile, hydro_params *p)
   } else if(!set_scale) {
     printf0(*p, "Did not set parameter \'scale\'\n");
     die(100);
+  } else if(!set_R_critical) {
+    printf0(*p, "Did not set parameter \'R_critical\'\n");
+    die(100);
+  } else if(!set_T_central) {
+    printf0(*p, "Did not set parameter \'T_central\'\n");
+    die(100);
+  } else if(!set_sphere_radius) {
+    printf0(*p, "Did not set parameter \'sphere_radius\'\n");
+    die(100);
   }else if(!set_initial) {
     printf0(*p, "Did not set parameter \'initial\'\n");
     die(100);
@@ -706,6 +716,10 @@ void get_parameters(char *infile, hydro_params *p)
       printf0(*p, "-- bubble\n");
     } else if(p->initial == INIT_PS) {
       printf0(*p, "-- init_ps\n");
+    } else if(p->initial == INIT_FLUID_SPHERE) {
+      printf0(*p, "-- T_central %g, sphere_radius %g\n"
+	      "-- initfs\n",
+	      p->T_central,p->sphere_radius);
     } else {
       printf0(*p, "-- warning, somehow have unknown initial conds.\n");
     }
@@ -752,17 +766,16 @@ void get_parameters(char *infile, hydro_params *p)
 void set_bubble_parameters(hydro_params *p){
 
 #ifdef BAG
-  p->V0 = (1./(96.*p->lambda*p->lambda*p->lambda)
-	 *(p->alpha + sqrt(p->alpha*p->alpha - 4.*p->gamma*p->lambda))
-	 *(p->alpha + sqrt(p->alpha*p->alpha - 4.*p->gamma*p->lambda))
-	 *(-6*p->gamma*p->lambda
-	   + p->alpha*(p->alpha + sqrt(p->alpha*p->alpha
-				       - 4.*p->gamma*p->lambda))));
-  
+
   p->phi_0 = (p->alpha + sqrt(p->alpha*p->alpha
 			      - 4.*p->gamma*p->lambda))/(2.*p->lambda);
+  p->V0 = (0.5*p->gamma*p->phi_0*p->phi_0
+	   - p->alpha*p->phi_0*p->phi_0*p->phi_0/3.
+	   + 0.25*p->lambda*p->phi_0*p->phi_0*p->phi_0*p->phi_0);
+  
+  
 #else
-  p->V0 = 0.25*p->gamma*p->gamma*p->T0*p->T0*p->T0*p->T0/p->lambda;
+  p->V0 = -0.25*p->gamma*p->gamma*p->T0*p->T0*p->T0*p->T0/p->lambda;
 #endif // BAG
 
 

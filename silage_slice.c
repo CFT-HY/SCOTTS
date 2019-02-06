@@ -38,6 +38,121 @@ void make_kinetic(hydro_fields f, hydro_params p, float ***temp) {
   halo_field(temp, p);
 }
 
+/** Make curl of enthalpy current array i.e (b = curl wU/\bar{w}).
+ */
+void make_curl(hydro_fields f, hydro_params p, float ****temp){
+  int x, y, z;
+  float loc_tot_enth = 0;
+  float mean_enth = 0;
+  float ***Wnb = make_field(p);
+  
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+	loc_tot_enth += f.p[x][y][z] + f.E[x][y][z]/f.W[x][y][z];
+      }
+    }
+  }
+
+  mean_enth = reduce_sum(loc_tot_enth, p)/(p.Lx*p.Ly*p.Lz);
+
+  // Construct node centered W.
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+	Wnb[x][y][z] = 0.125*(f.W[x-1][y][z]
+			      + f.W[x][y][z]
+			      + f.W[x][y-1][z]
+			      + f.W[x-1][y-1][z]
+			      + f.W[x][y][((z-1+p.Lz)%p.Lz)]
+			      + f.W[x][y-1][((z+p.Lz-1)%p.Lz)]
+			      + f.W[x-1][y][((z+p.Lz-1)%p.Lz)]
+			      + f.W[x-1][y-1][((z+p.Lz-1)%p.Lz)]);
+      }
+    }
+  }
+  halo_field(Wnb, p);
+  
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+	temp[0][x][y][z] = (f.Z[2][x][y+1][z]/Wnb[x][y+1][z]
+			    - f.Z[2][x][y-1][z]/Wnb[x][y-1][z]
+			    - f.Z[1][x][y][(z+1)%p.Lz]/Wnb[x][y][(z+1)%p.Lz]
+			    + f.Z[1][x][y][(z-1+p.Lz)%p.Lz]
+			    /Wnb[x][y][(z-1+p.Lz)%p.Lz]
+			    )/(2*p.dx*mean_enth);
+	
+	temp[1][x][y][z] = (f.Z[0][x][y][(z+1)%p.Lz]/Wnb[x][y][(z+1)%p.Lz]
+			    - f.Z[0][x][y][(z-1+p.Lz)%p.Lz]
+			    /Wnb[x][y][(z-1+p.Lz)%p.Lz]
+			    - f.Z[2][x+1][y][z]/Wnb[x+1][y][z]
+			    + f.Z[2][x-1][y][z]/Wnb[x-1][y][z]
+			    )/(2*p.dx*mean_enth);
+
+	temp[2][x][y][z] = (f.Z[1][x+1][y][z]/Wnb[x+1][y][z]
+			    - f.Z[1][x-1][y][z]/Wnb[x-1][y][z]
+			    - f.Z[0][x][y+1][z]/Wnb[x][y+1][z]
+			    + f.Z[0][x][y-1][z]/Wnb[x][y-1][z]
+			    )/(2*p.dx*mean_enth);	
+      }
+    }
+  }
+}
+
+/** Make div of enthalpy current array i.e (c = div wU/\bar{w}).
+ */
+void make_div(hydro_fields f, hydro_params p, float ***temp){
+  int x, y, z;
+  float loc_tot_enth = 0;
+  float mean_enth = 0;
+  float ***Wnb = make_field(p);
+  
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+	loc_tot_enth += f.p[x][y][z] + f.E[x][y][z]/f.W[x][y][z];
+      }
+    }
+  }
+
+  mean_enth = reduce_sum(loc_tot_enth, p)/(p.Lx*p.Ly*p.Lz);
+
+  // Construct node centered W.
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+	Wnb[x][y][z] = 0.125*(f.W[x-1][y][z]
+			      + f.W[x][y][z]
+			      + f.W[x][y-1][z]
+			      + f.W[x-1][y-1][z]
+			      + f.W[x][y][((z-1+p.Lz)%p.Lz)]
+			      + f.W[x][y-1][((z+p.Lz-1)%p.Lz)]
+			      + f.W[x-1][y][((z+p.Lz-1)%p.Lz)]
+			      + f.W[x-1][y-1][((z+p.Lz-1)%p.Lz)]);
+      }
+    }
+  }
+  halo_field(Wnb, p);
+    
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+	temp[x][y][z] = (f.Z[0][x+1][y][z]/Wnb[x+1][y][z]
+			 - f.Z[0][x-1][y][z]/Wnb[x-1][y][z]
+			 + f.Z[0][x][y+1][z]/Wnb[x][y+1][z]
+			 - f.Z[0][x][y-1][z]/Wnb[x][y-1][z]
+			 + f.Z[0][x][y][(z+1)%p.Lz]/Wnb[x][y][(z+1)%p.Lz]
+			 - f.Z[0][x][y][(z-1+p.Lz)%p.Lz]
+			 /Wnb[x][y][(z-1+p.Lz)%p.Lz]
+			 )/(2*p.dx*mean_enth);
+      }
+    }
+  }
+}
+
+  
+
 /** Populate an array with velocity magnitude.
  *
  */
@@ -61,9 +176,33 @@ void make_vel(hydro_fields f, hydro_params p, float ***temp) {
   halo_field(temp, p);
 }
 
+/** Populate an array with Z magnitude.
+ *
+ */
+void make_Z(hydro_fields f, hydro_params p, float ***temp) {
+  float vol = p.dx*p.dx*p.dx;
+
+  int x, y, z;
+
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+   
+   temp[x][y][z] = sqrt(f.Z[0][x][y][z]*f.Z[0][x][y][z]
+                + f.Z[1][x][y][z]*f.Z[1][x][y][z]
+                + f.Z[2][x][y][z]*f.Z[2][x][y][z]);
+        
+      }
+    }
+  }
+  
+  halo_field(temp, p);
+}
+
+
 #endif // !SCALAR
 
-/** Populate an array with a slice through `temp`.
+/** Populate an array with a scalar quantity in a slice through `temp`.
  *
  * This function takes a 3 dimensional array `temp` 
  * which contains a quanitity defined over the simulation box
@@ -130,7 +269,7 @@ void make_slice(hydro_fields f, hydro_params p, float *slice, float ***temp)
 		 p.slicey*p.Lz,
 		 MPI_FLOAT,
 		 ry*nx + x/p.slicex,
-		 x*ny + ry,
+		 ry,
 		 MPI_COMM_WORLD,
 		 &status);
       }
@@ -143,7 +282,7 @@ void make_slice(hydro_fields f, hydro_params p, float *slice, float ***temp)
                p.slicey*p.Lz,
                MPI_FLOAT,
 	       0,
-               x*ny + p.myposy,
+               p.myposy,
 	       MPI_COMM_WORLD);
     }
 
@@ -152,6 +291,7 @@ void make_slice(hydro_fields f, hydro_params p, float *slice, float ***temp)
   free(trim);
 
 }
+
 
 /** Write a silo file containing slices through the simulation box.
  *
@@ -258,11 +398,12 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step)
 
 
   //// prepare fluid velocity ////
-
+  
   make_vel(f, p, temp);
 
   make_slice(f, p, slice, temp);
 
+  
   //// write fluid velocity slice ///
 
 
@@ -272,10 +413,114 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step)
   }
 
 
+  //// prepare Z magnitude slice ////
+
+  
+  make_Z(f, p, temp);
+
+  make_slice(f, p, slice, temp);
+
+  // write Z magnitude slice.
+
+  if(!p.rank) {
+    DBPutQuadvar1(dbfile, "Z", "quadmesh", slice, meshsize, 2,
+         NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+  }
+
+
+  //// prepare div of enthalpy current (c) slice
+
+  make_div(f, p, temp);
+
+  make_slice(f, p, slice, temp);
+
+  // write div of enthalpy current (c) slice.
+
+  if(!p.rank) {
+    DBPutQuadvar1(dbfile, "c", "quadmesh", slice, meshsize, 2,
+         NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+  }
+
   
   free_field(p, temp);
 
-    //// make T slice ///
+  //// Write all vel components slice:
+  
+  /*
+  // Vx slice
+  make_slice(f, p, slice, f.V[0]);
+  if(!p.rank) {
+    DBPutQuadvar1(dbfile, "Vx", "quadmesh", slice, meshsize, 2,
+		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+  }
+
+  // Vy slice
+  make_slice(f, p, slice, f.V[1]);
+  if(!p.rank) {
+    DBPutQuadvar1(dbfile, "Vy", "quadmesh", slice, meshsize, 2,
+		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+  }
+
+  // Vz slice
+  make_slice(f, p, slice, f.V[2]);
+  if(!p.rank) {
+    DBPutQuadvar1(dbfile, "Vz", "quadmesh", slice, meshsize, 2,
+		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+  }
+
+  //// Write all Z components slice:
+
+  // Zx slice
+  make_slice(f, p, slice, f.Z[0]);
+  if(!p.rank) {
+    DBPutQuadvar1(dbfile, "Zx", "quadmesh", slice, meshsize, 2,
+		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+  }
+
+  // Zy slice
+  make_slice(f, p, slice, f.Z[1]);
+  if(!p.rank) {
+    DBPutQuadvar1(dbfile, "Zy", "quadmesh", slice, meshsize, 2,
+		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+  }
+
+  // Zz slice
+  make_slice(f, p, slice, f.Z[2]);
+  if(!p.rank) {
+    DBPutQuadvar1(dbfile, "Zz", "quadmesh", slice, meshsize, 2,
+		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+  }
+  */
+
+  //// Write all relativistic vorticity (b) components slice:
+
+  float ****temp_vec = make_vector(p);
+
+  make_curl(f, p, temp_vec);
+  // bx slice
+  make_slice(f, p, slice, temp_vec[0]);
+  if(!p.rank) {
+    DBPutQuadvar1(dbfile, "bx", "quadmesh", slice, meshsize, 2,
+		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+  }
+
+  // by slice
+  make_slice(f, p, slice, temp_vec[1]);
+  if(!p.rank) {
+    DBPutQuadvar1(dbfile, "by", "quadmesh", slice, meshsize, 2,
+		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+  }
+
+  // bz slice
+  make_slice(f, p, slice, temp_vec[2]);
+  if(!p.rank) {
+    DBPutQuadvar1(dbfile, "bz", "quadmesh", slice, meshsize, 2,
+		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+  }
+
+  free_vector(p, temp_vec);
+  
+  //// make T slice ///
 
   make_slice(f, p, slice, f.T);
 

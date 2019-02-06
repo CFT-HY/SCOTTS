@@ -52,16 +52,7 @@ int main(int argc, char *argv[]) {
   // Parse parameters from the filename specified on the command line
   get_parameters(argv[1], &p);
 
-  // Specify output filename
 
-  if(!p.rank){
-    if(strcmp(p.output_fname,"stdout") == 0) {
-      p.outputdest = stdout;
-    }
-    else {
-      p.outputdest = fopen(p.output_fname,"w");
-    }
-  }
   // Seed - make sure everyone gets the same one (if necessary)
   srandom(p.seed);
   srand48(p.seed);
@@ -116,6 +107,9 @@ int main(int argc, char *argv[]) {
 
   // Struct that stores the fields
   hydro_fields f;
+
+  // Counter to specify which order to perform advection
+  int adv_order = 0;
 
   // Storage of measurements of average stress-energy tensor (not used)
   //  float cpts[TENSOR_CPTS];
@@ -187,16 +181,24 @@ int main(int argc, char *argv[]) {
 	//    init_ps(f, p, f.Z);
 #else
 	
-	printf0(p,"INIT_PS initial conditions invalid with SCALAR compiler flag.",
-		"Exiting... \n");
+	printf0(p,"INIT_PS initial conditions invalid with SCALAR compiler flag."
+		" Exiting... \n");
 	die(100);
 	
 #endif // FFT && !SCALAR	
 
 	
     } else if(p.initial==INIT_BUBBLE){
+      if(p.nucleation==NUC_FILE_LOC){
+	initial_blank(f,p);
+	if(p.bubbles > 0){
+	  printf0(p,"Using nucleation location file: \n"
+		  "Ignoring initial bubbles parameter (bubbles %d). \n",
+		  p.bubbles);
+	}
+      }
       //Bubble initial conditions:
-      if(p.bubbles > 1){
+      else if(p.bubbles > 1){
 	// Instead, start off with an empty box
 	initial_blank(f, p);
       
@@ -242,6 +244,10 @@ int main(int argc, char *argv[]) {
     }else if(p.initial==INIT_SHOCK_TUBE){
       fprintf(stderr,"Sorry, shocktube is not implemented! Exiting... \n");
       die(100);
+    }else if(p.initial==INIT_FLUID_SPHERE){
+      initial_blank(f, p);
+      // Create a sphere of fluid at origin of the simulation box.
+      fluid_sphere(f, p);
     }else{
       fprintf(stderr,"Invalid initial condition option! Exiting... \n");
       die(100);
@@ -450,8 +456,7 @@ int main(int argc, char *argv[]) {
       gamma_max = reduce_max(get_gamma_max(f, p), p);
       
       if(!p.rank) {
-	fprintf(p.outputdest,
-		"%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf\t%6lf\t%6lf\t%6lf\n",
+	printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf\t%6lf\t%6lf\t%6lf\n",
 		step,
 		t,
 		current_energy,
@@ -465,7 +470,6 @@ int main(int argc, char *argv[]) {
 		current_avgpress,
 		s_max,
 		gamma_max);
-	fflush(p.outputdest);
       }
 
       // Statement of energy violation (not shown; better to use KE)
@@ -500,15 +504,16 @@ int main(int argc, char *argv[]) {
     evolve_uij(f, p);
 
     // Advection of state variables
-    advect_E(f, p);
+    advect_E(f, p, adv_order);
     //printf0(p,"Advected E \n");
     //dump_max_min(f, p);
     
     // Advection of momentum
-    advect_Z(f, p);
+    advect_Z(f, p, adv_order);
     //printf0(p,"Advected Z \n");
     //dump_max_min(f, p);
 
+    adv_order +=1;
     
     // Don't bother with art viscosity, yet
     //    artificial_viscosity(f, nb, p);
@@ -553,31 +558,23 @@ int main(int argc, char *argv[]) {
 
   
   if(!p.rank) {
-    fprintf(p.outputdest,
-	    "%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf\t%6lf\t%6lf\t%6lf\n",
-	    step,
-	    t,
-	    current_energy,
-	    current_kinetic,
-	    current_field_energy,
-	    current_gradient_energy,
-	    current_veltot,
-	    gwen,
-	    bcount,
-	    current_rest,
-	    current_avgpress,
-	    s_max,
-	    gamma_max);
-    fflush(p.outputdest);
+    printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf\t%6lf\t%6lf\t%6lf\n",
+	   step,
+	   t,
+	   current_energy,
+	   current_kinetic,
+	   current_field_energy,
+	   current_gradient_energy,
+	   current_veltot,
+	   gwen,
+	   bcount,
+	   current_rest,
+	   current_avgpress,
+	   s_max,
+	   gamma_max);
   }
 
 
-  // Close output file
-  if(!p.rank){
-    if(strcmp(p.output_fname,"stdout") != 0) {
-      fclose(p.outputdest);
-    }
-  }
   
   // End time, for walltime calculation
   end = clock();

@@ -341,11 +341,11 @@ void checkpoint(hydro_fields f, hydro_params p, int step)
 
 
 
-  char *vx_name = "Vx";
-  char *vy_name = "Vy";
-  char *vz_name = "Vz";
+  const char *vx_name = "Vx";
+  const char *vy_name = "Vy";
+  const char *vz_name = "Vz";
 
-  char *v_names[3];
+  const char *v_names[3];
 
   v_names[0] = vx_name;
   v_names[1] = vy_name;
@@ -362,11 +362,11 @@ void checkpoint(hydro_fields f, hydro_params p, int step)
 
 
 
-  char *zx_name = "Zx";
-  char *zy_name = "Zy";
-  char *zz_name = "Zz";
+  const char *zx_name = "Zx";
+  const char *zy_name = "Zy";
+  const char *zz_name = "Zz";
 
-  char *z_names[3];
+  const char *z_names[3];
 
   z_names[0] = zx_name;
   z_names[1] = zy_name;
@@ -382,11 +382,11 @@ void checkpoint(hydro_fields f, hydro_params p, int step)
 
 
 
-  char *ux_name = "Ux";
-  char *uy_name = "Uy";
-  char *uz_name = "Uz";
+  const char *ux_name = "Ux";
+  const char *uy_name = "Uy";
+  const char *uz_name = "Uz";
 
-  char *U_names[3];
+  const char *U_names[3];
 
   U_names[0] = ux_name;
   U_names[1] = uy_name;
@@ -402,11 +402,11 @@ void checkpoint(hydro_fields f, hydro_params p, int step)
 
 
 
-  char *fx_name = "Fx";
-  char *fy_name = "Fy";
-  char *fz_name = "Fz";
+  const char *fx_name = "Fx";
+  const char *fy_name = "Fy";
+  const char *fz_name = "Fz";
 
-  char *f_names[3];
+  const char *f_names[3];
 
   f_names[0] = fx_name;
   f_names[1] = fy_name;
@@ -423,14 +423,14 @@ void checkpoint(hydro_fields f, hydro_params p, int step)
 #endif // SCALAR
 
 
-  char *u11_name = "U11";
-  char *u21_name = "U21";
-  char *u31_name = "U31";
-  char *u22_name = "U22";
-  char *u32_name = "U32";
-  char *u33_name = "U33";
+  const char *u11_name = "U11";
+  const char *u21_name = "U21";
+  const char *u31_name = "U31";
+  const char *u22_name = "U22";
+  const char *u32_name = "U32";
+  const char *u33_name = "U33";
 
-  char *u_names[6];
+  const char *u_names[6];
 
   u_names[0] = u11_name;
   u_names[1] = u21_name;
@@ -454,14 +454,14 @@ void checkpoint(hydro_fields f, hydro_params p, int step)
 
 
 
-  char *udot11_name = "Udot11";
-  char *udot21_name = "Udot21";
-  char *udot31_name = "Udot31";
-  char *udot22_name = "Udot22";
-  char *udot32_name = "Udot32";
-  char *udot33_name = "Udot33";
+  const char *udot11_name = "Udot11";
+  const char *udot21_name = "Udot21";
+  const char *udot31_name = "Udot31";
+  const char *udot22_name = "Udot22";
+  const char *udot32_name = "Udot32";
+  const char *udot33_name = "Udot33";
 
-  char *udot_names[6];
+  const char *udot_names[6];
 
   udot_names[0] = udot11_name;
   udot_names[1] = udot21_name;
