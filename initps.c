@@ -229,7 +229,7 @@ void VtoZ(hydro_fields f, hydro_params p) {
     for(y=1; y<=p.slicey; y++) {
       for(z=0; z<p.Lz; z++) {
 
-	f.E[x][y][z] = f.W[x][y][z]*eps*(1.0+f.E[x][y][z]);
+		  f.E[x][y][z] = f.W[x][y][z]*eps*(1.0+f.E[x][y][z]);
 	/*
 	f.kappa[x][y][z] = kappa;
 
@@ -499,8 +499,7 @@ float get_normal(float mean, float dev) {
  *    of the spectral density are for the original simulation
  *    that generated the input PS.
  */
-void spectrum_interp(float ksq, hydro_params p, fftwf_complex *res,
-		     float *k_bins, float *pow_bins, int n_bins) {
+void spectrum_interp(float ksq, hydro_params p, fftwf_complex *res, float *k_bins, float *pow_bins, int n_bins) {
 
   float phase;
 
@@ -576,40 +575,64 @@ void spectrum_interp(float ksq, hydro_params p, fftwf_complex *res,
 
 }
 
+/*
+ * Analytic power spectrum described by Philip Cherian
+ * during his research internship with Chiara and Daniele in 2017
+*/
+float cherian_spectrum(float ksq, hydro_params p){
+
+	float rstar, vrms, cs, vw, z;
+
+	rstar = 1918.0/p.Tconst;
+	cs = 1.0/sqrt(3.0);
+	vw = 0.56;
+	vrms = 0.013;
+	z = 3.0;
 
 
+	float a, b, k, Pv,Cv;
+
+	k = sqrt(ksq)*rstar*p.dx;
+	a = fabs(vw-cs)/(2.0*vw);
+	b = 1.0/z;
+
+	Cv = 8.0*M_PI*a*b*b*b*(a*a+sqrt(2.0)*a*b+b*b)/(sqrt(2.0)*a+2.0*b);
+	Pv = Cv*vrms*vrms*rstar*k*k/(1.0+a*a*k*k)/(1.0+b*b*b*b*k*k*k*k);
+
+	return (k*k)/(2.0*M_PI*M_PI) * Pv/3.0;
+
+}
 
 /* spectrum
- *
- */
-void spectrum(float ksq, hydro_params p, fftwf_complex *res)
-{
+*
+*/
+void spectrum(float ksq, hydro_params p, fftwf_complex *res){
 
-  float phase;
-
-  float L = p.Lx;
+	float phase;
+	float L = p.Lx;
 
 
-  if(fabs(ksq) < 0.000001 || fabs(ksq) > p.initcutoff) {
-    (*res)[0] = 0.0;
-    (*res)[1] = 0.0;
-  } else {
+	if(fabs(ksq) < 0.000001 || fabs(ksq) > p.initcutoff) {
+		(*res)[0] = 0.0;
+		(*res)[1] = 0.0;
+	}
+	else {
 
 
-    //  (*res)[0] = p.initnorm*exp(-0.25*sqrt(ksq)*p.dx*((float)L));
-    //    (*res)[0] = get_normal(0.0, p.initnorm*exp(-0.25*sqrt(ksq)*p.dx*((float)L)));
-    (*res)[0] = get_normal(0.0, exp(-1.0*sqrt(ksq)*p.dx*p.initlength));
+		//  (*res)[0] = p.initnorm*exp(-0.25*sqrt(ksq)*p.dx*((float)L));
+		// (*res)[0] = get_normal(0.0, p.initnorm*exp(-0.25*sqrt(ksq)*p.dx*((float)L)));
+		// (*res)[0] = get_normal(0.0, exp(-1.0*sqrt(ksq)*p.dx*p.initlength));
 
+		(*res)[0] = get_normal(0.0, cherian_spectrum(ksq,p));
+		(*res)[1] = (*res)[0];
 
-    (*res)[1] = (*res)[0];
+		phase = drand48();
 
-    phase = drand48();
+		// Random phase
+		(*res)[0] = (*res)[0]*cos(2.0*M_PI*phase);
+		(*res)[1] = (*res)[1]*sin(2.0*M_PI*phase);
 
-    // Random phase
-    (*res)[0] = (*res)[0]*cos(2.0*M_PI*phase);
-    (*res)[1] = (*res)[1]*sin(2.0*M_PI*phase);
-
-  }
+	}
 }
 
 
@@ -1005,13 +1028,13 @@ for(x=x_start;x<x_start+x_thickness;x++) {
 	for(y=0;y<p.Ly;y++) {
 		for(z=0;z<p.Lz;z++) {
 
-			float s_x, s_y, s_z;
-		  float kx, ky, kz;
-			fftwf_complex kiVki;
+		float s_x, s_y, s_z;
+		float kx, ky, kz;
+		fftwf_complex kiVki;
 
-			s_x = 1.0;
-		  s_y = 1.0;
-		  s_z = 1.0;
+		s_x = 1.0;
+		s_y = 1.0;
+		s_z = 1.0;
 
 		  if(x+x_start > p.Lx/2) {
 		    true_x = -(p.Lx - (x+x_start));
@@ -1038,8 +1061,8 @@ for(x=x_start;x<x_start+x_thickness;x++) {
 		  }
 
 			kx = sqrt((2.0 - 2.0*cos(((float)(true_x))*2.0*M_PI/(((float)p.Lx))))/(p.dx*p.dx));
-		  ky = sqrt((2.0 - 2.0*cos(((float)(true_y))*2.0*M_PI/(((float)p.Ly))))/(p.dx*p.dx));
-		  kz = sqrt((2.0 - 2.0*cos(((float)(true_z))*2.0*M_PI/(((float)p.Lz))))/(p.dx*p.dx));
+			ky = sqrt((2.0 - 2.0*cos(((float)(true_y))*2.0*M_PI/(((float)p.Ly))))/(p.dx*p.dx));
+			kz = sqrt((2.0 - 2.0*cos(((float)(true_z))*2.0*M_PI/(((float)p.Lz))))/(p.dx*p.dx));
 
 
 			ksq = kx*kx+ky*ky+kz*kz;
@@ -1047,8 +1070,8 @@ for(x=x_start;x<x_start+x_thickness;x++) {
 			kiVki[1] = kx * in[0][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] + ky * in[1][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] + kz * in[2][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1];
 
 			if (ksq != 0){
-				e_in[(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0] = 4 / sqrt(3) * kiVki[0] / sqrt(ksq);
-				e_in[(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] = 4 / sqrt(3) * kiVki[1] / sqrt(ksq);
+				e_in[(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0] = - 4 / sqrt(3) * kiVki[0] / sqrt(ksq);
+				e_in[(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] = - 4 / sqrt(3) * kiVki[1] / sqrt(ksq);
 
 			}
 
