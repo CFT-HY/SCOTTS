@@ -652,9 +652,6 @@ void get_parameters(char *infile, hydro_params *p)
   } else if(!set_nucleation) {
     printf0(*p, "Did not set parameter \'nucleation\'\n");
     die(100);
-  } else if(!set_output_fname) {
-    printf0(*p, "Did not set parameter \'output_fname\'\n");
-    die(100);
   } else if(!set_silodir) {
     printf0(*p, "Did not set parameter \'silodir\'\n");
     die(100); 
