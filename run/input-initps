@@ -32,8 +32,8 @@ silointerval 10
 
 # Initial conditions
 initial initps
-initpsfile div-ps-step20000.txt.input.dat div
-initpsbins 2400
+initpsfile initial.txt div
+initpsbins 4200
 #initpsfile dogfood.dat
 #initpsbins 240
 
@@ -66,4 +66,16 @@ uetcstart -1
 silosliceinterval -1
 siloslicecoord 1
 
-output_fname stdout
+# Size of the critical bubble radius,
+# if less than zero default to gaussian ansatz:
+R_critical -1
+
+# Value of phi at the centre of the nucleated bubble,
+# if less than 0 default to broken phase value.
+phimin -1
+
+# Value of T at centre of fluid sphere, used if initial is set to "initfs" only.
+T_central 1
+
+# Radius of gaussian fluid sphere, used if initial is set to "initfs" only.
+sphere_radius 10
