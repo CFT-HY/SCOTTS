@@ -98,6 +98,7 @@ void make_curl(hydro_fields f, hydro_params p, float ****temp){
       }
     }
   }
+  free_field(p,Wnb);
 }
 
 /** Make div of enthalpy current array i.e (c = div wU/\bar{w}).
@@ -149,6 +150,7 @@ void make_div(hydro_fields f, hydro_params p, float ***temp){
       }
     }
   }
+  free_field(p,Wnb);
 }
 
 
