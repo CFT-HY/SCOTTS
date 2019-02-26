@@ -409,9 +409,13 @@ int main(int argc, char *argv[]) {
       }      
 
       // Power spectrum of scalar field
-      fft_field(f, p, f.phi, step);
-
+      fft_field(p, f.phi, "phi", step);
+      
 #ifndef SCALAR
+      
+      // Power spectrum of internal energy e=E/W
+      fft_e(f, p, "e", step);
+      
       // Velocity power spectrum
       fft_vel(f, p, step, f.V);
 #endif //!SCALAR

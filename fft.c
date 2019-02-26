@@ -20,7 +20,7 @@
  *
  * Unlike velps.c and gw.c there is no normalisation done here.
  */
-void fft_field(hydro_fields f, hydro_params p, float ***field, int step) {
+void fft_field(hydro_params p, float ***field, char *label, int step) {
 
   ptrdiff_t x_thickness, x_start, alloc_local;
 
@@ -292,7 +292,7 @@ void fft_field(hydro_fields f, hydro_params p, float ***field, int step) {
 
     char fftdest[200];
 
-    sprintf(fftdest,"fft-%d.txt", step);
+    sprintf(fftdest,"fft-%s-%d.txt",label,step);
     
     FILE *fp = fopen(fftdest,"w");
       
@@ -331,7 +331,29 @@ void fft_field(hydro_fields f, hydro_params p, float ***field, int step) {
 
 }
 
+#ifndef SCALAR
 
+/** Create internal energy field e = E/W and then perform fft of this field.
+ *
+ * Not a fan of this implementation, must be something neater/other 
+ * place for this to go.
+ */
+void fft_e(hydro_fields f, hydro_params p, char *label, int step){
+  int x, y, z;
+  float ***e = make_field(p);
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+	e[x][y][z] = f.E[x][y][z]/f.W[x][y][z];
+      }
+    }
+  }
+  halo_field(e, p);
+
+  fft_field(p, e, label, step);
+}
+
+#endif //!SCALAR
 
 
 
