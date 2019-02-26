@@ -151,7 +151,38 @@ void make_div(hydro_fields f, hydro_params p, float ***temp){
   }
 }
 
-  
+/** Populate an array with source term of relativistic drive.
+ * S = grad (W^(-1)) cross grad (E/W)
+ */
+void make_source(hydro_fields f, hydro_params p, float ****temp){
+  int x, y, z;
+  // gradients of internal energy E/W (central difference)
+  float grad_ex, grad_ey, grad_ez;
+  // gradients of 1/W (central difference)
+  float grad_invWx, grad_invWy, grad_invWz;
+    
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+	grad_ex = (f.E[x+1][y][z]/f.W[x+1][y][z]
+		   - f.E[x-1][y][z]/f.W[x-1][y][z])/(2*p.dx);
+	grad_ey = (f.E[x][y+1][z]/f.W[x][y+1][z]
+		   - f.E[x][y-1][z]/f.W[x][y-1][z])/(2*p.dx);
+	grad_ez = (f.E[x][y][(z+1)%p.Lz]/f.W[x][y][(z+1)%p.Lz]
+		   - f.E[x][y][(z-1+p.Lz)%p.Lz]/f.W[x][y][(z-1+p.Lz)%p.Lz]
+		   )/(2*p.dx);
+	grad_invWx = (1/f.W[x+1][y][z] - 1/f.W[x-1][y][z])/(2*p.dx);
+	grad_invWy = (1/f.W[x][y+1][z] - 1/f.W[x][y-1][z])/(2*p.dx);
+	grad_invWz = (1/f.W[x][y][(z+1)%p.Lz] - 1/f.W[x][y][(z-1+p.Lz)%p.Lz]
+		      )/(2*p.dx);
+	temp[0][x][y][z] = grad_invWy*grad_ez - grad_invWz*grad_ey;
+	temp[1][x][y][z] = grad_invWz*grad_ex - grad_invWx*grad_ez;
+	temp[2][x][y][z] = grad_invWx*grad_ey - grad_invWz*grad_ey;
+	
+      }
+    }
+  }
+}
 
 /** Populate an array with velocity magnitude.
  *
@@ -519,6 +550,32 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step)
   }
 
   free_vector(p, temp_vec);
+
+  //// Write all relativistic drive (S) components slice:
+
+  make_source(f, p, temp_vec);
+
+  // Sx slice
+  make_slice(f, p, slice, temp_vec[0]);
+  if(!p.rank) {
+    DBPutQuadvar1(dbfile, "Sx", "quadmesh", slice, meshsize, 2,
+		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+  }
+
+  // Sy slice
+  make_slice(f, p, slice, temp_vec[1]);
+  if(!p.rank) {
+    DBPutQuadvar1(dbfile, "Sy", "quadmesh", slice, meshsize, 2,
+		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+  }
+
+  // Sz slice
+  make_slice(f, p, slice, temp_vec[2]);
+  if(!p.rank) {
+    DBPutQuadvar1(dbfile, "Sz", "quadmesh", slice, meshsize, 2,
+		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+  }
+
   
   //// make T slice ///
 

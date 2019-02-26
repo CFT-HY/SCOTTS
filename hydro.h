@@ -643,6 +643,7 @@ void make_kinetic(hydro_fields f, hydro_params p, float ***temp);
 void make_slice(hydro_fields f, hydro_params p, float *slice, float ***temp);
 void make_curl(hydro_fields f, hydro_params p, float ****temp);
 void make_div(hydro_fields f, hydro_params p, float ***temp);
+void make_source(hydro_fields f, hydro_params p, float ****temp);
 void make_vel(hydro_fields f, hydro_params p, float ***temp);
 void make_Z(hydro_fields f, hydro_params p, float ***temp);
 void write_silo_slice_step(hydro_fields f, hydro_params p, int step);
@@ -658,7 +659,10 @@ float minof2(float a, float b);
 
 #ifdef FFT
 // fft.c
-void fft_field(hydro_fields f, hydro_params p, float ***field, int step);
+void fft_field(hydro_params p, float ***field, char *label, int step);
+#ifndef SCALAR
+void fft_e(hydro_fields f, hydro_params p, char *label, int step);
+#endif //!SCALAR
 
 // uetc.c
 void init_uetc(hydro_fields f, hydro_params p);
