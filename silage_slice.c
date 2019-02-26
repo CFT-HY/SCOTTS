@@ -549,8 +549,6 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step)
 		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
   }
 
-  free_vector(p, temp_vec);
-
   //// Write all relativistic drive (S) components slice:
 
   make_source(f, p, temp_vec);
@@ -575,6 +573,10 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step)
     DBPutQuadvar1(dbfile, "Sz", "quadmesh", slice, meshsize, 2,
 		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
   }
+
+  
+  free_vector(p, temp_vec);
+
 
   
   //// make T slice ///
