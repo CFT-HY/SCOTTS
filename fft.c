@@ -351,6 +351,8 @@ void fft_e(hydro_fields f, hydro_params p, char *label, int step){
   halo_field(e, p);
 
   fft_field(p, e, label, step);
+
+  free_field(p, e);
 }
 
 #endif //!SCALAR
