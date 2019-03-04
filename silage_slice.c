@@ -152,7 +152,7 @@ void make_div(hydro_fields f, hydro_params p, float ***temp){
     }
   }
 
-  free_field(p,Wnb)
+  free_field(p,Wnb);
 }
 
 /** Populate an array with source term of relativistic drive.
