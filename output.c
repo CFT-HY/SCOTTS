@@ -1,14 +1,12 @@
-/* output.c
+/** @file output.c
  * 
- * Simple things that we could in principle calculate offline, but
+ * Simple things, some of which we could in principle calculate offline, but
  * that are nice to know (energy-related quantites are in energy.c).
  */
 #include "hydro.h"
 
 
-/* float get_gamma_max(hydro_fields f, hydro_params p)
- *
- * Returns the largest zone-centred gamma factor found anywhere
+/** Returns the largest zone-centred gamma factor found anywhere
  * in the simulation box.
  */
 float get_gamma_max(hydro_fields f, hydro_params p) {
@@ -40,9 +38,7 @@ float get_gamma_max(hydro_fields f, hydro_params p) {
 #endif
 }
 
-/* float get_s_max(hydro_fields f, hydro_params p)
- *
- * Returns the largest zone-centred damping factor s found anywhere
+/** Returns the largest zone-centred damping factor s found anywhere
  * in the simulation box.
  */
 float get_s_max(hydro_fields f, hydro_params p) {
@@ -78,10 +74,9 @@ float get_s_max(hydro_fields f, hydro_params p) {
   return smax;
 	
 }
+
   
-/* float get_veltot(hydro_fields f, hydro_params p)
- *
- * The sum of the fluid (3-)velocity everywhere. A strange quantity
+/** The sum of the fluid (3-)velocity everywhere. A strange quantity
  * on its own, but allows calculation of average fluid velocity.
  */
 float get_veltot(hydro_fields f, hydro_params p) {
@@ -111,9 +106,7 @@ float get_veltot(hydro_fields f, hydro_params p) {
 }
 
 
-/* void dump(float *field, hydro_params p) 
- *
- * Dumps a field to stderr. Expects field to have N entries.
+/** Dumps a field to stderr. Expects field to have N entries.
  * For debugging purposes...
  */
 void dump(float *field, hydro_params p) {
@@ -128,9 +121,7 @@ void dump(float *field, hydro_params p) {
 
 
 
-/* void histo_field(float ***field, hydro_params p, int step)
- *
- * Calculate a histogram of the field, and store in a file
+/** Calculate a histogram of the field, and store in a file
  * labelled by the timestep.
  */
 void histo_field(float ***field, hydro_params p, int step) {
@@ -244,9 +235,7 @@ void histo_field(float ***field, hydro_params p, int step) {
 }
 
 
-/* void didj(float *cpts, hydro_fields f, hydro_params p)
- *
- * *Average* components of the stress-energy tensor for the scalar
+/** *Average* components of the stress-energy tensor for the scalar
  * field to leading order in the metric perturbation.
  */
 void didj(float *cpts, hydro_fields f, hydro_params p) {

@@ -511,5 +511,80 @@ void energy_density(hydro_fields f, hydro_params p, float ***en) {
 
 
 }
-    
+
+/** Compute the total of b^2 on the lattice,  where b is the curl of the enthalpy
+ * current, b = curl wU/\bar{w}.
+ */
+float get_btot(hydro_fields f, hydro_params p){
+#ifndef SCALAR
+  int x, y, z;
+  float loc_tot_enth = 0;
+  float mean_enth = 0;
+  float ***Wnb = make_field(p);
+  float b_tot = 0;
+  
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+	loc_tot_enth += f.p[x][y][z] + f.E[x][y][z]/f.W[x][y][z];
+      }
+    }
+  }
+
+  mean_enth = reduce_sum(loc_tot_enth, p)/(p.Lx*p.Ly*p.Lz);
+
+  // Construct node centered W.
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+	Wnb[x][y][z] = 0.125*(f.W[x-1][y][z]
+			      + f.W[x][y][z]
+			      + f.W[x][y-1][z]
+			      + f.W[x-1][y-1][z]
+			      + f.W[x][y][((z-1+p.Lz)%p.Lz)]
+			      + f.W[x][y-1][((z+p.Lz-1)%p.Lz)]
+			      + f.W[x-1][y][((z+p.Lz-1)%p.Lz)]
+			      + f.W[x-1][y-1][((z+p.Lz-1)%p.Lz)]);
+      }
+    }
+  }
+  halo_field(Wnb, p);
+  
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+	b_tot += pow((f.Z[2][x][y+1][z]/Wnb[x][y+1][z]
+		      - f.Z[2][x][y-1][z]/Wnb[x][y-1][z]
+		      - f.Z[1][x][y][(z+1)%p.Lz]/Wnb[x][y][(z+1)%p.Lz]
+		      + f.Z[1][x][y][(z-1+p.Lz)%p.Lz]
+		      /Wnb[x][y][(z-1+p.Lz)%p.Lz]
+		      )/(2*p.dx*mean_enth)
+		     , 2);
+	
+	b_tot += pow((f.Z[0][x][y][(z+1)%p.Lz]/Wnb[x][y][(z+1)%p.Lz]
+		      - f.Z[0][x][y][(z-1+p.Lz)%p.Lz]
+		      /Wnb[x][y][(z-1+p.Lz)%p.Lz]
+		      - f.Z[2][x+1][y][z]/Wnb[x+1][y][z]
+		      + f.Z[2][x-1][y][z]/Wnb[x-1][y][z]
+		      )/(2*p.dx*mean_enth)
+		     , 2);
+
+	b_tot += pow((f.Z[1][x+1][y][z]/Wnb[x+1][y][z]
+		       - f.Z[1][x-1][y][z]/Wnb[x-1][y][z]
+		       - f.Z[0][x][y+1][z]/Wnb[x][y+1][z]
+		       + f.Z[0][x][y-1][z]/Wnb[x][y-1][z]
+		       )/(2*p.dx*mean_enth)
+		      , 2);	
+      }
+    }
+  }
+
+  free_field(p,Wnb);
+  return b_tot;
+#else
+  return 0;
+
+#endif //!SCALAR
+
+}
 			    
