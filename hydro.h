@@ -575,9 +575,10 @@ void Vdpot(hydro_params p, float ***T, float ***phi, float ***Vprecalc);
 
 // energy.c
 float field_energy(hydro_fields f, hydro_params p);
-float gradient_energy(hydro_fields f, hydro_params p);
+float gradient_energy_field(hydro_fields f, hydro_params p);
+float kinetic_energy_field(hydro_fields f, hydro_params p);
 float total_energy(hydro_fields f, hydro_params p);
-float kinetic_energy(hydro_fields f, hydro_params p);
+float kinetic_energy_fluid(hydro_fields f, hydro_params p);
 float rest_energy(hydro_fields f, hydro_params p);
 void energy_density(hydro_fields f, hydro_params p, float ***en);
 void stress_energy(hydro_fields f, hydro_params p, float ****Tij);

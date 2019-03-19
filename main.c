@@ -114,8 +114,8 @@ int main(int argc, char *argv[]) {
   //  float cpts[TENSOR_CPTS];
 
   float initial_energy, current_energy;
-  float initial_field_energy, current_field_energy;
-  float current_kinetic, current_gradient_energy, current_rest;
+  float initial_field_energy, current_field_energy, current_kinetic_field;
+  float current_kinetic_fluid, current_gradient_energy, current_rest;
   float current_avgpress;
   float current_veltot;
   float gwen;
@@ -442,11 +442,12 @@ int main(int argc, char *argv[]) {
     if((p.interval > 0) && (step % p.interval == 0)) {
 
       current_energy = reduce_sum(total_energy(f, p), p);
-      current_kinetic = reduce_sum(kinetic_energy(f, p), p);
+      current_kinetic_fluid = reduce_sum(kinetic_energy_fluid(f, p), p);
+      current_kinetic_field = reduce_sum(kinetic_energy_field(f, p), p);
       current_rest = reduce_sum(rest_energy(f, p), p);
       current_avgpress = reduce_sum(avg_pressure(f, p), p);
       current_field_energy = reduce_sum(field_energy(f, p), p);
-      current_gradient_energy = reduce_sum(gradient_energy(f, p), p);
+      current_gradient_energy = reduce_sum(gradient_energy_field(f, p), p);
       current_veltot = reduce_sum(get_veltot(f, p), p)
 	/((float)(p.Lx*p.Ly*p.Lz));
       s_max = reduce_max(get_s_max(f, p), p);
@@ -454,11 +455,11 @@ int main(int argc, char *argv[]) {
       b_tot =  reduce_sum(get_btot(f,p),p);
       
       if(!p.rank) {
-	printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\n",
+	printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\n",
 	       step,
 	       t,
 	       current_energy,
-	       current_kinetic,
+	       current_kinetic_fluid,
 	       current_field_energy,
 	       current_gradient_energy,
 	       current_veltot,
@@ -468,7 +469,8 @@ int main(int argc, char *argv[]) {
 	       current_avgpress,
 	       s_max,
 	       gamma_max,
-	       b_tot);
+	       b_tot,
+	       current_kinetic_field);
       }
 
       // Statement of energy violation (not shown; better to use KE)
@@ -545,11 +547,12 @@ int main(int argc, char *argv[]) {
 
 
   current_energy = reduce_sum(total_energy(f, p), p);
-  current_kinetic = reduce_sum(kinetic_energy(f, p), p);
+  current_kinetic_fluid = reduce_sum(kinetic_energy_fluid(f, p), p);
+  current_kinetic_field = reduce_sum(kinetic_energy_field(f, p), p);
   current_rest = reduce_sum(rest_energy(f, p), p);
   current_avgpress = reduce_sum(avg_pressure(f, p), p);
   current_field_energy = reduce_sum(field_energy(f, p), p);
-  current_gradient_energy = reduce_sum(gradient_energy(f, p), p);
+  current_gradient_energy = reduce_sum(gradient_energy_field(f, p), p);
   current_veltot = reduce_sum(get_veltot(f, p), p)
     /((float)(p.Lx*p.Ly*p.Lz));
   s_max = reduce_max(get_s_max(f, p), p);
@@ -557,11 +560,11 @@ int main(int argc, char *argv[]) {
   b_tot = reduce_sum(get_btot(f, p), p);
   
   if(!p.rank) {
-    printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\n",
+    printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\n",
 	   step,
 	   t,
 	   current_energy,
-	   current_kinetic,
+	   current_kinetic_fluid,
 	   current_field_energy,
 	   current_gradient_energy,
 	   current_veltot,
@@ -571,7 +574,8 @@ int main(int argc, char *argv[]) {
 	   current_avgpress,
 	   s_max,
 	   gamma_max,
-	   b_tot);
+	   b_tot,
+	   current_kinetic_field);
   }
 
 
