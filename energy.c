@@ -31,10 +31,10 @@ float field_energy(hydro_fields f, hydro_params p) {
 	
 	a += 0.5*f.pi_future[x][y][z]*f.pi_future[x][y][z]*vol;
 
-	a += 0.5*((f.phi[x+1][y][z] - f.phi[x][y][z])/p.dx)
+	b += 0.5*((f.phi[x+1][y][z] - f.phi[x][y][z])/p.dx)
 	  *((f.phi[x+1][y][z] - f.phi[x][y][z])/p.dx)*vol;
 	
-	a += 0.5*((f.phi[x][y+1][z] - f.phi[x][y][z])/p.dx)
+	b += 0.5*((f.phi[x][y+1][z] - f.phi[x][y][z])/p.dx)
 	  *((f.phi[x][y+1][z] - f.phi[x][y][z])/p.dx)*vol;
 	
 	b += 0.5*((f.phi[x][y][(z+1)%p.Lz] - f.phi[x][y][z])/p.dx)
@@ -615,3 +615,65 @@ float get_btot(hydro_fields f, hydro_params p){
 
 }
 			    
+/** Compute the total of c^2 on the lattice,  where c is the divergence of the
+ * enthalpy current, c = div wU/\bar{w}.
+ */
+float get_ctot(hydro_fields f, hydro_params p){
+#ifndef SCALAR
+  int x, y, z;
+  float loc_tot_enth = 0;
+  float mean_enth = 0;
+  float ctot = 0;
+  float ***Wnb = make_field(p);
+  
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+	loc_tot_enth += f.p[x][y][z] + f.E[x][y][z]/f.W[x][y][z];
+      }
+    }
+  }
+
+  mean_enth = reduce_sum(loc_tot_enth, p)/(p.Lx*p.Ly*p.Lz);
+
+  // Construct node centered W.
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+	Wnb[x][y][z] = 0.125*(f.W[x-1][y][z]
+			      + f.W[x][y][z]
+			      + f.W[x][y-1][z]
+			      + f.W[x-1][y-1][z]
+			      + f.W[x][y][((z-1+p.Lz)%p.Lz)]
+			      + f.W[x][y-1][((z+p.Lz-1)%p.Lz)]
+			      + f.W[x-1][y][((z+p.Lz-1)%p.Lz)]
+			      + f.W[x-1][y-1][((z+p.Lz-1)%p.Lz)]);
+      }
+    }
+  }
+  halo_field(Wnb, p);
+    
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+	ctot += (f.Z[0][x+1][y][z]/Wnb[x+1][y][z]
+			 - f.Z[0][x-1][y][z]/Wnb[x-1][y][z]
+			 + f.Z[0][x][y+1][z]/Wnb[x][y+1][z]
+			 - f.Z[0][x][y-1][z]/Wnb[x][y-1][z]
+			 + f.Z[0][x][y][(z+1)%p.Lz]/Wnb[x][y][(z+1)%p.Lz]
+			 - f.Z[0][x][y][(z-1+p.Lz)%p.Lz]
+			 /Wnb[x][y][(z-1+p.Lz)%p.Lz]
+			 )/(2*p.dx*mean_enth);
+      }
+    }
+  }
+
+  free_field(p,Wnb);
+
+  return ctot;
+#else
+  return 0;
+
+#endif //!SCALAR
+
+}

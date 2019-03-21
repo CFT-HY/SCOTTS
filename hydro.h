@@ -585,6 +585,7 @@ void stress_energy(hydro_fields f, hydro_params p, float ****Tij);
 float avg_pressure(hydro_fields f, hydro_params p);
 float tzerozero(hydro_fields f, hydro_params p);
 float get_btot(hydro_fields f, hydro_params p);
+float get_ctot(hydro_fields f, hydro_params p);
 
 // eos.c
 
