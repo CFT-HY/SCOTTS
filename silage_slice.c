@@ -38,6 +38,57 @@ void make_kinetic(hydro_fields f, hydro_params p, float ***temp) {
   halo_field(temp, p);
 }
 
+/** Make ordinary vorticity i.e vort = curl V
+ */
+void make_vort(hydro_fields f, hydro_params p, float ****temp){
+
+  int x, y, z;
+  float ****Vcell= make_vector(p);
+  // Construct T velocity (centered at cell)
+
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+
+	Vcell[0][x][y][z] = 0.5*(f.V[0][x][y][z] + f.V[0][x+1][y][z]);
+	Vcell[1][x][y][z] = 0.5*(f.V[1][x][y][z] + f.V[1][x][y+1][z]
+				)*f.T[x][y][z]*f.W[x][y][z];
+	Vcell[2][x][y][z] = 0.5*(f.V[2][x][y][z] + f.V[2][x][y][(z+1)%p.Lz]
+				)*f.T[x][y][z]*f.W[x][y][z];
+      }
+    }
+  }
+
+  halo_field(Vcell[0], p);
+  halo_field(Vcell[1], p);
+  halo_field(Vcell[2], p);
+
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+  	temp[0][x][y][z] = (Vcell[2][x][y+1][z] - Vcell[2][x][y-1][z]
+			    - Vcell[1][x][y][(z+1)%p.Lz]
+			    + Vcell[1][x][y][(z-1+p.Lz)%p.Lz])/(2*p.dx);
+	temp[1][x][y][z] = (Vcell[0][x][y][(z+1)%p.Lz]
+			    - Vcell[0][x][y-1][(z-1+p.Lz)%p.Lz]
+			    - Vcell[2][x+1][y][z] + Vcell[2][x-1][y][z])/(2*p.dx);
+	temp[2][x][y][z] = (Vcell[1][x+1][y][z] - Vcell[1][x-1][y][z]
+			    - Vcell[0][x][y+1][z] + Vcell[0][x][y-1][z])/(2*p.dx);
+
+      }
+    }
+  }
+
+  free_vector(p, Vcell);
+
+
+  halo_field(temp[0], p);
+  halo_field(temp[1], p);
+  halo_field(temp[2], p);
+
+  
+}
+
 /** Make T vorticity i.e (Tvort = curl T U)
  */
 void make_Tvort(hydro_fields f, hydro_params p, float ****temp){
@@ -639,6 +690,31 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step)
 		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
   }
 
+  //// Write all vorticity (vort) components slice:
+
+  
+  make_vort(f, p, temp_vec);
+
+  // vortx slice
+  make_slice(f, p, slice, temp_vec[0]);
+  if(!p.rank) {
+    DBPutQuadvar1(dbfile, "vortx", "quadmesh", slice, meshsize, 2,
+		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+  }
+
+  // vorty slice
+  make_slice(f, p, slice, temp_vec[1]);
+  if(!p.rank) {
+    DBPutQuadvar1(dbfile, "vorty", "quadmesh", slice, meshsize, 2,
+		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+  }
+
+  // vortz slice
+  make_slice(f, p, slice, temp_vec[2]);
+  if(!p.rank) {
+    DBPutQuadvar1(dbfile, "vortz", "quadmesh", slice, meshsize, 2,
+		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+  }
 
   
   //// Write all T vorticity (Tvort) components slice:

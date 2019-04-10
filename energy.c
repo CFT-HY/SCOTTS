@@ -656,14 +656,14 @@ float get_ctot(hydro_fields f, hydro_params p){
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
-	ctot += (f.Z[0][x+1][y][z]/Wnb[x+1][y][z]
-			 - f.Z[0][x-1][y][z]/Wnb[x-1][y][z]
-			 + f.Z[0][x][y+1][z]/Wnb[x][y+1][z]
-			 - f.Z[0][x][y-1][z]/Wnb[x][y-1][z]
-			 + f.Z[0][x][y][(z+1)%p.Lz]/Wnb[x][y][(z+1)%p.Lz]
-			 - f.Z[0][x][y][(z-1+p.Lz)%p.Lz]
-			 /Wnb[x][y][(z-1+p.Lz)%p.Lz]
-			 )/(2*p.dx*mean_enth);
+	ctot += pow((f.Z[0][x+1][y][z]/Wnb[x+1][y][z]
+		     - f.Z[0][x-1][y][z]/Wnb[x-1][y][z]
+		     + f.Z[0][x][y+1][z]/Wnb[x][y+1][z]
+		     - f.Z[0][x][y-1][z]/Wnb[x][y-1][z]
+		     + f.Z[0][x][y][(z+1)%p.Lz]/Wnb[x][y][(z+1)%p.Lz]
+		     - f.Z[0][x][y][(z-1+p.Lz)%p.Lz]
+		     /Wnb[x][y][(z-1+p.Lz)%p.Lz]
+		     )/(2*p.dx*mean_enth),2);
       }
     }
   }

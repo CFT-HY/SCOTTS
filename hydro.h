@@ -644,6 +644,8 @@ void write_silo_step(hydro_fields f, hydro_params p, int step);
 // silage_slice.c
 void make_kinetic(hydro_fields f, hydro_params p, float ***temp);
 void make_slice(hydro_fields f, hydro_params p, float *slice, float ***temp);
+void make_vort(hydro_fields f, hydro_params p, float ****temp);
+void make_Tvort(hydro_fields f, hydro_params p, float ****temp);
 void make_curl(hydro_fields f, hydro_params p, float ****temp);
 void make_div(hydro_fields f, hydro_params p, float ***temp);
 void make_source(hydro_fields f, hydro_params p, float ****temp);
