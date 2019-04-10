@@ -69,7 +69,7 @@ void make_vort(hydro_fields f, hydro_params p, float ****temp){
 			    - Vcell[1][x][y][(z+1)%p.Lz]
 			    + Vcell[1][x][y][(z-1+p.Lz)%p.Lz])/(2*p.dx);
 	temp[1][x][y][z] = (Vcell[0][x][y][(z+1)%p.Lz]
-			    - Vcell[0][x][y-1][(z-1+p.Lz)%p.Lz]
+			    - Vcell[0][x][y][(z-1+p.Lz)%p.Lz]
 			    - Vcell[2][x+1][y][z] + Vcell[2][x-1][y][z])/(2*p.dx);
 	temp[2][x][y][z] = (Vcell[1][x+1][y][z] - Vcell[1][x-1][y][z]
 			    - Vcell[0][x][y+1][z] + Vcell[0][x][y-1][z])/(2*p.dx);
@@ -123,7 +123,7 @@ void make_Tvort(hydro_fields f, hydro_params p, float ****temp){
 			    - Tvel[1][x][y][(z+1)%p.Lz]
 			    + Tvel[1][x][y][(z-1+p.Lz)%p.Lz])/(2*p.dx);
 	temp[1][x][y][z] = (Tvel[0][x][y][(z+1)%p.Lz]
-			    - Tvel[0][x][y-1][(z-1+p.Lz)%p.Lz]
+			    - Tvel[0][x][y][(z-1+p.Lz)%p.Lz]
 			    - Tvel[2][x+1][y][z] + Tvel[2][x-1][y][z])/(2*p.dx);
 	temp[2][x][y][z] = (Tvel[1][x+1][y][z] - Tvel[1][x-1][y][z]
 			    - Tvel[0][x][y+1][z] + Tvel[0][x][y-1][z])/(2*p.dx);
