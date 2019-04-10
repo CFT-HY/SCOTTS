@@ -51,10 +51,9 @@ void make_vort(hydro_fields f, hydro_params p, float ****temp){
       for(z = 0; z < p.Lz; z++) {
 
 	Vcell[0][x][y][z] = 0.5*(f.V[0][x][y][z] + f.V[0][x+1][y][z]);
-	Vcell[1][x][y][z] = 0.5*(f.V[1][x][y][z] + f.V[1][x][y+1][z]
-				)*f.T[x][y][z]*f.W[x][y][z];
-	Vcell[2][x][y][z] = 0.5*(f.V[2][x][y][z] + f.V[2][x][y][(z+1)%p.Lz]
-				)*f.T[x][y][z]*f.W[x][y][z];
+	Vcell[1][x][y][z] = 0.5*(f.V[1][x][y][z] + f.V[1][x][y+1][z]);
+	Vcell[2][x][y][z] = 0.5*(f.V[2][x][y][z] + f.V[2][x][y][(z+1)%p.Lz]);
+
       }
     }
   }
