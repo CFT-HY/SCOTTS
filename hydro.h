@@ -584,8 +584,7 @@ void energy_density(hydro_fields f, hydro_params p, float ***en);
 void stress_energy(hydro_fields f, hydro_params p, float ****Tij);
 float avg_pressure(hydro_fields f, hydro_params p);
 float tzerozero(hydro_fields f, hydro_params p);
-float get_btot(hydro_fields f, hydro_params p);
-float get_ctot(hydro_fields f, hydro_params p);
+float get_Tvort_tot(hydro_fields f, hydro_params p);
 
 // eos.c
 
@@ -646,8 +645,6 @@ void make_kinetic(hydro_fields f, hydro_params p, float ***temp);
 void make_slice(hydro_fields f, hydro_params p, float *slice, float ***temp);
 void make_vort(hydro_fields f, hydro_params p, float ****temp);
 void make_Tvort(hydro_fields f, hydro_params p, float ****temp);
-void make_curl(hydro_fields f, hydro_params p, float ****temp);
-void make_div(hydro_fields f, hydro_params p, float ***temp);
 void make_source(hydro_fields f, hydro_params p, float ****temp);
 void make_vel(hydro_fields f, hydro_params p, float ***temp);
 void make_Z(hydro_fields f, hydro_params p, float ***temp);
