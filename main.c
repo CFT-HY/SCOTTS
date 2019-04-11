@@ -121,8 +121,7 @@ int main(int argc, char *argv[]) {
   float gwen;
   float s_max;
   float gamma_max;
-  float b_tot;
-  float c_tot;
+  float Tvort_tot;
   
   // Timing counters
   float cpu_time_used;
@@ -453,11 +452,10 @@ int main(int argc, char *argv[]) {
 	/((float)(p.Lx*p.Ly*p.Lz));
       s_max = reduce_max(get_s_max(f, p), p);
       gamma_max = reduce_max(get_gamma_max(f, p), p);
-      b_tot =  reduce_sum(get_btot(f,p),p);
-      c_tot =  reduce_sum(get_ctot(f,p),p);
+      Tvort_tot =  reduce_sum(get_Tvort_tot(f,p),p);
       
       if(!p.rank) {
-	printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\n",
+	printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\n",
 	       step,
 	       t,
 	       current_energy,
@@ -471,9 +469,8 @@ int main(int argc, char *argv[]) {
 	       current_avgpress,
 	       s_max,
 	       gamma_max,
-	       b_tot,
-	       current_kinetic_field,
-	       c_tot);
+	       Tvort_tot,
+	       current_kinetic_field);
       }
 
       // Statement of energy violation (not shown; better to use KE)
@@ -560,11 +557,10 @@ int main(int argc, char *argv[]) {
     /((float)(p.Lx*p.Ly*p.Lz));
   s_max = reduce_max(get_s_max(f, p), p);
   gamma_max = reduce_max(get_gamma_max(f, p), p);
-  b_tot = reduce_sum(get_btot(f, p), p);
-  c_tot = reduce_sum(get_ctot(f, p), p);
+  Tvort_tot = reduce_sum(get_Tvort_tot(f, p), p);
   
   if(!p.rank) {
-    printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\n",
+    printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\n",
 	   step,
 	   t,
 	   current_energy,
@@ -578,9 +574,8 @@ int main(int argc, char *argv[]) {
 	   current_avgpress,
 	   s_max,
 	   gamma_max,
-	   b_tot,
-	   current_kinetic_field,
-	   c_tot);
+	   Tvort_tot,
+	   current_kinetic_field);
   }
 
 
