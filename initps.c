@@ -667,7 +667,7 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
-		  f.phi[x][y][z] = p->phi_0;
+		  f.phi[x][y][z] = p.phi_0;
 	  }
   }
 }
