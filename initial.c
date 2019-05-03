@@ -385,7 +385,7 @@ void fluid_sphere(hydro_fields f, hydro_params p){
 #ifdef SCALAR
   printf0(p, "Error - fluid sphere incompatible with SCALAR compiler flag, "
 	  "exiting...");
-  die(100);
+  die(PARAMETER_NOT_SET_ERR);
 #else
   int x, y, z;
   

@@ -29,7 +29,7 @@ void get_parameters(char *infile, hydro_params *p)
 
   int set_dx = 0;
   int set_dt = 0;
- 
+
   int set_Lx = 0;
   int set_Ly = 0;
   int set_Lz = 0;
@@ -54,7 +54,7 @@ void get_parameters(char *infile, hydro_params *p)
   int set_checkpointinterval = 0;
   int set_siloslicecoord=0;
 
-  
+
   int set_uetcstart = 0;
 
   int set_initial = 0;
@@ -96,7 +96,7 @@ void get_parameters(char *infile, hydro_params *p)
 
   if(access(infile, R_OK) != 0) {
     printf0(*p, "Cannot read parameter file: %s\n", infile);
-    die(-1);
+    die(PARAMETER_FILE_ERR);
   }
 
   fp = fopen(infile,"r");
@@ -137,7 +137,7 @@ void get_parameters(char *infile, hydro_params *p)
       printf0(*p,"Unable to parse input line: \"%s\"\n", total);
       continue;
     }
-    
+
     // Comment
     if(key[0] == '#') {
       continue;
@@ -152,19 +152,19 @@ void get_parameters(char *infile, hydro_params *p)
     else if(!strcasecmp(key,"dt")) {
       p->dt = strtof(value,NULL);
       set_dt = 1;
-    }    
+    }
     else if(!strcasecmp(key,"Lx")) {
       p->Lx = strtol(value,NULL,10);
       set_Lx = 1;
-    } 
+    }
     else if(!strcasecmp(key,"Ly")) {
       p->Ly = strtol(value,NULL,10);
       set_Ly = 1;
-    } 
+    }
     else if(!strcasecmp(key,"Lz")) {
       p->Lz = strtol(value,NULL,10);
       set_Lz = 1;
-    } 
+    }
     else if(!strcasecmp(key,"steps")) {
       p->steps = strtol(value,NULL,10);
       set_steps = 1;
@@ -315,7 +315,7 @@ void get_parameters(char *infile, hydro_params *p)
 
 	while(strlen(curr) && strlen(next)) {
 	  p->nucsteps[i] = strtol(curr,&next,10);
-	  //	  printf0(*p,"bubble at step %d, next is %s\n", 
+	  //	  printf0(*p,"bubble at step %d, next is %s\n",
 	  //		  p->nucsteps[i],next);
 	  curr = next+sizeof(char);
 	  //	  printf0(*p,"strlen next is %d and curr is %d\n",
@@ -348,7 +348,7 @@ void get_parameters(char *infile, hydro_params *p)
 	if(access(option,R_OK) != 0) {
 	  printf0(*p ,"Unable to read nucleation file \"%s\", giving up!\n",
 		  option);
-	  die(123);
+	  die(NUCLEATION_FILE_ERR);
 	}
 
 	FILE *nucfile = fopen(option,"r");
@@ -374,10 +374,10 @@ void get_parameters(char *infile, hydro_params *p)
 
 	for(i=0; i<p->n_nucsteps; i++)
 	  still_reading = fscanf(nucfile,"%d",&p->nucsteps[i]);
-       
+
 
 	fclose(nucfile);
-	
+
 
 	// Just in case, bubble sort the list
 	int sorted = 0;
@@ -404,7 +404,7 @@ void get_parameters(char *infile, hydro_params *p)
 	if(access(option,R_OK) != 0) {
 	  printf0(*p ,"Unable to read nucleation file \"%s\", giving up!\n",
 		  option);
-	  die(123);
+	  die(NUCLEATION_FILE_ERR);
 	}
 
 	FILE *nucfile = fopen(option,"r");
@@ -428,22 +428,22 @@ void get_parameters(char *infile, hydro_params *p)
 	p->nucsteps = (int *)malloc((p->n_nucsteps)*sizeof(int));
 	p->nuclocs = (int **)malloc((p->n_nucsteps)*sizeof(int *));
 	p->nuclocs[0] = (int *)malloc(p->n_nucsteps*3*sizeof(int));
-	
+
 	int i;
 
 	for(i=0; i<p->n_nucsteps; i++)
 	  p->nuclocs[i] = (*p->nuclocs + i * 3);
 
-	
+
 	for(i=0; i<p->n_nucsteps; i++)
 	  still_reading = fscanf(nucfile,"%d %d %d %d\n",
 				 &p->nucsteps[i], &p->nuclocs[i][0],
 				 &p->nuclocs[i][1], &p->nuclocs[i][2]);
-       
+
 
 	fclose(nucfile);
-	
-	
+
+
 	// Just in case, bubble sort the list
 	int sorted = 0;
 	int j = 0;
@@ -457,7 +457,7 @@ void get_parameters(char *infile, hydro_params *p)
 	      p->nucsteps[i] = temp;
 	      for(j = 0; j < 3; j++){
 		temp = p->nuclocs[i][j];
-		p->nuclocs[i+1][j] = p->nuclocs[i][j]; 
+		p->nuclocs[i+1][j] = p->nuclocs[i][j];
 		p->nuclocs[i][j] = temp;
 	      }
 	      printf0(*p, "Bubble sort iteration necessary!\n");
@@ -470,30 +470,30 @@ void get_parameters(char *infile, hydro_params *p)
       else {
 	printf0(*p ,"Unrecognised nucleation type (%s), giving up!\n",
 		value);
-	  die(123);
+	  die(NUCLEATION_FILE_ERR);
       }
       set_nucleation = 1;
     }
     else if(!strcasecmp(key,"silodir")) {
-     
+
       if(strlen(value) > 500)
 	printf0(*p,
 		"Warning: silodir name \"%s\" may be too long!\n",
 		value);
 
       strncpy(p->silodir, value, 500);
-     
+
       set_silodir = 1;
     }
     else if(!strcasecmp(key,"checkpointdir")) {
-     
+
       if(strlen(value) > 500)
 	printf0(*p,
 		"Warning: checkpointdir name \"%s\" may be too long!\n",
 		value);
 
       strncpy(p->checkpointdir, value, 500);
-     
+
       set_checkpointdir = 1;
     }
     else if(!strcasecmp(key,"seed")) {
@@ -501,117 +501,117 @@ void get_parameters(char *infile, hydro_params *p)
       p->seed = abs(p->seed);
 
       set_seed = 1;
-    } 
+    }
 
 
   }
-  
+
   // Check parameters were set (in order)
   if(!set_dx) {
     printf0(*p, "Did not set parameter \'dx\'\n");
-    die(100);
+    die(PARAMETER_NOT_SET_ERR);
   } else if(!set_dt) {
     printf0(*p, "Did not set parameter \'dt\'\n");
-    die(100);
+    die(PARAMETER_NOT_SET_ERR);
   } else if(!set_Lx) {
     printf0(*p, "Did not set parameter \'Lx\'\n");
-    die(100);
+    die(PARAMETER_NOT_SET_ERR);
   } else if(!set_Ly) {
     printf0(*p, "Did not set parameter \'Ly\'\n");
-    die(100);
+    die(PARAMETER_NOT_SET_ERR);
   } else if(!set_Lz) {
     printf0(*p, "Did not set parameter \'Lz\'\n");
-    die(100);
+    die(PARAMETER_NOT_SET_ERR);
   } else if(!set_steps) {
     printf0(*p, "Did not set parameter \'steps\'\n");
-    die(100);
+    die(PARAMETER_NOT_SET_ERR);
   } else if(!set_Cav) {
     printf0(*p, "Did not set parameter \'Cav\'\n");
-    die(100);
+    die(PARAMETER_NOT_SET_ERR);
   } else if(!set_C) {
     printf0(*p, "Did not set parameter \'C\'\n");
-    die(100);
+    die(PARAMETER_NOT_SET_ERR);
   } else if(!set_alpha) {
     printf0(*p, "Did not set parameter \'alpha\'\n");
-    die(100);
+    die(PARAMETER_NOT_SET_ERR);
   } else if(!set_gamma) {
     printf0(*p, "Did not set parameter \'gamma\'\n");
-    die(100);
+    die(PARAMETER_NOT_SET_ERR);
   } else if(!set_lambda) {
     printf0(*p, "Did not set parameter \'lambda\'\n");
-    die(100);
+    die(PARAMETER_NOT_SET_ERR);
   } else if(!set_gstar) {
     printf0(*p, "Did not set parameter \'gstar\'\n");
-    die(100);
+    die(PARAMETER_NOT_SET_ERR);
   } else if(!set_T0) {
     printf0(*p, "Did not set parameter \'T0\'\n");
-    die(100);
+    die(PARAMETER_NOT_SET_ERR);
   } else if(!set_Tconst) {
     printf0(*p, "Did not set parameter \'Tconst\'\n");
-    die(100);
+    die(PARAMETER_NOT_SET_ERR);
   } else if(!set_interval) {
     printf0(*p, "Did not set parameter \'interval\'\n");
-    die(100);
+    die(PARAMETER_NOT_SET_ERR);
   } else if(!set_fftinterval) {
     printf0(*p, "Did not set parameter \'fftinterval\'\n");
-    die(100);
+    die(PARAMETER_NOT_SET_ERR);
   } else if(!set_silointerval) {
     printf0(*p, "Did not set parameter \'silointerval\'\n");
-    die(100);
+    die(PARAMETER_NOT_SET_ERR);
   } else if(!set_silosliceinterval) {
     printf0(*p, "Did not set parameter \'silosliceinterval\'\n");
-    die(100);
+    die(PARAMETER_NOT_SET_ERR);
   }else if(!set_checkpointinterval) {
     printf0(*p, "Did not set parameter \'checkpointinterval\'\n");
-    die(100);
+    die(PARAMETER_NOT_SET_ERR);
   }else if(!set_siloslicecoord) {
     printf0(*p, "Did not set parameter \'siloslicecoord\'\n");
-    die(100);
+    die(PARAMETER_NOT_SET_ERR);
   } else if(!set_uetcstart) {
     printf0(*p, "Did not set parameter \'uetcstart\'\n");
-    die(100);
+    die(PARAMETER_NOT_SET_ERR);
   } else if(!set_bubbles) {
     printf0(*p, "Did not set parameter \'bubbles\'\n");
-    die(100);
+    die(PARAMETER_NOT_SET_ERR);
   } else if(!set_scale) {
     printf0(*p, "Did not set parameter \'scale\'\n");
-    die(100);
+    die(PARAMETER_NOT_SET_ERR);
   } else if(!set_R_critical) {
     printf0(*p, "Did not set parameter \'R_critical\'\n");
-    die(100);
+    die(PARAMETER_NOT_SET_ERR);
   } else if(!set_T_central) {
     printf0(*p, "Did not set parameter \'T_central\'\n");
-    die(100);
+    die(PARAMETER_NOT_SET_ERR);
   } else if(!set_sphere_radius) {
     printf0(*p, "Did not set parameter \'sphere_radius\'\n");
-    die(100);
+    die(PARAMETER_NOT_SET_ERR);
   }else if(!set_initial) {
     printf0(*p, "Did not set parameter \'initial\'\n");
-    die(100);
+    die(PARAMETER_NOT_SET_ERR);
   }else if(!set_initnorm) {
     printf0(*p, "Did not set parameter \'initnorm\'\n");
-    die(100);
+    die(PARAMETER_NOT_SET_ERR);
   } else if(!set_initcutoff) {
     printf0(*p, "Did not set parameter \'initcutoff\'\n");
-    die(100);
+    die(PARAMETER_NOT_SET_ERR);
   } else if(!set_initlength) {
     printf0(*p, "Did not set parameter \'initlength\'\n");
-    die(100);
+    die(PARAMETER_NOT_SET_ERR);
   }else if(!set_gwsource) {
     printf0(*p, "Did not set parameter \'gwsource\'\n");
-    die(100);
+    die(PARAMETER_NOT_SET_ERR);
   } else if(!set_nucleation) {
     printf0(*p, "Did not set parameter \'nucleation\'\n");
-    die(100);
+    die(PARAMETER_NOT_SET_ERR);
   } else if(!set_silodir) {
     printf0(*p, "Did not set parameter \'silodir\'\n");
-    die(100);
+    die(PARAMETER_NOT_SET_ERR);
   } else if(!set_checkpointdir) {
     printf0(*p, "Did not set parameter \'checkpointdir\'\n");
-    die(100);
+    die(PARAMETER_NOT_SET_ERR);
   } else if(!set_seed) {
     printf0(*p, "Did not set parameter \'seed\'\n");
-    die(100);
+    die(PARAMETER_NOT_SET_ERR);
   }
 
 
@@ -652,7 +652,7 @@ void get_parameters(char *infile, hydro_params *p)
 	    p->silodir,
 	    p->checkpointdir,
 	    p->seed);
-    
+
     if(p->initial == INIT_SHOCK_TUBE) {
       printf0(*p, "-- shock tube\n");
     } else if(p->initial == INIT_BUBBLE) {
@@ -692,15 +692,15 @@ void get_parameters(char *infile, hydro_params *p)
     } else {
       printf0(*p, "<Warning, somehow have unknown nucleation process.\n");
     }
-    
+
   }
 
   set_bubble_parameters(p);
-  
+
   fclose(fp);
 
-  
-  
+
+
 }
 
 /** Set parameters relating to bubble profiles at nucleation.
@@ -715,8 +715,8 @@ void set_bubble_parameters(hydro_params *p){
   p->V0 = (0.5*p->gamma*p->phi_0*p->phi_0
 	   - p->alpha*p->phi_0*p->phi_0*p->phi_0/3.
 	   + 0.25*p->lambda*p->phi_0*p->phi_0*p->phi_0*p->phi_0);
-  
-  
+
+
 #else
   p->V0 = -0.25*p->gamma*p->gamma*p->T0*p->T0*p->T0*p->T0/p->lambda;
 #endif // BAG
@@ -752,11 +752,11 @@ void set_bubble_parameters(hydro_params *p){
 					 - Vf(*p, p->Tconst, p->phimin));
   }
   p->R_scaled = p->scale*p->R_critical;
-  
+
   printf0(*p, "-- Calculated bubble profile parameters: \n"
-	  "-- surface_tension %g, phimin %g \n" 
+	  "-- surface_tension %g, phimin %g \n"
           "-- R_critical %g, R_scaled %g \n"
-	  "Constant potential term found \n" 
+	  "Constant potential term found \n"
 	  "-- V0 %g \n",
 	  p->surface_tension, p->phimin, p->R_critical, p->R_scaled,
 	  p->V0);

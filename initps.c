@@ -294,12 +294,12 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
   if(((int)x_thickness) != p.Lx/p.size) {
     fprintf(stderr,
             "Giving up in FFT: FFTW told me to use a silly layout!\n");
-    die(-42);
+    die(FFTW_LAYOUT_ERR);
   }
 
   if(((int)x_thickness) == 0) {
     fprintf(stderr, "Giving up in FFT: dx=0!\n");
-    die(-43);
+    die(FFTW_DX_0_ERR);
   }
 
 

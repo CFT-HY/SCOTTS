@@ -225,7 +225,7 @@ void histogram(hydro_params p, float *slice, char *filename,
 	/*
         if(((x+x_start)>p.Lx/2) || (y> p.Ly/2) || (z>p.Lz/2))
           continue;
-	*/	
+	*/
 
         if(x+x_start > p.Lx/2)
           true_x = p.Lx - (x+x_start);
@@ -343,7 +343,7 @@ void fft_vel(hydro_fields f, hydro_params p, int step, float ****vectorfield) {
     if(p.rank) {
       MPI_Send(&x_thickness, 1, MPI_INTEGER, 0, p.rank, MPI_COMM_WORLD);
       MPI_Send(&x_start, 1, MPI_INTEGER, 0, p.rank, MPI_COMM_WORLD);
-      
+
     } else {
       thicknesses[0] = x_thickness;
       starts[0] = x_start;
@@ -351,10 +351,10 @@ void fft_vel(hydro_fields f, hydro_params p, int step, float ****vectorfield) {
           for(i=1; i<p.size; i++) {
 	    MPI_Recv(&thicknesses[i], 1, MPI_INTEGER, i, i, MPI_COMM_WORLD, &status);
 	    MPI_Recv(&starts[i], 1, MPI_INTEGER, i, i, MPI_COMM_WORLD, &status);
-	    
+
 	    //	    fprintf(stderr,"rank %d, thickness %d, start %d\n", i, thicknesses[i], starts[i]);
 	  }
-	  
+
 
 	  for(x=0; x<p.Lx; x++) {
 	    map[x] = -1;
@@ -367,7 +367,7 @@ void fft_vel(hydro_fields f, hydro_params p, int step, float ****vectorfield) {
           }
         if(map[x] == -1) {
      fprintf(stderr,"cannot find a node responsible for x=%d!\n", x);
-     die(-99);
+     die(NODE_NOT_A_FACTOR_ERR);
           }
 
       }
@@ -391,7 +391,7 @@ void fft_vel(hydro_fields f, hydro_params p, int step, float ****vectorfield) {
     fprintf(stderr,
 	    "Rank %d giving up in FFT: FFTW told me to use a silly layout!\n",
 	    p.rank);
-    die(-42);
+    die(FFTW_LAYOUT_ERR);
   }
   */
 
@@ -402,7 +402,7 @@ void fft_vel(hydro_fields f, hydro_params p, int step, float ****vectorfield) {
   fftwf_complex *out = fftwf_alloc_complex(alloc_local);
 
   fftwf_complex **outcpts = (fftwf_complex **)malloc(3*sizeof(fftwf_complex *));
-  
+
   for(i=0;i<3;i++) {
     outcpts[i] = fftwf_alloc_complex(alloc_local);
   }
@@ -417,15 +417,15 @@ void fft_vel(hydro_fields f, hydro_params p, int step, float ****vectorfield) {
 
   int ry;
 
-  // Now planning  
+  // Now planning
   fftwf_plan plan = fftwf_mpi_plan_dft_3d(p.Lx, p.Ly, p.Lz,
 					in, out, MPI_COMM_WORLD,
 					FFTW_BACKWARD, FFTW_ESTIMATE);
 
   for(i = 0; i < 3; i++) {
 
-    float check = 0.0;    
-    
+    float check = 0.0;
+
     for(x=1; x<=p.slicex; x++) {
       for(y=1; y<=p.slicey; y++) {
 	for(z=0; z<p.Lz; z++) {
@@ -436,25 +436,25 @@ void fft_vel(hydro_fields f, hydro_params p, int step, float ****vectorfield) {
     }
 
     //    fprintf(stderr,"Check: uij %lf\n", reduce_sum(check, p));
-    
+
     for(x=0; x<p.Lx; x++) {
-      
+
       // Check whether we are the target node for this slab
       if(map[x] == p.rank) {
-	
+
 	for(ry = 0; ry < ny; ry++) {
 
 	  //	  fprintf(stderr, "%d: my slice, x=%d\n", p.rank, x);
-	  
+
 	  if((x/p.slicex == p.myposx) && (ry == p.myposy)) {
-	    
+
 	    memcpy(&slice[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
 		   &trim[(x-p.shiftx)*p.slicey*p.Lz],
 		   p.slicey*p.Lz*sizeof(float));
 	    continue;
 	  }
-	  
-	  
+
+
 	  MPI_Recv(&slice[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
 		   p.slicey*p.Lz,
 		   MPI_FLOAT,
@@ -463,18 +463,18 @@ void fft_vel(hydro_fields f, hydro_params p, int step, float ****vectorfield) {
 		   MPI_COMM_WORLD,
 		   &status);
 	}
-	
+
 	//	fprintf(stderr, "%d: got pencil with x=%d\n", p.rank, x);
 
-	
+
       } else if((x >= p.shiftx) && (x < (p.shiftx + p.slicex))) {
-	
-	
+
+
 	/*
 	fprintf(stderr, "%d: my pencil, x=%d to dest %d/%d\n",
 		p.rank, x, x, map[x]);
 	*/
-	
+
       MPI_Send(&trim[(x-p.shiftx)*p.slicey*p.Lz],
 	       p.slicey*p.Lz,
 	       MPI_FLOAT,
@@ -482,7 +482,7 @@ void fft_vel(hydro_fields f, hydro_params p, int step, float ****vectorfield) {
 	       x*ny + p.myposy,
 	       MPI_COMM_WORLD);
       }
-      
+
     }
 
     float total = 0.0;
@@ -498,15 +498,15 @@ void fft_vel(hydro_fields f, hydro_params p, int step, float ****vectorfield) {
 	}
       }
     }
-  
+
     fftwf_mpi_execute_dft(plan, in, out);
-    
+
     total = 0.0;
-    
+
     for(x=0;x<x_thickness;x++) {
       for(y=0;y<p.Ly;y++) {
 	for(z=0;z<p.Lz;z++) {
-	  outcpts[i][x*p.Ly*p.Lz + y*p.Lz + z][0] 
+	  outcpts[i][x*p.Ly*p.Lz + y*p.Lz + z][0]
 	    = fft_norm*out[x*p.Ly*p.Lz + y*p.Lz + z][0];
 	  outcpts[i][x*p.Ly*p.Lz + y*p.Lz + z][1]
 	    = fft_norm*out[x*p.Ly*p.Lz + y*p.Lz + z][1];
@@ -549,7 +549,7 @@ void fft_vel(hydro_fields f, hydro_params p, int step, float ****vectorfield) {
   free(trim);
 
   fftwf_destroy_plan(plan);
-  
+
   fftwf_free(in);
   fftwf_free(out);
 

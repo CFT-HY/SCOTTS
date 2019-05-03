@@ -71,7 +71,7 @@ void layout(hydro_params *p) {
   if( (p->Lx*p->Ly % p->size) > 0 ) {
     printf0(*p, "Number of (%d) nodes not a factor of Lx*Ly!\n", p->size);
 
-    die(-99);
+    die(NODE_NOT_A_FACTOR_ERR);
   }
 
   // Work out prime factors of the number of nodes
@@ -88,7 +88,7 @@ void layout(hydro_params *p) {
     printf0(*p, "Can\'t figure out how to put %dx%d%d on %d nodes\n",
 	      p->Lx, p->Ly, p->Lz, p->size);
 
-    die(-100);
+    die(NODE_FACTORIZATION_ERR);
   }
 
   // Show factorisation
@@ -130,7 +130,7 @@ void layout(hydro_params *p) {
 	if(!p->rank &&  (p->slicex % prime[n] != 0)) {
 	  fprintf(stderr,"Should not get here "
 		  "-- still can\'t divide by x!\n");
-	  die(100);
+	  die(PARAMETER_NOT_SET_ERR);
 	} else {
 	  printf0(*p, "Dividing x direction...\n");
 	  p->slicex = p->slicex/prime[n];

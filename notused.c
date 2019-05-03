@@ -91,7 +91,7 @@ void init_profile(hydro_fields *f, hydro_params *p) {
 
   if(access("profile",R_OK) != 0) {
     printf0(*p, "Unable to access profile file, \"profile\"\n");
-    die(100);
+    die(PARAMETER_NOT_SET_ERR);
   }
 
   FILE *fp = fopen("profile","r");
@@ -127,7 +127,7 @@ void init_profile(hydro_fields *f, hydro_params *p) {
 	      &(f->V_inv[i])) != 3 && (!(p->rank))) {
       fprintf(stderr, "File inconsistent between first and second reads: "
 	      "odd... giving up\n");
-      die(100);
+      die(PARAMETER_NOT_SET_ERR);
     }
     i++;
   }

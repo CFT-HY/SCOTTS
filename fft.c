@@ -91,7 +91,7 @@ void fft_field(hydro_fields f, hydro_params p, float ***field, int step) {
       }
       if(map[x] == -1) {
 	fprintf(stderr,"cannot find a node responsible for x=%d!\n", x);
-	die(-99);
+	die(NODE_NOT_A_FACTOR_ERR);
       }
 
     }
@@ -117,7 +117,7 @@ void fft_field(hydro_fields f, hydro_params p, float ***field, int step) {
     fprintf(stderr,
 	    "Rank %d giving up in FFT: FFTW told me to use a silly layout!\n",
 	    p.rank);
-    die(-42);
+    die(FFTW_LAYOUT_ERR);
   }
   */
 

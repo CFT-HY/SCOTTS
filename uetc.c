@@ -14,7 +14,7 @@
  *
  * Initialise the UETC calculation with the Tij's from the
  * current timestep.
- */ 
+ */
 void init_uetc(hydro_fields f, hydro_params p) {
 
 
@@ -96,7 +96,7 @@ void uetc_project(hydro_params p, int x_start, int slab,
 	ky = ((float)y)*2.0*M_PI/((float)p.Ly);
 	kz = ((float)z)*2.0*M_PI/((float)p.Lz);
 	*/
-	
+
 
         kx = s_x*sqrt((2.0 - 2.0*cos(((float)(true_x))*2.0*M_PI/(((float)p.Lx))))/(p.dx*p.dx));
 	ky = s_y*sqrt((2.0 - 2.0*cos(((float)(true_y))*2.0*M_PI/(((float)p.Ly))))/(p.dx*p.dx));
@@ -208,7 +208,7 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
       }
       if(map[x] == -1) {
 	fprintf(stderr,"cannot find a node responsible for x=%d!\n", x);
-        die(-99);
+        die(NODE_NOT_A_FACTOR_ERR);
       }
 
     }
@@ -224,12 +224,12 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
   if(((int)x_thickness) != p.Lx/p.size) {
     fprintf(stderr,
 	    "Giving up in FFT: FFTW told me to use a silly layout!\n");
-    die(-42);
+    die(FFTW_LAYOUT_ERR);
   }
 
   if(((int)x_thickness) == 0) {
     fprintf(stderr, "Giving up in FFT: dx=0!\n");
-    die(-43);
+    die(FFTW_DX_0_ERR);
   }
   */
 
@@ -250,7 +250,7 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
     (fftwf_complex **)malloc(6*sizeof(fftwf_complex *));
   fftwf_complex **outcpts_now =
     (fftwf_complex **)malloc(6*sizeof(fftwf_complex *));
-  
+
   for(i=0;i<TENSOR_CPTS;i++) {
     outcpts_then[i] = fftwf_alloc_complex(alloc_local);
     outcpts_now[i] = fftwf_alloc_complex(alloc_local);
@@ -268,19 +268,19 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
 
   int ry;
 
-  // Now planning  
+  // Now planning
   fftwf_plan plan = fftwf_mpi_plan_dft_3d(p.Lx, p.Ly, p.Lz,
 					in, out, MPI_COMM_WORLD,
 					FFTW_BACKWARD, FFTW_ESTIMATE);
 
   for(i = 0; i < TENSOR_CPTS; i++) {
 
-    float check = 0.0;    
-    
+    float check = 0.0;
+
     for(x=1; x<=p.slicex; x++) {
       for(y=1; y<=p.slicey; y++) {
 	for(z=0; z<p.Lz; z++) {
-	  trim_then[(x-1)*p.slicey*p.Lz + (y-1)*p.Lz + z] 
+	  trim_then[(x-1)*p.slicey*p.Lz + (y-1)*p.Lz + z]
 	    = f.initial_Tij[i][x][y][z];
 	  trim_now[(x-1)*p.slicey*p.Lz + (y-1)*p.Lz + z]
 	    = Tij[i][x][y][z];
@@ -289,16 +289,16 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
     }
 
     //    fprintf(stderr,"Check: uij %lf\n", reduce_sum(check, p));
-    
+
     for(x=0; x<p.Lx; x++) {
-      
+
       // Check whether we are the target node for this slab
       if(map[x] == p.rank) {
-	
+
 	for(ry = 0; ry < ny; ry++) {
-	  
+
 	  if((x/p.slicex == p.myposx) && (ry == p.myposy)) {
-	    
+
 	    memcpy(&slice_then[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
 		   &trim_then[(x-p.shiftx)*p.slicey*p.Lz],
 		   p.slicey*p.Lz*sizeof(float));
@@ -308,8 +308,8 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
 		   p.slicey*p.Lz*sizeof(float));
 	    continue;
 	  }
-	  
-	  
+
+
 	  MPI_Recv(&slice_then[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
 		   p.slicey*p.Lz,
 		   MPI_FLOAT,
@@ -326,11 +326,11 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
 		   MPI_COMM_WORLD,
 		   &status);
 	}
-	
-	
+
+
       } else if((x >= p.shiftx) && (x < (p.shiftx + p.slicex))) {
-	
-	
+
+
       MPI_Send(&trim_then[(x-p.shiftx)*p.slicey*p.Lz],
 	       p.slicey*p.Lz,
 	       MPI_FLOAT,
@@ -345,7 +345,7 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
 	       p.Lx*ny + x*ny + p.myposy,
 	       MPI_COMM_WORLD);
       }
-      
+
     }
 
     float total = 0.0;
@@ -366,7 +366,7 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
     for(x=0;x<x_thickness;x++) {
       for(y=0;y<p.Ly;y++) {
 	for(z=0;z<p.Lz;z++) {
-	  outcpts_then[i][x*p.Ly*p.Lz + y*p.Lz + z][0] 
+	  outcpts_then[i][x*p.Ly*p.Lz + y*p.Lz + z][0]
 	    = fft_norm*out[x*p.Ly*p.Lz + y*p.Lz + z][0];
 	  outcpts_then[i][x*p.Ly*p.Lz + y*p.Lz + z][1]
 	    = fft_norm*out[x*p.Ly*p.Lz + y*p.Lz + z][1];
@@ -395,7 +395,7 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
     for(x=0;x<x_thickness;x++) {
       for(y=0;y<p.Ly;y++) {
 	for(z=0;z<p.Lz;z++) {
-	  outcpts_now[i][x*p.Ly*p.Lz + y*p.Lz + z][0] 
+	  outcpts_now[i][x*p.Ly*p.Lz + y*p.Lz + z][0]
 	    = fft_norm*out[x*p.Ly*p.Lz + y*p.Lz + z][0];
 	  outcpts_now[i][x*p.Ly*p.Lz + y*p.Lz + z][1]
 	    = fft_norm*out[x*p.Ly*p.Lz + y*p.Lz + z][1];
@@ -459,14 +459,14 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
 	    true_z = p.Lz - z;
 	  else
 	    true_z = z;
-	
+
 
 	  kmode = sqrt(
 		       ((float)(true_x*true_x))/((float)(p.Lx*p.Lx))
 		       + ((float)(true_y*true_y))/((float)(p.Ly*p.Ly))
 		       + ((float)(true_z*true_z))/((float)(p.Lz*p.Lz))
 		       )*2.0*M_PI;
-	  
+
 	  whichbin = (int)floor(kmode/dk);
 	  bins_re[whichbin] += slice_re[x*p.Ly*p.Lz + y*p.Lz + z];
 	  bins_im[whichbin] += slice_im[x*p.Ly*p.Lz + y*p.Lz + z];
@@ -484,10 +484,10 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
 
       red_value = reduce_sum(bins_re[i], p);
       bins_re[i] = red_value;
-    
+
       red_value = reduce_sum(bins_im[i], p);
       bins_im[i] = red_value;
-    
+
       red_count = reduce_sum_int(counts[i], p);
       counts[i] = red_count;
     }
@@ -499,11 +499,11 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
     if(!p.rank) {
 
       char fftdest[200];
-  
+
       sprintf(fftdest,"uetc-step%d.txt", step);
-      
+
       FILE *fp = fopen(fftdest,"w");
-  
+
       for(i=0;i<nbins;i++) {
 
 	fprintf(fp, "%lf %g %g %d %d\n",
@@ -574,14 +574,14 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
 	    true_z = p.Lz - z;
 	  else
 	    true_z = z;
-	
+
 
 	  kmode = sqrt(
 		       ((float)(true_x*true_x))/((float)(p.Lx*p.Lx))
 		       + ((float)(true_y*true_y))/((float)(p.Ly*p.Ly))
 		       + ((float)(true_z*true_z))/((float)(p.Lz*p.Lz))
 		       )*2.0*M_PI;
-	  
+
 	  whichbin = (int)floor(kmode/dk);
 	  bins_re[whichbin] += slice_re[x*p.Ly*p.Lz + y*p.Lz + z];
 	  bins_im[whichbin] += slice_im[x*p.Ly*p.Lz + y*p.Lz + z];
@@ -599,10 +599,10 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
 
       red_value = reduce_sum(bins_re[i], p);
       bins_re[i] = red_value;
-    
+
       red_value = reduce_sum(bins_im[i], p);
       bins_im[i] = red_value;
-    
+
       red_count = reduce_sum_int(counts[i], p);
       counts[i] = red_count;
     }
@@ -614,11 +614,11 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
     if(!p.rank) {
 
       char fftdest[200];
-  
+
       sprintf(fftdest,"shearstress-step%d.txt", step);
-      
+
       FILE *fp = fopen(fftdest,"w");
-  
+
       for(i=0;i<nbins;i++) {
 
 	fprintf(fp, "%lf %g %g %d %d\n",
@@ -647,7 +647,7 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
   free(trim_now);
 
   fftwf_destroy_plan(plan);
-  
+
   fftwf_free(in);
   fftwf_free(out);
 

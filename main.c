@@ -177,7 +177,7 @@ int main(int argc, char *argv[]) {
 	
 	printf0(p,"INIT_PS initial conditions invalid with SCALAR compiler flag."
 		" Exiting... \n");
-	die(100);
+	die(PARAMETER_NOT_SET_ERR);
 	
 #endif // FFT && !SCALAR	
 
@@ -237,14 +237,14 @@ int main(int argc, char *argv[]) {
       }
     }else if(p.initial==INIT_SHOCK_TUBE){
       fprintf(stderr,"Sorry, shocktube is not implemented! Exiting... \n");
-      die(100);
+      die(PARAMETER_NOT_SET_ERR);
     }else if(p.initial==INIT_FLUID_SPHERE){
       initial_blank(f, p);
       // Create a sphere of fluid at origin of the simulation box.
       fluid_sphere(f, p);
     }else{
       fprintf(stderr,"Invalid initial condition option! Exiting... \n");
-      die(100);
+      die(PARAMETER_NOT_SET_ERR);
     }
 	
   

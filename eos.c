@@ -1,21 +1,21 @@
 /** @file eos.c
- * 
+ *
  * Calculations of the equation of state and T.
- * 
+ *
  * Note that find_Ta() can be called seperately from eq_of_state() but
- * eq_of_state() at the start. 
+ * eq_of_state() at the start.
  *
  * We find `f.T` by solving
  * \f[
  * \epsilon = 3 a T^4 + V(\phi, T) - T \frac{\partial V}{\partial T}
  * \f]
- * for \f$ T \f$. 
+ * for \f$ T \f$.
  *
  * This leads to
  * \f[
- * T^2= \dfrac{ \frac{1}{2} \gamma \phi^2 
- *              \pm \sqrt{\frac{1}{4} \gamma^2\phi^4 +12a(\epsilon + 
- *		    \frac{1}{2}\gamma T_0^2 \phi^2 
+ * T^2= \dfrac{ \frac{1}{2} \gamma \phi^2
+ *              \pm \sqrt{\frac{1}{4} \gamma^2\phi^4 +12a(\epsilon +
+ *		    \frac{1}{2}\gamma T_0^2 \phi^2
  *                   -\frac{1}{4}\lambda\phi^4 + V_0)}}
  *	{6a}\text.
  * \f]
@@ -30,9 +30,9 @@
  * \kappa= 1 + \frac{PW}{E}\text.
  * \f]
  *
- * Alternatively in the BAG model we find `f.T` by solving 
+ * Alternatively in the BAG model we find `f.T` by solving
  * \f[
- * \epsilon = 3 a(\phi) T^4 + V_B(\phi) 
+ * \epsilon = 3 a(\phi) T^4 + V_B(\phi)
  * \f]
  * and so
  * \f[
@@ -48,7 +48,7 @@
 
 /** Find temperature by 'solving' equation of state.
  *
- * Root finding algorithm from internal energy equation. 
+ * Root finding algorithm from internal energy equation.
  * Note that if `Tfix` goes negative then at that site `f.T` will become
  * NaN's which then spread.
  *
@@ -84,15 +84,16 @@ void find_Ta(hydro_fields f, hydro_params p) {
 		  "Tfix = %f \n W = %f \n phi = %f \n E=%f \n",
 		  p.shiftx+x-1,p.shifty+y-1,z,Tfix,f.W[x][y][z],
 		  f.phi[x][y][z],f.E[x][y][z]);
+        die(TEMPERATURE_ERR);
 	}
-	
+
 	f.T[x][y][z]=pow(Tfix , 0.25);
 #else
 
 	/*
 	 * NaN's happen when Tfix goes negative,
 	 * they then spread out from here.
-	 */ 
+	 */
 	Tfix = 0.25*p.gamma*p.gamma*f.phi[x][y][z]*f.phi[x][y][z]
 	  *f.phi[x][y][z]*f.phi[x][y][z]
 	  - 12.0*p.gdeg*(0.25*p.lambda*f.phi[x][y][z]*f.phi[x][y][z]
@@ -107,7 +108,7 @@ void find_Ta(hydro_fields f, hydro_params p) {
 		  p.shiftx+x-1,p.shifty+y-1,z,Tfix,f.W[x][y][z],
 		  f.phi[x][y][z],f.E[x][y][z]);
 	}
-	
+
 	f.T[x][y][z] = sqrt((1.0/(6.0*p.gdeg))
 			    * (0.5*p.gamma*f.phi[x][y][z]*f.phi[x][y][z]
 			       + sqrt(Tfix)));
@@ -126,8 +127,8 @@ void find_Ta(hydro_fields f, hydro_params p) {
 
 
 /** By 'solving' the equation of state, determine first T and then
- * pressure p and the adiabatic parameter kappa. 
- * 
+ * pressure p and the adiabatic parameter kappa.
+ *
  * Calls find_Ta() to obtain the temperature.
  */
 void eq_of_state(hydro_fields f, hydro_params p) {
@@ -137,7 +138,7 @@ void eq_of_state(hydro_fields f, hydro_params p) {
   int x, y, z;
 
   /*
-   * Getting some space on the heap takes time -- but then, not sure 
+   * Getting some space on the heap takes time -- but then, not sure
    * Vpot call is most efficient either (cannot fuse loops between find_Ta,
    * Vpot and this function. Will get rid of both simultaneously.
    */
@@ -156,24 +157,24 @@ void eq_of_state(hydro_fields f, hydro_params p) {
     for(y=1; y<=p.slicey; y++) {
       for(z=0; z<p.Lz; z++) {
 	/*
-	if(f.E[x][y][z] 
+	if(f.E[x][y][z]
 	   < tolE*f.W[x][y][z]*3.0*p.gdeg*f.T[x][y][z]
 	   *f.T[x][y][z]*f.T[x][y][z]*f.T[x][y][z]) {
 	  fprintf(stderr,"(at %d,%d,%d) E getting dangerously small "
 		  "due to -ve V cont.\n",
 		  p.shiftx+x-1,p.shifty+y-1,z);
-	  die(100);
+	  die(PARAMETER_NOT_SET_ERR);
 	}
 	*/
 	// pressure P is radiative pressure less the potential
 	f.p[x][y][z] = p.gdeg*f.T[x][y][z]*f.T[x][y][z]
 	  *f.T[x][y][z]*f.T[x][y][z] - Vnew[x][y][z];
 	f.kappa[x][y][z] = 1.0 + f.W[x][y][z]*f.p[x][y][z]/f.E[x][y][z];
-	
+
       }
     }
   }
-  
+
   //  free(Vnew);
   free_field(p, Vnew);
 
