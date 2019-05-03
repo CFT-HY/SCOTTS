@@ -636,12 +636,6 @@ void spectrum(float ksq, hydro_params p, fftwf_complex *res){
 }
 
 
-
-
-
-
-
-
 /* init_ps(hydro_fields f, hydro_params p, float ***field)
  *
  * Initialises the field with a power spectrum.
@@ -668,6 +662,15 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
   int i, j;
 
   float *trim = (float *)malloc(p.slicex*p.slicey*p.Lz*sizeof(float));
+
+  // initialize the field in the broken phase
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+		  f.phi[x][y][z] = p->phi_0;
+	  }
+  }
+}
 
 
   fftwf_mpi_init();
