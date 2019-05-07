@@ -4,10 +4,10 @@
 Lx  64
 Ly	64
 Lz	64
-steps  1000
+steps  100
 
 # How big the simulation is
-dx     2.0
+dx     1.0
 dt     0.2
 
 # Viscosity terms
@@ -19,21 +19,21 @@ C      0.35
 # sigma  0.1
 # lcorr  6.0
 
-alpha 0.19902
-gamma 0.2222
-lambda 0.079221
+alpha 0.167705098312
+gamma 0.0427050983125
+lambda 0.0731762745781
 
 T0 0.70710678
 Tconst 0.86
 
 # How often to write data
-interval 200
-silointerval 10
+interval 5
+silointerval 5
 
 # Initial conditions
 initial initps
 initpsfile initial.txt div
-initpsbins 4200
+initpsbins 200
 #initpsfile dogfood.dat
 #initpsbins 240
 
