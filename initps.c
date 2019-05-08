@@ -184,8 +184,8 @@ void VtoZ(hydro_fields f, hydro_params p) {
 		for(y=1; y<=p.slicey; y++) {
 			for(z=0; z<p.Lz; z++) {
 				f.W[x][y][z] = 1.0/sqrt(1 - (f.V[0][x][y][z]*f.V[0][x][y][z] +
-				f.V[1][x][y][z]*f.V[1][x][y][z] +
-				f.V[2][x][y][z]*f.V[2][x][y][z]));
+					f.V[1][x][y][z]*f.V[1][x][y][z] +
+					f.V[2][x][y][z]*f.V[2][x][y][z]));
 
 				f.U[0][x][y][z] = f.W[x][y][z]*f.V[0][x][y][z];
 				f.U[1][x][y][z] = f.W[x][y][z]*f.V[1][x][y][z];
@@ -1116,7 +1116,7 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 			}
 		}
 	}
-	// halo_field(f.E, p);
+	halo_field(f.E, p);
 
 
 
