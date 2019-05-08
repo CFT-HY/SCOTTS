@@ -296,11 +296,16 @@ void nucleate_at(hydro_fields f, hydro_params p, int x0, int y0, int z0) {
 
 	// Don't set up the energy density according to the Eqn of state?!
 	//	f.E[x][y][z] = 0.0;
+
 #endif // SCALAR
       }
     }
   }
- 
+#ifndef SCALAR
+  halo_field(f.E,p);
+#endif //!SCALAR
+  halo_field(f.phi,p);
+	
 }
 
 
@@ -332,7 +337,6 @@ int try_nucleate(hydro_fields f, hydro_params p) {
 
   } else {
     nucleate_at(f, p, try_x, try_y, try_z);
-    halo_field(f.phi, p);
   }
   
 
