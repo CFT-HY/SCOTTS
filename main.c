@@ -200,7 +200,6 @@ int main(int argc, char *argv[]) {
 	start = clock();
 	printf0(p, "Nucleating first bubble\n");
 	nucleate_at(f,p,0,0,0);
-	halo_field(f.phi,p);
       
 	end = clock();
 	if(!p.rank)
@@ -230,7 +229,6 @@ int main(int argc, char *argv[]) {
 	
 	printf0(p, "Nucleating just one bubble\n");
 	nucleate_at(f,p,0,0,0);
-	halo_field(f.phi,p);
 	bcount+=1;
       } else{
 	// Empty system
@@ -363,12 +361,11 @@ int main(int argc, char *argv[]) {
       }
       else{
 	still_nucleate = try_nucleate(f, p);
-
 	bcount += still_nucleate;
 	i++;
       }
     }
-
+    
 
     // Checkpoint if necessary
     if((p.checkpointinterval > 0) && (step % p.checkpointinterval == 0) \
