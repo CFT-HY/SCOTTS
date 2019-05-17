@@ -107,7 +107,7 @@ void layout(hydro_params *p) {
   for (n=n_primes-1; n>=0; n--) {
 
     for(i=0; i<nfactors[n]; i++) {
-      
+
       // Longest direction that we can still chop...
       if((p->slicex > p->slicey) && (p->slicex % prime[n] == 0)) {
 
@@ -231,7 +231,7 @@ void halo_field(float ***field, hydro_params p) {
 		 &field[p.slicex+1][y][0],
 		 p.Lz, MPI_FLOAT, p.rank_xP, mpi_counter,
 		 MPI_COMM_WORLD, &stat);
-    
+
     mpi_counter++;
   }
 
@@ -248,9 +248,9 @@ void halo_field(float ***field, hydro_params p) {
 		 &field[0][y][0],
 		 p.Lz, MPI_FLOAT, p.rank_xM, mpi_counter,
 		 MPI_COMM_WORLD, &stat);
-    
+
     mpi_counter++;
-    
+
   }
 
 
@@ -299,7 +299,7 @@ void halo_field(float ***field, hydro_params p) {
 	       &field[0][0][0],
 	       p.Lz, MPI_FLOAT, p.rank_xMyM, mpi_counter,
 	       MPI_COMM_WORLD, &stat);
-  
+
   mpi_counter++;
 
 
@@ -312,9 +312,9 @@ void halo_field(float ***field, hydro_params p) {
 	       &field[p.slicex+1][p.slicey+1][0],
 	       p.Lz, MPI_FLOAT, p.rank_xPyP, mpi_counter,
 	       MPI_COMM_WORLD, &stat);
-  
+
   mpi_counter++;
-  
+
 
   /* [' ]
    *
@@ -325,9 +325,9 @@ void halo_field(float ***field, hydro_params p) {
 	       &field[p.slicex+1][0][0],
 	       p.Lz, MPI_FLOAT, p.rank_xPyM, mpi_counter,
 	       MPI_COMM_WORLD, &stat);
-  
+
   mpi_counter++;
-  
+
 
   /* [ ,]
    *
@@ -338,7 +338,7 @@ void halo_field(float ***field, hydro_params p) {
 	       &field[0][p.slicey+1][0],
 	       p.Lz, MPI_FLOAT, p.rank_xMyP, mpi_counter,
 	       MPI_COMM_WORLD, &stat);
-  
+
   mpi_counter++;
 
 
@@ -350,7 +350,7 @@ void halo_field(float ***field, hydro_params p) {
 }
 
 
-// Reduction routines, for when we want to combine things    
+// Reduction routines, for when we want to combine things
 
 /** Add together floats from each node.
  *
@@ -482,14 +482,12 @@ void printf0(hydro_params p, char *msg, ...) {
 }
 
 
-/** Call `MPI_Finalize` and quit.
+/** Call `MPI_Abort` and quit.
  *
- * The return value is 'howbad'.  Note that all nodes have to call
- * this, or the code may hang.
+ * The return value is 'howbad'.
  */
 void die(int howbad) {
-  MPI_Finalize();
-  exit(howbad);
+  MPI_Abort(MPI_COMM_WORLD,howbad);
 }
 
 
@@ -602,7 +600,7 @@ void halo_field(float ***field, hydro_params p) {
 
 
   for(z = 0; z < p.Lz; z++) {
-      
+
     field[0][0][z] = field[p.Lx][p.Ly][z];
 
     mpi_counter++;
@@ -615,7 +613,7 @@ void halo_field(float ***field, hydro_params p) {
 
 
   for(z = 0; z < p.Lz; z++) {
-      
+
     field[p.Lx+1][p.Ly+1][z] = field[1][1][z];
 
     mpi_counter++;
@@ -627,7 +625,7 @@ void halo_field(float ***field, hydro_params p) {
    */
 
   for(z = 0; z < p.Lz; z++) {
-      
+
     field[p.Lx+1][0][z] = field[1][p.Ly][z];
 
     mpi_counter++;
@@ -640,7 +638,7 @@ void halo_field(float ***field, hydro_params p) {
    */
 
   for(z = 0; z < p.Lz; z++) {
-      
+
     field[0][p.Ly+1][z] = field[p.Lx][1][z];
 
     mpi_counter++;
@@ -650,7 +648,7 @@ void halo_field(float ***field, hydro_params p) {
   end = clock();
 
   comms_time += ((float) (end - start)) / CLOCKS_PER_SEC;
-  
+
 }
 
 float reduce_sum(float result, hydro_params p) {
