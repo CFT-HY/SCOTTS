@@ -141,7 +141,7 @@ typedef struct {
   /** Quadratic potential parameter \f$ \gamma \f$.
    */
   float gamma;
-  
+
   /** Nucleation temperature \f$ T_N \f$ used to initialise the
    *  simulation.
    */
@@ -175,7 +175,7 @@ typedef struct {
    */
   int silosliceinterval;
   int checkpointinterval;
-  
+
   /** `x` coord to slice through for write_silo_slice_step()
    */
   int siloslicecoord;
@@ -186,7 +186,7 @@ typedef struct {
 
   /** Initial conditions type (see #defines above)
    */
-  int initial;  
+  int initial;
 
   /** Scale factor.
    */
@@ -228,7 +228,7 @@ typedef struct {
    * -- i.e. we have `(slicex+2)*(slicey+2)*Lz` sites to ourselves
    */
   int slicey;
-  
+
 
   /** `shiftx` corresponds to where the local `x` coordinate starts in
    * the physical volume.
@@ -243,7 +243,7 @@ typedef struct {
    * NB: the physical position of a site `y` is e.g. `(y+shifty-1)`
    */
   int shifty;
-  
+
   /** Where the silo files go.
    */
   char silodir[500];
@@ -276,13 +276,13 @@ typedef struct {
    */
   int *nucsteps;
 
-  /** Bubble nucleation center locations on the lattice. 
+  /** Bubble nucleation center locations on the lattice.
    *
-   * NB: Only used if nucleation type is `NUC_FILE_LOC`.  
+   * NB: Only used if nucleation type is `NUC_FILE_LOC`.
    */
   int **nuclocs;
-  
-  /** Total number of steps on which we perform nucleation. 
+
+  /** Total number of steps on which we perform nucleation.
    *
    * NB: If a step is repeated it is counted multiple times.
    */
@@ -355,7 +355,7 @@ typedef struct {
 
   /** Value of `phi` at the center of the nucleated bubble.
    *
-   * Read from the parameter file, if given as <=0 default to broken 
+   * Read from the parameter file, if given as <=0 default to broken
    * phase value at \f$T=T_N\f$.
    */
   float phimin;
@@ -375,19 +375,19 @@ typedef struct {
    */
   float R_scaled;
 
-  /** Value of temperature in the centre of the fluid sphere, 
+  /** Value of temperature in the centre of the fluid sphere,
    * used in INIT_FLUID_SPHERE ("initfs") only.
    */
   float T_central;
 
-  /** Radius of gaussian sphere of fluid, 
+  /** Radius of gaussian sphere of fluid,
    * used in INIT_FLUID_SPHERE ("initfs") only.
    */
   float sphere_radius;
-  
+
   /** Constant in potential term.
    *
-   * Calculated s.t \f$V(\phi_b,T=0)=0\f$ 
+   * Calculated s.t \f$V(\phi_b,T=0)=0\f$
    * or s.t \f$ V_B(\phi_b)=0\f$ for BAG
    */
   float V0;
@@ -396,14 +396,14 @@ typedef struct {
    */
   double phi_0;
 #endif //BAG
-  
+
 } hydro_params;
 
 
 
 /** Struct containing the fields defined on the lattice that we track
  * at every timestep.
- * 
+ *
  * Scalar field fields:
  *
  * `phi`, `phi_old`, `pi`, `pi_future`.
@@ -416,7 +416,7 @@ typedef struct {
  * Gravity fields:
  *
  * `uij`, `udotij`, and `initial_Tij`.
- * 
+ *
  */
 typedef struct {
 
@@ -444,7 +444,7 @@ typedef struct {
 
 #ifndef SCALAR
   // Fluid
-  
+
   /** `T` is the temperature of the fluid.
    */
   float ***T;
@@ -695,8 +695,9 @@ void histogram(hydro_params p, float *slice, char *filename,
 // initps.c
 void init_ps(hydro_fields f, hydro_params p, float ****field);
 void norm_power(hydro_fields f, hydro_params p, float ****field);
-void VtoZ(hydro_fields f, hydro_params p);
+void UtoZ(hydro_fields f, hydro_params p);
 float get_momtot(hydro_fields f, hydro_params p);
 float get_normal(float mean, float dev);
+void init_energy(hydro_params p, hydro_fields f, fftwf_complex **in, ptrdiff_t x_start, ptrdiff_t x_thickness, int* map);
 
 #endif // FFT && !SCALAR
