@@ -1,5 +1,5 @@
 /* main.c
- * 
+ *
  * Execution entrypoint.
  */
 #include "hydro.h"
@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
   */
 
 
-  
+
   // Degrees of freedom, still hardcoded
   p.gdeg = p.gstar*M_PI*M_PI/90.0;
 
@@ -122,7 +122,7 @@ int main(int argc, char *argv[]) {
   float gwen;
   float s_max;
   float gamma_max;
-  
+
   // Timing counters
   float cpu_time_used;
 
@@ -161,9 +161,9 @@ int main(int argc, char *argv[]) {
       // Then no bubbles nucleated.
 
 	initial_blank(f,p);
-	init_ps(f, p, f.V);
+	init_ps(f, p, f.U);
+    UtoZ(f, p);
 	fft_vel(f, p, -1, f.V);
-	VtoZ(f, p);
 	//	init_ps(f, p, f.Z);
 	//	fft_vel(f, p, -3, f.Z);
 	//	norm_power(f, p, f.Z);
@@ -180,14 +180,14 @@ int main(int argc, char *argv[]) {
 	//	init_ps(f, p, f.V);
 	//    init_ps(f, p, f.Z);
 #else
-	
+
 	printf0(p,"INIT_PS initial conditions invalid with SCALAR compiler flag."
 		" Exiting... \n");
 	die(100);
-	
-#endif // FFT && !SCALAR	
 
-	
+#endif // FFT && !SCALAR
+
+
     } else if(p.initial==INIT_BUBBLE){
       if(p.nucleation==NUC_FILE_LOC){
 	initial_blank(f,p);
@@ -201,18 +201,18 @@ int main(int argc, char *argv[]) {
       else if(p.bubbles > 1){
 	// Instead, start off with an empty box
 	initial_blank(f, p);
-      
+
 	start = clock();
 	printf0(p, "Nucleating first bubble\n");
 	nucleate_at(f,p,0,0,0);
 	halo_field(f.phi,p);
-      
+
 	end = clock();
 	if(!p.rank)
 	  fprintf(stderr,"Nucleation attempt took %lf\n",
 		  ((float) (end - start)) / CLOCKS_PER_SEC);
 	bcount+=1;
-	
+
 	// p.bubbles is how many bubbles to make at the start (usually 1)
 	for(step=1;step<p.bubbles;step++) {
 	  start = clock();
@@ -221,18 +221,18 @@ int main(int argc, char *argv[]) {
 	  if(!p.rank)
 	    fprintf(stderr,"Nucleation attempt took %lf\n",
 		    ((float) (end - start)) / CLOCKS_PER_SEC);
-	  
+
 	  bcount += still_nucleate;
-      
+
 	  // Each is an independent attempt, do not disable!
 	  //      if(!still_nucleate)
 	  //	break;
-	  
+
 	}
       } else if(p.bubbles == 1){
 	// One bubble only (not normally used)
 	initial_blank(f, p);
-	
+
 	printf0(p, "Nucleating just one bubble\n");
 	nucleate_at(f,p,0,0,0);
 	halo_field(f.phi,p);
@@ -252,9 +252,9 @@ int main(int argc, char *argv[]) {
       fprintf(stderr,"Invalid initial condition option! Exiting... \n");
       die(100);
     }
-	
-  
-      
+
+
+
     // (don't) turn off nucleation after initial stage
     //  still_nucleate = 0;
 
@@ -278,7 +278,7 @@ int main(int argc, char *argv[]) {
   initial_energy = reduce_sum(total_energy(f, p), p);
   initial_field_energy = reduce_sum(field_energy(f, p), p);
 
-  printf0(p, "Initial avg energy per site: %g\n", 
+  printf0(p, "Initial avg energy per site: %g\n",
 	  initial_energy/((float)p.N));
 
 
@@ -359,7 +359,7 @@ int main(int argc, char *argv[]) {
 	printf0(p, "Nucleating a bubble on step %d at (%d, %d, %d)"
 		" without any checks.\n", step, p.nuclocs[bub_loc_ind][0],
 		p.nuclocs[bub_loc_ind][1], p.nuclocs[bub_loc_ind][2]);
-		
+
 	nucleate_at(f, p, p.nuclocs[bub_loc_ind][0], p.nuclocs[bub_loc_ind][1],
 		    p.nuclocs[bub_loc_ind][2]);
 	bub_loc_ind++;
@@ -412,7 +412,7 @@ int main(int argc, char *argv[]) {
 
 	// Calculate UETCs (not in use)
 	fft_uetc(f, p, step);
-      }      
+      }
 
       // Power spectrum of scalar field
       fft_field(f, p, f.phi, step);
@@ -454,7 +454,7 @@ int main(int argc, char *argv[]) {
 	/((float)(p.Lx*p.Ly*p.Lz));
       s_max = reduce_max(get_s_max(f, p), p);
       gamma_max = reduce_max(get_gamma_max(f, p), p);
-      
+
       if(!p.rank) {
 	printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf\t%6lf\t%6lf\t%6lf\n",
 		step,
@@ -493,13 +493,13 @@ int main(int argc, char *argv[]) {
     //printf0(p,"Calculated eos \n");
     //dump_max_min(f, p);
 
-    
+
     // Do the hydro bits
     evolve_hydro(f, p);
 
     //printf0(p,"Evolved hydro \n");
     //dump_max_min(f, p);
-    
+
     // Evolve metric perturbations
     evolve_uij(f, p);
 
@@ -507,20 +507,20 @@ int main(int argc, char *argv[]) {
     advect_E(f, p, adv_order);
     //printf0(p,"Advected E \n");
     //dump_max_min(f, p);
-    
+
     // Advection of momentum
     advect_Z(f, p, adv_order);
     //printf0(p,"Advected Z \n");
     //dump_max_min(f, p);
 
     adv_order +=1;
-    
+
     // Don't bother with art viscosity, yet
     //    artificial_viscosity(f, nb, p);
 
     // Solve for T
     find_Ta(f, p);
-    
+
     t += p.dt;
 
 
@@ -535,7 +535,7 @@ int main(int argc, char *argv[]) {
       fft_tensor(f,p,step,current_energy);
     }
 #endif // FFT
-    
+
   } // main loop ends here
 
 
@@ -556,7 +556,7 @@ int main(int argc, char *argv[]) {
   s_max = reduce_max(get_s_max(f, p), p);
   gamma_max = reduce_max(get_gamma_max(f, p), p);
 
-  
+
   if(!p.rank) {
     printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf\t%6lf\t%6lf\t%6lf\n",
 	   step,
@@ -575,7 +575,7 @@ int main(int argc, char *argv[]) {
   }
 
 
-  
+
   // End time, for walltime calculation
   end = clock();
 
@@ -587,7 +587,7 @@ int main(int argc, char *argv[]) {
 #endif // !SCALAR
 
   fft_tensor(f,p,step,current_energy);
-    
+
 #endif // FFT
 
 
@@ -597,7 +597,7 @@ int main(int argc, char *argv[]) {
   papi_finalise();
 
 #endif // PAPI
-  
+
 
 #ifdef MPI
 
@@ -622,10 +622,10 @@ int main(int argc, char *argv[]) {
 
   // Clean up memory
   free_fields(&f, p);
-  
-  
 
-  
+
+
+
   return 0;
 
 }

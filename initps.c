@@ -36,7 +36,6 @@ float get_momtot(hydro_fields f, hydro_params p) {
 	return momtot;
 }
 
-
 void norm_power(hydro_fields f, hydro_params p, float ****field) {
 
 	int i, x, y, z;
@@ -167,40 +166,40 @@ void debug_write_power(hydro_params p, fftwf_complex **in, ptrdiff_t x_start, pt
 	histogram(p, product_tot, fftdest, x_thickness, x_start);
 }
 
-void VtoZ(hydro_fields f, hydro_params p) {
+void UtoZ(hydro_fields f, hydro_params p) {
 
 	int i, x, y, z;
 
-	// This assumes V has been initialised (but not necessarily haloed)
+	// This assumes U has been initialised (but not necessarily haloed)
 
-	// First, then, halo V
-	halo_field(f.V[0], p);
-	halo_field(f.V[1], p);
-	halo_field(f.V[2], p);
+	// First, then, halo U
+	halo_field(f.U[0], p);
+	halo_field(f.U[1], p);
+	halo_field(f.U[2], p);
 
-	// Work out U from V (approximately)
+	// Work out V from U (approximately)
 	// (this can be made more precise by adopting what is in evolve.c)
 	for(x=1; x<=p.slicex; x++) {
 		for(y=1; y<=p.slicey; y++) {
 			for(z=0; z<p.Lz; z++) {
-				f.W[x][y][z] = 1.0/sqrt(1 - (f.V[0][x][y][z]*f.V[0][x][y][z] +
-					f.V[1][x][y][z]*f.V[1][x][y][z] +
-					f.V[2][x][y][z]*f.V[2][x][y][z]));
+				f.W[x][y][z] = sqrt(1 + (f.U[0][x][y][z]*f.U[0][x][y][z] +
+					f.U[1][x][y][z]*f.U[1][x][y][z] +
+					f.U[2][x][y][z]*f.U[2][x][y][z]));
 
-				f.U[0][x][y][z] = f.W[x][y][z]*f.V[0][x][y][z];
-				f.U[1][x][y][z] = f.W[x][y][z]*f.V[1][x][y][z];
-				f.U[2][x][y][z] = f.W[x][y][z]*f.V[2][x][y][z];
+				f.V[0][x][y][z] = f.U[0][x][y][z]/f.W[x][y][z];
+				f.V[1][x][y][z] = f.U[1][x][y][z]/f.W[x][y][z];
+				f.V[2][x][y][z] = f.U[2][x][y][z]/f.W[x][y][z];
 			}
 		}
 	}
 
 	// Halo W and U
 	halo_field(f.W, p);
-	halo_field(f.U[0], p);
-	halo_field(f.U[1], p);
-	halo_field(f.U[2], p);
+	halo_field(f.V[0], p);
+	halo_field(f.V[1], p);
+	halo_field(f.V[2], p);
 
-	float eps = 1.0;
+	// float eps = 1.0;
 	float kappa = 1.0;
 
 
@@ -209,7 +208,7 @@ void VtoZ(hydro_fields f, hydro_params p) {
 	for(x=1; x<=p.slicex; x++) {
 		for(y=1; y<=p.slicey; y++) {
 			for(z=0; z<p.Lz; z++) {
-				f.E[x][y][z] = f.W[x][y][z]*eps*f.E[x][y][z];
+				// f.E[x][y][z] = f.W[x][y][z]*eps*f.E[x][y][z];
 				/*
 				f.kappa[x][y][z] = kappa;
 				f.p[x][y][z] = (f.kappa[x][y][z] - 1.0)*f.E[x][y][z]/f.W[x][y][z];
@@ -223,7 +222,7 @@ void VtoZ(hydro_fields f, hydro_params p) {
 
 
 	// halo E and kappa
-	halo_field(f.E, p);
+	// halo_field(f.E, p);
 	halo_field(f.kappa, p);
 
 	float sigmabar;
@@ -260,6 +259,161 @@ void VtoZ(hydro_fields f, hydro_params p) {
 	halo_field(f.Z[0], p);
 	halo_field(f.Z[1], p);
 	halo_field(f.Z[2], p);
+}
+
+/*
+ * Initialize the energy density
+ *
+ * For a rotational-free flow, the energy density is linked to the velocity field
+ * For a divergence-free flow, the energy density is set to be constant
+ */
+void init_energy(hydro_params p, hydro_fields f, fftwf_complex **in, ptrdiff_t x_start, ptrdiff_t x_thickness, int* map){
+	int x, y, z;
+	// TODO : INITPSFILE_ALL
+
+	if(p.initpsfile_type == INITPSFILE_ROT) {
+		for(x=1; x<=p.slicex; x++) {
+			for(y=1; y<=p.slicey; y++) {
+				for(z=0; z<p.Lz; z++) {
+					f.E[x][y][z] = 1;
+				}
+			}
+		}
+
+	} else if(p.initpsfile_type == INITPSFILE_DIV) {
+
+		ptrdiff_t n0 = p.Lx;
+		ptrdiff_t n1 = p.Ly;
+		ptrdiff_t n2 = p.Lz;
+		MPI_Status status;
+
+		ptrdiff_t alloc_local = fftwf_mpi_local_size_3d(n0, n1, n2,
+		   MPI_COMM_WORLD,
+		   &x_thickness, &x_start);
+		fftwf_complex *lambda_in = fftwf_alloc_complex(alloc_local);
+		fftwf_complex *lambda_out = fftwf_alloc_complex(alloc_local);
+		float *slice = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
+		float *trim = (float *)malloc(p.slicex*p.slicey*p.Lz*sizeof(float));
+
+		fftwf_plan plan = fftwf_mpi_plan_dft_3d(p.Lx, p.Ly, p.Lz,
+			lambda_in, lambda_out, MPI_COMM_WORLD,
+			FFTW_FORWARD, FFTW_ESTIMATE);
+
+		float kx, ky, kz,kmode;
+		int true_x, true_y, true_z;
+		fftwf_complex kiVki;
+		int nx = p.Lx/p.slicex;
+		int ny = p.Ly/p.slicey;
+		int ry;
+
+		for(x=x_start;x<x_start+x_thickness;x++) {
+			for(y=0;y<p.Ly;y++) {
+				for(z=0;z<p.Lz;z++) {
+
+					if(x+x_start > p.Lx/2) {
+						true_x = -(p.Lx - x);
+					} else {
+						true_x = x;
+					}
+
+					if(y > p.Ly/2) {
+						true_y = -(p.Ly - y);
+					} else {
+						true_y = y;
+					}
+
+					if(z > p.Lz/2) {
+						true_z = -(p.Lz - z);
+					} else {
+						true_z = z;
+					}
+
+					kx = 2.0*sin(((float)(true_x))*M_PI/(((float)p.Lx)))/p.dx;
+					ky = 2.0*sin(((float)(true_y))*M_PI/(((float)p.Ly)))/p.dx;
+					kz = 2.0*sin(((float)(true_z))*M_PI/(((float)p.Lz)))/p.dx;
+
+					kmode = sqrt(kx*kx+ky*ky+kz*kz);
+					kiVki[0] = kx * in[0][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0] + ky * in[1][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0] + kz * in[2][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0];
+					kiVki[1] = kx * in[0][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] + ky * in[1][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] + kz * in[2][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1];
+
+					if (kmode != 0){
+						lambda_in[(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0] = 4 / sqrt(3) * kiVki[0] / kmode;
+						lambda_in[(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] = 4 / sqrt(3) * kiVki[1] / kmode;
+
+					}
+
+				}
+			}
+		}
+
+		// Calculate the inverse fourier transform for the energy
+		fftwf_mpi_execute_dft(plan, lambda_in, lambda_out);
+		MPI_Barrier(MPI_COMM_WORLD);
+
+		// prepare slice
+		for(x=0; x<x_thickness; x++) {
+				for(y=0; y<p.Ly; y++) {
+					for(z=0; z<p.Lz; z++) {
+						slice[x*p.Ly*p.Lz + y*p.Lz + z] = lambda_out[x*p.Ly*p.Lz + y*p.Lz + z][0];
+				}
+			}
+		}
+
+		MPI_Barrier(MPI_COMM_WORLD);
+
+		for(x=0; x<p.Lx; x++) {
+			// Check whether we are the source node for this slab
+			if(map[x] == p.rank) {
+				for(ry = 0; ry < ny; ry++) {
+
+					if((x/p.slicex == p.myposx) && (ry == p.myposy)) {
+
+						memcpy(&trim[(x-p.shiftx)*p.slicey*p.Lz],
+							&slice[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
+							p.slicey*p.Lz*sizeof(float));
+
+						continue;
+					}
+
+
+					MPI_Send(&slice[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
+						p.slicey*p.Lz,
+						MPI_FLOAT,
+						ry*nx + x/p.slicex,
+						x*ny + ry,
+						MPI_COMM_WORLD);
+
+				}
+			} else if((x >= p.shiftx) && (x < (p.shiftx + p.slicex))) {
+
+				MPI_Recv(&trim[(x-p.shiftx)*p.slicey*p.Lz],
+					p.slicey*p.Lz,
+					MPI_FLOAT,
+					map[x],
+					x*ny + p.myposy,
+					MPI_COMM_WORLD,
+					&status);
+
+			}
+		}
+
+		// untrim
+		for(x=1; x<=p.slicex; x++) {
+			for(y=1; y<=p.slicey; y++) {
+				for(z=0; z<p.Lz; z++) {
+					f.E[x][y][z] = exp(trim[(x-1)*p.slicey*p.Lz + (y-1)*p.Lz + z]);
+				}
+			}
+		}
+
+		free(slice);
+		free(trim);
+		fftwf_destroy_plan(plan);
+		fftwf_free(lambda_in);
+		fftwf_free(lambda_out);
+	}
+	halo_field(f.E, p);
+
 }
 
 /* project_down
@@ -357,22 +511,22 @@ void project_down(hydro_params p, fftwf_complex **in, int shift_x, int x_thickne
 					for(j=1; j<=3; j++) {
 
 						if(p.initpsfile_type == INITPSFILE_ROT) {
-						//  Rot?
-						// v_i^\perp = P_{ij} v_j
-						// where P_{ij} = \delta_{ij} - \hat{k}_i \hat{k}_j
-						// and $\hat{k}$ is a unit vector in the $k$ direction.
-						in_proj_re[i-1] += vel_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-						in_proj_im[i-1] += vel_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+							//  Rot?
+							// v_i^\perp = P_{ij} v_j
+							// where P_{ij} = \delta_{ij} - \hat{k}_i \hat{k}_j
+							// and $\hat{k}$ is a unit vector in the $k$ direction.
+							in_proj_re[i-1] += vel_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+							in_proj_im[i-1] += vel_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 
 
-						// this is delta_{ij} - P_{ij}V_j
-						if(i == j) {
-							res_re += (1.0-vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-							res_im += (1.0-vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
-						} else {
-							res_re += (-1.0*vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-							res_im += (-1.0*vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
-						}
+							// this is delta_{ij} - P_{ij}V_j
+							if(i == j) {
+								res_re += (1.0-vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+								res_im += (1.0-vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+							} else {
+								res_re += (-1.0*vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+								res_im += (-1.0*vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+							}
 
 
 						} else if(p.initpsfile_type == INITPSFILE_DIV) {
@@ -640,23 +794,19 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 
 
 	fftwf_complex **in = (fftwf_complex **)malloc(3*sizeof(fftwf_complex *));
-	in[0] = fftwf_alloc_complex(alloc_local);
-	in[1] = fftwf_alloc_complex(alloc_local);
-	in[2] = fftwf_alloc_complex(alloc_local);
+		in[0] = fftwf_alloc_complex(alloc_local);
+		in[1] = fftwf_alloc_complex(alloc_local);
+		in[2] = fftwf_alloc_complex(alloc_local);
 
 	fftwf_complex **swap_in = (fftwf_complex **)malloc(3*sizeof(fftwf_complex *));
-	swap_in[0] = fftwf_alloc_complex(x_thickness*p.Ly*p.Lz);
-	swap_in[1] = fftwf_alloc_complex(x_thickness*p.Ly*p.Lz);
-	swap_in[2] = fftwf_alloc_complex(x_thickness*p.Ly*p.Lz);
+		swap_in[0] = fftwf_alloc_complex(x_thickness*p.Ly*p.Lz);
+		swap_in[1] = fftwf_alloc_complex(x_thickness*p.Ly*p.Lz);
+		swap_in[2] = fftwf_alloc_complex(x_thickness*p.Ly*p.Lz);
 
 	fftwf_complex **out = (fftwf_complex **)malloc(3*sizeof(fftwf_complex *));
-	out[0] = fftwf_alloc_complex(alloc_local);
-	out[1] = fftwf_alloc_complex(alloc_local);
-	out[2] = fftwf_alloc_complex(alloc_local);
-
-	// For the energy density
-	fftwf_complex *lambda_in = fftwf_alloc_complex(alloc_local);
-	fftwf_complex *lambda_out = fftwf_alloc_complex(alloc_local);
+		out[0] = fftwf_alloc_complex(alloc_local);
+		out[1] = fftwf_alloc_complex(alloc_local);
+		out[2] = fftwf_alloc_complex(alloc_local);
 
 	int nx = p.Lx/p.slicex;
 	int ny = p.Ly/p.slicey;
@@ -758,7 +908,6 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 	}
 
 	project_down(p, in, x_start, x_thickness, 3);
-
 	debug_write_power(p, in, x_start, x_thickness);
 
 	/*
@@ -898,53 +1047,6 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 	FFTW_FORWARD, FFTW_ESTIMATE);
 
 
-
-	for(x=x_start;x<x_start+x_thickness;x++) {
-		for(y=0;y<p.Ly;y++) {
-			for(z=0;z<p.Lz;z++) {
-
-				float kx, ky, kz;
-				fftwf_complex kiVki;
-
-				if(x+x_start > p.Lx/2) {
-					true_x = -(p.Lx - (x+x_start));
-				} else {
-					true_x = x+x_start;
-				}
-
-				if(y > p.Ly/2) {
-					true_y = -(p.Ly - y);
-				} else {
-					true_y = y;
-				}
-
-				if(z > p.Lz/2) {
-					true_z = -(p.Lz - z);
-				} else {
-					true_z = z;
-				}
-
-				kx = 2.0*sin(((float)(true_x))*M_PI/(((float)p.Lx)))/p.dx;
-				ky = 2.0*sin(((float)(true_y))*M_PI/(((float)p.Ly)))/p.dx;
-				kz = 2.0*sin(((float)(true_z))*M_PI/(((float)p.Lz)))/p.dx;
-
-
-				ksq = kx*kx+ky*ky+kz*kz;
-				kiVki[0] = kx * in[0][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0] + ky * in[1][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0] + kz * in[2][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0];
-				kiVki[1] = kx * in[0][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] + ky * in[1][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] + kz * in[2][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1];
-
-				if (ksq != 0){
-					lambda_in[(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0] = 4 / sqrt(3) * kiVki[0] / sqrt(ksq);
-					lambda_in[(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] = 4 / sqrt(3) * kiVki[1] / sqrt(ksq);
-
-				}
-
-			}
-		}
-	}
-
-
-
 	//  MPI_Barrier(MPI_COMM_WORLD);
 	//  printf0(p, "Done planning\n");
 
@@ -958,14 +1060,7 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 	fftwf_mpi_execute_dft(plan, in[1], out[1]);
 	fftwf_mpi_execute_dft(plan, in[2], out[2]);
 
-	plan = fftwf_mpi_plan_dft_3d(p.Lx, p.Ly, p.Lz,
-	lambda_in, lambda_out, MPI_COMM_WORLD,
-	FFTW_FORWARD, FFTW_ESTIMATE);
 
-	// Calculate the inverse fourier transform for the energy
-	fftwf_mpi_execute_dft(plan, lambda_in, lambda_out);
-
-	MPI_Barrier(MPI_COMM_WORLD);
 	//  printf0(p, "Done FFTing, example value %g %g\n", out[0][0][0], out[0][0][1]);
 
 	/*
@@ -1051,75 +1146,14 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 
 
 		halo_field(field[i], p);
+
 	}
 
-	// For the energy density
+	printf0(p,"Start the energy density initialization\n");
+	init_energy(p, f, in, x_start, x_thickness, map);
+	printf0(p,"Energy density initialized\n");
 
-	// prepare slice
-
-	for(x=0; x<x_thickness; x++) {
-		for(y=0; y<p.Ly; y++) {
-			for(z=0; z<p.Lz; z++) {
-				slice[x*p.Ly*p.Lz + y*p.Lz + z] = lambda_out[x*p.Ly*p.Lz + y*p.Lz + z][0];
-
-		}
-	}
-	}
-
-	//    fprintf(stderr,"maximag is %g\n", maximag);
-	MPI_Barrier(MPI_COMM_WORLD);
-
-
-	for(x=0; x<p.Lx; x++) {
-		// Check whether we are the source node for this slab
-		if(map[x] == p.rank) {
-			for(ry = 0; ry < ny; ry++) {
-
-				if((x/p.slicex == p.myposx) && (ry == p.myposy)) {
-
-					memcpy(&trim[(x-p.shiftx)*p.slicey*p.Lz],
-						&slice[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
-						p.slicey*p.Lz*sizeof(float));
-
-					continue;
-				}
-
-
-				MPI_Send(&slice[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
-					p.slicey*p.Lz,
-					MPI_FLOAT,
-					ry*nx + x/p.slicex,
-					x*ny + ry,
-					MPI_COMM_WORLD);
-
-			}
-		} else if((x >= p.shiftx) && (x < (p.shiftx + p.slicex))) {
-
-			MPI_Recv(&trim[(x-p.shiftx)*p.slicey*p.Lz],
-				p.slicey*p.Lz,
-				MPI_FLOAT,
-				map[x],
-				x*ny + p.myposy,
-				MPI_COMM_WORLD,
-				&status);
-
-		}
-	}
-
-
-	// untrim
-
-	for(x=1; x<=p.slicex; x++) {
-		for(y=1; y<=p.slicey; y++) {
-			for(z=0; z<p.Lz; z++) {
-				f.E[x][y][z] = exp(trim[(x-1)*p.slicey*p.Lz + (y-1)*p.Lz + z]);
-			}
-		}
-	}
-	halo_field(f.E, p);
-
-
-
+	free(map);
 	free(slice);
 	free(trim);
 
@@ -1134,8 +1168,6 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 	fftwf_free(in[2]);
 	fftwf_free(swap_in[2]);
 	fftwf_free(out[2]);
-	fftwf_free(lambda_in);
-	fftwf_free(lambda_out);
 
 	free(in);
 	free(out);
