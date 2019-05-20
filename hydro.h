@@ -698,6 +698,6 @@ void norm_power(hydro_fields f, hydro_params p, float ****field);
 void UtoZ(hydro_fields f, hydro_params p);
 float get_momtot(hydro_fields f, hydro_params p);
 float get_normal(float mean, float dev);
-void init_energy(hydro_params p, hydro_fields f, fftwf_complex **in, ptrdiff_t x_start, ptrdiff_t x_thickness, int* map);
+void init_energy(hydro_params p, hydro_fields f, fftwf_complex **in, ptrdiff_t x_start, ptrdiff_t x_thickness, int* map,ptrdiff_t alloc_local);
 
 #endif // FFT && !SCALAR
