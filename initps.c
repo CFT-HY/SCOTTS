@@ -267,7 +267,7 @@ void UtoZ(hydro_fields f, hydro_params p) {
  * For a rotational-free flow, the energy density is linked to the velocity field
  * For a divergence-free flow, the energy density is set to be constant
  */
-void init_energy(hydro_params p, hydro_fields f, fftwf_complex **in, ptrdiff_t x_start, ptrdiff_t x_thickness, int* map){
+void init_energy(hydro_params p, hydro_fields f, fftwf_complex **in, ptrdiff_t x_start, ptrdiff_t x_thickness, int* map, ptrdiff_t alloc_local){
 	int x, y, z;
 	// TODO : INITPSFILE_ALL
 
@@ -287,9 +287,6 @@ void init_energy(hydro_params p, hydro_fields f, fftwf_complex **in, ptrdiff_t x
 		ptrdiff_t n2 = p.Lz;
 		MPI_Status status;
 
-		ptrdiff_t alloc_local = fftwf_mpi_local_size_3d(n0, n1, n2,
-		   MPI_COMM_WORLD,
-		   &x_thickness, &x_start);
 		fftwf_complex *lambda_in = fftwf_alloc_complex(alloc_local);
 		fftwf_complex *lambda_out = fftwf_alloc_complex(alloc_local);
 		float *slice = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
@@ -310,7 +307,7 @@ void init_energy(hydro_params p, hydro_fields f, fftwf_complex **in, ptrdiff_t x
 			for(y=0;y<p.Ly;y++) {
 				for(z=0;z<p.Lz;z++) {
 
-					if(x+x_start > p.Lx/2) {
+					if(x > p.Lx/2) {
 						true_x = -(p.Lx - x);
 					} else {
 						true_x = x;
@@ -337,17 +334,17 @@ void init_energy(hydro_params p, hydro_fields f, fftwf_complex **in, ptrdiff_t x
 					kiVki[1] = kx * in[0][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] + ky * in[1][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] + kz * in[2][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1];
 
 					if (kmode != 0){
-						lambda_in[(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0] = 4 / sqrt(3) * kiVki[0] / kmode;
-						lambda_in[(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] = 4 / sqrt(3) * kiVki[1] / kmode;
+						lambda_in[(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0] = 4 / sqrt(3) * kiVki[1] / kmode;
+						lambda_in[(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] = - 4 / sqrt(3) * kiVki[0] / kmode;
 
 					}
 
 				}
 			}
 		}
-
+		MPI_Barrier(MPI_COMM_WORLD);
 		// Calculate the inverse fourier transform for the energy
-		fftwf_mpi_execute_dft(plan, lambda_in, lambda_out);
+		fftwf_execute(plan);
 		MPI_Barrier(MPI_COMM_WORLD);
 
 		// prepare slice
@@ -461,109 +458,109 @@ void project_down(hydro_params p, fftwf_complex **in, int shift_x, int x_thickne
 		// Project out divergenceless bit!
 		for(x=0;x<x_thickness;x++) {
 			for(y=0;y<p.Ly;y++) {
-			for(z=0;z<p.Lz;z++) {
+				for(z=0;z<p.Lz;z++) {
 
 
-			if(x+shift_x > p.Lx/2) {
-				true_x = -(p.Lx - (x+shift_x));
-			} else {
-				true_x = x+shift_x;
-			}
+					if(x+shift_x > p.Lx/2) {
+						true_x = -(p.Lx - (x+shift_x));
+					} else {
+						true_x = x+shift_x;
+					}
 
-			if(y > p.Ly/2) {
-				true_y = -(p.Ly - y);
-			} else {
-				true_y = y;
-			}
+					if(y > p.Ly/2) {
+						true_y = -(p.Ly - y);
+					} else {
+						true_y = y;
+					}
 
-			if(z > p.Lz/2) {
-				true_z = -(p.Lz - z);
-			} else {
-				true_z = z;
-			}
-
-
-			// kx = s_x*sqrt((2.0 - 2.0*cos(((float)(true_x))*2.0*M_PI/(((float)p.Lx))))/(p.dx*p.dx));
-			// ky = s_y*sqrt((2.0 - 2.0*cos(((float)(true_y))*2.0*M_PI/(((float)p.Ly))))/(p.dx*p.dx));
-			// kz = s_z*sqrt((2.0 - 2.0*cos(((float)(true_z))*2.0*M_PI/(((float)p.Lz))))/(p.dx*p.dx));
-
-			kx = 2.0*sin(((float)(true_x))*M_PI/(((float)p.Lx)))/p.dx;
-			ky = 2.0*sin(((float)(true_y))*M_PI/(((float)p.Ly)))/p.dx;
-			kz = 2.0*sin(((float)(true_z))*M_PI/(((float)p.Lz)))/p.dx;
-
-			in_proj_re[0] = 0.0;
-			in_proj_re[1] = 0.0;
-			in_proj_re[2] = 0.0;
-
-			in_proj_im[0] = 0.0;
-			in_proj_im[1] = 0.0;
-			in_proj_im[2] = 0.0;
-
-			if(p.initpsfile_type == INITPSFILE_ALL) {
-			// do nothing
-			} else {
-
-				for(i=1; i<=3; i++) {
-
-					res_re = 0.0;
-					res_im = 0.0;
-
-					for(j=1; j<=3; j++) {
-
-						if(p.initpsfile_type == INITPSFILE_ROT) {
-							//  Rot?
-							// v_i^\perp = P_{ij} v_j
-							// where P_{ij} = \delta_{ij} - \hat{k}_i \hat{k}_j
-							// and $\hat{k}$ is a unit vector in the $k$ direction.
-							in_proj_re[i-1] += vel_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-							in_proj_im[i-1] += vel_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+					if(z > p.Lz/2) {
+						true_z = -(p.Lz - z);
+					} else {
+						true_z = z;
+					}
 
 
-							// this is delta_{ij} - P_{ij}V_j
-							if(i == j) {
-								res_re += (1.0-vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-								res_im += (1.0-vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
-							} else {
-								res_re += (-1.0*vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-								res_im += (-1.0*vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+					// kx = s_x*sqrt((2.0 - 2.0*cos(((float)(true_x))*2.0*M_PI/(((float)p.Lx))))/(p.dx*p.dx));
+					// ky = s_y*sqrt((2.0 - 2.0*cos(((float)(true_y))*2.0*M_PI/(((float)p.Ly))))/(p.dx*p.dx));
+					// kz = s_z*sqrt((2.0 - 2.0*cos(((float)(true_z))*2.0*M_PI/(((float)p.Lz))))/(p.dx*p.dx));
+
+					kx = 2.0*sin(((float)(true_x))*M_PI/(((float)p.Lx)))/p.dx;
+					ky = 2.0*sin(((float)(true_y))*M_PI/(((float)p.Ly)))/p.dx;
+					kz = 2.0*sin(((float)(true_z))*M_PI/(((float)p.Lz)))/p.dx;
+
+					in_proj_re[0] = 0.0;
+					in_proj_re[1] = 0.0;
+					in_proj_re[2] = 0.0;
+
+					in_proj_im[0] = 0.0;
+					in_proj_im[1] = 0.0;
+					in_proj_im[2] = 0.0;
+
+					if(p.initpsfile_type == INITPSFILE_ALL) {
+					// do nothing
+					} else {
+
+						for(i=1; i<=3; i++) {
+
+							res_re = 0.0;
+							res_im = 0.0;
+
+							for(j=1; j<=3; j++) {
+
+								if(p.initpsfile_type == INITPSFILE_ROT) {
+									//  Rot?
+									// v_i^\perp = P_{ij} v_j
+									// where P_{ij} = \delta_{ij} - \hat{k}_i \hat{k}_j
+									// and $\hat{k}$ is a unit vector in the $k$ direction.
+									in_proj_re[i-1] += vel_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+									in_proj_im[i-1] += vel_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+
+
+									// this is delta_{ij} - P_{ij}V_j
+									if(i == j) {
+										res_re += (1.0-vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+										res_im += (1.0-vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+									} else {
+										res_re += (-1.0*vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+										res_im += (-1.0*vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+									}
+
+
+								} else if(p.initpsfile_type == INITPSFILE_DIV) {
+
+									// Div?
+									// v_i^\parallel = (\delta_{ij} - P_{ij}) v_j
+									if(i == j) {
+										in_proj_re[i-1] += (1.0-vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+										in_proj_im[i-1] += (1.0-vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+									} else {
+										in_proj_re[i-1] += (-1.0*vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+										in_proj_im[i-1] += (-1.0*vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+									}
+									// #endif
+
+									res_re += vel_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+									res_im += vel_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+
+								}
+
 							}
-
-
-						} else if(p.initpsfile_type == INITPSFILE_DIV) {
-
-							// Div?
-							// v_i^\parallel = (\delta_{ij} - P_{ij}) v_j
-							if(i == j) {
-								in_proj_re[i-1] += (1.0-vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-								in_proj_im[i-1] += (1.0-vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
-							} else {
-								in_proj_re[i-1] += (-1.0*vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-								in_proj_im[i-1] += (-1.0*vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
-							}
-							// #endif
-
-							res_re += vel_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-							res_im += vel_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
-
+							stuff += in_proj_re[i-1]*in_proj_re[i-1] + in_proj_im[i-1]*in_proj_im[i-1];
+							resid += res_re*res_re + res_im*res_im;
 						}
 
+
+						in[0][x*p.Ly*p.Lz + y*p.Lz + z][0] = in_proj_re[0];
+						in[1][x*p.Ly*p.Lz + y*p.Lz + z][0] = in_proj_re[1];
+						in[2][x*p.Ly*p.Lz + y*p.Lz + z][0] = in_proj_re[2];
+
+						in[0][x*p.Ly*p.Lz + y*p.Lz + z][1] = in_proj_im[0];
+						in[1][x*p.Ly*p.Lz + y*p.Lz + z][1] = in_proj_im[1];
+						in[2][x*p.Ly*p.Lz + y*p.Lz + z][1] = in_proj_im[2];
 					}
-					stuff += in_proj_re[i-1]*in_proj_re[i-1] + in_proj_im[i-1]*in_proj_im[i-1];
-					resid += res_re*res_re + res_im*res_im;
+
 				}
-
-
-				in[0][x*p.Ly*p.Lz + y*p.Lz + z][0] = in_proj_re[0];
-				in[1][x*p.Ly*p.Lz + y*p.Lz + z][0] = in_proj_re[1];
-				in[2][x*p.Ly*p.Lz + y*p.Lz + z][0] = in_proj_re[2];
-
-				in[0][x*p.Ly*p.Lz + y*p.Lz + z][1] = in_proj_im[0];
-				in[1][x*p.Ly*p.Lz + y*p.Lz + z][1] = in_proj_im[1];
-				in[2][x*p.Ly*p.Lz + y*p.Lz + z][1] = in_proj_im[2];
 			}
-
-		}
-		}
 		}
 
 		if(!p.rank)
@@ -1150,7 +1147,7 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 	}
 
 	printf0(p,"Start the energy density initialization\n");
-	init_energy(p, f, in, x_start, x_thickness, map);
+	init_energy(p, f, in, x_start, x_thickness, map, alloc_local);
 	printf0(p,"Energy density initialized\n");
 
 	free(map);
