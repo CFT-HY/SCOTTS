@@ -115,13 +115,14 @@ int main(int argc, char *argv[]) {
   //  float cpts[TENSOR_CPTS];
 
   float initial_energy, current_energy;
-  float initial_field_energy, current_field_energy;
-  float current_kinetic, current_gradient_energy, current_rest;
+  float initial_field_energy, current_field_energy, current_kinetic_field;
+  float current_kinetic_fluid, current_gradient_energy, current_rest;
   float current_avgpress;
   float current_veltot;
   float gwen;
   float s_max;
   float gamma_max;
+  float Tvort_tot;
 
   // Timing counters
   float cpu_time_used;
@@ -205,7 +206,6 @@ int main(int argc, char *argv[]) {
 	start = clock();
 	printf0(p, "Nucleating first bubble\n");
 	nucleate_at(f,p,0,0,0);
-	halo_field(f.phi,p);
 
 	end = clock();
 	if(!p.rank)
@@ -235,7 +235,6 @@ int main(int argc, char *argv[]) {
 
 	printf0(p, "Nucleating just one bubble\n");
 	nucleate_at(f,p,0,0,0);
-	halo_field(f.phi,p);
 	bcount+=1;
       } else{
 	// Empty system
@@ -368,7 +367,6 @@ int main(int argc, char *argv[]) {
       }
       else{
 	still_nucleate = try_nucleate(f, p);
-
 	bcount += still_nucleate;
 	i++;
       }
@@ -415,9 +413,13 @@ int main(int argc, char *argv[]) {
       }
 
       // Power spectrum of scalar field
-      fft_field(f, p, f.phi, step);
+      fft_field(p, f.phi, "phi", step);
 
 #ifndef SCALAR
+
+      // Power spectrum of internal energy e=E/W
+      fft_e(f, p, "e", step);
+
       // Velocity power spectrum
       fft_vel(f, p, step, f.V);
       //      fft_vel(f, p, 100 + step, f.Z);
@@ -445,31 +447,35 @@ int main(int argc, char *argv[]) {
     if((p.interval > 0) && (step % p.interval == 0)) {
 
       current_energy = reduce_sum(total_energy(f, p), p);
-      current_kinetic = reduce_sum(kinetic_energy(f, p), p);
+      current_kinetic_fluid = reduce_sum(kinetic_energy_fluid(f, p), p);
+      current_kinetic_field = reduce_sum(kinetic_energy_field(f, p), p);
       current_rest = reduce_sum(rest_energy(f, p), p);
       current_avgpress = reduce_sum(avg_pressure(f, p), p);
       current_field_energy = reduce_sum(field_energy(f, p), p);
-      current_gradient_energy = reduce_sum(gradient_energy(f, p), p);
+      current_gradient_energy = reduce_sum(gradient_energy_field(f, p), p);
       current_veltot = reduce_sum(get_veltot(f, p), p)
 	/((float)(p.Lx*p.Ly*p.Lz));
       s_max = reduce_max(get_s_max(f, p), p);
       gamma_max = reduce_max(get_gamma_max(f, p), p);
+      Tvort_tot =  reduce_sum(get_Tvort_tot(f,p),p);
 
       if(!p.rank) {
-	printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf\t%6lf\t%6lf\t%6lf\n",
-		step,
-		t,
-		current_energy,
-		current_kinetic,
-		current_field_energy,
-		current_gradient_energy,
-		current_veltot,
-		gwen,
-		bcount,
-		current_rest,
-		current_avgpress,
-		s_max,
-		gamma_max);
+	printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\n",
+	       step,
+	       t,
+	       current_energy,
+	       current_kinetic_fluid,
+	       current_field_energy,
+	       current_gradient_energy,
+	       current_veltot,
+	       gwen,
+	       bcount,
+	       current_rest,
+	       current_avgpress,
+	       s_max,
+	       gamma_max,
+	       Tvort_tot,
+	       current_kinetic_field);
       }
 
       // Statement of energy violation (not shown; better to use KE)
@@ -546,23 +552,24 @@ int main(int argc, char *argv[]) {
 
 
   current_energy = reduce_sum(total_energy(f, p), p);
-  current_kinetic = reduce_sum(kinetic_energy(f, p), p);
+  current_kinetic_fluid = reduce_sum(kinetic_energy_fluid(f, p), p);
+  current_kinetic_field = reduce_sum(kinetic_energy_field(f, p), p);
   current_rest = reduce_sum(rest_energy(f, p), p);
   current_avgpress = reduce_sum(avg_pressure(f, p), p);
   current_field_energy = reduce_sum(field_energy(f, p), p);
-  current_gradient_energy = reduce_sum(gradient_energy(f, p), p);
+  current_gradient_energy = reduce_sum(gradient_energy_field(f, p), p);
   current_veltot = reduce_sum(get_veltot(f, p), p)
     /((float)(p.Lx*p.Ly*p.Lz));
   s_max = reduce_max(get_s_max(f, p), p);
   gamma_max = reduce_max(get_gamma_max(f, p), p);
-
+  Tvort_tot = reduce_sum(get_Tvort_tot(f, p), p);
 
   if(!p.rank) {
-    printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf\t%6lf\t%6lf\t%6lf\n",
+    printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\n",
 	   step,
 	   t,
 	   current_energy,
-	   current_kinetic,
+	   current_kinetic_fluid,
 	   current_field_energy,
 	   current_gradient_energy,
 	   current_veltot,
@@ -571,7 +578,9 @@ int main(int argc, char *argv[]) {
 	   current_rest,
 	   current_avgpress,
 	   s_max,
-	   gamma_max);
+	   gamma_max,
+	   Tvort_tot,
+	   current_kinetic_field);
   }
 
 
