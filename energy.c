@@ -31,10 +31,10 @@ float field_energy(hydro_fields f, hydro_params p) {
 	
 	a += 0.5*f.pi_future[x][y][z]*f.pi_future[x][y][z]*vol;
 
-	a += 0.5*((f.phi[x+1][y][z] - f.phi[x][y][z])/p.dx)
+	b += 0.5*((f.phi[x+1][y][z] - f.phi[x][y][z])/p.dx)
 	  *((f.phi[x+1][y][z] - f.phi[x][y][z])/p.dx)*vol;
 	
-	a += 0.5*((f.phi[x][y+1][z] - f.phi[x][y][z])/p.dx)
+	b += 0.5*((f.phi[x][y+1][z] - f.phi[x][y][z])/p.dx)
 	  *((f.phi[x][y+1][z] - f.phi[x][y][z])/p.dx)*vol;
 	
 	b += 0.5*((f.phi[x][y][(z+1)%p.Lz] - f.phi[x][y][z])/p.dx)
@@ -68,7 +68,7 @@ float field_energy(hydro_fields f, hydro_params p) {
  * Note that this does _not_ currently sum over all sites, only those
  * on the current node.
  */
-float gradient_energy(hydro_fields f, hydro_params p) {
+float gradient_energy_field(hydro_fields f, hydro_params p) {
 
   int x, y, z;
 
@@ -100,7 +100,34 @@ float gradient_energy(hydro_fields f, hydro_params p) {
   return Etot;
 }
 
+/** Computes the kinetic energy in the scalar field.
+ *
+ * Note that this does _not_ currently sum over all sites, only those
+ * on the current node.
+ */
+float kinetic_energy_field(hydro_fields f, hydro_params p) {
 
+  int x, y, z;
+
+  float vol;
+
+  float Etot = 0.0;
+
+
+  vol = p.dx*p.dx*p.dx;
+
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+
+	Etot += 0.5*f.pi_future[x][y][z]*f.pi_future[x][y][z]*vol;
+	
+      }
+    }
+  }
+  
+  return Etot;
+}
 
 /** Compute the total internal energy of the system.
  *
@@ -174,7 +201,7 @@ float total_energy(hydro_fields f, hydro_params p) {
  *
  * NB: This function does _not_ currently sum over all sites.
  */
-float kinetic_energy(hydro_fields f, hydro_params p) {
+float kinetic_energy_fluid(hydro_fields f, hydro_params p) {
 
   int x, y, z;
 
@@ -511,5 +538,57 @@ void energy_density(hydro_fields f, hydro_params p, float ***en) {
 
 
 }
-    
-			    
+
+/** Compute total Tvort^2 (for calculating T enstrophy).
+ *
+ */
+float get_Tvort_tot(hydro_fields f, hydro_params p){
+#ifndef SCALAR
+  int x, y, z;
+
+  float ****Tvel = make_vector(p);
+
+  float Tvort_tot = 0;
+  float vol=p.dx*p.dx*p.dx;
+
+  // Construct T velocity (centered at cell)
+
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+
+	Tvel[0][x][y][z] = 0.5*(f.V[0][x][y][z] + f.V[0][x+1][y][z]
+				)*f.T[x][y][z]*f.W[x][y][z];
+	Tvel[1][x][y][z] = 0.5*(f.V[1][x][y][z] + f.V[1][x][y+1][z]
+				)*f.T[x][y][z]*f.W[x][y][z];
+	Tvel[2][x][y][z] = 0.5*(f.V[2][x][y][z] + f.V[2][x][y][(z+1)%p.Lz]
+				)*f.T[x][y][z]*f.W[x][y][z];
+      }
+    }
+  }
+
+  halo_field(Tvel[0], p);
+  halo_field(Tvel[1], p);
+  halo_field(Tvel[2], p);
+
+  
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+	Tvort_tot += pow((Tvel[2][x][y+1][z] - Tvel[2][x][y-1][z]
+			  - Tvel[1][x][y][(z+1)%p.Lz]
+			  + Tvel[1][x][y][(z-1+p.Lz)%p.Lz])/(2*p.dx),2)*vol;
+	Tvort_tot += pow((Tvel[0][x][y][(z+1)%p.Lz]
+			  - Tvel[0][x][y][(z-1+p.Lz)%p.Lz]
+			  - Tvel[2][x+1][y][z] + Tvel[2][x-1][y][z])/(2*p.dx),2)*vol;
+	Tvort_tot += pow((Tvel[1][x+1][y][z] - Tvel[1][x-1][y][z]
+			  - Tvel[0][x][y+1][z] + Tvel[0][x][y-1][z])/(2*p.dx),2)*vol;
+      }
+    }
+  }
+  free_vector(p, Tvel);
+  return Tvort_tot;
+#else
+  return 0
+#endif //!SCALAR
+}
