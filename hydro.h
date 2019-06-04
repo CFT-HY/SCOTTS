@@ -661,9 +661,9 @@ float minof2(float a, float b);
 
 #ifdef FFT
 // fft.c
-void fft_field(hydro_params p, float ***field, char *label, int step);
+void fft_field(hydro_params p, float ***field, int step, char *label);
 #ifndef SCALAR
-void fft_e(hydro_fields f, hydro_params p, char *label, int step);
+void fft_e(hydro_fields f, hydro_params p, int step, char *label);
 #endif //!SCALAR
 
 // uetc.c
@@ -677,9 +677,14 @@ float fft_tensor(hydro_fields f, hydro_params p, int step,
 int indexof(int i, int j);
 float lambda(int i, int j, int l, int m, float kx, float ky, float kz);
 
-// velps.c
-float vel_proj(int T, float kx, float ky, float kz);
-void fft_vel(hydro_fields f, hydro_params p, int step, float ****vectorfield);
+// vectorps.c
+float vectorproj(int T, float kx, float ky, float kz);
+void fft_vec(hydro_params p, int step, float ****vectorfield,char *label);
+void split_and_power(hydro_params p, int x_start, int slab,
+		     float *product, float *product_div, float *product_tot,
+		     fftwf_complex **vk);
+void histogram(hydro_params p, float *slice, char *filename,
+	       int slab, int x_start);
 
 #endif // FFT
 

@@ -407,15 +407,15 @@ int main(int argc, char *argv[]) {
       }      
 
       // Power spectrum of scalar field
-      fft_field(p, f.phi, "phi", step);
+      fft_field(p, f.phi, step, "phi");
       
 #ifndef SCALAR
       
       // Power spectrum of internal energy e=E/W
-      fft_e(f, p, "e", step);
+      fft_e(f, p, step,"e");
       
       // Velocity power spectrum
-      fft_vel(f, p, step, f.V);
+      fft_vec(p, step, f.V, "vel");
 #endif //!SCALAR
 
       // Gravitational wave power spectrum (returns GW energy)
@@ -527,7 +527,7 @@ int main(int argc, char *argv[]) {
     if(step == p.steps - 1) {
 
 #ifndef SCALAR
-      fft_vel(f, p, step, f.V);
+      fft_vec(p, step, f.V, "vel");
 #endif // !SCALAR
 
       fft_tensor(f,p,step,current_energy);
@@ -584,7 +584,7 @@ int main(int argc, char *argv[]) {
 #ifdef FFT
 
 #ifndef SCALAR
-  fft_vel(f,p,step,f.V);
+  fft_vec(p,step,f.V,"vel");
 #endif // !SCALAR
 
   fft_tensor(f,p,step,current_energy);
