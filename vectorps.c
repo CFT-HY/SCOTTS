@@ -1,6 +1,7 @@
-/** @file velps.c
+/** @file vectorps.c
  *
- * Fourier transform and velocity/vorticity power spectrum.
+ * Fourier transform a vector and then find transverse/longitudinal
+ * power spectrum.
  *
  * The gravitational wave power spectrum is in gw.c,
  * and a generic field power spectrum calculation is in fft.c.
@@ -11,10 +12,9 @@
 #ifdef FFT
 
 
-/** Calculate the projector for the transverse component of the
- * velocity.
+/** Calculate the projector for the transverse component of the vector.
  */
-float vel_proj(int T, float kx, float ky, float kz) {
+float vec_proj(int T, float kx, float ky, float kz) {
 
   float mag = sqrt(kx*kx + ky*ky + kz*kz);
 
@@ -60,7 +60,7 @@ float vel_proj(int T, float kx, float ky, float kz) {
 
   default:
     fprintf(stderr,
-	    "Unknown velocity projector element! Nonsense will ensue...\n");
+	    "Unknown vector projector element! Nonsense will ensue...\n");
 
   }
 
@@ -150,21 +150,21 @@ void split_and_power(hydro_params p, int x_start, int slab,
           for(j=1; j<=3; j++) {
 
 	    // Transverse components
-	    res_r += vel_proj(i*10 + j, kx, ky, kz)
+	    res_r += vec_proj(i*10 + j, kx, ky, kz)
 	      *vk[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-	    res_i += vel_proj(i*10 + j, kx, ky, kz)
+	    res_i += vec_proj(i*10 + j, kx, ky, kz)
 	      *vk[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 
 	    // And longitudinal...
 	    if(i == j) {
-	    resid_r += (1.0 - vel_proj(i*10 + j, kx, ky, kz))
+	    resid_r += (1.0 - vec_proj(i*10 + j, kx, ky, kz))
 	      *vk[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-	    resid_i += (1.0 - vel_proj(i*10 + j, kx, ky, kz))
+	    resid_i += (1.0 - vec_proj(i*10 + j, kx, ky, kz))
 	      *vk[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 	    } else {
-	    resid_r += (-1.0*vel_proj(i*10 + j, kx, ky, kz))
+	    resid_r += (-1.0*vec_proj(i*10 + j, kx, ky, kz))
 	      *vk[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-	    resid_i += (-1.0*vel_proj(i*10 + j, kx, ky, kz))
+	    resid_i += (-1.0*vec_proj(i*10 + j, kx, ky, kz))
 	      *vk[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 	    }
 	  }
@@ -299,10 +299,10 @@ void histogram(hydro_params p, float *slice, char *filename,
 
 
 
-/** Main method. Calculate the velocity power spectrum.
+/** Main method. Calculate the vector power spectrum.
  *
  */
-void fft_vel(hydro_fields f, hydro_params p, int step, float ****vectorfield) {
+void fft_vec(hydro_params p, int step, float ****vectorfield, char *label) {
 
 #ifndef SCALAR
   ptrdiff_t x_thickness, x_start, alloc_local;
@@ -325,7 +325,7 @@ void fft_vel(hydro_fields f, hydro_params p, int step, float ****vectorfield) {
 
   float *trim = (float *)malloc(p.slicex*p.slicey*p.Lz*sizeof(float));
 
-  printf0(p, "Starting velocity power spectrum FFT calculation.\n");
+  printf0(p, "Starting %s power spectrum FFT calculation.\n",label);
 
   float start = clock();
 
@@ -487,7 +487,7 @@ void fft_vel(hydro_fields f, hydro_params p, int step, float ****vectorfield) {
 
     float total = 0.0;
 
-    printf0(p, "Vel FFT: Done slicing for cpt %d\n", i);
+    printf0(p, "%s FFT: Done slicing for cpt %d\n",label, i);
 
     for(x=0;x<x_thickness;x++) {
       for(y=0;y<p.Ly;y++) {
@@ -533,11 +533,11 @@ void fft_vel(hydro_fields f, hydro_params p, int step, float ****vectorfield) {
 
   char fftdest[200];
 
-  sprintf(fftdest,"rot-ps-step%d.txt", step);
+  sprintf(fftdest,"%s-rot-ps-step%d.txt", label,step);
   histogram(p, slice, fftdest, x_thickness, x_start);
-  sprintf(fftdest,"div-ps-step%d.txt", step);
+  sprintf(fftdest,"%s-div-ps-step%d.txt", label,step);
   histogram(p, slice_div, fftdest, x_thickness, x_start);
-  sprintf(fftdest,"tot-ps-step%d.txt", step);
+  sprintf(fftdest,"%s-tot-ps-step%d.txt", label,step);
   histogram(p, slice_tot, fftdest, x_thickness, x_start);
 
 
@@ -561,7 +561,7 @@ void fft_vel(hydro_fields f, hydro_params p, int step, float ****vectorfield) {
 
   float end = clock();
 
-  printf0(p, "Velocity power spectrum FFT calculation took %lf\n",
+  printf0(p, "%s power spectrum FFT calculation took %lf\n", label,
 	  ((float) (end - start)) / CLOCKS_PER_SEC);
 
 #endif // SCALAR
