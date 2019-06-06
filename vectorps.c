@@ -302,9 +302,8 @@ void histogram(hydro_params p, float *slice, char *filename,
 /** Main method. Calculate the vector power spectrum.
  *
  */
-void fft_vec(hydro_params p, int step, float ****vectorfield, char *label) {
+void fft_vec(float ****vectorfield, hydro_params p, int step, char *label) {
 
-#ifndef SCALAR
   ptrdiff_t x_thickness, x_start, alloc_local;
 
   ptrdiff_t n0 = p.Lx;
@@ -563,11 +562,98 @@ void fft_vec(hydro_params p, int step, float ****vectorfield, char *label) {
 
   printf0(p, "%s power spectrum FFT calculation took %lf\n", label,
 	  ((float) (end - start)) / CLOCKS_PER_SEC);
+}
 
-#endif // SCALAR
+/** Calculate power spectrum of temperature current \f$ J^{i}=T U^{i} \f$.
+ *
+ */
+void fft_J(hydro_fields f, hydro_params p, int step, char *label){
+#ifndef SCALAR
+  int x, y, z, i;
+  float ****J = make_vector(p);
+  float Tnode;
+
+  // Construct temperature current.
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+	Tnode = 0.125*(f.T[x][y][z] + f.T[x-1][y][z]
+		       + f.T[x][y-1][z] + f.T[x][y][(z-1+p.Lz)%p.Lz]
+		       + f.T[x-1][y-1][z] + f.T[x-1][y][(z-1+p.Lz)%p.Lz]
+		       + f.T[x][y-1][(z-1+p.Lz)%p.Lz]
+		       + f.T[x-1][y-1][(z-1+p.Lz)%p.Lz]
+		       );
+	for(i =0; i < 3; i++){
+	  J[i][x][y][z] = f.U[i][x][y][z]*Tnode;
+	}
+      }
+    }
+  }
+
+  halo_field(J[0], p);
+  halo_field(J[1], p);
+  halo_field(J[2], p);
+
+  fft_vec(J, p, step, label);
+  
+  free_vector(p, J);
+    
+    
+#endif //!SCALAR
 }
 
 
+/** Calculate power spectrum of \f$ X^{i}=\sqrt{w}U^{i} \f$.
+ *
+ */
+void fft_X(hydro_fields f, hydro_params p, int step, char *label){
+#ifndef SCALAR
+  int x, y, z, i;
+  float ****X = make_vector(p);
+  float sqrt_enth_node;
 
+  // Construct X vector.
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+	sqrt_enth_node = pow((f.kappa[x][y][z]*f.E[x][y][z]
+			      /f.W[x][y][z]
+			      + f.kappa[x-1][y][z]*f.E[x-1][y][z]
+			      /f.W[x-1][y][z]
+			      + f.kappa[x][y-1][z]*f.E[x][y-1][z]
+			      /f.W[x][y-1][z]
+			      + f.kappa[x][y][(z-1+p.Lz)%p.Lz]
+			      *f.E[x][y][(z-1+p.Lz)%p.Lz]
+			      /f.W[x][y][(z-1+p.Lz)%p.Lz]
+			      + f.kappa[x-1][y-1][z]*f.E[x-1][y-1][z]
+			      /f.W[x-1][y-1][z]
+			      + f.kappa[x-1][y][(z-1+p.Lz)%p.Lz]
+			      *f.E[x-1][y][(z-1+p.Lz)%p.Lz]
+			      /f.W[x-1][y][(z-1+p.Lz)%p.Lz]
+			      + f.kappa[x][y-1][(z-1+p.Lz)%p.Lz]
+			      *f.E[x][y-1][(z-1+p.Lz)%p.Lz]
+			      /f.W[x][y-1][(z-1+p.Lz)%p.Lz]
+			      + f.kappa[x-1][y-1][(z-1+p.Lz)%p.Lz]
+			      *f.E[x-1][y-1][(z-1+p.Lz)%p.Lz]
+			      /f.W[x-1][y-1][(z-1+p.Lz)%p.Lz]
+			      )*0.125, 0.5);
+	for(i =0; i < 3; i++){
+	  X[i][x][y][z] = sqrt_enth_node*f.U[i][x][y][z];
+	}
+      }
+    }
+  }
+
+  halo_field(X[0], p);
+  halo_field(X[1], p);
+  halo_field(X[2], p);
+  
+  fft_vec(X, p, step, label);
+  
+  free_vector(p, X);
+    
+    
+#endif //!SCALAR
+}
 
 #endif // FFT
