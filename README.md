@@ -3,6 +3,7 @@
 Papers using/describing this code:
 https://arxiv.org/abs/1511.04527
 https://arxiv.org/abs/1704.05871
+https://arxiv.org/abs/1906.00480
 
 ## The model 
 
