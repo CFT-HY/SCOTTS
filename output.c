@@ -105,6 +105,85 @@ float get_veltot(hydro_fields f, hydro_params p) {
 #endif
 }
 
+/** Find number of sites in the broken phase.
+ */
+long long get_N_broken(hydro_fields f, hydro_params p){
+  int x, y, z;
+  long long N_broken = 0;
+  float phi_broken;
+  
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+#ifdef BAG
+	if(f.phi[x][y][z] > p.phi_0/2.){
+	  N_broken += 1;
+	}
+#else
+	phi_broken =  (p.alpha*f.T[x][y][z]
+		       + sqrt((p.alpha*p.Tconst)*(p.alpha*f.T[x][y][z])
+			      - 4.0*p.lambda*p.gamma
+			      *(f.T[x][y][z]*f.T[x][y][z] - p.T0*p.T0))
+		       )/(2.0*p.lambda);
+
+	if(f.phi[x][y][z] > phi_broken/2.){
+	  N_broken += 1;
+	}
+#endif
+      }
+    }
+  }
+
+  return N_broken;
+
+}
+
+/** Find number of links between broken and symmetric phase.
+ */
+long long get_broken_links(hydro_fields f, hydro_params p){
+  int x, y, z;
+  long long N_links = 0;
+  float phi_broken;
+  
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+#ifdef BAG
+	if((f.phi[x+1][y][z] - p.phi_0/2.)*(f.phi[x][y][z] - p.phi_0/2.) < 0){
+	  N_links += 1;
+	}
+	if((f.phi[x][y+1][z] - p.phi_0/2.)*(f.phi[x][y][z] - p.phi_0/2.) < 0){
+	  N_links += 1;
+	}
+	if((f.phi[x][y][(z+1)%p.Lz] - p.phi_0/2.)
+	   *(f.phi[x][y][z] - p.phi_0/2.) < 0){
+	  N_links += 1;
+	}
+#else
+	phi_broken =  (p.alpha*f.T[x][y][z]
+		       + sqrt((p.alpha*p.Tconst)*(p.alpha*f.T[x][y][z])
+			      - 4.0*p.lambda*p.gamma
+			      *(f.T[x][y][z]*f.T[x][y][z] - p.T0*p.T0))
+		       )/(2.0*p.lambda);
+	if((f.phi[x+1][y][z] - phi_broken/2.)
+	   *(f.phi[x][y][z] - phi_broken/2.) < 0){
+	  N_links += 1;
+	}
+	if((f.phi[x][y+1][z] - phi_broken/2.)
+	   *(f.phi[x][y][z] - phi_broken/2.) < 0){
+	  N_links += 1;
+	}
+	if((f.phi[x][y][(z+1)%p.Lz] - phi_broken/2.)
+	   *(f.phi[x][y][z] - phi_broken/2.) < 0){
+	  N_links += 1;
+	}
+#endif // BAG
+      }
+    }
+  }
+
+  return N_links;
+}
 
 /** Dumps a field to stderr. Expects field to have N entries.
  * For debugging purposes...

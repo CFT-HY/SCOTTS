@@ -122,6 +122,9 @@ int main(int argc, char *argv[]) {
   float s_max;
   float gamma_max;
   float Tvort_tot;
+  float Jdiv_tot;
+  long long N_broken;
+  long long N_links;
   
   // Timing counters
   float cpu_time_used;
@@ -454,9 +457,13 @@ int main(int argc, char *argv[]) {
       s_max = reduce_max(get_s_max(f, p), p);
       gamma_max = reduce_max(get_gamma_max(f, p), p);
       Tvort_tot =  reduce_sum(get_Tvort_tot(f,p),p);
+      Jdiv_tot = reduce_sum(get_Jdiv_tot(f,p), p);
+      N_broken = reduce_sum(get_N_broken(f,p), p);
+      N_links = reduce_sum(get_broken_links(f,p), p);
       
       if(!p.rank) {
-	printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\n",
+	printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf"
+	       "\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%lli\t%lli\n",
 	       step,
 	       t,
 	       current_energy,
@@ -471,7 +478,10 @@ int main(int argc, char *argv[]) {
 	       s_max,
 	       gamma_max,
 	       Tvort_tot,
-	       current_kinetic_field);
+	       current_kinetic_field,
+	       Jdiv_tot,
+	       N_broken,
+	       N_links);
       }
 
       // Statement of energy violation (not shown; better to use KE)
@@ -561,9 +571,13 @@ int main(int argc, char *argv[]) {
   s_max = reduce_max(get_s_max(f, p), p);
   gamma_max = reduce_max(get_gamma_max(f, p), p);
   Tvort_tot = reduce_sum(get_Tvort_tot(f, p), p);
-  
+  Jdiv_tot = reduce_sum(get_Jdiv_tot(f,p), p);
+  N_broken = reduce_sum(get_N_broken(f,p), p);
+  N_links = reduce_sum(get_broken_links(f,p), p);
+      
   if(!p.rank) {
-    printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\n",
+    printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf\t%6lf"
+	   "\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%lli\t%lli\n",
 	   step,
 	   t,
 	   current_energy,
@@ -578,7 +592,10 @@ int main(int argc, char *argv[]) {
 	   s_max,
 	   gamma_max,
 	   Tvort_tot,
-	   current_kinetic_field);
+	   current_kinetic_field,
+	   Jdiv_tot,
+	   N_broken,
+	   N_links);
   }
 
 
