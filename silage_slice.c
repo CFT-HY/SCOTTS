@@ -206,12 +206,12 @@ void make_vel(hydro_fields f, hydro_params p, float ***temp) {
     for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
    
-	temp[x][y][z] = sqrt(0.5*((f.V[0][x][y][z] + f.V[0][x+1][y][z])
-				  *(f.V[0][x][y][z] + f.V[0][x+1][y][z])	  
-				  + (f.V[1][x][y][z] + f.V[1][x][y+1][z])
-				  *(f.V[1][x][y][z] + f.V[1][x][y+1][z])
-				  + (f.V[2][x][y][z] + f.V[2][x][y][z+1])
-				  *(f.V[2][x][y][z] + f.V[2][x][y][z+1])));
+	temp[x][y][z] = sqrt(0.25*((f.V[0][x][y][z] + f.V[0][x+1][y][z])
+				   *(f.V[0][x][y][z] + f.V[0][x+1][y][z])	  
+				   + (f.V[1][x][y][z] + f.V[1][x][y+1][z])
+				   *(f.V[1][x][y][z] + f.V[1][x][y+1][z])
+				   + (f.V[2][x][y][z] + f.V[2][x][y][z+1])
+				   *(f.V[2][x][y][z] + f.V[2][x][y][z+1])));
         
       }
     }
