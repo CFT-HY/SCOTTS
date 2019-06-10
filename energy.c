@@ -539,7 +539,7 @@ void energy_density(hydro_fields f, hydro_params p, float ***en) {
 
 }
 
-/** Compute total Tvort^2 (for calculating T enstrophy).
+/** Compute total Tvort^2 on CPU (for calculating T enstrophy).
  *
  */
 float get_Tvort_tot(hydro_fields f, hydro_params p){
@@ -589,6 +589,54 @@ float get_Tvort_tot(hydro_fields f, hydro_params p){
   free_vector(p, Tvel);
   return Tvort_tot;
 #else
-  return 0
+  return 0;
+#endif //!SCALAR   
+}
+
+/** Compute total divergence of temperature current on current CPU
+ * (div J)^2 .
+ *
+ */
+float get_Jdiv_tot(hydro_fields f, hydro_params p){
+#ifndef SCALAR
+  int x, y, z;
+  float ****J = make_vector(p);
+  float Jdiv_tot = 0;
+
+  // Construct temperature current (centered at cell)
+
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+
+	J[0][x][y][z] = 0.5*(f.V[0][x][y][z] + f.V[0][x+1][y][z]
+				)*f.T[x][y][z]*f.W[x][y][z];
+	J[1][x][y][z] = 0.5*(f.V[1][x][y][z] + f.V[1][x][y+1][z]
+				)*f.T[x][y][z]*f.W[x][y][z];
+	J[2][x][y][z] = 0.5*(f.V[2][x][y][z] + f.V[2][x][y][(z+1)%p.Lz]
+				)*f.T[x][y][z]*f.W[x][y][z];
+      }
+    }
+  }
+
+  halo_field(J[0], p);
+  halo_field(J[1], p);
+  halo_field(J[2], p);
+
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+	Jdiv_tot += pow((J[0][x+1][y][z] - J[0][x][y][z]
+			 + J[1][x][y+1][z] - J[1][x][y][z]
+			 + J[2][x][y][z+1] - J[2][x][y][z])/p.dx,2);
+      }
+    }
+  }
+
+  free_vector(p, J);
+  return Jdiv_tot;
+  
+#else
+  return 0;
 #endif //!SCALAR
 }

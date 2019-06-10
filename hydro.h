@@ -585,6 +585,7 @@ void stress_energy(hydro_fields f, hydro_params p, float ****Tij);
 float avg_pressure(hydro_fields f, hydro_params p);
 float tzerozero(hydro_fields f, hydro_params p);
 float get_Tvort_tot(hydro_fields f, hydro_params p);
+float get_Jdiv_tot(hydro_fields f, hydro_params p);
 
 // eos.c
 
@@ -618,6 +619,8 @@ void fluid_sphere(hydro_fields f, hydro_params p);
 float get_gamma_max(hydro_fields f, hydro_params p);
 float get_s_max(hydro_fields f, hydro_params p);
 float get_veltot(hydro_fields f, hydro_params p);
+long long get_N_broken(hydro_fields f, hydro_params p);
+long long get_broken_links(hydro_fields f, hydro_params p);
 void dump(float *field, hydro_params p);
 void histo_field(float ***field, hydro_params p, int step);
 void didj(float *cpts, hydro_fields f, hydro_params p);
@@ -644,8 +647,9 @@ void write_silo_step(hydro_fields f, hydro_params p, int step);
 void make_kinetic(hydro_fields f, hydro_params p, float ***temp);
 void make_slice(hydro_fields f, hydro_params p, float *slice, float ***temp);
 void make_vort(hydro_fields f, hydro_params p, float ****temp);
+void make_Vdiv(hydro_fields f, hydro_params p, float ***temp);
 void make_Tvort(hydro_fields f, hydro_params p, float ****temp);
-void make_source(hydro_fields f, hydro_params p, float ****temp);
+void make_Jdiv(hydro_fields f, hydro_params p, float ***temp);
 void make_vel(hydro_fields f, hydro_params p, float ***temp);
 void make_Z(hydro_fields f, hydro_params p, float ***temp);
 void write_silo_slice_step(hydro_fields f, hydro_params p, int step);
