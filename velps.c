@@ -256,12 +256,12 @@ void histogram(hydro_params p, float *slice, char *filename,
           true_z = z;
 
     float kx,ky,kz;
-    // kx = sqrt((2.0 - 2.0*cos(((float)(true_x))*2.0*M_PI/(((float)p.Lx)))));
-    // ky = sqrt((2.0 - 2.0*cos(((float)(true_y))*2.0*M_PI/(((float)p.Ly)))));
-    // kz = sqrt((2.0 - 2.0*cos(((float)(true_z))*2.0*M_PI/(((float)p.Lz)))));
-    kx = 2.0*sin(((float)(true_x))*M_PI/(((float)p.Lx)))/p.dx;
-    ky = 2.0*sin(((float)(true_y))*M_PI/(((float)p.Ly)))/p.dx;
-    kz = 2.0*sin(((float)(true_z))*M_PI/(((float)p.Lz)))/p.dx;
+    kx = sqrt((2.0 - 2.0*cos(((float)(true_x))*2.0*M_PI/(((float)p.Lx)))));
+    ky = sqrt((2.0 - 2.0*cos(((float)(true_y))*2.0*M_PI/(((float)p.Ly)))));
+    kz = sqrt((2.0 - 2.0*cos(((float)(true_z))*2.0*M_PI/(((float)p.Lz)))));
+    // kx = 2.0*sin(((float)(true_x))*M_PI/(((float)p.Lx)))/p.dx;
+    // ky = 2.0*sin(((float)(true_y))*M_PI/(((float)p.Ly)))/p.dx;
+    // kz = 2.0*sin(((float)(true_z))*M_PI/(((float)p.Lz)))/p.dx;
 
     kmode = sqrt(kx*kx+ky*ky+kz*kz);
 
