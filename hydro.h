@@ -701,9 +701,9 @@ void histogram(hydro_params p, float *slice, char *filename,
 // initps.c
 void init_ps(hydro_fields f, hydro_params p, float ****field);
 void norm_power(hydro_fields f, hydro_params p, float ****field);
+void spectrum_interp(float ksq, hydro_params p, fftwf_complex *res, float *k_bins, float *pow_bins, int n_bins);
 void UtoZ(hydro_fields f, hydro_params p);
 float get_momtot(hydro_fields f, hydro_params p);
 float get_normal(float mean, float dev);
-void init_energy(hydro_params p, hydro_fields f, fftwf_complex **in, ptrdiff_t x_start, ptrdiff_t x_thickness, int* map,ptrdiff_t alloc_local);
-
+void init_energy(hydro_params p, hydro_fields f, ptrdiff_t x_start, ptrdiff_t x_thickness, int* map, ptrdiff_t alloc_local,float *k_bins, float *pow_bins);
 #endif // FFT && !SCALAR

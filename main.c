@@ -164,7 +164,7 @@ int main(int argc, char *argv[]) {
 	initial_blank(f,p);
 	init_ps(f, p, f.U);
     UtoZ(f, p);
-	fft_vel(f, p, -1, f.V);
+	fft_vel(f, p, -1, f.U);
 	//	init_ps(f, p, f.Z);
 	//	fft_vel(f, p, -3, f.Z);
 	//	norm_power(f, p, f.Z);
@@ -421,7 +421,7 @@ int main(int argc, char *argv[]) {
       fft_e(f, p, "e", step);
 
       // Velocity power spectrum
-      fft_vel(f, p, step, f.V);
+      fft_vel(f, p, step, f.U);
       //      fft_vel(f, p, 100 + step, f.Z);
 
 #endif // !SCALAR
@@ -535,7 +535,7 @@ int main(int argc, char *argv[]) {
     if(step == p.steps - 1) {
 
 #ifndef SCALAR
-      fft_vel(f, p, step, f.V);
+      fft_vel(f, p, step, f.U);
 #endif // !SCALAR
 
       fft_tensor(f,p,step,current_energy);
@@ -592,7 +592,7 @@ int main(int argc, char *argv[]) {
 #ifdef FFT
 
 #ifndef SCALAR
-  fft_vel(f,p,step,f.V);
+  fft_vel(f,p,step,f.U);
 #endif // !SCALAR
 
   fft_tensor(f,p,step,current_energy);
