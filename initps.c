@@ -267,7 +267,7 @@ void UtoZ(hydro_fields f, hydro_params p) {
  * For a rotational-free flow, the energy density is linked to the velocity field
  * For a divergence-free flow, the energy density is set to be constant
  */
-void init_energy(hydro_params p, hydro_fields f, fftwf_complex **in, ptrdiff_t x_start, ptrdiff_t x_thickness, int* map, ptrdiff_t alloc_local){
+void init_energy(hydro_params p, hydro_fields f, ptrdiff_t x_start, ptrdiff_t x_thickness, int* map, ptrdiff_t alloc_local,float *k_bins, float *pow_bins){
 	int x, y, z;
 	// TODO : INITPSFILE_ALL
 
@@ -287,18 +287,19 @@ void init_energy(hydro_params p, hydro_fields f, fftwf_complex **in, ptrdiff_t x
 		ptrdiff_t n2 = p.Lz;
 		MPI_Status status;
 
-		fftwf_complex *lambda_in = fftwf_alloc_complex(alloc_local);
-		fftwf_complex *lambda_out = fftwf_alloc_complex(alloc_local);
+		fftwf_complex *in = fftwf_alloc_complex(alloc_local);
+		fftwf_complex *out = fftwf_alloc_complex(alloc_local);
+		fftwf_complex *swap_in = fftwf_alloc_complex(alloc_local);
 		float *slice = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
 		float *trim = (float *)malloc(p.slicex*p.slicey*p.Lz*sizeof(float));
 
 		fftwf_plan plan = fftwf_mpi_plan_dft_3d(p.Lx, p.Ly, p.Lz,
-			lambda_in, lambda_out, MPI_COMM_WORLD,
+			in, out, MPI_COMM_WORLD,
 			FFTW_FORWARD, FFTW_ESTIMATE);
 
-		float kx, ky, kz,kmode;
+		float kx,ky,kz,kmode,ksq;
 		int true_x, true_y, true_z;
-		fftwf_complex kiVki;
+		fftwf_complex kiVki, vec_i;
 		int nx = p.Lx/p.slicex;
 		int ny = p.Ly/p.slicey;
 		int ry;
@@ -330,12 +331,21 @@ void init_energy(hydro_params p, hydro_fields f, fftwf_complex **in, ptrdiff_t x
 					kz = 2.0*sin(((float)(true_z))*M_PI/(((float)p.Lz)))/p.dx;
 
 					kmode = sqrt(kx*kx+ky*ky+kz*kz);
-					kiVki[0] = kx * in[0][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0] + ky * in[1][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0] + kz * in[2][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0];
-					kiVki[1] = kx * in[0][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] + ky * in[1][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] + kz * in[2][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1];
+					ksq = kx*kx+ky*ky+kz*kz;
+
+					spectrum_interp(ksq, p,&(vec_i),k_bins, pow_bins, p.initpsbins);
+					kiVki[0] = kx * vec_i[0];
+					kiVki[1] = kx * vec_i[1];
+					spectrum_interp(ksq, p,&(vec_i),k_bins, pow_bins, p.initpsbins);
+					kiVki[0] += ky * vec_i[0];
+					kiVki[1] += ky * vec_i[1];
+					spectrum_interp(ksq, p,&(vec_i),k_bins, pow_bins, p.initpsbins);
+					kiVki[0] += kz * vec_i[0];
+					kiVki[1] += kz * vec_i[1];
 
 					if (kmode != 0){
-						lambda_in[(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0] = 4 / sqrt(3) * kiVki[1] / kmode;
-						lambda_in[(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] = - 4 / sqrt(3) * kiVki[0] / kmode;
+						in[(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0] = 4 / sqrt(3) * kiVki[1] / kmode;
+						in[(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] = - 4 / sqrt(3) * kiVki[0] / kmode;
 
 					}
 
@@ -343,15 +353,122 @@ void init_energy(hydro_params p, hydro_fields f, fftwf_complex **in, ptrdiff_t x
 			}
 		}
 		MPI_Barrier(MPI_COMM_WORLD);
+
+		// These are the minimum and maximum (INCLUSIVE) x-slice coordinates needed by this node
+		int min_needed = p.Lx-(x_start+x_thickness)+1;
+		int max_needed = p.Lx-x_start;
+
+		// At this point each node knows what it ought to have, but we need to 'hermitianise' it
+		// Need to do swapping
+
+		for(int j=0; j<=p.Lx; j++) {
+			if(j>= x_start && j < x_start+x_thickness) {
+				if(map[((p.Lx-j) % p.Lx)] == p.rank) {
+				} else {
+					MPI_Send(&(((float *)in)[((j-x_start)%p.Lx)*p.Ly*p.Lz*2]),
+					2*p.Ly*p.Lz, MPI_FLOAT,
+					map[((p.Lx-j) % p.Lx)], j, MPI_COMM_WORLD);
+				}
+			}
+
+			if(j>=min_needed && j<=max_needed) {
+				if(map[(j % p.Lx)] == p.rank) {
+					memcpy(&(((fftwf_complex *)swap_in)[(j-min_needed)*p.Ly*p.Lz]),
+					&(((fftwf_complex *)in)[((j-x_start)%p.Lx)*p.Ly*p.Lz]),
+					p.Ly*p.Lz*sizeof(fftwf_complex));
+
+
+				} else {
+					MPI_Recv(&(((float *)swap_in)[(j-min_needed)*p.Ly*p.Lz*2]),
+					2*p.Ly*p.Lz, MPI_FLOAT,
+					map[(j % p.Lx)], j, MPI_COMM_WORLD, &status);
+
+				}
+			}
+		}
+
+		// at this point swap_in has the stuff needed to do the conjugate properly
+		printf0(p, "Starting swap\n");
+
+
+		for(x=x_start; x < x_start+x_thickness; x++) {
+			// This is the row in the swap_in where one can find (p.Lx-x)
+			//      int swap_row = (((p.Lx-x) % x_thickness) + x_thickness - 1) % x_thickness;
+			int swap_row = (((p.Lx-x) - min_needed));
+
+			for(y=0;y<p.Ly;y++) {
+				for(z=0;z<p.Lz;z++) {
+					// Conjugate the system. Treat special cases first.
+
+					if((x == 0 || x == p.Lx/2)
+						&& (y == 0 || y == p.Ly/2)
+						&& (z == 0 || z == p.Lz/2)) {
+
+
+						/* These sites need to be pure real.
+						*/
+						in[(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0] \
+							= sqrt(swap_in[swap_row*p.Ly*p.Lz
+							+ ((p.Ly-y)%p.Ly)*p.Lz + ((p.Lz-z)%p.Lz)][0]
+							*swap_in[swap_row*p.Ly*p.Lz
+							+ ((p.Ly-y)%p.Ly)*p.Lz + ((p.Lz-z)%p.Lz)][0]
+							+ swap_in[swap_row*p.Ly*p.Lz
+							+ ((p.Ly-y)%p.Ly)*p.Lz + ((p.Lz-z)%p.Lz)][1]
+							*swap_in[swap_row*p.Ly*p.Lz
+							+ ((p.Ly-y)%p.Ly)*p.Lz + ((p.Lz-z)%p.Lz)][1]);
+
+						in[(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] = 0.0;
+
+
+					}
+
+					else if((x == 0 || x == p.Lx/2)) {
+						/* need local mirror image on these slices, so ignore swap rows
+						* if we used swap_in we'd not end up with something that is
+						* hermitian because otherwise:
+						* [<>          []]
+						* initially would be swapped (and conjugated)
+						* to become:
+						* [[]          <>]
+						*/
+						in[(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0] = \
+							in[(x-x_start)*p.Ly*p.Lz
+							+ ((p.Ly-y)%p.Ly)*p.Lz + ((p.Lz-z)%p.Lz)][0];
+						in[(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] = \
+							-1.0*in[(x-x_start)*p.Ly*p.Lz
+							+ ((p.Ly-y)%p.Ly)*p.Lz + ((p.Lz-z)%p.Lz)][1];
+
+					} else if(x >= p.Lx/2) {
+						/* in this case we conjugate the stuff in the lower
+						slices, using swap_row to work out where it was put.
+						*/
+
+						in[(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0] = \
+						1.0*swap_in[swap_row*p.Ly*p.Lz
+						+ ((p.Ly-y)%p.Ly)*p.Lz + ((p.Lz-z)%p.Lz)][0];
+						in[(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] = \
+						-1.0*swap_in[swap_row*p.Ly*p.Lz
+						+ ((p.Ly-y)%p.Ly)*p.Lz + ((p.Lz-z)%p.Lz)][1];
+
+					}
+					// otherwise do nothing
+
+
+				}
+			}
+		}
+
+		MPI_Barrier(MPI_COMM_WORLD);
+
 		// Calculate the inverse fourier transform for the energy
 		fftwf_execute(plan);
 		MPI_Barrier(MPI_COMM_WORLD);
 
 		// prepare slice
 		for(x=0; x<x_thickness; x++) {
-				for(y=0; y<p.Ly; y++) {
-					for(z=0; z<p.Lz; z++) {
-						slice[x*p.Ly*p.Lz + y*p.Lz + z] = lambda_out[x*p.Ly*p.Lz + y*p.Lz + z][0];
+			for(y=0; y<p.Ly; y++) {
+				for(z=0; z<p.Lz; z++) {
+					slice[x*p.Ly*p.Lz + y*p.Lz + z] = out[x*p.Ly*p.Lz + y*p.Lz + z][0];
 				}
 			}
 		}
@@ -406,8 +523,8 @@ void init_energy(hydro_params p, hydro_fields f, fftwf_complex **in, ptrdiff_t x
 		free(slice);
 		free(trim);
 		fftwf_destroy_plan(plan);
-		fftwf_free(lambda_in);
-		fftwf_free(lambda_out);
+		fftwf_free(in);
+		fftwf_free(out);
 	}
 	halo_field(f.E, p);
 
@@ -454,13 +571,10 @@ void project_down(hydro_params p, fftwf_complex **in, int shift_x, int x_thickne
 	for(reruns = 0; reruns < times; reruns++) {
 		resid = 0.0;
 		stuff = 0.0;
-
 		// Project out divergenceless bit!
 		for(x=0;x<x_thickness;x++) {
 			for(y=0;y<p.Ly;y++) {
 				for(z=0;z<p.Lz;z++) {
-
-
 					if(x+shift_x > p.Lx/2) {
 						true_x = -(p.Lx - (x+shift_x));
 					} else {
@@ -478,8 +592,6 @@ void project_down(hydro_params p, fftwf_complex **in, int shift_x, int x_thickne
 					} else {
 						true_z = z;
 					}
-
-
 					// kx = s_x*sqrt((2.0 - 2.0*cos(((float)(true_x))*2.0*M_PI/(((float)p.Lx))))/(p.dx*p.dx));
 					// ky = s_y*sqrt((2.0 - 2.0*cos(((float)(true_y))*2.0*M_PI/(((float)p.Ly))))/(p.dx*p.dx));
 					// kz = s_z*sqrt((2.0 - 2.0*cos(((float)(true_z))*2.0*M_PI/(((float)p.Lz))))/(p.dx*p.dx));
@@ -566,7 +678,6 @@ void project_down(hydro_params p, fftwf_complex **in, int shift_x, int x_thickne
 		if(!p.rank)
 		fprintf(stderr,"run %d, stuff is %g, resid is now %g\n", reruns, stuff, resid);
 	}
-
 }
 
 
@@ -1147,7 +1258,7 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 	}
 
 	printf0(p,"Start the energy density initialization\n");
-	init_energy(p, f, in, x_start, x_thickness, map, alloc_local);
+	init_energy(p, f, x_start, x_thickness, map, alloc_local,k_bins,pow_bins);
 	printf0(p,"Energy density initialized\n");
 
 	free(map);
