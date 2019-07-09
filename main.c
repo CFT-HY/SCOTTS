@@ -163,7 +163,8 @@ int main(int argc, char *argv[]) {
 
 	initial_blank(f,p);
 	init_ps(f, p, f.U);
-    UtoZ(f, p);
+	eq_of_state(f, p);
+	UtoZ(f, p);
 	fft_vel(f, p, -1, f.U);
 	//	init_ps(f, p, f.Z);
 	//	fft_vel(f, p, -3, f.Z);
