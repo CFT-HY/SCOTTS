@@ -169,6 +169,10 @@ void debug_write_power(hydro_params p, fftwf_complex **in, ptrdiff_t x_start, pt
 void UtoZ(hydro_fields f, hydro_params p) {
 
 	int i, x, y, z;
+	float ubarx, ubary, ubarz;
+	float utildex, utildey, utildez;
+	float Wfacex, Wfacey, Wfacez;
+
 
 	// This assumes U has been initialised (but not necessarily haloed)
 
@@ -177,56 +181,165 @@ void UtoZ(hydro_fields f, hydro_params p) {
 	halo_field(f.U[1], p);
 	halo_field(f.U[2], p);
 
-	// Work out V from U (approximately)
-	// (this can be made more precise by adopting what is in evolve.c)
-	for(x=1; x<=p.slicex; x++) {
-		for(y=1; y<=p.slicey; y++) {
-			for(z=0; z<p.Lz; z++) {
-				f.W[x][y][z] = sqrt(1 + (f.U[0][x][y][z]*f.U[0][x][y][z] +
-					f.U[1][x][y][z]*f.U[1][x][y][z] +
-					f.U[2][x][y][z]*f.U[2][x][y][z]));
+	// Calculate Lorentz factor W.
+	for(x = 1; x <= p.slicex; x++) {
+	  for(y = 1; y <= p.slicey; y++) {
+	    for(z = 0; z < p.Lz; z++) {
+	
+	
+	      utildex = (f.U[0][x][y][z] 
+			 + f.U[0][x+1][y][z]
+			 + f.U[0][x][y+1][z]
+			 + f.U[0][x][y][((z+1)%p.Lz)]
+			 + f.U[0][x+1][y][((z+1)%p.Lz)]
+			 + f.U[0][x][y+1][((z+1)%p.Lz)]
+			 + f.U[0][x+1][y+1][z]
+			 + f.U[0][x+1][y+1][((z+1)%p.Lz)]
+			 )/8.0;
+	
+	      utildey = (f.U[1][x][y][z] 
+			 + f.U[1][x+1][y][z]
+			 + f.U[1][x][y+1][z]
+			 + f.U[1][x][y][((z+1)%p.Lz)]
+			 + f.U[1][x+1][y][((z+1)%p.Lz)]
+			 + f.U[1][x][y+1][((z+1)%p.Lz)]
+			 + f.U[1][x+1][y+1][z]
+			 + f.U[1][x+1][y+1][((z+1)%p.Lz)]
+			 )/8.0;
+    
+	      utildez = (f.U[2][x][y][z] 
+			 + f.U[2][x+1][y][z]
+			 + f.U[2][x][y+1][z]
+			 + f.U[2][x][y][((z+1)%p.Lz)]
+			 + f.U[2][x+1][y][((z+1)%p.Lz)]
+			 + f.U[2][x][y+1][((z+1)%p.Lz)]
+			 + f.U[2][x+1][y+1][z]
+			 + f.U[2][x+1][y+1][((z+1)%p.Lz)]
+			 )/8.0;
 
-				f.V[0][x][y][z] = f.U[0][x][y][z]/f.W[x][y][z];
-				f.V[1][x][y][z] = f.U[1][x][y][z]/f.W[x][y][z];
-				f.V[2][x][y][z] = f.U[2][x][y][z]/f.W[x][y][z];
-			}
-		}
+	
+	      //    if(x < 3 || x > p.N-3)
+	      //      fprintf(stderr,"utildex %d = %lf\n", x, utildex);
+     
+	      f.W[x][y][z] = sqrt(1.0 
+				  + utildex*utildex 
+				  + utildey*utildey 
+				  + utildez*utildez);
+	    }
+	  }
 	}
 
-	// Halo W and U
+	
+	// Work out V from U ensuring accurate centring.
+
+	for(x = 1; x <= p.slicex; x++) {
+	  for(y = 1; y <= p.slicey; y++) {
+	    for(z = 0; z < p.Lz; z++) {
+
+	      ubarx = (f.U[0][x][y][z]
+		       + f.U[0][x][y+1][z] 
+		       + f.U[0][x][y][((z+1)%p.Lz)]
+		       + f.U[0][x][y+1][((z+1)%p.Lz)]
+		       )/4.0;
+	
+	      ubary = (f.U[1][x][y][z]
+		       + f.U[1][x][y+1][z]
+		       + f.U[1][x][y][((z+1)%p.Lz)]
+		       + f.U[1][x][y+1][((z+1)%p.Lz)]
+		       )/4.0;
+	
+	      ubarz = (f.U[2][x][y][z]
+		       + f.U[2][x][y+1][z]
+		       + f.U[2][x][y][((z+1)%p.Lz)]
+		       + f.U[2][x][y+1][((z+1)%p.Lz)]
+		       )/4.0;
+	
+	      Wfacex = sqrt(1.0 + ubarx*ubarx + ubary*ubary + ubarz*ubarz);
+	
+	      f.V[0][x][y][z] = ubarx/Wfacex;
+	    }
+	  }
+	}
+  
+
+
+
+	// y-cpt
+	for(x = 1; x <= p.slicex; x++) {
+	  for(y = 1; y <= p.slicey; y++) {
+	    for(z = 0; z < p.Lz; z++) {
+	
+	      ubarx = (f.U[0][x][y][z]
+		       + f.U[0][x+1][y][z] 
+		       + f.U[0][x][y][((z+1)%p.Lz)]
+		       + f.U[0][x+1][y][((z+1)%p.Lz)]
+		       )/4.0;
+
+	      ubary = (f.U[1][x][y][z]
+		       + f.U[1][x+1][y][z] 
+		       + f.U[1][x][y][((z+1)%p.Lz)]
+		       + f.U[1][x+1][y][((z+1)%p.Lz)]
+		       )/4.0;
+
+	      ubarz = (f.U[2][x][y][z]
+		       + f.U[2][x+1][y][z] 
+		       + f.U[2][x][y][((z+1)%p.Lz)]
+		       + f.U[2][x+1][y][((z+1)%p.Lz)]
+		       )/4.0;
+
+	      Wfacey = sqrt(1.0 + ubarx*ubarx + ubary*ubary + ubarz*ubarz);
+
+	      f.V[1][x][y][z] = ubary/Wfacey;
+	
+	    }
+	  }
+	}
+
+	// z-cpt
+	for(x = 1; x <= p.slicex; x++) {
+	  for(y = 1; y <= p.slicey; y++) {
+	    for(z = 0; z < p.Lz; z++) {
+
+	      ubarx = (f.U[0][x][y][z]
+		       + f.U[0][x][y+1][z] 
+		       + f.U[0][x+1][y][z]
+		       + f.U[0][x+1][y+1][z]
+		       )/4.0;
+	
+	      ubary = (f.U[1][x][y][z]
+		       + f.U[1][x][y+1][z] 
+		       + f.U[1][x+1][y][z]
+		       + f.U[1][x+1][y+1][z]
+		       )/4.0;
+	
+	      ubarz = (f.U[2][x][y][z]
+		       + f.U[2][x][y+1][z] 
+		       + f.U[2][x+1][y][z]
+		       + f.U[2][x+1][y+1][z]
+		       )/4.0;
+	
+	      Wfacez = sqrt(1.0 + ubarx*ubarx + ubary*ubary + ubarz*ubarz);
+    
+	      f.V[2][x][y][z] = ubarz/Wfacez;
+	    }
+	  }
+	}
+
+
+	
+
+
+
+	// Halo W and V
 	halo_field(f.W, p);
 	halo_field(f.V[0], p);
 	halo_field(f.V[1], p);
 	halo_field(f.V[2], p);
 
-	// float eps = 1.0;
-	float kappa = 1.0;
-
-
-	// Work out Z and E from U and W (approximately)
-	// (this can be made more precise by adopting what is in evolve.c)
-	for(x=1; x<=p.slicex; x++) {
-		for(y=1; y<=p.slicey; y++) {
-			for(z=0; z<p.Lz; z++) {
-				// f.E[x][y][z] = f.W[x][y][z]*eps*f.E[x][y][z];
-				/*
-				f.kappa[x][y][z] = kappa;
-				f.p[x][y][z] = (f.kappa[x][y][z] - 1.0)*f.E[x][y][z]/f.W[x][y][z];
-				*/
-				// eps??? shouldn't it be one third of the rest energy
-				f.p[x][y][z] = (1.0/3.0)*f.E[x][y][z]/f.W[x][y][z];
-				f.kappa[x][y][z] = 1.0 + (1.0/3.0)/f.W[x][y][z]; // f.p[x][y][z]/f.E[x][y][z];
-			}
-		}
-	}
-
-
-	// halo E and kappa
-	// halo_field(f.E, p);
-	halo_field(f.kappa, p);
-
 	float sigmabar;
 
+	// Following assumes that f.kappa has been set
+	// (i.e that eq_of_state has been called.)
 	for(x=1; x<=p.slicex; x++) {
 		for(y=1; y<=p.slicey; y++) {
 			for(z=0; z<p.Lz; z++) {
