@@ -589,8 +589,8 @@ float get_Jdiv_tot(hydro_fields f, hydro_params p);
 
 // eos.c
 
-void find_Ta(hydro_fields f, hydro_params p);
-void eq_of_state(hydro_fields f, hydro_params p);
+void find_Ta(hydro_fields f, hydro_params p, int step);
+void eq_of_state(hydro_fields f, hydro_params p, int step);
 
 // transport.c
 
@@ -645,14 +645,16 @@ void write_silo_step(hydro_fields f, hydro_params p, int step);
 
 // silage_slice.c
 void make_kinetic(hydro_fields f, hydro_params p, float ***temp);
-void make_slice(hydro_fields f, hydro_params p, float *slice, float ***temp);
+void make_slice(hydro_fields f, hydro_params p, int xcoord, float *slice,
+		float ***temp);
 void make_vort(hydro_fields f, hydro_params p, float ****temp);
 void make_Vdiv(hydro_fields f, hydro_params p, float ***temp);
 void make_Tvort(hydro_fields f, hydro_params p, float ****temp);
 void make_Jdiv(hydro_fields f, hydro_params p, float ***temp);
 void make_vel(hydro_fields f, hydro_params p, float ***temp);
 void make_Z(hydro_fields f, hydro_params p, float ***temp);
-void write_silo_slice_step(hydro_fields f, hydro_params p, int step);
+void write_silo_slice_step(hydro_fields f, hydro_params p, int step,
+			   int xcoord);
 #endif // SILO
 
 

@@ -48,19 +48,21 @@
 
 /** Find temperature by 'solving' equation of state.
  *
- * Root finding algorithm from internal energy equation. 
- * Note that if `Tfix` goes negative then at that site `f.T` will become
- * NaN's which then spread.
+ * Root finding algorithm from internal energy equation.  Note that if
+ * `Tfix` goes negative then at that site `f.T` will become NaN's. If
+ * this happens we write out a slice through one of the locations
+ * where `Tfix` became negative and kill the run.
  *
- * Directly copied from the 1+1 fortran code.
  */
-void find_Ta(hydro_fields f, hydro_params p) {
+void find_Ta(hydro_fields f, hydro_params p, int step) {
 
 #ifndef SCALAR
 
   int x, y, z;
 
   float Tfix;
+  int TfixError = 0;
+  int sliceError = -1;
 
   for(x=1; x<=p.slicex; x++) {
     for(y=1; y<=p.slicey; y++) {
@@ -84,6 +86,8 @@ void find_Ta(hydro_fields f, hydro_params p) {
 		  "Tfix = %f \n W = %f \n phi = %f \n E=%f \n",
 		  p.shiftx+x-1,p.shifty+y-1,z,Tfix,f.W[x][y][z],
 		  f.phi[x][y][z],f.E[x][y][z]);
+	  TfixError = 1;
+	  sliceError = p.shiftx + x - 1;
 	}
 	
 	f.T[x][y][z]=pow(Tfix , 0.25);
@@ -106,6 +110,8 @@ void find_Ta(hydro_fields f, hydro_params p) {
 		  "Tfix = %f \n W = %f \n phi = %f \n E=%f \n",
 		  p.shiftx+x-1,p.shifty+y-1,z,Tfix,f.W[x][y][z],
 		  f.phi[x][y][z],f.E[x][y][z]);
+	  TfixError = 1;
+	  sliceError = p.shiftx + x - 1;
 	}
 	
 	f.T[x][y][z] = sqrt((1.0/(6.0*p.gdeg))
@@ -119,6 +125,15 @@ void find_Ta(hydro_fields f, hydro_params p) {
   // Not needed... except for phi^2/T damping
   halo_field(f.T, p);
 
+  TfixError = reduce_max_int(TfixError, p);
+  sliceError = reduce_max_int(sliceError, p);
+  
+  if(TfixError == 1){
+    printf0(p,"Writing out a slice where Tfix -ve, then aborting run\n");
+    write_silo_slice_step(f, p, step, sliceError);
+    MPI_Barrier(MPI_COMM_WORLD);
+    die(10);
+  }
 #endif // SCALAR
 }
 
@@ -130,7 +145,7 @@ void find_Ta(hydro_fields f, hydro_params p) {
  * 
  * Calls find_Ta() to obtain the temperature.
  */
-void eq_of_state(hydro_fields f, hydro_params p) {
+void eq_of_state(hydro_fields f, hydro_params p, int step) {
 
 #ifndef SCALAR
 
@@ -145,7 +160,7 @@ void eq_of_state(hydro_fields f, hydro_params p) {
 
   float tolE = 1e-3;
 
-  find_Ta(f, p);
+  find_Ta(f, p, step);
 
 
 

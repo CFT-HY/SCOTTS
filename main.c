@@ -387,7 +387,7 @@ int main(int argc, char *argv[]) {
     }
 
     if((p.silosliceinterval > 0) && (step % p.silosliceinterval == 0)) {
-      write_silo_slice_step(f, p, step);
+      write_silo_slice_step(f, p, step, p.siloslicecoord);
     }
 #endif // SILO
 
@@ -501,7 +501,7 @@ int main(int argc, char *argv[]) {
     //dump_max_min(f, p);
 
     // Calculate EOS
-    eq_of_state(f, p);
+    eq_of_state(f, p, step);
     //printf0(p,"Calculated eos \n");
     //dump_max_min(f, p);
 
@@ -531,7 +531,7 @@ int main(int argc, char *argv[]) {
     //    artificial_viscosity(f, nb, p);
 
     // Solve for T
-    find_Ta(f, p);
+    find_Ta(f, p, step);
     
     t += p.dt;
 
