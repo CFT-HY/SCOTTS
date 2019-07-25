@@ -2,8 +2,9 @@
  *
  * Module to write slices of silo data for visualisations.
  *
- * Slicing is done through the x coordinate at `x=p.siloslicecoord` 
- * where `p.siloslicecoord` is specified in the input file.
+ * Slicing is done through a specified x coordinate, typically at
+ * `x=p.siloslicecoord` where `p.siloslicecoord` is specified in the
+ * input file.
  * 
  * write_silo_slice_step() makes a silo file containing a slice
  * of the scalar field phi and the kinetic energy density. It calls make_kinetic()
@@ -251,9 +252,9 @@ void make_Z(hydro_fields f, hydro_params p, float ***temp) {
  * This function takes a 3 dimensional array `temp` 
  * which contains a quanitity defined over the simulation box
  * and populates the 1 dimensional array `slice` with a slice through 
- * `x=p.siloslicecoord` where `p.siloslicecoord` is specified in the input file.
+ * `x=xcoord`.
  * 
- * Only processors containing the coordinate `x=p.siloslicecoord`
+ * Only processors containing the coordinate `x=xcoord`
  * will participate in this. 
  *
  * First the 1 dimensional array `trim` is populated with the data on 
@@ -268,13 +269,13 @@ void make_Z(hydro_fields f, hydro_params p, float ***temp) {
  *
  */
 
-void make_slice(hydro_fields f, hydro_params p, float *slice, float ***temp)
+void make_slice(hydro_fields f, hydro_params p, int xcoord, float *slice, float ***temp)
 {
 
   
   int x, y, z;
 
-  x=p.siloslicecoord;
+  x=xcoord;
   
   float *trim = (float *)malloc(p.slicey*p.Lz*sizeof(float));
   
@@ -340,14 +341,7 @@ void make_slice(hydro_fields f, hydro_params p, float *slice, float ***temp)
 /** Write a silo file containing slices through the simulation box.
  *
  * This function saves in a silo file slices through
- * the coordinate `x=p.siloslicecoord` where `p.siloslicecoord`
- * is specified in the input file.
- *
- * The silo file will contain both the kinetic energy density of the fluid
- * and the scalar field value phi.
- *
- * The kinetic energy density is found by calling make_kinetic(),
- * and the slices are populated using make_slice().
+ * the coordinate `x=xcoord`.
  *
  * The `slice` arrays are of length `p.Lz*p.Ly`, and increase first
  * in `z` and then in `y`.
@@ -356,7 +350,7 @@ void make_slice(hydro_fields f, hydro_params p, float *slice, float ***temp)
  * - 2010-2017 David Weir
  * - 2018-     Daniel Cutting
  */
-void write_silo_slice_step(hydro_fields f, hydro_params p, int step)
+void write_silo_slice_step(hydro_fields f, hydro_params p, int step, int xcoord)
 {
 
   
@@ -425,10 +419,10 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step)
   
   make_kinetic(f, p, temp);
 
-  make_slice(f, p, slice, temp);
+  make_slice(f, p, xcoord, slice, temp);
 
   if(!p.rank){
-    fprintf(stderr,"Slice coord x=%d\n",p.siloslicecoord);
+    fprintf(stderr,"Slice coord x=%d\n",xcoord);
   }
   
   //// write kinetic slice ///
@@ -445,7 +439,7 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step)
   
   make_vel(f, p, temp);
 
-  make_slice(f, p, slice, temp);
+  make_slice(f, p, xcoord, slice, temp);
 
   
   //// write fluid velocity slice ///
@@ -462,7 +456,7 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step)
   
   make_Z(f, p, temp);
 
-  make_slice(f, p, slice, temp);
+  make_slice(f, p, xcoord, slice, temp);
 
   // write Z magnitude slice.
 
@@ -476,7 +470,7 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step)
   
   make_Vdiv(f, p, temp);
 
-  make_slice(f, p, slice, temp);
+  make_slice(f, p, xcoord, slice, temp);
 
   // write Vdiv slice.
 
@@ -489,7 +483,7 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step)
   
   make_Jdiv(f, p, temp);
 
-  make_slice(f, p, slice, temp);
+  make_slice(f, p, xcoord, slice, temp);
 
   // write Vdiv slice.
 
@@ -504,21 +498,21 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step)
   
   /*
   // Vx slice
-  make_slice(f, p, slice, f.V[0]);
+  make_slice(f, p, xcoord, slice, f.V[0]);
   if(!p.rank) {
     DBPutQuadvar1(dbfile, "Vx", "quadmesh", slice, meshsize, 2,
 		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
   }
 
   // Vy slice
-  make_slice(f, p, slice, f.V[1]);
+  make_slice(f, p, xcoord, slice, f.V[1]);
   if(!p.rank) {
     DBPutQuadvar1(dbfile, "Vy", "quadmesh", slice, meshsize, 2,
 		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
   }
 
   // Vz slice
-  make_slice(f, p, slice, f.V[2]);
+  make_slice(f, p, xcoord, slice, f.V[2]);
   if(!p.rank) {
     DBPutQuadvar1(dbfile, "Vz", "quadmesh", slice, meshsize, 2,
 		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
@@ -527,21 +521,21 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step)
   //// Write all Z components slice:
 
   // Zx slice
-  make_slice(f, p, slice, f.Z[0]);
+  make_slice(f, p, xcoord, slice, f.Z[0]);
   if(!p.rank) {
     DBPutQuadvar1(dbfile, "Zx", "quadmesh", slice, meshsize, 2,
 		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
   }
 
   // Zy slice
-  make_slice(f, p, slice, f.Z[1]);
+  make_slice(f, p, xcoord, slice, f.Z[1]);
   if(!p.rank) {
     DBPutQuadvar1(dbfile, "Zy", "quadmesh", slice, meshsize, 2,
 		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
   }
 
   // Zz slice
-  make_slice(f, p, slice, f.Z[2]);
+  make_slice(f, p, xcoord, slice, f.Z[2]);
   if(!p.rank) {
     DBPutQuadvar1(dbfile, "Zz", "quadmesh", slice, meshsize, 2,
 		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
@@ -557,21 +551,21 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step)
   make_vort(f, p, temp_vec);
 
   // vortx slice
-  make_slice(f, p, slice, temp_vec[0]);
+  make_slice(f, p, xcoord, slice, temp_vec[0]);
   if(!p.rank) {
     DBPutQuadvar1(dbfile, "vortx", "quadmesh", slice, meshsize, 2,
 		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
   }
 
   // vorty slice
-  make_slice(f, p, slice, temp_vec[1]);
+  make_slice(f, p, xcoord, slice, temp_vec[1]);
   if(!p.rank) {
     DBPutQuadvar1(dbfile, "vorty", "quadmesh", slice, meshsize, 2,
 		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
   }
 
   // vortz slice
-  make_slice(f, p, slice, temp_vec[2]);
+  make_slice(f, p, xcoord, slice, temp_vec[2]);
   if(!p.rank) {
     DBPutQuadvar1(dbfile, "vortz", "quadmesh", slice, meshsize, 2,
 		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
@@ -584,21 +578,21 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step)
   make_Tvort(f, p, temp_vec);
 
   // Tvortx slice
-  make_slice(f, p, slice, temp_vec[0]);
+  make_slice(f, p, xcoord, slice, temp_vec[0]);
   if(!p.rank) {
     DBPutQuadvar1(dbfile, "Tvortx", "quadmesh", slice, meshsize, 2,
 		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
   }
 
   // Tvorty slice
-  make_slice(f, p, slice, temp_vec[1]);
+  make_slice(f, p, xcoord, slice, temp_vec[1]);
   if(!p.rank) {
     DBPutQuadvar1(dbfile, "Tvorty", "quadmesh", slice, meshsize, 2,
 		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
   }
 
   // Tvortz slice
-  make_slice(f, p, slice, temp_vec[2]);
+  make_slice(f, p, xcoord, slice, temp_vec[2]);
   if(!p.rank) {
     DBPutQuadvar1(dbfile, "Tvortz", "quadmesh", slice, meshsize, 2,
 		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
@@ -613,7 +607,7 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step)
   
   //// make T slice ///
 
-  make_slice(f, p, slice, f.T);
+  make_slice(f, p, xcoord, slice, f.T);
 
   //// write T slice ///
 
@@ -626,7 +620,7 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step)
   
   //// make E slice ///
 
-  make_slice(f, p, slice, f.E);
+  make_slice(f, p, xcoord, slice, f.E);
 
   //// write E slice ///
 
@@ -642,7 +636,7 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step)
   
   //// make phi slice ///
 
-  make_slice(f, p, slice, f.phi);
+  make_slice(f, p, xcoord, slice, f.phi);
 
   //// write phi slice ///
 
