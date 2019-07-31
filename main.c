@@ -123,6 +123,9 @@ int main(int argc, char *argv[]) {
   float s_max;
   float gamma_max;
   float Tvort_tot;
+  float Jdiv_tot;
+  long long N_broken;
+  long long N_links;
 
   // Timing counters
   float cpu_time_used;
@@ -163,13 +166,13 @@ int main(int argc, char *argv[]) {
 
 	initial_blank(f,p);
 	init_ps(f, p, f.U);
-	eq_of_state(f, p);
+	eq_of_state(f, p, 0);
 	UtoZ(f, p);
-	fft_vel(f, p, -1, f.U);
+	// fft_vel(f, p, -1, f.U);
 	//	init_ps(f, p, f.Z);
 	//	fft_vel(f, p, -3, f.Z);
 	//	norm_power(f, p, f.Z);
-	fft_vel(f, p, -2, f.Z);
+	// fft_vel(f, p, -2, f.Z);
 
 	/*
 	  memcpy(f.V[0][0][0], f.U[0][0][0], (p.slicex+2)*(p.slicey+2)
@@ -391,7 +394,7 @@ int main(int argc, char *argv[]) {
     }
 
     if((p.silosliceinterval > 0) && (step % p.silosliceinterval == 0)) {
-      write_silo_slice_step(f, p, step);
+      write_silo_slice_step(f, p, step, p.siloslicecoord);
     }
 #endif // SILO
 
@@ -414,18 +417,20 @@ int main(int argc, char *argv[]) {
       }
 
       // Power spectrum of scalar field
-      fft_field(p, f.phi, "phi", step);
+      fft_field(f.phi, p, step, "phi");
 
 #ifndef SCALAR
 
       // Power spectrum of internal energy e=E/W
-      fft_e(f, p, "e", step);
+      fft_e(f, p, step,"e");
 
       // Velocity power spectrum
-      fft_vel(f, p, step, f.U);
-      //      fft_vel(f, p, 100 + step, f.Z);
-
-#endif // !SCALAR
+      fft_vec(f.V, p, step, "vel");
+      // Temperature current power spectrum.
+      fft_J(f, p, step, "J");
+      // X variable power spectrum.
+      fft_X(f, p, step, "X");
+#endif //!SCALAR
 
       // Gravitational wave power spectrum (returns GW energy)
       gwen = fft_tensor(f, p, step, 0.0);
@@ -459,9 +464,13 @@ int main(int argc, char *argv[]) {
       s_max = reduce_max(get_s_max(f, p), p);
       gamma_max = reduce_max(get_gamma_max(f, p), p);
       Tvort_tot =  reduce_sum(get_Tvort_tot(f,p),p);
+      Jdiv_tot = reduce_sum(get_Jdiv_tot(f,p), p);
+      N_broken = reduce_sum(get_N_broken(f,p), p);
+      N_links = reduce_sum(get_broken_links(f,p), p);
 
       if(!p.rank) {
-	printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\n",
+	printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf"
+	       "\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%lli\t%lli\n",
 	       step,
 	       t,
 	       current_energy,
@@ -476,7 +485,10 @@ int main(int argc, char *argv[]) {
 	       s_max,
 	       gamma_max,
 	       Tvort_tot,
-	       current_kinetic_field);
+	       current_kinetic_field,
+	       Jdiv_tot,
+	       N_broken,
+	       N_links);
       }
 
       // Statement of energy violation (not shown; better to use KE)
@@ -496,7 +508,7 @@ int main(int argc, char *argv[]) {
     //dump_max_min(f, p);
 
     // Calculate EOS
-    eq_of_state(f, p);
+    eq_of_state(f, p, step);
     //printf0(p,"Calculated eos \n");
     //dump_max_min(f, p);
 
@@ -526,7 +538,7 @@ int main(int argc, char *argv[]) {
     //    artificial_viscosity(f, nb, p);
 
     // Solve for T
-    find_Ta(f, p);
+    find_Ta(f, p, step);
 
     t += p.dt;
 
@@ -536,7 +548,9 @@ int main(int argc, char *argv[]) {
     if(step == p.steps - 1) {
 
 #ifndef SCALAR
-      fft_vel(f, p, step, f.U);
+      fft_vec(f.V, p, step, "vel");
+      fft_J(f, p, step, "J");
+      fft_X(f, p, step, "X");
 #endif // !SCALAR
 
       fft_tensor(f,p,step,current_energy);
@@ -564,9 +578,13 @@ int main(int argc, char *argv[]) {
   s_max = reduce_max(get_s_max(f, p), p);
   gamma_max = reduce_max(get_gamma_max(f, p), p);
   Tvort_tot = reduce_sum(get_Tvort_tot(f, p), p);
+  Jdiv_tot = reduce_sum(get_Jdiv_tot(f,p), p);
+  N_broken = reduce_sum(get_N_broken(f,p), p);
+  N_links = reduce_sum(get_broken_links(f,p), p);
 
   if(!p.rank) {
-    printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\n",
+    printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf\t%6lf"
+	   "\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%lli\t%lli\n",
 	   step,
 	   t,
 	   current_energy,
@@ -581,7 +599,10 @@ int main(int argc, char *argv[]) {
 	   s_max,
 	   gamma_max,
 	   Tvort_tot,
-	   current_kinetic_field);
+	   current_kinetic_field,
+	   Jdiv_tot,
+	   N_broken,
+	   N_links);
   }
 
 
@@ -593,7 +614,9 @@ int main(int argc, char *argv[]) {
 #ifdef FFT
 
 #ifndef SCALAR
-  fft_vel(f,p,step,f.U);
+  fft_vec(f.V, p, step, "vel");
+  fft_J(f, p, step, "J");
+  fft_X(f, p, step, "X");
 #endif // !SCALAR
 
   fft_tensor(f,p,step,current_energy);

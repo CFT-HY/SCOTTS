@@ -2,8 +2,9 @@
  *
  * Module to write slices of silo data for visualisations.
  *
- * Slicing is done through the x coordinate at `x=p.siloslicecoord`
- * where `p.siloslicecoord` is specified in the input file.
+ * Slicing is done through a specified x coordinate, typically at
+ * `x=p.siloslicecoord` where `p.siloslicecoord` is specified in the
+ * input file.
  *
  * write_silo_slice_step() makes a silo file containing a slice
  * of the scalar field phi and the kinetic energy density. It calls make_kinetic()
@@ -88,92 +89,110 @@ void make_vort(hydro_fields f, hydro_params p, float ****temp){
 
 }
 
+/** Make divergence of velocity field.
+ */
+void make_Vdiv(hydro_fields f, hydro_params p, float ***temp){
+  int x, y, z;
+    for(x = 1; x <= p.slicex; x++) {
+      for(y = 1; y <= p.slicey; y++) {
+	for(z = 0; z < p.Lz; z++) {
+	  temp[x][y][z] = (f.V[0][x+1][y][z] - f.V[0][x][y][z]
+			   + f.V[1][x][y+1][z] - f.V[1][x][y][z]
+			   + f.V[2][x][y][z+1] - f.V[2][x][y][z])/p.dx;
+	}
+      }
+    }
+
+    halo_field(temp, p);
+}
+
 /** Make T vorticity i.e (Tvort = curl T U)
  */
 void make_Tvort(hydro_fields f, hydro_params p, float ****temp){
   int x, y, z;
 
-  float ****Tvel = make_vector(p);
+  float ****J = make_vector(p);
 
-  // Construct T velocity (centered at cell)
+  // Construct temperature current (centered at cell)
 
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
 
-	Tvel[0][x][y][z] = 0.5*(f.V[0][x][y][z] + f.V[0][x+1][y][z]
+	J[0][x][y][z] = 0.5*(f.V[0][x][y][z] + f.V[0][x+1][y][z]
 				)*f.T[x][y][z]*f.W[x][y][z];
-	Tvel[1][x][y][z] = 0.5*(f.V[1][x][y][z] + f.V[1][x][y+1][z]
+	J[1][x][y][z] = 0.5*(f.V[1][x][y][z] + f.V[1][x][y+1][z]
 				)*f.T[x][y][z]*f.W[x][y][z];
-	Tvel[2][x][y][z] = 0.5*(f.V[2][x][y][z] + f.V[2][x][y][(z+1)%p.Lz]
+	J[2][x][y][z] = 0.5*(f.V[2][x][y][z] + f.V[2][x][y][(z+1)%p.Lz]
 				)*f.T[x][y][z]*f.W[x][y][z];
       }
     }
   }
 
-  halo_field(Tvel[0], p);
-  halo_field(Tvel[1], p);
-  halo_field(Tvel[2], p);
+  halo_field(J[0], p);
+  halo_field(J[1], p);
+  halo_field(J[2], p);
 
 
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
-	temp[0][x][y][z] = (Tvel[2][x][y+1][z] - Tvel[2][x][y-1][z]
-			    - Tvel[1][x][y][(z+1)%p.Lz]
-			    + Tvel[1][x][y][(z-1+p.Lz)%p.Lz])/(2*p.dx);
-	temp[1][x][y][z] = (Tvel[0][x][y][(z+1)%p.Lz]
-			    - Tvel[0][x][y][(z-1+p.Lz)%p.Lz]
-			    - Tvel[2][x+1][y][z] + Tvel[2][x-1][y][z])/(2*p.dx);
-	temp[2][x][y][z] = (Tvel[1][x+1][y][z] - Tvel[1][x-1][y][z]
-			    - Tvel[0][x][y+1][z] + Tvel[0][x][y-1][z])/(2*p.dx);
+	temp[0][x][y][z] = (J[2][x][y+1][z] - J[2][x][y-1][z]
+			    - J[1][x][y][(z+1)%p.Lz]
+			    + J[1][x][y][(z-1+p.Lz)%p.Lz])/(2*p.dx);
+	temp[1][x][y][z] = (J[0][x][y][(z+1)%p.Lz]
+			    - J[0][x][y][(z-1+p.Lz)%p.Lz]
+			    - J[2][x+1][y][z] + J[2][x-1][y][z])/(2*p.dx);
+	temp[2][x][y][z] = (J[1][x+1][y][z] - J[1][x-1][y][z]
+			    - J[0][x][y+1][z] + J[0][x][y-1][z])/(2*p.dx);
       }
     }
   }
-  free_vector(p, Tvel);
+  free_vector(p, J);
 
   halo_field(temp[0], p);
   halo_field(temp[1], p);
   halo_field(temp[2], p);
 }
 
-
-/** Populate an array with source term of relativistic drive.
- * S = grad (W^(-1)) cross grad (E/W)
+/** Make divergence of temperature current \f$ J^{i} = TU \f$.
  */
-void make_source(hydro_fields f, hydro_params p, float ****temp){
+void make_Jdiv(hydro_fields f, hydro_params p, float ***temp){
   int x, y, z;
-  // gradients of internal energy E/W (central difference)
-  float grad_ex, grad_ey, grad_ez;
-  // gradients of 1/W (central difference)
-  float grad_invWx, grad_invWy, grad_invWz;
+  float ****J = make_vector(p);
+
+  // Construct temperature current (centered at cell)
 
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
-	grad_ex = (f.E[x+1][y][z]/f.W[x+1][y][z]
-		   - f.E[x-1][y][z]/f.W[x-1][y][z])/(2*p.dx);
-	grad_ey = (f.E[x][y+1][z]/f.W[x][y+1][z]
-		   - f.E[x][y-1][z]/f.W[x][y-1][z])/(2*p.dx);
-	grad_ez = (f.E[x][y][(z+1)%p.Lz]/f.W[x][y][(z+1)%p.Lz]
-		   - f.E[x][y][(z-1+p.Lz)%p.Lz]/f.W[x][y][(z-1+p.Lz)%p.Lz]
-		   )/(2*p.dx);
-	grad_invWx = (1/f.W[x+1][y][z] - 1/f.W[x-1][y][z])/(2*p.dx);
-	grad_invWy = (1/f.W[x][y+1][z] - 1/f.W[x][y-1][z])/(2*p.dx);
-	grad_invWz = (1/f.W[x][y][(z+1)%p.Lz] - 1/f.W[x][y][(z-1+p.Lz)%p.Lz]
-		      )/(2*p.dx);
-	temp[0][x][y][z] = grad_invWy*grad_ez - grad_invWz*grad_ey;
-	temp[1][x][y][z] = grad_invWz*grad_ex - grad_invWx*grad_ez;
-	temp[2][x][y][z] = grad_invWx*grad_ey - grad_invWz*grad_ey;
 
+	J[0][x][y][z] = 0.5*(f.V[0][x][y][z] + f.V[0][x+1][y][z]
+				)*f.T[x][y][z]*f.W[x][y][z];
+	J[1][x][y][z] = 0.5*(f.V[1][x][y][z] + f.V[1][x][y+1][z]
+				)*f.T[x][y][z]*f.W[x][y][z];
+	J[2][x][y][z] = 0.5*(f.V[2][x][y][z] + f.V[2][x][y][(z+1)%p.Lz]
+				)*f.T[x][y][z]*f.W[x][y][z];
       }
     }
   }
 
-  halo_field(temp[0], p);
-  halo_field(temp[1], p);
-  halo_field(temp[2], p);
+  halo_field(J[0], p);
+  halo_field(J[1], p);
+  halo_field(J[2], p);
 
+  for(x = 1; x <= p.slicex; x++) {
+      for(y = 1; y <= p.slicey; y++) {
+	for(z = 0; z < p.Lz; z++) {
+	  temp[x][y][z] = (J[0][x+1][y][z] - J[0][x][y][z]
+			   + J[1][x][y+1][z] - J[1][x][y][z]
+			   + J[2][x][y][z+1] - J[2][x][y][z])/p.dx;
+	}
+      }
+    }
+
+    halo_field(temp, p);
+    free_vector(p, J);
 }
 
 /** Populate an array with velocity magnitude.
@@ -188,9 +207,12 @@ void make_vel(hydro_fields f, hydro_params p, float ***temp) {
     for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
 
-   temp[x][y][z] = sqrt(f.V[0][x][y][z]*f.V[0][x][y][z]
-                + f.V[1][x][y][z]*f.V[1][x][y][z]
-                + f.V[2][x][y][z]*f.V[2][x][y][z]);
+	temp[x][y][z] = sqrt(0.25*((f.V[0][x][y][z] + f.V[0][x+1][y][z])
+				   *(f.V[0][x][y][z] + f.V[0][x+1][y][z])
+				   + (f.V[1][x][y][z] + f.V[1][x][y+1][z])
+				   *(f.V[1][x][y][z] + f.V[1][x][y+1][z])
+				   + (f.V[2][x][y][z] + f.V[2][x][y][z+1])
+				   *(f.V[2][x][y][z] + f.V[2][x][y][z+1])));
 
       }
     }
@@ -230,9 +252,9 @@ void make_Z(hydro_fields f, hydro_params p, float ***temp) {
  * This function takes a 3 dimensional array `temp`
  * which contains a quanitity defined over the simulation box
  * and populates the 1 dimensional array `slice` with a slice through
- * `x=p.siloslicecoord` where `p.siloslicecoord` is specified in the input file.
+ * `x=xcoord`.
  *
- * Only processors containing the coordinate `x=p.siloslicecoord`
+ * Only processors containing the coordinate `x=xcoord`
  * will participate in this.
  *
  * First the 1 dimensional array `trim` is populated with the data on
@@ -247,13 +269,13 @@ void make_Z(hydro_fields f, hydro_params p, float ***temp) {
  *
  */
 
-void make_slice(hydro_fields f, hydro_params p, float *slice, float ***temp)
+void make_slice(hydro_fields f, hydro_params p, int xcoord, float *slice, float ***temp)
 {
 
 
   int x, y, z;
 
-  x=p.siloslicecoord;
+  x=xcoord;
 
   float *trim = (float *)malloc(p.slicey*p.Lz*sizeof(float));
 
@@ -319,14 +341,7 @@ void make_slice(hydro_fields f, hydro_params p, float *slice, float ***temp)
 /** Write a silo file containing slices through the simulation box.
  *
  * This function saves in a silo file slices through
- * the coordinate `x=p.siloslicecoord` where `p.siloslicecoord`
- * is specified in the input file.
- *
- * The silo file will contain both the kinetic energy density of the fluid
- * and the scalar field value phi.
- *
- * The kinetic energy density is found by calling make_kinetic(),
- * and the slices are populated using make_slice().
+ * the coordinate `x=xcoord`.
  *
  * The `slice` arrays are of length `p.Lz*p.Ly`, and increase first
  * in `z` and then in `y`.
@@ -335,7 +350,7 @@ void make_slice(hydro_fields f, hydro_params p, float *slice, float ***temp)
  * - 2010-2017 David Weir
  * - 2018-     Daniel Cutting
  */
-void write_silo_slice_step(hydro_fields f, hydro_params p, int step)
+void write_silo_slice_step(hydro_fields f, hydro_params p, int step, int xcoord)
 {
 
 
@@ -404,10 +419,10 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step)
 
   make_kinetic(f, p, temp);
 
-  make_slice(f, p, slice, temp);
+  make_slice(f, p, xcoord, slice, temp);
 
   if(!p.rank){
-    fprintf(stderr,"Slice coord x=%d\n",p.siloslicecoord);
+    fprintf(stderr,"Slice coord x=%d\n",xcoord);
   }
 
   //// write kinetic slice ///
@@ -424,7 +439,7 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step)
 
   make_vel(f, p, temp);
 
-  make_slice(f, p, slice, temp);
+  make_slice(f, p, xcoord, slice, temp);
 
 
   //// write fluid velocity slice ///
@@ -441,7 +456,7 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step)
 
   make_Z(f, p, temp);
 
-  make_slice(f, p, slice, temp);
+  make_slice(f, p, xcoord, slice, temp);
 
   // write Z magnitude slice.
 
@@ -451,26 +466,52 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step)
   }
 
 
+  //// prepare Vdiv slice
+
+  make_Vdiv(f, p, temp);
+
+  make_slice(f, p, xcoord, slice, temp);
+
+  // write Vdiv slice.
+
+  if(!p.rank) {
+    DBPutQuadvar1(dbfile, "Vdiv", "quadmesh", slice, meshsize, 2,
+         NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+  }
+
+  //// prepare Jdiv slice
+
+  make_Jdiv(f, p, temp);
+
+  make_slice(f, p, xcoord, slice, temp);
+
+  // write Vdiv slice.
+
+  if(!p.rank) {
+    DBPutQuadvar1(dbfile, "Jdiv", "quadmesh", slice, meshsize, 2,
+         NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+  }
+
   free_field(p, temp);
 
   //// Write all vel components slice:
 
   // Vx slice
-  make_slice(f, p, slice, f.V[0]);
+  make_slice(f, p, xcoord, slice, f.V[0]);
   if(!p.rank) {
     DBPutQuadvar1(dbfile, "Vx", "quadmesh", slice, meshsize, 2,
 		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
   }
 
   // Vy slice
-  make_slice(f, p, slice, f.V[1]);
+  make_slice(f, p, xcoord, slice, f.V[1]);
   if(!p.rank) {
     DBPutQuadvar1(dbfile, "Vy", "quadmesh", slice, meshsize, 2,
 		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
   }
 
   // Vz slice
-  make_slice(f, p, slice, f.V[2]);
+  make_slice(f, p, xcoord, slice, f.V[2]);
   if(!p.rank) {
     DBPutQuadvar1(dbfile, "Vz", "quadmesh", slice, meshsize, 2,
 		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
@@ -479,21 +520,21 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step)
   //// Write all Z components slice:
 
   // Zx slice
-  make_slice(f, p, slice, f.Z[0]);
+  make_slice(f, p, xcoord, slice, f.Z[0]);
   if(!p.rank) {
     DBPutQuadvar1(dbfile, "Zx", "quadmesh", slice, meshsize, 2,
 		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
   }
 
   // Zy slice
-  make_slice(f, p, slice, f.Z[1]);
+  make_slice(f, p, xcoord, slice, f.Z[1]);
   if(!p.rank) {
     DBPutQuadvar1(dbfile, "Zy", "quadmesh", slice, meshsize, 2,
 		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
   }
 
   // Zz slice
-  make_slice(f, p, slice, f.Z[2]);
+  make_slice(f, p, xcoord, slice, f.Z[2]);
   if(!p.rank) {
     DBPutQuadvar1(dbfile, "Zz", "quadmesh", slice, meshsize, 2,
 		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
@@ -502,53 +543,27 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step)
 
   float ****temp_vec = make_vector(p);
 
-
-  //// Write all relativistic drive (S) components slice:
-
-  make_source(f, p, temp_vec);
-
-  // Sx slice
-  make_slice(f, p, slice, temp_vec[0]);
-  if(!p.rank) {
-    DBPutQuadvar1(dbfile, "Sx", "quadmesh", slice, meshsize, 2,
-		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
-  }
-
-  // Sy slice
-  make_slice(f, p, slice, temp_vec[1]);
-  if(!p.rank) {
-    DBPutQuadvar1(dbfile, "Sy", "quadmesh", slice, meshsize, 2,
-		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
-  }
-
-  // Sz slice
-  make_slice(f, p, slice, temp_vec[2]);
-  if(!p.rank) {
-    DBPutQuadvar1(dbfile, "Sz", "quadmesh", slice, meshsize, 2,
-		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
-  }
-
   //// Write all vorticity (vort) components slice:
 
 
   make_vort(f, p, temp_vec);
 
   // vortx slice
-  make_slice(f, p, slice, temp_vec[0]);
+  make_slice(f, p, xcoord, slice, temp_vec[0]);
   if(!p.rank) {
     DBPutQuadvar1(dbfile, "vortx", "quadmesh", slice, meshsize, 2,
 		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
   }
 
   // vorty slice
-  make_slice(f, p, slice, temp_vec[1]);
+  make_slice(f, p, xcoord, slice, temp_vec[1]);
   if(!p.rank) {
     DBPutQuadvar1(dbfile, "vorty", "quadmesh", slice, meshsize, 2,
 		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
   }
 
   // vortz slice
-  make_slice(f, p, slice, temp_vec[2]);
+  make_slice(f, p, xcoord, slice, temp_vec[2]);
   if(!p.rank) {
     DBPutQuadvar1(dbfile, "vortz", "quadmesh", slice, meshsize, 2,
 		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
@@ -561,21 +576,21 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step)
   make_Tvort(f, p, temp_vec);
 
   // Tvortx slice
-  make_slice(f, p, slice, temp_vec[0]);
+  make_slice(f, p, xcoord, slice, temp_vec[0]);
   if(!p.rank) {
     DBPutQuadvar1(dbfile, "Tvortx", "quadmesh", slice, meshsize, 2,
 		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
   }
 
   // Tvorty slice
-  make_slice(f, p, slice, temp_vec[1]);
+  make_slice(f, p, xcoord, slice, temp_vec[1]);
   if(!p.rank) {
     DBPutQuadvar1(dbfile, "Tvorty", "quadmesh", slice, meshsize, 2,
 		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
   }
 
   // Tvortz slice
-  make_slice(f, p, slice, temp_vec[2]);
+  make_slice(f, p, xcoord, slice, temp_vec[2]);
   if(!p.rank) {
     DBPutQuadvar1(dbfile, "Tvortz", "quadmesh", slice, meshsize, 2,
 		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
@@ -590,7 +605,7 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step)
 
   //// make T slice ///
 
-  make_slice(f, p, slice, f.T);
+  make_slice(f, p, xcoord, slice, f.T);
 
   //// write T slice ///
 
@@ -603,7 +618,7 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step)
 
   //// make E slice ///
 
-  make_slice(f, p, slice, f.E);
+  make_slice(f, p, xcoord, slice, f.E);
 
   //// write E slice ///
 
@@ -619,7 +634,7 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step)
 
   //// make phi slice ///
 
-  make_slice(f, p, slice, f.phi);
+  make_slice(f, p, xcoord, slice, f.phi);
 
   //// write phi slice ///
 

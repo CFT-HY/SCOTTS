@@ -1,6 +1,7 @@
-/** @file velps.c
+/** @file vectorps.c
  *
- * Fourier transform and velocity/vorticity power spectrum.
+ * Fourier transform a vector and then find transverse/longitudinal
+ * power spectrum.
  *
  * The gravitational wave power spectrum is in gw.c,
  * and a generic field power spectrum calculation is in fft.c.
@@ -11,11 +12,9 @@
 #ifdef FFT
 
 
-
-/** Calculate the projector for the transverse component of the
- * velocity.
+/** Calculate the projector for the transverse component of the vector.
  */
-float vel_proj(int T, float kx, float ky, float kz) {
+float vec_proj(int T, float kx, float ky, float kz) {
 
   float mag = sqrt(kx*kx + ky*ky + kz*kz);
 
@@ -61,7 +60,7 @@ float vel_proj(int T, float kx, float ky, float kz) {
 
   default:
     fprintf(stderr,
-	    "Unknown velocity projector element! Nonsense will ensue...\n");
+	    "Unknown vector projector element! Nonsense will ensue...\n");
 
   }
 
@@ -154,21 +153,21 @@ void split_and_power(hydro_params p, int x_start, int slab,
           for(j=1; j<=3; j++) {
 
 	    // Transverse components
-	    res_r += vel_proj(i*10 + j, kx, ky, kz)
+	    res_r += vec_proj(i*10 + j, kx, ky, kz)
 	      *vk[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-	    res_i += vel_proj(i*10 + j, kx, ky, kz)
+	    res_i += vec_proj(i*10 + j, kx, ky, kz)
 	      *vk[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 
 	    // And longitudinal...
 	    if(i == j) {
-	    resid_r += (1.0 - vel_proj(i*10 + j, kx, ky, kz))
+	    resid_r += (1.0 - vec_proj(i*10 + j, kx, ky, kz))
 	      *vk[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-	    resid_i += (1.0 - vel_proj(i*10 + j, kx, ky, kz))
+	    resid_i += (1.0 - vec_proj(i*10 + j, kx, ky, kz))
 	      *vk[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 	    } else {
-	    resid_r += (-1.0*vel_proj(i*10 + j, kx, ky, kz))
+	    resid_r += (-1.0*vec_proj(i*10 + j, kx, ky, kz))
 	      *vk[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-	    resid_i += (-1.0*vel_proj(i*10 + j, kx, ky, kz))
+	    resid_i += (-1.0*vec_proj(i*10 + j, kx, ky, kz))
 	      *vk[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 	    }
 	  }
@@ -331,12 +330,11 @@ void histogram(hydro_params p, float *slice, char *filename,
 
 
 
-/** Main method. Calculate the velocity power spectrum.
+/** Main method. Calculate the vector power spectrum.
  *
  */
-void fft_vel(hydro_fields f, hydro_params p, int step, float ****vectorfield) {
+void fft_vec(float ****vectorfield, hydro_params p, int step, char *label) {
 
-#ifndef SCALAR
   ptrdiff_t x_thickness, x_start, alloc_local;
 
   ptrdiff_t n0 = p.Lx;
@@ -357,7 +355,7 @@ void fft_vel(hydro_fields f, hydro_params p, int step, float ****vectorfield) {
 
   float *trim = (float *)malloc(p.slicex*p.slicey*p.Lz*sizeof(float));
 
-  printf0(p, "Starting velocity power spectrum FFT calculation.\n");
+  printf0(p, "Starting %s power spectrum FFT calculation.\n",label);
 
   float start = clock();
 
@@ -519,7 +517,7 @@ void fft_vel(hydro_fields f, hydro_params p, int step, float ****vectorfield) {
 
     float total = 0.0;
 
-    printf0(p, "Vel FFT: Done slicing for cpt %d\n", i);
+    printf0(p, "%s FFT: Done slicing for cpt %d\n",label, i);
 
     for(x=0;x<x_thickness;x++) {
       for(y=0;y<p.Ly;y++) {
@@ -565,11 +563,11 @@ void fft_vel(hydro_fields f, hydro_params p, int step, float ****vectorfield) {
 
   char fftdest[200];
 
-  sprintf(fftdest,"rot-ps-step%d.txt", step);
+  sprintf(fftdest,"%s-rot-ps-step%d.txt", label,step);
   histogram(p, slice, fftdest, x_thickness, x_start);
-  sprintf(fftdest,"div-ps-step%d.txt", step);
+  sprintf(fftdest,"%s-div-ps-step%d.txt", label,step);
   histogram(p, slice_div, fftdest, x_thickness, x_start);
-  sprintf(fftdest,"tot-ps-step%d.txt", step);
+  sprintf(fftdest,"%s-tot-ps-step%d.txt", label,step);
   histogram(p, slice_tot, fftdest, x_thickness, x_start);
 
 
@@ -593,13 +591,100 @@ void fft_vel(hydro_fields f, hydro_params p, int step, float ****vectorfield) {
 
   float end = clock();
 
-  printf0(p, "Velocity power spectrum FFT calculation took %lf\n",
+  printf0(p, "%s power spectrum FFT calculation took %lf\n", label,
 	  ((float) (end - start)) / CLOCKS_PER_SEC);
+}
 
-#endif // SCALAR
+/** Calculate power spectrum of temperature current \f$ J^{i}=T U^{i} \f$.
+ *
+ */
+void fft_J(hydro_fields f, hydro_params p, int step, char *label){
+#ifndef SCALAR
+  int x, y, z, i;
+  float ****J = make_vector(p);
+  float Tnode;
+
+  // Construct temperature current.
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+	Tnode = 0.125*(f.T[x][y][z] + f.T[x-1][y][z]
+		       + f.T[x][y-1][z] + f.T[x][y][(z-1+p.Lz)%p.Lz]
+		       + f.T[x-1][y-1][z] + f.T[x-1][y][(z-1+p.Lz)%p.Lz]
+		       + f.T[x][y-1][(z-1+p.Lz)%p.Lz]
+		       + f.T[x-1][y-1][(z-1+p.Lz)%p.Lz]
+		       );
+	for(i =0; i < 3; i++){
+	  J[i][x][y][z] = f.U[i][x][y][z]*Tnode;
+	}
+      }
+    }
+  }
+
+  halo_field(J[0], p);
+  halo_field(J[1], p);
+  halo_field(J[2], p);
+
+  fft_vec(J, p, step, label);
+
+  free_vector(p, J);
+
+
+#endif //!SCALAR
 }
 
 
+/** Calculate power spectrum of \f$ X^{i}=\sqrt{w}U^{i} \f$.
+ *
+ */
+void fft_X(hydro_fields f, hydro_params p, int step, char *label){
+#ifndef SCALAR
+  int x, y, z, i;
+  float ****X = make_vector(p);
+  float sqrt_enth_node;
 
+  // Construct X vector.
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+	sqrt_enth_node = pow((f.kappa[x][y][z]*f.E[x][y][z]
+			      /f.W[x][y][z]
+			      + f.kappa[x-1][y][z]*f.E[x-1][y][z]
+			      /f.W[x-1][y][z]
+			      + f.kappa[x][y-1][z]*f.E[x][y-1][z]
+			      /f.W[x][y-1][z]
+			      + f.kappa[x][y][(z-1+p.Lz)%p.Lz]
+			      *f.E[x][y][(z-1+p.Lz)%p.Lz]
+			      /f.W[x][y][(z-1+p.Lz)%p.Lz]
+			      + f.kappa[x-1][y-1][z]*f.E[x-1][y-1][z]
+			      /f.W[x-1][y-1][z]
+			      + f.kappa[x-1][y][(z-1+p.Lz)%p.Lz]
+			      *f.E[x-1][y][(z-1+p.Lz)%p.Lz]
+			      /f.W[x-1][y][(z-1+p.Lz)%p.Lz]
+			      + f.kappa[x][y-1][(z-1+p.Lz)%p.Lz]
+			      *f.E[x][y-1][(z-1+p.Lz)%p.Lz]
+			      /f.W[x][y-1][(z-1+p.Lz)%p.Lz]
+			      + f.kappa[x-1][y-1][(z-1+p.Lz)%p.Lz]
+			      *f.E[x-1][y-1][(z-1+p.Lz)%p.Lz]
+			      /f.W[x-1][y-1][(z-1+p.Lz)%p.Lz]
+			      )*0.125, 0.5);
+	for(i =0; i < 3; i++){
+	  X[i][x][y][z] = sqrt_enth_node*f.U[i][x][y][z];
+	}
+      }
+    }
+  }
+
+  halo_field(X[0], p);
+  halo_field(X[1], p);
+  halo_field(X[2], p);
+
+  fft_vec(X, p, step, label);
+
+  free_vector(p, X);
+
+
+#endif //!SCALAR
+}
 
 #endif // FFT
