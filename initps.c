@@ -122,21 +122,21 @@ void debug_write_power(hydro_params p, fftwf_complex **in, ptrdiff_t x_start, pt
 					for(j=1; j<=3; j++) {
 
 					// Transverse components
-					res_r += vel_proj(i*10 + j, kx, ky, kz)
+					res_r += vec_proj(i*10 + j, kx, ky, kz)
 					*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-					res_i += vel_proj(i*10 + j, kx, ky, kz)
+					res_i += vec_proj(i*10 + j, kx, ky, kz)
 					*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 
 					// And longitudinal...
 					if(i == j) {
-					resid_r += (1.0 - vel_proj(i*10 + j, kx, ky, kz))
+					resid_r += (1.0 - vec_proj(i*10 + j, kx, ky, kz))
 					*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-					resid_i += (1.0 - vel_proj(i*10 + j, kx, ky, kz))
+					resid_i += (1.0 - vec_proj(i*10 + j, kx, ky, kz))
 					*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 					} else {
-					resid_r += (-1.0*vel_proj(i*10 + j, kx, ky, kz))
+					resid_r += (-1.0*vec_proj(i*10 + j, kx, ky, kz))
 					*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-					resid_i += (-1.0*vel_proj(i*10 + j, kx, ky, kz))
+					resid_i += (-1.0*vec_proj(i*10 + j, kx, ky, kz))
 					*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 					}
 					}
@@ -185,9 +185,9 @@ void UtoZ(hydro_fields f, hydro_params p) {
 	for(x = 1; x <= p.slicex; x++) {
 	  for(y = 1; y <= p.slicey; y++) {
 	    for(z = 0; z < p.Lz; z++) {
-	
-	
-	      utildex = (f.U[0][x][y][z] 
+
+
+	      utildex = (f.U[0][x][y][z]
 			 + f.U[0][x+1][y][z]
 			 + f.U[0][x][y+1][z]
 			 + f.U[0][x][y][((z+1)%p.Lz)]
@@ -196,8 +196,8 @@ void UtoZ(hydro_fields f, hydro_params p) {
 			 + f.U[0][x+1][y+1][z]
 			 + f.U[0][x+1][y+1][((z+1)%p.Lz)]
 			 )/8.0;
-	
-	      utildey = (f.U[1][x][y][z] 
+
+	      utildey = (f.U[1][x][y][z]
 			 + f.U[1][x+1][y][z]
 			 + f.U[1][x][y+1][z]
 			 + f.U[1][x][y][((z+1)%p.Lz)]
@@ -206,8 +206,8 @@ void UtoZ(hydro_fields f, hydro_params p) {
 			 + f.U[1][x+1][y+1][z]
 			 + f.U[1][x+1][y+1][((z+1)%p.Lz)]
 			 )/8.0;
-    
-	      utildez = (f.U[2][x][y][z] 
+
+	      utildez = (f.U[2][x][y][z]
 			 + f.U[2][x+1][y][z]
 			 + f.U[2][x][y+1][z]
 			 + f.U[2][x][y][((z+1)%p.Lz)]
@@ -217,19 +217,19 @@ void UtoZ(hydro_fields f, hydro_params p) {
 			 + f.U[2][x+1][y+1][((z+1)%p.Lz)]
 			 )/8.0;
 
-	
+
 	      //    if(x < 3 || x > p.N-3)
 	      //      fprintf(stderr,"utildex %d = %lf\n", x, utildex);
-     
-	      f.W[x][y][z] = sqrt(1.0 
-				  + utildex*utildex 
-				  + utildey*utildey 
+
+	      f.W[x][y][z] = sqrt(1.0
+				  + utildex*utildex
+				  + utildey*utildey
 				  + utildez*utildez);
 	    }
 	  }
 	}
 
-	
+
 	// Work out V from U ensuring accurate centring.
 
 	for(x = 1; x <= p.slicex; x++) {
@@ -237,30 +237,30 @@ void UtoZ(hydro_fields f, hydro_params p) {
 	    for(z = 0; z < p.Lz; z++) {
 
 	      ubarx = (f.U[0][x][y][z]
-		       + f.U[0][x][y+1][z] 
+		       + f.U[0][x][y+1][z]
 		       + f.U[0][x][y][((z+1)%p.Lz)]
 		       + f.U[0][x][y+1][((z+1)%p.Lz)]
 		       )/4.0;
-	
+
 	      ubary = (f.U[1][x][y][z]
 		       + f.U[1][x][y+1][z]
 		       + f.U[1][x][y][((z+1)%p.Lz)]
 		       + f.U[1][x][y+1][((z+1)%p.Lz)]
 		       )/4.0;
-	
+
 	      ubarz = (f.U[2][x][y][z]
 		       + f.U[2][x][y+1][z]
 		       + f.U[2][x][y][((z+1)%p.Lz)]
 		       + f.U[2][x][y+1][((z+1)%p.Lz)]
 		       )/4.0;
-	
+
 	      Wfacex = sqrt(1.0 + ubarx*ubarx + ubary*ubary + ubarz*ubarz);
-	
+
 	      f.V[0][x][y][z] = ubarx/Wfacex;
 	    }
 	  }
 	}
-  
+
 
 
 
@@ -268,21 +268,21 @@ void UtoZ(hydro_fields f, hydro_params p) {
 	for(x = 1; x <= p.slicex; x++) {
 	  for(y = 1; y <= p.slicey; y++) {
 	    for(z = 0; z < p.Lz; z++) {
-	
+
 	      ubarx = (f.U[0][x][y][z]
-		       + f.U[0][x+1][y][z] 
+		       + f.U[0][x+1][y][z]
 		       + f.U[0][x][y][((z+1)%p.Lz)]
 		       + f.U[0][x+1][y][((z+1)%p.Lz)]
 		       )/4.0;
 
 	      ubary = (f.U[1][x][y][z]
-		       + f.U[1][x+1][y][z] 
+		       + f.U[1][x+1][y][z]
 		       + f.U[1][x][y][((z+1)%p.Lz)]
 		       + f.U[1][x+1][y][((z+1)%p.Lz)]
 		       )/4.0;
 
 	      ubarz = (f.U[2][x][y][z]
-		       + f.U[2][x+1][y][z] 
+		       + f.U[2][x+1][y][z]
 		       + f.U[2][x][y][((z+1)%p.Lz)]
 		       + f.U[2][x+1][y][((z+1)%p.Lz)]
 		       )/4.0;
@@ -290,7 +290,7 @@ void UtoZ(hydro_fields f, hydro_params p) {
 	      Wfacey = sqrt(1.0 + ubarx*ubarx + ubary*ubary + ubarz*ubarz);
 
 	      f.V[1][x][y][z] = ubary/Wfacey;
-	
+
 	    }
 	  }
 	}
@@ -301,32 +301,32 @@ void UtoZ(hydro_fields f, hydro_params p) {
 	    for(z = 0; z < p.Lz; z++) {
 
 	      ubarx = (f.U[0][x][y][z]
-		       + f.U[0][x][y+1][z] 
+		       + f.U[0][x][y+1][z]
 		       + f.U[0][x+1][y][z]
 		       + f.U[0][x+1][y+1][z]
 		       )/4.0;
-	
+
 	      ubary = (f.U[1][x][y][z]
-		       + f.U[1][x][y+1][z] 
+		       + f.U[1][x][y+1][z]
 		       + f.U[1][x+1][y][z]
 		       + f.U[1][x+1][y+1][z]
 		       )/4.0;
-	
+
 	      ubarz = (f.U[2][x][y][z]
-		       + f.U[2][x][y+1][z] 
+		       + f.U[2][x][y+1][z]
 		       + f.U[2][x+1][y][z]
 		       + f.U[2][x+1][y+1][z]
 		       )/4.0;
-	
+
 	      Wfacez = sqrt(1.0 + ubarx*ubarx + ubary*ubary + ubarz*ubarz);
-    
+
 	      f.V[2][x][y][z] = ubarz/Wfacez;
 	    }
 	  }
 	}
 
 
-	
+
 
 
 
@@ -473,8 +473,9 @@ void init_energy(hydro_params p, hydro_fields f, ptrdiff_t x_start, ptrdiff_t x_
 
 		// At this point each node knows what it ought to have, but we need to 'hermitianise' it
 		// Need to do swapping
+		int j;
 
-		for(int j=0; j<=p.Lx; j++) {
+		for(j=0; j<=p.Lx; j++) {
 			if(j>= x_start && j < x_start+x_thickness) {
 				if(map[((p.Lx-j) % p.Lx)] == p.rank) {
 				} else {
@@ -737,17 +738,17 @@ void project_down(hydro_params p, fftwf_complex **in, int shift_x, int x_thickne
 									// v_i^\perp = P_{ij} v_j
 									// where P_{ij} = \delta_{ij} - \hat{k}_i \hat{k}_j
 									// and $\hat{k}$ is a unit vector in the $k$ direction.
-									in_proj_re[i-1] += vel_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-									in_proj_im[i-1] += vel_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+									in_proj_re[i-1] += vec_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+									in_proj_im[i-1] += vec_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 
 
 									// this is delta_{ij} - P_{ij}V_j
 									if(i == j) {
-										res_re += (1.0-vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-										res_im += (1.0-vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+										res_re += (1.0-vec_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+										res_im += (1.0-vec_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 									} else {
-										res_re += (-1.0*vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-										res_im += (-1.0*vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+										res_re += (-1.0*vec_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+										res_im += (-1.0*vec_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 									}
 
 
@@ -756,16 +757,16 @@ void project_down(hydro_params p, fftwf_complex **in, int shift_x, int x_thickne
 									// Div?
 									// v_i^\parallel = (\delta_{ij} - P_{ij}) v_j
 									if(i == j) {
-										in_proj_re[i-1] += (1.0-vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-										in_proj_im[i-1] += (1.0-vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+										in_proj_re[i-1] += (1.0-vec_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+										in_proj_im[i-1] += (1.0-vec_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 									} else {
-										in_proj_re[i-1] += (-1.0*vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-										in_proj_im[i-1] += (-1.0*vel_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+										in_proj_re[i-1] += (-1.0*vec_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+										in_proj_im[i-1] += (-1.0*vec_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 									}
 									// #endif
 
-									res_re += vel_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-									res_im += vel_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+									res_re += vec_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+									res_im += vec_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 
 								}
 

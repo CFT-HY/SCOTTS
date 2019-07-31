@@ -20,7 +20,7 @@
  *
  * Unlike velps.c and gw.c there is no normalisation done here.
  */
-void fft_field(hydro_params p, float ***field, char *label, int step) {
+void fft_field(float ***field, hydro_params p, int step, char *label) {
 
   ptrdiff_t x_thickness, x_start, alloc_local;
 
@@ -338,7 +338,7 @@ void fft_field(hydro_params p, float ***field, char *label, int step) {
  * Not a fan of this implementation, must be something neater/other 
  * place for this to go.
  */
-void fft_e(hydro_fields f, hydro_params p, char *label, int step){
+void fft_e(hydro_fields f, hydro_params p, int step, char *label){
   int x, y, z;
   float ***e = make_field(p);
   for(x = 1; x <= p.slicex; x++) {
@@ -350,7 +350,7 @@ void fft_e(hydro_fields f, hydro_params p, char *label, int step){
   }
   halo_field(e, p);
 
-  fft_field(p, e, label, step);
+  fft_field(e, p, step, label);
 
   free_field(p, e);
 }
