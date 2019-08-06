@@ -163,12 +163,12 @@ int main(int argc, char *argv[]) {
 #if defined (FFT) && ! defined(SCALAR)
       // If initial is INIT_PS then initialise velocity power spec.
       // Then no bubbles nucleated.
-
-	initial_blank(f,p);
-	init_ps(f, p, f.U);
-	eq_of_state(f, p, 0);
-	UtoZ(f, p);
-	// fft_vel(f, p, -1, f.U);
+      start=clock();
+      initial_blank(f,p);
+      init_ps(f, p, f.U);
+      eq_of_state(f, p, 0);
+      UtoZ(f, p);
+      // fft_vel(f, p, -1, f.U);
 	//	init_ps(f, p, f.Z);
 	//	fft_vel(f, p, -3, f.Z);
 	//	norm_power(f, p, f.Z);
@@ -184,6 +184,14 @@ int main(int argc, char *argv[]) {
 	  */
 	//	init_ps(f, p, f.V);
 	//    init_ps(f, p, f.Z);
+
+      end=clock();
+
+      if(!p.rank){
+	fprintf(stderr,"Init ps initialisation took %lf\n",
+		((float) (end - start)) / CLOCKS_PER_SEC);
+      }
+
 #else
 
 	printf0(p,"INIT_PS initial conditions invalid with SCALAR compiler flag."
