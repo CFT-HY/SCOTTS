@@ -129,11 +129,18 @@ void find_Ta(hydro_fields f, hydro_params p, int step) {
   sliceError = reduce_max_int(sliceError, p);
   
   if(TfixError == 1){
+
+#ifdef SILO
     printf0(p,"Writing out a slice where Tfix -ve, then aborting run\n");
     write_silo_slice_step(f, p, step, sliceError);
     MPI_Barrier(MPI_COMM_WORLD);
+#else 
+	printf0(p,"Aborting run as Tfix -ve\n");
+#endif //SILO
     die(10);
   }
+
+
 #endif // SCALAR
 }
 
