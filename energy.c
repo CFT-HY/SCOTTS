@@ -547,6 +547,7 @@ float get_Tvort_tot(hydro_fields f, hydro_params p){
   int x, y, z;
 
   float ****Tvel = make_vector(p);
+  float temp;
 
   float Tvort_tot = 0;
   float vol=p.dx*p.dx*p.dx;
@@ -575,14 +576,19 @@ float get_Tvort_tot(hydro_fields f, hydro_params p){
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
-	Tvort_tot += pow((Tvel[2][x][y+1][z] - Tvel[2][x][y-1][z]
+	temp = (Tvel[2][x][y+1][z] - Tvel[2][x][y-1][z]
 			  - Tvel[1][x][y][(z+1)%p.Lz]
-			  + Tvel[1][x][y][(z-1+p.Lz)%p.Lz])/(2*p.dx),2)*vol;
-	Tvort_tot += pow((Tvel[0][x][y][(z+1)%p.Lz]
+			  + Tvel[1][x][y][(z-1+p.Lz)%p.Lz])/(2*p.dx);
+	Tvort_tot += temp*temp*vol;
+	
+	temp = (Tvel[0][x][y][(z+1)%p.Lz]
 			  - Tvel[0][x][y][(z-1+p.Lz)%p.Lz]
-			  - Tvel[2][x+1][y][z] + Tvel[2][x-1][y][z])/(2*p.dx),2)*vol;
-	Tvort_tot += pow((Tvel[1][x+1][y][z] - Tvel[1][x-1][y][z]
-			  - Tvel[0][x][y+1][z] + Tvel[0][x][y-1][z])/(2*p.dx),2)*vol;
+			  - Tvel[2][x+1][y][z] + Tvel[2][x-1][y][z])/(2*p.dx);
+	Tvort_tot += temp*temp*vol;
+
+	temp = (Tvel[1][x+1][y][z] - Tvel[1][x-1][y][z]
+			  - Tvel[0][x][y+1][z] + Tvel[0][x][y-1][z])/(2*p.dx);
+	Tvort_tot += temp*temp*vol;
       }
     }
   }
@@ -602,7 +608,8 @@ float get_Jdiv_tot(hydro_fields f, hydro_params p){
   int x, y, z;
   float ****J = make_vector(p);
   float Jdiv_tot = 0;
-
+  float temp;
+  float vol=p.dx*p.dx*p.dx;
   // Construct temperature current (centered at cell)
 
   for(x = 1; x <= p.slicex; x++) {
@@ -626,9 +633,10 @@ float get_Jdiv_tot(hydro_fields f, hydro_params p){
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
-	Jdiv_tot += pow((J[0][x+1][y][z] - J[0][x][y][z]
-			 + J[1][x][y+1][z] - J[1][x][y][z]
-			 + J[2][x][y][z+1] - J[2][x][y][z])/p.dx,2);
+		temp = (J[0][x+1][y][z] - J[0][x][y][z]
+				 + J[1][x][y+1][z] - J[1][x][y][z]
+				 + J[2][x][y][z+1] - J[2][x][y][z])/p.dx;
+		Jdiv_tot += temp*temp*vol;
       }
     }
   }
