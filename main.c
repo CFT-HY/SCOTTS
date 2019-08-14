@@ -410,19 +410,19 @@ int main(int argc, char *argv[]) {
       }      
 
       // Power spectrum of scalar field
-      fft_field(f.phi, p, step, "phi");
+      fft_field(p, step, f.phi, "phi");
       
 #ifndef SCALAR
       
       // Power spectrum of internal energy e=E/W
-      fft_e(f, p, step,"e");
+      fft_e(f, p, step);
       
       // Velocity power spectrum
-      fft_vec(f.V, p, step, "vel");
+      fft_vec(p, f.V, step, "vel");
       // Temperature current power spectrum.
-      fft_J(f, p, step, "J");
+      fft_J(f, p, step);
       // X variable power spectrum.
-      fft_X(f, p, step, "X");
+      fft_X(f, p, step);
 #endif //!SCALAR
 
       // Gravitational wave power spectrum (returns GW energy)
@@ -541,9 +541,9 @@ int main(int argc, char *argv[]) {
     if(step == p.steps - 1) {
 
 #ifndef SCALAR
-      fft_vec(f.V, p, step, "vel");
-      fft_J(f, p, step, "J");
-      fft_X(f, p, step, "X");
+      fft_vec(p, f.V, step, "vel");
+      fft_J(f, p, step);
+      fft_X(f, p, step);
 #endif // !SCALAR
 
       fft_tensor(f,p,step,current_energy);
@@ -607,9 +607,9 @@ int main(int argc, char *argv[]) {
 #ifdef FFT
 
 #ifndef SCALAR
-  fft_vec(f.V, p, step, "vel");
-  fft_J(f, p, step, "J");
-  fft_X(f, p, step, "X");
+  fft_vec(p, f.V, step, "vel");
+  fft_J(f, p, step);
+  fft_X(f, p, step);
 #endif // !SCALAR
 
   fft_tensor(f,p,step,current_energy);
