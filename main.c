@@ -410,7 +410,7 @@ int main(int argc, char *argv[]) {
       }      
 
       // Power spectrum of scalar field
-      fft_field(p, step, f.phi, "phi");
+      fft_field(p, f.phi, step, "phi");
       
 #ifndef SCALAR
       
