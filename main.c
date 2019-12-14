@@ -142,6 +142,7 @@ int main(int argc, char *argv[]) {
   float cpu_time_used;
 
   clock_t start, end;
+  clock_t fft_start, fft_end;
 
   // What step does the for loop start on? For checkpoint restarts...
   int step_start = 0;
@@ -422,15 +423,23 @@ int main(int argc, char *argv[]) {
       histo_field(f.phi, p, step);
 
       // Fourier transform scalar field:
+      fft_start = clock();
       fft_scalar(p, fft_f, f.phi);
-      
+      fft_end = clock();
+      printf0(p, "fft scalar took %lf\n", ((float) (fft_end - fft_start))
+	      / CLOCKS_PER_SEC);
+
       // Power spectrum of scalar field
       scalarps(p,  fft_f.out, step, "phi");
 
 #ifndef SCALAR
       
       // Power spectrum of internal energy e=E/W
+      fft_start = clock();
       fft_e(f, p, fft_f);
+      fft_end = clock();
+      printf0(p, "fft scalar took %lf\n", ((float) (fft_end - fft_start))
+	      / CLOCKS_PER_SEC);
       
       scalarps(p, fft_f.out, step, "e");
       
@@ -451,10 +460,14 @@ int main(int argc, char *argv[]) {
       
 #ifndef SCALAR
       
-      // Velocity power spectrum
+      // Velocity power spectrum and UETCs
       fft_vector(p, fft_f, f.V, outcpts_vec);
       
       vectorps(p, outcpts_vec, step, "vel");
+
+      if(p.uetcstart >= 0 && step > p.uetcstart) {
+	uetc_vector(p, fft_f.initial_V, outcpts_vec, p.uetcstart, step, "vel");
+      }
       
       // Temperature current power spectrum
       fft_J(f, p, fft_f, outcpts_vec);
@@ -716,7 +729,7 @@ int main(int argc, char *argv[]) {
       
   free(outcpts_vec);
 
-  // Tensor spectra & UETCs
+  // Tensor spectra
 
   fftwf_complex **outcpts_tens = (fftwf_complex **)malloc(6*sizeof(fftwf_complex *));
 

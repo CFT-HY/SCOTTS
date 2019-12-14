@@ -507,6 +507,10 @@ typedef struct{
    */
   fftwf_complex **initial_Tij;
 
+  /** Reference time field for velocity in momentum space.
+   */
+  fftwf_complex **initial_V;
+
   /** Plan for performing the fast fourier transforms.
    *
    */
@@ -715,14 +719,22 @@ void uetc_tens_proj(hydro_params p, int x_start, int slab,
 		    float *product_re, float *product_im,
 		    fftwf_complex **tensora, fftwf_complex **tensorb);
 void split_vector(hydro_params p, int x_start, int slab,
-		  float *product, float *product_div, float *product_tot,
-		  fftwf_complex **vk);
+		  float *product_rot, float *product_div, float *product_tot,
+		  fftwf_complex **vec);
+void uetc_split_vector(hydro_params p, int x_start, int slab,
+		       float *product_rot_re, float *product_rot_im,
+		       float *product_div_re, float *product_div_im,
+		       fftwf_complex **veca, fftwf_complex **vecb);
 
 // uetc.c
 void init_uetc(hydro_fields f, hydro_params p, fft_fields fft_f);
 void uetc_tensor(hydro_params p, fftwf_complex **tensor_then,
 		 fftwf_complex **tensor_now, int step_then, int step_now,
 		 char *label);
+void uetc_vector(hydro_params p, fftwf_complex **vector_then,
+		 fftwf_complex **vector_now, int step_then, int step_now,
+		 char *label);
+
 
 // tensorps.c
 float tensorps(hydro_params p, fftwf_complex **outcpts, int step, char *label);

@@ -20,8 +20,6 @@
  * For the calculation of vector field power spectra, see vectorps.c
  * For tensor power spetra, see tensorps.c
  *
- * Unlike vectorps.c and tensorps.c there is no normalisation done
- * here (should there be?).
  */
 void scalarps(hydro_params p, fftwf_complex *field, int step, char *label) {
 
@@ -49,7 +47,8 @@ void scalarps(hydro_params p, fftwf_complex *field, int step, char *label) {
 					MPI_COMM_WORLD, &x_thickness, &x_start);
 
   // Now we perform binning
-  
+  float fft_norm = (1.0/(((float)p.Lx)*((float)p.Ly)*((float)p.Lz)));
+
   int nbins = minof3_int(p.Lx, p.Ly, p.Lz);
   float mink = 0.0;
   float maxk = 2.0*M_PI;
@@ -121,7 +120,8 @@ void scalarps(hydro_params p, fftwf_complex *field, int step, char *label) {
     red_value = reduce_sum(bins[i], p);
     red_count = reduce_sum_int(counts[i], p);
 
-    bins[i] = red_value;
+    // Do normalisation here because we don't do it during fft_scalar...
+    bins[i] = red_value/(fft_norm*fft_norm);
     counts[i] = red_count;
   }
 
@@ -133,11 +133,11 @@ void scalarps(hydro_params p, fftwf_complex *field, int step, char *label) {
     char fftdest[200];
     if(label != NULL){
       if(*label){
-        sprintf(fftdest,"fft-%s-%d.txt",label,step);
+        sprintf(fftdest,"%s-ps-step%d.txt",label,step);
       }
     }
     else{
-      sprintf(fftdest,"fft-%d.txt",step);
+      sprintf(fftdest,"ps-step%d.txt",step);
     }
     
     FILE *fp = fopen(fftdest,"w");
@@ -148,9 +148,8 @@ void scalarps(hydro_params p, fftwf_complex *field, int step, char *label) {
     
       char fftdest[200];
       
- 
       fprintf(fp, "%lf %g %d\n",
-	      thisk, bins[i], counts[i]);
+	      thisk/(p.a*p.dx), bins[i], counts[i]);
 
       thisk = thisk + dk;
       
@@ -159,11 +158,21 @@ void scalarps(hydro_params p, fftwf_complex *field, int step, char *label) {
     fclose(fp);
   }
 
-  printf0(p, "Basic FFT done\n");
-      
   free(bins);
   free(counts);
-
+  
+  float end = clock();
+  if(label != NULL){
+    if(*label){
+      printf0(p, "%s scalar power spectrum calculation took %lf\n", label,
+        ((float) (end - start)) / CLOCKS_PER_SEC);
+    }
+  }
+  else{
+    printf0(p, "scalar power spectrum calculation took %lf\n",
+      ((float) (end - start)) / CLOCKS_PER_SEC);
+  }
+    
 }
 
 

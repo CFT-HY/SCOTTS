@@ -101,16 +101,22 @@ void fft_init(hydro_params p, fft_fields *fft_f){
   fft_f->plan = fftwf_mpi_plan_dft_3d(p.Lx, p.Ly, p.Lz,
 				     fft_f->in, fft_f->out, MPI_COMM_WORLD,
 				     FFTW_FORWARD, FFTW_ESTIMATE);
-
+  // Initialise UETC reference fields
   if (p.uetcstart>=0){
+    // Tensor fields
     fft_f->initial_Tij = (fftwf_complex **)malloc(6*sizeof(fftwf_complex *));
   
     for(i=0;i<TENSOR_CPTS;i++) {
       fft_f->initial_Tij[i] = fftwf_alloc_complex(alloc_local);
     }
-  }
 
+    // Vector fields
+    fft_f->initial_V = (fftwf_complex **)malloc(3*sizeof(fftwf_complex *));
   
+    for(i=0;i<3;i++) {
+      fft_f->initial_V[i] = fftwf_alloc_complex(alloc_local);
+    }
+  }
 }
 
 /** Cleanup the fft_fields fftwf fields, plan and mpi routines.
@@ -130,6 +136,11 @@ void fft_finalise(hydro_params p, fft_fields *fft_f){
       fftwf_free(fft_f->initial_Tij[i]);
 
     free(fft_f->initial_Tij);
+
+    for(i=0;i<3;i++)
+      fftwf_free(fft_f->initial_V[i]);
+
+    free(fft_f->initial_V);
   }
 
   free(fft_f->map);
@@ -291,6 +302,8 @@ void fft_vector(hydro_params p, fft_fields fft_f, float ****vector_field,
   int x, y, z;
   int i;
 
+  float start = clock();
+  
   alloc_local = fftwf_mpi_local_size_3d(n0, n1, n2,
 					MPI_COMM_WORLD, &x_thickness, &x_start);
 
@@ -314,10 +327,12 @@ void fft_vector(hydro_params p, fft_fields fft_f, float ****vector_field,
 	}
       }
     }
-
     //printf0(p, "FFT vector: Completed fft for cpt %d\n", i);
-
   }
+  float end = clock();
+  
+  printf0(p, "fft vector took %lf\n", ((float) (end - start)) / CLOCKS_PER_SEC);
+
 }
 
 /** Populate outcpts with normalised fourier transform of
@@ -344,6 +359,8 @@ void fft_tensor(hydro_params p, fft_fields fft_f, float ****tensor_field,
   int x, y, z;
   int i;
 
+  float start = clock();
+  
   alloc_local = fftwf_mpi_local_size_3d(n0, n1, n2,
 					MPI_COMM_WORLD, &x_thickness, &x_start);
 
@@ -371,6 +388,10 @@ void fft_tensor(hydro_params p, fft_fields fft_f, float ****tensor_field,
     //printf0(p, "FFT tensor: Completed fft for cpt %d\n", i);
 
   }
+  float end = clock();
+  
+  printf0(p, "fft tensor took %lf\n", ((float) (end - start)) / CLOCKS_PER_SEC);
+
 }
 
 
