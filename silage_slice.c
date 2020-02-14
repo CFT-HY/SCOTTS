@@ -45,7 +45,6 @@ void make_vort(hydro_fields f, hydro_params p, float ****temp){
 
   int x, y, z;
   float ****Vcell= make_vector(p);
-  // Construct T velocity (centered at cell)
 
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
@@ -63,6 +62,8 @@ void make_vort(hydro_fields f, hydro_params p, float ****temp){
   halo_field(Vcell[1], p);
   halo_field(Vcell[2], p);
 
+  // Construct vorticity (curl V). Use first-order centered difference to
+  // keep components centered in same place.
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
@@ -91,7 +92,7 @@ void make_vort(hydro_fields f, hydro_params p, float ****temp){
 
 /** Make divergence of velocity field.
  */
-void make_Vdiv(hydro_fields f, hydro_params p, float ***temp){
+void make_divV(hydro_fields f, hydro_params p, float ***temp){
   int x, y, z;
     for(x = 1; x <= p.slicex; x++) {
       for(y = 1; y <= p.slicey; y++) {
@@ -106,9 +107,10 @@ void make_Vdiv(hydro_fields f, hydro_params p, float ***temp){
     halo_field(temp, p);
 }
 
-/** Make T vorticity i.e (Tvort = curl T U)
+/** Make curl of temperature current i.e (curl J) with 
+ * \f$ J^{i} = TU \f$.
  */
-void make_Tvort(hydro_fields f, hydro_params p, float ****temp){
+void make_curlJ(hydro_fields f, hydro_params p, float ****temp){
   int x, y, z;
 
   float ****J = make_vector(p);
@@ -133,7 +135,8 @@ void make_Tvort(hydro_fields f, hydro_params p, float ****temp){
   halo_field(J[1], p);
   halo_field(J[2], p);
 
-  
+  // Construct curl of J, use first-order centered difference to
+  // keep components centered in same place.
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
@@ -157,7 +160,7 @@ void make_Tvort(hydro_fields f, hydro_params p, float ****temp){
 
 /** Make divergence of temperature current \f$ J^{i} = TU \f$.
  */
-void make_Jdiv(hydro_fields f, hydro_params p, float ***temp){
+void make_divJ(hydro_fields f, hydro_params p, float ***temp){
   int x, y, z;
   float ****J = make_vector(p);
 
@@ -181,12 +184,14 @@ void make_Jdiv(hydro_fields f, hydro_params p, float ***temp){
   halo_field(J[1], p);
   halo_field(J[2], p);
 
+  // Construct divergence of J, use first-order centered difference to
+  // keep components centered in same place.
   for(x = 1; x <= p.slicex; x++) {
       for(y = 1; y <= p.slicey; y++) {
 	for(z = 0; z < p.Lz; z++) {
-	  temp[x][y][z] = (J[0][x+1][y][z] - J[0][x][y][z]
-			   + J[1][x][y+1][z] - J[1][x][y][z]
-			   + J[2][x][y][z+1] - J[2][x][y][z])/p.dx;
+	  temp[x][y][z] = (J[0][x+1][y][z] - J[0][x-1][y][z]
+			   + J[1][x][y+1][z] - J[1][x][y-1][z]
+			   + J[2][x][y][(z+1)%p.Lz] - J[2][x][y][(z-1+p.Lz)%p.Lz])/(2*p.dx);
 	}
       }
     }
@@ -466,29 +471,29 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step, int xcoord)
   }
 
 
-  //// prepare Vdiv slice
+  //// prepare divV slice
   
-  make_Vdiv(f, p, temp);
+  make_divV(f, p, temp);
 
   make_slice(f, p, xcoord, slice, temp);
 
-  // write Vdiv slice.
+  // write divV slice.
 
   if(!p.rank) {
-    DBPutQuadvar1(dbfile, "Vdiv", "quadmesh", slice, meshsize, 2,
+    DBPutQuadvar1(dbfile, "divV", "quadmesh", slice, meshsize, 2,
          NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
   }
 
-  //// prepare Jdiv slice
+  //// prepare divJ slice
   
-  make_Jdiv(f, p, temp);
+  make_divJ(f, p, temp);
 
   make_slice(f, p, xcoord, slice, temp);
 
-  // write Vdiv slice.
+  // write divV slice.
 
   if(!p.rank) {
-    DBPutQuadvar1(dbfile, "Jdiv", "quadmesh", slice, meshsize, 2,
+    DBPutQuadvar1(dbfile, "divJ", "quadmesh", slice, meshsize, 2,
          NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
   }
   
@@ -572,29 +577,29 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step, int xcoord)
   }
 
   
-  //// Write all T vorticity (Tvort) components slice:
+  //// Write all curl of temperature current (curl J) components slice:
 
   
-  make_Tvort(f, p, temp_vec);
+  make_curlJ(f, p, temp_vec);
 
-  // Tvortx slice
+  // curlJx slice
   make_slice(f, p, xcoord, slice, temp_vec[0]);
   if(!p.rank) {
-    DBPutQuadvar1(dbfile, "Tvortx", "quadmesh", slice, meshsize, 2,
+    DBPutQuadvar1(dbfile, "curlJx", "quadmesh", slice, meshsize, 2,
 		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
   }
 
-  // Tvorty slice
+  // curlJy slice
   make_slice(f, p, xcoord, slice, temp_vec[1]);
   if(!p.rank) {
-    DBPutQuadvar1(dbfile, "Tvorty", "quadmesh", slice, meshsize, 2,
+    DBPutQuadvar1(dbfile, "curlJy", "quadmesh", slice, meshsize, 2,
 		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
   }
 
-  // Tvortz slice
+  // curlJz slice
   make_slice(f, p, xcoord, slice, temp_vec[2]);
   if(!p.rank) {
-    DBPutQuadvar1(dbfile, "Tvortz", "quadmesh", slice, meshsize, 2,
+    DBPutQuadvar1(dbfile, "curlJz", "quadmesh", slice, meshsize, 2,
 		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
   }
 
