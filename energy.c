@@ -31,10 +31,10 @@ float field_energy(hydro_fields f, hydro_params p) {
 	
 	a += 0.5*f.pi_future[x][y][z]*f.pi_future[x][y][z]*vol;
 
-	a += 0.5*((f.phi[x+1][y][z] - f.phi[x][y][z])/p.dx)
+	b += 0.5*((f.phi[x+1][y][z] - f.phi[x][y][z])/p.dx)
 	  *((f.phi[x+1][y][z] - f.phi[x][y][z])/p.dx)*vol;
 	
-	a += 0.5*((f.phi[x][y+1][z] - f.phi[x][y][z])/p.dx)
+	b += 0.5*((f.phi[x][y+1][z] - f.phi[x][y][z])/p.dx)
 	  *((f.phi[x][y+1][z] - f.phi[x][y][z])/p.dx)*vol;
 	
 	b += 0.5*((f.phi[x][y][(z+1)%p.Lz] - f.phi[x][y][z])/p.dx)
@@ -66,9 +66,9 @@ float field_energy(hydro_fields f, hydro_params p) {
 /** Computes the gradient energy in the scalar field.
  *
  * Note that this does _not_ currently sum over all sites, only those
- * on the current node.
+ * on the current core.
  */
-float gradient_energy(hydro_fields f, hydro_params p) {
+float gradient_energy_field(hydro_fields f, hydro_params p) {
 
   int x, y, z;
 
@@ -100,7 +100,34 @@ float gradient_energy(hydro_fields f, hydro_params p) {
   return Etot;
 }
 
+/** Computes the kinetic energy in the scalar field.
+ *
+ * Note that this does _not_ currently sum over all sites, only those
+ * on the current core.
+ */
+float kinetic_energy_field(hydro_fields f, hydro_params p) {
 
+  int x, y, z;
+
+  float vol;
+
+  float Etot = 0.0;
+
+
+  vol = p.dx*p.dx*p.dx;
+
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+
+	Etot += 0.5*f.pi_future[x][y][z]*f.pi_future[x][y][z]*vol;
+	
+      }
+    }
+  }
+  
+  return Etot;
+}
 
 /** Compute the total internal energy of the system.
  *
@@ -109,7 +136,7 @@ float gradient_energy(hydro_fields f, hydro_params p) {
  * way of performing the calculation.
  *
  * NB: This function currently does _not_ sum over all sites, only
- * those on the current node.
+ * those on the current core.
  */
 float total_energy(hydro_fields f, hydro_params p) {
 
@@ -174,7 +201,7 @@ float total_energy(hydro_fields f, hydro_params p) {
  *
  * NB: This function does _not_ currently sum over all sites.
  */
-float kinetic_energy(hydro_fields f, hydro_params p) {
+float kinetic_energy_fluid(hydro_fields f, hydro_params p) {
 
   int x, y, z;
 
@@ -511,5 +538,119 @@ void energy_density(hydro_fields f, hydro_params p, float ***en) {
 
 
 }
-    
-			    
+
+/** Compute total vorticity of temperature current 
+ * (curl J)^2 on local core. Allows calculation of enstrophy of J.
+ *
+ */
+float get_curlJ_tot(hydro_fields f, hydro_params p){
+#ifndef SCALAR
+  int x, y, z;
+
+  float ****J = make_vector(p);
+  float temp;
+
+  float curlJ_tot = 0;
+  float vol=p.dx*p.dx*p.dx;
+
+  // Construct temperature current (J) (centered at cell)
+
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+
+	J[0][x][y][z] = 0.5*(f.V[0][x][y][z] + f.V[0][x+1][y][z]
+				)*f.T[x][y][z]*f.W[x][y][z];
+	J[1][x][y][z] = 0.5*(f.V[1][x][y][z] + f.V[1][x][y+1][z]
+				)*f.T[x][y][z]*f.W[x][y][z];
+	J[2][x][y][z] = 0.5*(f.V[2][x][y][z] + f.V[2][x][y][(z+1)%p.Lz]
+				)*f.T[x][y][z]*f.W[x][y][z];
+      }
+    }
+  }
+
+  halo_field(J[0], p);
+  halo_field(J[1], p);
+  halo_field(J[2], p);
+
+
+  // Construct (curl J)^2.
+  // Use centered first-order difference so all components live in the same place,
+  // and we avoid generation of spurious vorticity.
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+	temp = (J[2][x][y+1][z] - J[2][x][y-1][z]
+			  - J[1][x][y][(z+1)%p.Lz]
+			  + J[1][x][y][(z-1+p.Lz)%p.Lz])/(2*p.dx);
+	curlJ_tot += temp*temp*vol;
+	
+	temp = (J[0][x][y][(z+1)%p.Lz]
+			  - J[0][x][y][(z-1+p.Lz)%p.Lz]
+			  - J[2][x+1][y][z] + J[2][x-1][y][z])/(2*p.dx);
+	curlJ_tot += temp*temp*vol;
+
+	temp = (J[1][x+1][y][z] - J[1][x-1][y][z]
+			  - J[0][x][y+1][z] + J[0][x][y-1][z])/(2*p.dx);
+	curlJ_tot += temp*temp*vol;
+      }
+    }
+  }
+  free_vector(p, J);
+  return curlJ_tot;
+#else
+  return 0;
+#endif //!SCALAR   
+}
+
+/** Compute total divergence of temperature current on local core
+ * (div J)^2.
+ *
+ */
+float get_divJ_tot(hydro_fields f, hydro_params p){
+#ifndef SCALAR
+  int x, y, z;
+  float ****J = make_vector(p);
+  float divJ_tot = 0;
+  float temp;
+  float vol=p.dx*p.dx*p.dx;
+  // Construct temperature current (centered at cell)
+
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+
+	J[0][x][y][z] = 0.5*(f.V[0][x][y][z] + f.V[0][x+1][y][z]
+				)*f.T[x][y][z]*f.W[x][y][z];
+	J[1][x][y][z] = 0.5*(f.V[1][x][y][z] + f.V[1][x][y+1][z]
+				)*f.T[x][y][z]*f.W[x][y][z];
+	J[2][x][y][z] = 0.5*(f.V[2][x][y][z] + f.V[2][x][y][(z+1)%p.Lz]
+				)*f.T[x][y][z]*f.W[x][y][z];
+      }
+    }
+  }
+
+  halo_field(J[0], p);
+  halo_field(J[1], p);
+  halo_field(J[2], p);
+
+  // Construct (div J)^2
+  // Use centered first-order difference so all components live in the same place,
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+	temp = (J[0][x+1][y][z] - J[0][x-1][y][z]
+		+ J[1][x][y+1][z] - J[1][x][y-1][z]
+		+ J[2][x][y][(z+1)%p.Lz] - J[2][x][y][(z-1+p.Lz)%p.Lz])/(2*p.dx);
+	divJ_tot += temp*temp*vol;
+      }
+    }
+  }
+
+  free_vector(p, J);
+  return divJ_tot;
+  
+#else
+  return 0;
+#endif //!SCALAR
+}

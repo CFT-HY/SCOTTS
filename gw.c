@@ -276,8 +276,7 @@ void gwproject(hydro_params p, int x_start, int slab,
  *
  * Question: how is the output normalised, what exactly is this?
  */
-float fft_tensor(hydro_fields f, hydro_params p, int step,
-		float energydensity) {
+float fft_tensor(hydro_fields f, hydro_params p, int step) {
 
   ptrdiff_t x_thickness, x_start, alloc_local;
 
