@@ -575,14 +575,17 @@ void Vdpot(hydro_params p, float ***T, float ***phi, float ***Vprecalc);
 
 // energy.c
 float field_energy(hydro_fields f, hydro_params p);
-float gradient_energy(hydro_fields f, hydro_params p);
+float gradient_energy_field(hydro_fields f, hydro_params p);
+float kinetic_energy_field(hydro_fields f, hydro_params p);
 float total_energy(hydro_fields f, hydro_params p);
-float kinetic_energy(hydro_fields f, hydro_params p);
+float kinetic_energy_fluid(hydro_fields f, hydro_params p);
 float rest_energy(hydro_fields f, hydro_params p);
 void energy_density(hydro_fields f, hydro_params p, float ***en);
 void stress_energy(hydro_fields f, hydro_params p, float ****Tij);
 float avg_pressure(hydro_fields f, hydro_params p);
 float tzerozero(hydro_fields f, hydro_params p);
+float get_curlJ_tot(hydro_fields f, hydro_params p);
+float get_divJ_tot(hydro_fields f, hydro_params p);
 
 // eos.c
 
@@ -613,9 +616,14 @@ void fluid_sphere(hydro_fields f, hydro_params p);
 
 
 // output.c
+void write_global_headers(hydro_fields f, hydro_params p);
+void write_globals(hydro_fields f, hydro_params p, float gwen,
+		    int bcount, float sim_time, int step);
 float get_gamma_max(hydro_fields f, hydro_params p);
 float get_s_max(hydro_fields f, hydro_params p);
 float get_veltot(hydro_fields f, hydro_params p);
+long long get_N_broken(hydro_fields f, hydro_params p);
+long long get_broken_links(hydro_fields f, hydro_params p);
 void dump(float *field, hydro_params p);
 void histo_field(float ***field, hydro_params p, int step);
 void didj(float *cpts, hydro_fields f, hydro_params p);
@@ -640,12 +648,16 @@ void write_silo_step(hydro_fields f, hydro_params p, int step);
 
 // silage_slice.c
 void make_kinetic(hydro_fields f, hydro_params p, float ***temp);
-void make_slice(hydro_fields f, hydro_params p, float *slice, float ***temp);
-void make_curl(hydro_fields f, hydro_params p, float ****temp);
-void make_div(hydro_fields f, hydro_params p, float ***temp);
+void make_slice(hydro_fields f, hydro_params p, int xcoord, float *slice,
+		float ***temp);
+void make_vort(hydro_fields f, hydro_params p, float ****temp);
+void make_divV(hydro_fields f, hydro_params p, float ***temp);
+void make_curlJ(hydro_fields f, hydro_params p, float ****temp);
+void make_divJ(hydro_fields f, hydro_params p, float ***temp);
 void make_vel(hydro_fields f, hydro_params p, float ***temp);
 void make_Z(hydro_fields f, hydro_params p, float ***temp);
-void write_silo_slice_step(hydro_fields f, hydro_params p, int step);
+void write_silo_slice_step(hydro_fields f, hydro_params p, int step,
+			   int xcoord);
 #endif // SILO
 
 
@@ -658,7 +670,10 @@ float minof2(float a, float b);
 
 #ifdef FFT
 // fft.c
-void fft_field(hydro_fields f, hydro_params p, float ***field, int step);
+void fft_field(hydro_params p, float ***field, int step, char *label);
+#ifndef SCALAR
+void fft_e(hydro_fields f, hydro_params p, int step);
+#endif //!SCALAR
 
 // uetc.c
 void init_uetc(hydro_fields f, hydro_params p);
@@ -666,15 +681,20 @@ void fft_uetc(hydro_fields f, hydro_params p, int step);
 
 // gw.c
 float proj(int T, float kx, float ky, float kz);
-float fft_tensor(hydro_fields f, hydro_params p, int step,
-		  float energydensity);
+float fft_tensor(hydro_fields f, hydro_params p, int step);
 int indexof(int i, int j);
 float lambda(int i, int j, int l, int m, float kx, float ky, float kz);
 
-// velps.c
-float vel_proj(int T, float kx, float ky, float kz);
-void fft_vel(hydro_fields f, hydro_params p, int step, float ****vectorfield);
-
+// vectorps.c
+float vec_proj(int T, float kx, float ky, float kz);
+void fft_vec(hydro_params p, float ****vectorfield, int step,char *label);
+void split_and_power(hydro_params p, int x_start, int slab,
+		     float *product, float *product_div, float *product_tot,
+		     fftwf_complex **vk);
+void histogram(hydro_params p, float *slice, char *filename,
+	       int slab, int x_start);
+void fft_J(hydro_fields f, hydro_params p, int step);
+void fft_X(hydro_fields f, hydro_params p, int step);
 #endif // FFT
 
 

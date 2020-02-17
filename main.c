@@ -100,9 +100,9 @@ int main(int argc, char *argv[]) {
   // How many bubbles to nucleate on a given timestep
   int howmany;
 
-  // time iterates: count steps and t separately
+  // time iterates: count steps and time separately
   int step;
-  float t = 0.0;
+  float sim_time = 0.0;
 
   // Struct that stores the fields
   hydro_fields f;
@@ -113,14 +113,8 @@ int main(int argc, char *argv[]) {
   // Storage of measurements of average stress-energy tensor (not used)
   //  float cpts[TENSOR_CPTS];
 
-  float initial_energy, current_energy;
-  float initial_field_energy, current_field_energy;
-  float current_kinetic, current_gradient_energy, current_rest;
-  float current_avgpress;
-  float current_veltot;
+  float initial_energy, initial_field_energy;
   float gwen;
-  float s_max;
-  float gamma_max;
   
   // Timing counters
   float cpu_time_used;
@@ -199,7 +193,6 @@ int main(int argc, char *argv[]) {
 	start = clock();
 	printf0(p, "Nucleating first bubble\n");
 	nucleate_at(f,p,0,0,0);
-	halo_field(f.phi,p);
       
 	end = clock();
 	if(!p.rank)
@@ -229,7 +222,6 @@ int main(int argc, char *argv[]) {
 	
 	printf0(p, "Nucleating just one bubble\n");
 	nucleate_at(f,p,0,0,0);
-	halo_field(f.phi,p);
 	bcount+=1;
       } else{
 	// Empty system
@@ -319,6 +311,9 @@ int main(int argc, char *argv[]) {
   }
   */
 
+  // Spit out to stdout global headers
+  write_global_headers(f, p);
+  
   printf0(p, "Starting main loop.\n");
 
   // Wall time measurement
@@ -343,7 +338,7 @@ int main(int argc, char *argv[]) {
 
     // How many bubbles do we (try to) nucleate this timestep?
     // (Always 0 if initial condition not set to "bubble")
-    howmany = bubbles_at_step(f, p, t, step);
+    howmany = bubbles_at_step(f, p, sim_time, step);
 
     i = 0;
 
@@ -362,12 +357,11 @@ int main(int argc, char *argv[]) {
       }
       else{
 	still_nucleate = try_nucleate(f, p);
-
 	bcount += still_nucleate;
 	i++;
       }
     }
-
+    
 
     // Checkpoint if necessary
     if((p.checkpointinterval > 0) && (step % p.checkpointinterval == 0) \
@@ -386,7 +380,7 @@ int main(int argc, char *argv[]) {
     }
 
     if((p.silosliceinterval > 0) && (step % p.silosliceinterval == 0)) {
-      write_silo_slice_step(f, p, step);
+      write_silo_slice_step(f, p, step, p.siloslicecoord);
     }
 #endif // SILO
 
@@ -409,15 +403,23 @@ int main(int argc, char *argv[]) {
       }      
 
       // Power spectrum of scalar field
-      fft_field(f, p, f.phi, step);
-
+      fft_field(p, f.phi, step, "phi");
+      
 #ifndef SCALAR
+      
+      // Power spectrum of internal energy e=E/W
+      fft_e(f, p, step);
+      
       // Velocity power spectrum
-      fft_vel(f, p, step, f.V);
+      fft_vec(p, f.V, step, "vel");
+      // Temperature current power spectrum.
+      fft_J(f, p, step);
+      // X variable power spectrum.
+      fft_X(f, p, step);
 #endif //!SCALAR
 
       // Gravitational wave power spectrum (returns GW energy)
-      gwen = fft_tensor(f, p, step, 0.0);
+      gwen = fft_tensor(f, p, step);
 
       // Average size of stress-energy tensor components (not used)
       /*
@@ -436,34 +438,8 @@ int main(int argc, char *argv[]) {
     // Measurements
     if((p.interval > 0) && (step % p.interval == 0)) {
 
-      current_energy = reduce_sum(total_energy(f, p), p);
-      current_kinetic = reduce_sum(kinetic_energy(f, p), p);
-      current_rest = reduce_sum(rest_energy(f, p), p);
-      current_avgpress = reduce_sum(avg_pressure(f, p), p);
-      current_field_energy = reduce_sum(field_energy(f, p), p);
-      current_gradient_energy = reduce_sum(gradient_energy(f, p), p);
-      current_veltot = reduce_sum(get_veltot(f, p), p)
-	/((float)(p.Lx*p.Ly*p.Lz));
-      s_max = reduce_max(get_s_max(f, p), p);
-      gamma_max = reduce_max(get_gamma_max(f, p), p);
+      write_globals(f, p, gwen, bcount, sim_time, step);
       
-      if(!p.rank) {
-	printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf\t%6lf\t%6lf\t%6lf\n",
-		step,
-		t,
-		current_energy,
-		current_kinetic,
-		current_field_energy,
-		current_gradient_energy,
-		current_veltot,
-		gwen,
-		bcount,
-		current_rest,
-		current_avgpress,
-		s_max,
-		gamma_max);
-      }
-
       // Statement of energy violation (not shown; better to use KE)
       /*
       fprintf(stderr, "Energy violation: %.10lf%%, %lf%%\n",
@@ -513,7 +489,7 @@ int main(int argc, char *argv[]) {
     // Solve for T
     find_Ta(f, p);
     
-    t += p.dt;
+    sim_time += p.dt;
 
 
     // On the last step, do some extra GW power spectra FFTs
@@ -521,10 +497,12 @@ int main(int argc, char *argv[]) {
     if(step == p.steps - 1) {
 
 #ifndef SCALAR
-      fft_vel(f, p, step, f.V);
+      fft_vec(p, f.V, step, "vel");
+      fft_J(f, p, step);
+      fft_X(f, p, step);
 #endif // !SCALAR
 
-      fft_tensor(f,p,step,current_energy);
+      fft_tensor(f,p,step);
     }
 #endif // FFT
     
@@ -537,34 +515,8 @@ int main(int argc, char *argv[]) {
   }
 
 
-  current_energy = reduce_sum(total_energy(f, p), p);
-  current_kinetic = reduce_sum(kinetic_energy(f, p), p);
-  current_rest = reduce_sum(rest_energy(f, p), p);
-  current_avgpress = reduce_sum(avg_pressure(f, p), p);
-  current_field_energy = reduce_sum(field_energy(f, p), p);
-  current_gradient_energy = reduce_sum(gradient_energy(f, p), p);
-  current_veltot = reduce_sum(get_veltot(f, p), p)
-    /((float)(p.Lx*p.Ly*p.Lz));
-  s_max = reduce_max(get_s_max(f, p), p);
-  gamma_max = reduce_max(get_gamma_max(f, p), p);
-
-  
-  if(!p.rank) {
-    printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf\t%6lf\t%6lf\t%6lf\n",
-	   step,
-	   t,
-	   current_energy,
-	   current_kinetic,
-	   current_field_energy,
-	   current_gradient_energy,
-	   current_veltot,
-	   gwen,
-	   bcount,
-	   current_rest,
-	   current_avgpress,
-	   s_max,
-	   gamma_max);
-  }
+  // Write globals one last time.
+  write_globals(f, p, gwen, bcount, sim_time, step);
 
 
   
@@ -575,10 +527,12 @@ int main(int argc, char *argv[]) {
 #ifdef FFT
 
 #ifndef SCALAR
-  fft_vel(f,p,step,f.V);
+  fft_vec(p, f.V, step, "vel");
+  fft_J(f, p, step);
+  fft_X(f, p, step);
 #endif // !SCALAR
 
-  fft_tensor(f,p,step,current_energy);
+  fft_tensor(f,p,step);
     
 #endif // FFT
 
