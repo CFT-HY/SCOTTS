@@ -6,6 +6,79 @@
 #include "hydro.h"
 
 
+
+/** Output to std out the global headers.
+ */
+void write_global_headers(hydro_fields f, hydro_params p){
+  if(!p.rank) {
+    printf("step\ttime\ttot_E\tkin_E_fl\ttot_E_fi\tgrad_E_fi\tV^2_tot\tgwen\tNb\trest_E"
+	   "\tpress\ts_max\tgmma_max\tcurl_J\tkin_E_fi\tdiv_J\tN_broken\tN_links\n");
+  }
+}
+
+/** Write out all global quantities to std out. Takes gwen calculated
+ * from fft_tensor, number of bubbles at current time, and the
+ * simulation time and timestep.
+ *
+ * To do: write summary of outputs here.
+ */
+void write_globals(hydro_fields f, hydro_params p, float gwen, int bcount,
+		    float sim_time, int step){
+
+  float current_energy, current_field_energy, current_kinetic_field;
+  float current_kinetic_fluid, current_gradient_energy, current_rest;
+  float current_avgpress;
+  float current_veltot;
+  float s_max;
+  float gamma_max;
+  float curlJ_tot;
+  float divJ_tot;
+  long long N_broken;
+  long long N_links;
+
+  
+  current_energy = reduce_sum(total_energy(f, p), p);
+  current_kinetic_fluid = reduce_sum(kinetic_energy_fluid(f, p), p);
+  current_kinetic_field = reduce_sum(kinetic_energy_field(f, p), p);
+  current_rest = reduce_sum(rest_energy(f, p), p);
+  current_avgpress = reduce_sum(avg_pressure(f, p), p);
+  current_field_energy = reduce_sum(field_energy(f, p), p);
+  current_gradient_energy = reduce_sum(gradient_energy_field(f, p), p);
+  current_veltot = reduce_sum(get_veltot(f, p), p)
+    /((float)(p.Lx*p.Ly*p.Lz));
+  s_max = reduce_max(get_s_max(f, p), p);
+  gamma_max = reduce_max(get_gamma_max(f, p), p);
+  curlJ_tot =  reduce_sum(get_curlJ_tot(f,p),p);
+  divJ_tot = reduce_sum(get_divJ_tot(f,p), p);
+  N_broken = reduce_sum(get_N_broken(f,p), p);
+  N_links = reduce_sum(get_broken_links(f,p), p);
+      
+  if(!p.rank) {
+    printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf"
+	   "\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%lli\t%lli\n",
+	   step,
+	   sim_time,
+	   current_energy,
+	   current_kinetic_fluid,
+	   current_field_energy,
+	   current_gradient_energy,
+	   current_veltot,
+	   gwen,
+	   bcount,
+	   current_rest,
+	   current_avgpress,
+	   s_max,
+	   gamma_max,
+	   curlJ_tot,
+	   current_kinetic_field,
+	   divJ_tot,
+	   N_broken,
+	   N_links);
+  }
+
+}
+
+
 /** Returns the largest zone-centred gamma factor found anywhere
  * in the simulation box.
  */
@@ -87,7 +160,6 @@ float get_veltot(hydro_fields f, hydro_params p) {
   
   float veltot = 0.0;
 
-  // Just search for maxmimum
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
@@ -105,7 +177,8 @@ float get_veltot(hydro_fields f, hydro_params p) {
 #endif
 }
 
-/** Find number of sites in the broken phase.
+/** Find number of sites in the broken phase. Allows for calculation
+ * of volume of broken phase, and therefore wall speed.
  */
 long long get_N_broken(hydro_fields f, hydro_params p){
   int x, y, z;
@@ -138,7 +211,9 @@ long long get_N_broken(hydro_fields f, hydro_params p){
 
 }
 
-/** Find number of links between broken and symmetric phase.
+/** Find number of links between broken and symmetric phase.  Allows
+ * for calculation of surface area of bubbles, and therefore wall
+ * speed.
  */
 long long get_broken_links(hydro_fields f, hydro_params p){
   int x, y, z;
