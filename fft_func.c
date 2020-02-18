@@ -404,21 +404,19 @@ void fft_J(hydro_fields f, hydro_params p, fft_fields fft_f,
 #ifndef SCALAR
   int x, y, z, i;
   float ****J = make_vector(p);
-  float Tnode;
 
-  // Construct temperature current.
+  // Construct temperature current (centered at cell)
+
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
-	Tnode = 0.125*(f.T[x][y][z] + f.T[x-1][y][z]
-		       + f.T[x][y-1][z] + f.T[x][y][(z-1+p.Lz)%p.Lz]
-		       + f.T[x-1][y-1][z] + f.T[x-1][y][(z-1+p.Lz)%p.Lz]
-		       + f.T[x][y-1][(z-1+p.Lz)%p.Lz]
-		       + f.T[x-1][y-1][(z-1+p.Lz)%p.Lz]
-		       );
-	for(i =0; i < 3; i++){
-	  J[i][x][y][z] = f.U[i][x][y][z]*Tnode;
-	}
+
+	J[0][x][y][z] = 0.5*(f.V[0][x][y][z] + f.V[0][x+1][y][z]
+				)*f.T[x][y][z]*f.W[x][y][z];
+	J[1][x][y][z] = 0.5*(f.V[1][x][y][z] + f.V[1][x][y+1][z]
+				)*f.T[x][y][z]*f.W[x][y][z];
+	J[2][x][y][z] = 0.5*(f.V[2][x][y][z] + f.V[2][x][y][(z+1)%p.Lz]
+				)*f.T[x][y][z]*f.W[x][y][z];
       }
     }
   }

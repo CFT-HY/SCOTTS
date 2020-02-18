@@ -234,5 +234,4 @@ void vectorps(hydro_params p, fftwf_complex **outcpts, int step, char *label) {
   }
 }
 
-
 #endif // FFT

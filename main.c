@@ -100,9 +100,9 @@ int main(int argc, char *argv[]) {
   // How many bubbles to nucleate on a given timestep
   int howmany;
 
-  // time iterates: count steps and t separately
+  // time iterates: count steps and time separately
   int step;
-  float t = 0.0;
+  float sim_time = 0.0;
 
   // Struct that stores the fields
   hydro_fields f;
@@ -125,18 +125,8 @@ int main(int argc, char *argv[]) {
   // Storage of measurements of average stress-energy tensor (not used)
   //  float cpts[TENSOR_CPTS];
 
-  float initial_energy, current_energy;
-  float initial_field_energy, current_field_energy, current_kinetic_field;
-  float current_kinetic_fluid, current_gradient_energy, current_rest;
-  float current_avgpress;
-  float current_veltot;
+  float initial_energy, initial_field_energy;
   float gwen;
-  float s_max;
-  float gamma_max;
-  float Tvort_tot;
-  float Jdiv_tot;
-  long long N_broken;
-  long long N_links;
   
   // Timing counters
   float cpu_time_used;
@@ -341,6 +331,9 @@ int main(int argc, char *argv[]) {
   }
   */
 
+  // Spit out to stdout global headers
+  write_global_headers(f, p);
+  
   printf0(p, "Starting main loop.\n");
 
   // Wall time measurement
@@ -365,7 +358,7 @@ int main(int argc, char *argv[]) {
 
     // How many bubbles do we (try to) nucleate this timestep?
     // (Always 0 if initial condition not set to "bubble")
-    howmany = bubbles_at_step(f, p, t, step);
+    howmany = bubbles_at_step(f, p, sim_time, step);
 
     i = 0;
 
@@ -533,45 +526,8 @@ int main(int argc, char *argv[]) {
     // Measurements
     if((p.interval > 0) && (step % p.interval == 0)) {
 
-      current_energy = reduce_sum(total_energy(f, p), p);
-      current_kinetic_fluid = reduce_sum(kinetic_energy_fluid(f, p), p);
-      current_kinetic_field = reduce_sum(kinetic_energy_field(f, p), p);
-      current_rest = reduce_sum(rest_energy(f, p), p);
-      current_avgpress = reduce_sum(avg_pressure(f, p), p);
-      current_field_energy = reduce_sum(field_energy(f, p), p);
-      current_gradient_energy = reduce_sum(gradient_energy_field(f, p), p);
-      current_veltot = reduce_sum(get_veltot(f, p), p)
-	/((float)(p.Lx*p.Ly*p.Lz));
-      s_max = reduce_max(get_s_max(f, p), p);
-      gamma_max = reduce_max(get_gamma_max(f, p), p);
-      Tvort_tot =  reduce_sum(get_Tvort_tot(f,p),p);
-      Jdiv_tot = reduce_sum(get_Jdiv_tot(f,p), p);
-      N_broken = reduce_sum(get_N_broken(f,p), p);
-      N_links = reduce_sum(get_broken_links(f,p), p);
+      write_globals(f, p, gwen, bcount, sim_time, step);
       
-      if(!p.rank) {
-	printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf"
-	       "\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%lli\t%lli\n",
-	       step,
-	       t,
-	       current_energy,
-	       current_kinetic_fluid,
-	       current_field_energy,
-	       current_gradient_energy,
-	       current_veltot,
-	       gwen,
-	       bcount,
-	       current_rest,
-	       current_avgpress,
-	       s_max,
-	       gamma_max,
-	       Tvort_tot,
-	       current_kinetic_field,
-	       Jdiv_tot,
-	       N_broken,
-	       N_links);
-      }
-
       // Statement of energy violation (not shown; better to use KE)
       /*
       fprintf(stderr, "Energy violation: %.10lf%%, %lf%%\n",
@@ -589,7 +545,7 @@ int main(int argc, char *argv[]) {
     //dump_max_min(f, p);
 
     // Calculate EOS
-    eq_of_state(f, p, step);
+    eq_of_state(f, p);
     //printf0(p,"Calculated eos \n");
     //dump_max_min(f, p);
 
@@ -619,9 +575,9 @@ int main(int argc, char *argv[]) {
     //    artificial_viscosity(f, nb, p);
 
     // Solve for T
-    find_Ta(f, p, step);
+    find_Ta(f, p);
     
-    t += p.dt;
+    sim_time += p.dt;
     
   } // main loop ends here
 
@@ -632,44 +588,8 @@ int main(int argc, char *argv[]) {
   }
 
 
-  current_energy = reduce_sum(total_energy(f, p), p);
-  current_kinetic_fluid = reduce_sum(kinetic_energy_fluid(f, p), p);
-  current_kinetic_field = reduce_sum(kinetic_energy_field(f, p), p);
-  current_rest = reduce_sum(rest_energy(f, p), p);
-  current_avgpress = reduce_sum(avg_pressure(f, p), p);
-  current_field_energy = reduce_sum(field_energy(f, p), p);
-  current_gradient_energy = reduce_sum(gradient_energy_field(f, p), p);
-  current_veltot = reduce_sum(get_veltot(f, p), p)
-    /((float)(p.Lx*p.Ly*p.Lz));
-  s_max = reduce_max(get_s_max(f, p), p);
-  gamma_max = reduce_max(get_gamma_max(f, p), p);
-  Tvort_tot = reduce_sum(get_Tvort_tot(f, p), p);
-  Jdiv_tot = reduce_sum(get_Jdiv_tot(f,p), p);
-  N_broken = reduce_sum(get_N_broken(f,p), p);
-  N_links = reduce_sum(get_broken_links(f,p), p);
-      
-  if(!p.rank) {
-    printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf\t%6lf"
-	   "\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%lli\t%lli\n",
-	   step,
-	   t,
-	   current_energy,
-	   current_kinetic_fluid,
-	   current_field_energy,
-	   current_gradient_energy,
-	   current_veltot,
-	   gwen,
-	   bcount,
-	   current_rest,
-	   current_avgpress,
-	   s_max,
-	   gamma_max,
-	   Tvort_tot,
-	   current_kinetic_field,
-	   Jdiv_tot,
-	   N_broken,
-	   N_links);
-  }
+  // Write globals one last time.
+  write_globals(f, p, gwen, bcount, sim_time, step);
 
 
   
@@ -713,6 +633,7 @@ int main(int argc, char *argv[]) {
 
   // Temperature current power spectrum
   fft_J(f, p, fft_f, outcpts_vec);
+
     
   vectorps(p, outcpts_vec, step, "J");
       
