@@ -122,21 +122,21 @@ void debug_write_power(hydro_params p, fftwf_complex **in, ptrdiff_t x_start, pt
 					for(j=1; j<=3; j++) {
 
 					// Transverse components
-					res_r += vec_proj(i*10 + j, kx, ky, kz)
+					res_r += proj(i*10 + j, kx, ky, kz)
 					*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-					res_i += vec_proj(i*10 + j, kx, ky, kz)
+					res_i += proj(i*10 + j, kx, ky, kz)
 					*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 
 					// And longitudinal...
 					if(i == j) {
-					resid_r += (1.0 - vec_proj(i*10 + j, kx, ky, kz))
+					resid_r += (1.0 - proj(i*10 + j, kx, ky, kz))
 					*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-					resid_i += (1.0 - vec_proj(i*10 + j, kx, ky, kz))
+					resid_i += (1.0 - proj(i*10 + j, kx, ky, kz))
 					*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 					} else {
-					resid_r += (-1.0*vec_proj(i*10 + j, kx, ky, kz))
+					resid_r += (-1.0*proj(i*10 + j, kx, ky, kz))
 					*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-					resid_i += (-1.0*vec_proj(i*10 + j, kx, ky, kz))
+					resid_i += (-1.0*proj(i*10 + j, kx, ky, kz))
 					*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 					}
 					}
@@ -738,17 +738,17 @@ void project_down(hydro_params p, fftwf_complex **in, int shift_x, int x_thickne
 									// v_i^\perp = P_{ij} v_j
 									// where P_{ij} = \delta_{ij} - \hat{k}_i \hat{k}_j
 									// and $\hat{k}$ is a unit vector in the $k$ direction.
-									in_proj_re[i-1] += vec_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-									in_proj_im[i-1] += vec_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+									in_proj_re[i-1] += proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+									in_proj_im[i-1] += proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 
 
 									// this is delta_{ij} - P_{ij}V_j
 									if(i == j) {
-										res_re += (1.0-vec_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-										res_im += (1.0-vec_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+										res_re += (1.0-proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+										res_im += (1.0-proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 									} else {
-										res_re += (-1.0*vec_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-										res_im += (-1.0*vec_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+										res_re += (-1.0*proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+										res_im += (-1.0*proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 									}
 
 
@@ -757,16 +757,16 @@ void project_down(hydro_params p, fftwf_complex **in, int shift_x, int x_thickne
 									// Div?
 									// v_i^\parallel = (\delta_{ij} - P_{ij}) v_j
 									if(i == j) {
-										in_proj_re[i-1] += (1.0-vec_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-										in_proj_im[i-1] += (1.0-vec_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+										in_proj_re[i-1] += (1.0-proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+										in_proj_im[i-1] += (1.0-proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 									} else {
-										in_proj_re[i-1] += (-1.0*vec_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-										in_proj_im[i-1] += (-1.0*vec_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+										in_proj_re[i-1] += (-1.0*proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+										in_proj_im[i-1] += (-1.0*proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 									}
 									// #endif
 
-									res_re += vec_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-									res_im += vec_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+									res_re += proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+									res_im += proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 
 								}
 
