@@ -1,6 +1,12 @@
-/* uetc.c
+/** @file uetc.c
  *
- * Unequal time correlator calculation
+ * File containing unequal time correlator calculations.
+ *
+ * FFT functions in fft_func.c,
+ * Projectors are in projectors.c,
+ * Tensor power spectra are in tensorps.c,
+ * Vector power spectra are in vectorps.c,
+ * Scalar power spectrum calculation is in scalarps.c.
  */
 #include "hydro.h"
 
@@ -10,139 +16,36 @@
 
 
 
-/* void init_uetc(hydro_fields f, hydro_params p)
- *
- * Initialise the UETC calculation with the Tij's from the
- * current timestep.
+/**  Initialise the UETC calculation for all fields for which we
+ * calculate UETCs with the momentum space 
  */ 
-void init_uetc(hydro_fields f, hydro_params p) {
+void init_uetc(hydro_fields f, hydro_params p, fft_fields fft_f) {
 
 
   int i, x, y, z;
 
+  // Initialise UETC for energy momentum tensor.
   float ****Tij = make_tensor(p);
   stress_energy(f, p, Tij);
 
 
-  for(i = 0; i < TENSOR_CPTS; i++) {
-    for(x = 1; x <= p.slicex; x++) {
-      for(y = 1; y <= p.slicey; y++) {
-        for(z = 0; z < p.Lz; z++) {
-
-          f.initial_Tij[i][x][y][z] = Tij[i][x][y][z];
-        }
-      }
-    }
-  }
+  fft_tensor(p, fft_f, Tij, fft_f.initial_Tij, 1.0);
 
 
   free_tensor(p, Tij);
+
+  fft_vector(p, fft_f, f.V, fft_f.initial_V);
+
 }
 
 
-/* void uetc_project(hydro_params p, int x_start, int slab,
- *                 float *product_re, float *product_im,
- *                 fftwf_complex **Tij_then, fftwf_complex **Tij_now)
- *
- * Like gwproject (see gw.c), but for two separate timesteps, and takes two
- * different tensors.
+/**  Actually calculate the transverse traceless uetc of a tensor between two timesteps and store in
+ * an appropriately named file.
  */
-void uetc_project(hydro_params p, int x_start, int slab,
-		  float *product_re, float *product_im,
-		  fftwf_complex **Tij_then, fftwf_complex **Tij_now) {
-
-  int i, j, l, m;
-  int x, y, z;
-  float kx, ky, kz;
-
-  int true_x, true_y, true_z;
-
-  float s_x, s_y, s_z;
-
-  for(x=0; x<slab; x++) {
-    for(y=0; y<p.Ly; y++) {
-      for(z=0; z<p.Lz; z++) {
-
-        s_x = 1.0;
-        s_y = 1.0;
-        s_z = 1.0;
-
-        if(x+x_start > p.Lx/2) {
-          true_x = -(p.Lx - (x+x_start));
-          s_x = -1.0;
-        } else {
-          true_x = x+x_start;
-          s_x = 1.0;
-        }
-
-        if(y > p.Ly/2) {
-          true_y = -(p.Ly - y);
-          s_y = -1.0;
-        } else {
-          true_y = y;
-          s_y = 1.0;
-        }
-
-        if(z > p.Lz/2) {
-          true_z = -(p.Lz - z);
-          s_z = -1.0;
-        } else {
-          true_z = z;
-          s_z = 1.0;
-        }
-
-	/*
-	kx = ((float)(x+x_start))*2.0*M_PI/((float)p.Lx);
-	ky = ((float)y)*2.0*M_PI/((float)p.Ly);
-	kz = ((float)z)*2.0*M_PI/((float)p.Lz);
-	*/
-	
-
-        kx = s_x*sqrt((2.0 - 2.0*cos(((float)(true_x))*2.0*M_PI/(((float)p.Lx))))/(p.dx*p.dx));
-	ky = s_y*sqrt((2.0 - 2.0*cos(((float)(true_y))*2.0*M_PI/(((float)p.Ly))))/(p.dx*p.dx));
-	kz = s_z*sqrt((2.0 - 2.0*cos(((float)(true_z))*2.0*M_PI/(((float)p.Lz))))/(p.dx*p.dx));
-
-	product_re[x*p.Ly*p.Lz + y*p.Lz + z] = 0.0;
-	product_im[x*p.Ly*p.Lz + y*p.Lz + z] = 0.0;
-
-	// Sum over indices on lambda_{ij,lm} and udot_{ij}(k)
-	for(i=1; i<=3; i++) {
-	  for(j=1; j<=3; j++) {
-	    for(l=1; l<=3; l++) {
-	      for(m=1; m<=3; m++) {
-
-		product_re[x*p.Ly*p.Lz + y*p.Lz + z] +=
-		  lambda(i, j, l, m, kx, ky, kz)
-		  *(Tij_then[indexof(i,j)][x*p.Ly*p.Lz + y*p.Lz + z][0]
-		   *Tij_now[indexof(l,m)][x*p.Ly*p.Lz + y*p.Lz + z][0]
-		    + Tij_then[indexof(i,j)][x*p.Ly*p.Lz + y*p.Lz + z][1]
-		    *Tij_now[indexof(l,m)][x*p.Ly*p.Lz + y*p.Lz + z][1]);
-
-		product_im[x*p.Ly*p.Lz + y*p.Lz + z] +=
-		  lambda(i, j, l, m, kx, ky, kz)
-		  *(-Tij_then[indexof(i,j)][x*p.Ly*p.Lz + y*p.Lz + z][0]
-		   *Tij_now[indexof(l,m)][x*p.Ly*p.Lz + y*p.Lz + z][1]
-		    + Tij_then[indexof(i,j)][x*p.Ly*p.Lz + y*p.Lz + z][1]
-		    *Tij_now[indexof(l,m)][x*p.Ly*p.Lz + y*p.Lz + z][0]);
-	      }
-	    }
-	  }
-	}
-
-      }
-    }
-  }
-}
-
-
-
-
-/* fft_uetc(hydro_fields f, hydro_params p)
- *
- * Actually calculate the uetc at the current timestep and
- * store in an appropriately named file.
- */
-void fft_uetc(hydro_fields f, hydro_params p, int step) {
+void uetc_tensor(hydro_params p, fftwf_complex **tensor_then,
+		 fftwf_complex **tensor_now, int step_then, int step_now,
+		 char *label){
+ 
 
   ptrdiff_t x_thickness, x_start, alloc_local;
 
@@ -159,260 +62,33 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
   int x, y, z;
   int i;
 
-  float fft_norm = (1.0/(((float)p.Lx)*((float)p.Ly)*((float)p.Lz)))
-    *(1.0/sqrt(32.0*M_PI));
-  // *p.a*p.a*p.a*p.dx*p.dx*p.dx
-
-  float *trim_then = (float *)malloc(p.slicex*p.slicey*p.Lz*sizeof(float));
-  float *trim_now = (float *)malloc(p.slicex*p.slicey*p.Lz*sizeof(float));
-
-  printf0(p, "Starting UETC calculation.\n");
-
+  if(label != NULL){
+    if(*label){
+      printf0(p, "Starting %s tensor (TT) UETC calculation.\n",label);
+    }
+  }
+  else{
+   printf0(p, "Starting tensor (TT) UETC calculation.\n");
+  }
   float start = clock();
-
-  fftwf_mpi_init();
 
   alloc_local = fftwf_mpi_local_size_3d(n0, n1, n2,
 				       MPI_COMM_WORLD, &x_thickness, &x_start);
 
-
-  int *thicknesses = malloc(p.size*sizeof(int));
-  int *starts = malloc(p.size*sizeof(int));
-  int *map = malloc(p.Lx*sizeof(int));
-
-
-  if(p.rank) {
-    MPI_Send(&x_thickness, 1, MPI_INTEGER, 0, p.rank, MPI_COMM_WORLD);
-    MPI_Send(&x_start, 1, MPI_INTEGER, 0, p.rank, MPI_COMM_WORLD);
-
-  } else {
-    thicknesses[0] = x_thickness;
-    starts[0] = x_start;
-
-    for(i=1; i<p.size; i++) {
-      MPI_Recv(&thicknesses[i], 1, MPI_INTEGER, i, i, MPI_COMM_WORLD, &status);
-      MPI_Recv(&starts[i], 1, MPI_INTEGER, i, i, MPI_COMM_WORLD, &status);
-
-      //      fprintf(stderr,"rank %d, thickness %d, start %d\n", i, thicknesses[i], starts[i]);
-    }
-
-
-    for(x=0; x<p.Lx; x++) {
-      map[x] = -1;
-      for(i=0; i<p.size; i++) {
-        if(starts[i] <= x && (starts[i] + thicknesses[i]) > x) {
-          map[x] = i;
-          //      fprintf(stderr, "therefore node %d is responsible for x=%d\n", i, x);
-          break;
-        }
-      }
-      if(map[x] == -1) {
-	fprintf(stderr,"cannot find a node responsible for x=%d!\n", x);
-        die(-99);
-      }
-
-    }
-  }
-
-  printf0(p,"broadcasting our results\n");
-  MPI_Bcast(map, p.Lx, MPI_INTEGER, 0, MPI_COMM_WORLD);
-  printf0(p,"now to layout\n");
-
-  /*
-  slab = (int) x_thickness;
-
-  if(((int)x_thickness) != p.Lx/p.size) {
-    fprintf(stderr,
-	    "Giving up in FFT: FFTW told me to use a silly layout!\n");
-    die(-42);
-  }
-
-  if(((int)x_thickness) == 0) {
-    fprintf(stderr, "Giving up in FFT: dx=0!\n");
-    die(-43);
-  }
-  */
-
-  /////////////// here compute other thing to be squished ////////////////
-
-  float ****Tij = make_tensor(p);
-  stress_energy(f, p, Tij);
-
-  printf0(p,"generated stress-energy\n");
-
-  /////////////// done /////////////////
-
-
-  fftwf_complex *in = fftwf_alloc_complex(alloc_local);
-  fftwf_complex *out = fftwf_alloc_complex(alloc_local);
-
-  fftwf_complex **outcpts_then =
-    (fftwf_complex **)malloc(6*sizeof(fftwf_complex *));
-  fftwf_complex **outcpts_now =
-    (fftwf_complex **)malloc(6*sizeof(fftwf_complex *));
   
-  for(i=0;i<TENSOR_CPTS;i++) {
-    outcpts_then[i] = fftwf_alloc_complex(alloc_local);
-    outcpts_now[i] = fftwf_alloc_complex(alloc_local);
-  }
-
-  float *slice_then = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
-  float *slice_now = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
-
+  /////////////// Project to get transverse traceless tensor uetc ///////////////////
+  
   float *slice_re = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
   float *slice_im = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
 
 
-  int nx = p.Lx/p.slicex;
-  int ny = p.Ly/p.slicey;
-
-  int ry;
-
-  // Now planning  
-  fftwf_plan plan = fftwf_mpi_plan_dft_3d(p.Lx, p.Ly, p.Lz,
-					in, out, MPI_COMM_WORLD,
-					FFTW_BACKWARD, FFTW_ESTIMATE);
-
-  for(i = 0; i < TENSOR_CPTS; i++) {
-
-    float check = 0.0;    
-    
-    for(x=1; x<=p.slicex; x++) {
-      for(y=1; y<=p.slicey; y++) {
-	for(z=0; z<p.Lz; z++) {
-	  trim_then[(x-1)*p.slicey*p.Lz + (y-1)*p.Lz + z] 
-	    = f.initial_Tij[i][x][y][z];
-	  trim_now[(x-1)*p.slicey*p.Lz + (y-1)*p.Lz + z]
-	    = Tij[i][x][y][z];
-	}
-      }
-    }
-
-    //    fprintf(stderr,"Check: uij %lf\n", reduce_sum(check, p));
-    
-    for(x=0; x<p.Lx; x++) {
-      
-      // Check whether we are the target node for this slab
-      if(map[x] == p.rank) {
-	
-	for(ry = 0; ry < ny; ry++) {
-	  
-	  if((x/p.slicex == p.myposx) && (ry == p.myposy)) {
-	    
-	    memcpy(&slice_then[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
-		   &trim_then[(x-p.shiftx)*p.slicey*p.Lz],
-		   p.slicey*p.Lz*sizeof(float));
-
-	    memcpy(&slice_now[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
-		   &trim_now[(x-p.shiftx)*p.slicey*p.Lz],
-		   p.slicey*p.Lz*sizeof(float));
-	    continue;
-	  }
-	  
-	  
-	  MPI_Recv(&slice_then[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
-		   p.slicey*p.Lz,
-		   MPI_FLOAT,
-		   ry*nx + x/p.slicex,
-		   x*ny + ry,
-		   MPI_COMM_WORLD,
-		   &status);
-
-	  MPI_Recv(&slice_now[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
-		   p.slicey*p.Lz,
-		   MPI_FLOAT,
-		   ry*nx + x/p.slicex,
-		   p.Lx*ny + x*ny + ry,
-		   MPI_COMM_WORLD,
-		   &status);
-	}
-	
-	
-      } else if((x >= p.shiftx) && (x < (p.shiftx + p.slicex))) {
-	
-	
-      MPI_Send(&trim_then[(x-p.shiftx)*p.slicey*p.Lz],
-	       p.slicey*p.Lz,
-	       MPI_FLOAT,
-	       map[x],
-	       x*ny + p.myposy,
-	       MPI_COMM_WORLD);
-
-      MPI_Send(&trim_now[(x-p.shiftx)*p.slicey*p.Lz],
-	       p.slicey*p.Lz,
-	       MPI_FLOAT,
-	       map[x],
-	       p.Lx*ny + x*ny + p.myposy,
-	       MPI_COMM_WORLD);
-      }
-      
-    }
-
-    float total = 0.0;
-
-    for(x=0;x<x_thickness;x++) {
-      for(y=0;y<p.Ly;y++) {
-	for(z=0;z<p.Lz;z++) {
-	  in[x*p.Ly*p.Lz + y*p.Lz + z][0] = slice_then[x*p.Ly*p.Lz + y*p.Lz + z];
-	  in[x*p.Ly*p.Lz + y*p.Lz + z][1] = 0.0;
-	}
-      }
-    }
-
-    printf0(p, "executing FFT for early tensor, cpt %d/%d\n", i, TENSOR_CPTS);
-
-    fftwf_mpi_execute_dft(plan, in, out);
-
-    for(x=0;x<x_thickness;x++) {
-      for(y=0;y<p.Ly;y++) {
-	for(z=0;z<p.Lz;z++) {
-	  outcpts_then[i][x*p.Ly*p.Lz + y*p.Lz + z][0] 
-	    = fft_norm*out[x*p.Ly*p.Lz + y*p.Lz + z][0];
-	  outcpts_then[i][x*p.Ly*p.Lz + y*p.Lz + z][1]
-	    = fft_norm*out[x*p.Ly*p.Lz + y*p.Lz + z][1];
-
-	}
-      }
-    }
-
-
-
-    for(x=0;x<x_thickness;x++) {
-      for(y=0;y<p.Ly;y++) {
-	for(z=0;z<p.Lz;z++) {
-	  in[x*p.Ly*p.Lz + y*p.Lz + z][0]
-	    = slice_now[x*p.Ly*p.Lz + y*p.Lz + z];
-	  in[x*p.Ly*p.Lz + y*p.Lz + z][1]
-	    = 0.0;
-	}
-      }
-    }
-
-    printf0(p, "executing FFT for late tensor, cpt %d/%d\n", i, TENSOR_CPTS);
-
-    fftwf_mpi_execute_dft(plan, in, out);
-
-    for(x=0;x<x_thickness;x++) {
-      for(y=0;y<p.Ly;y++) {
-	for(z=0;z<p.Lz;z++) {
-	  outcpts_now[i][x*p.Ly*p.Lz + y*p.Lz + z][0] 
-	    = fft_norm*out[x*p.Ly*p.Lz + y*p.Lz + z][0];
-	  outcpts_now[i][x*p.Ly*p.Lz + y*p.Lz + z][1]
-	    = fft_norm*out[x*p.Ly*p.Lz + y*p.Lz + z][1];
-
-	}
-      }
-    }
-
-  }
-
   // could make strictly > because equal time is just shear stress
-  if(step >= p.uetcstart) {
+  if(step_now >= p.uetcstart) {
 
     printf0(p,"projecting\n");
 
-    uetc_project(p, x_start, x_thickness, slice_re, slice_im,
-		 outcpts_then, outcpts_now);
+    uetc_tens_proj(p, x_start, x_thickness, slice_re, slice_im,
+		 tensor_then, tensor_now);
 
 
     printf0(p,"binning\n");
@@ -499,15 +175,21 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
     if(!p.rank) {
 
       char fftdest[200];
-  
-      sprintf(fftdest,"uetc-step%d.txt", step);
       
+      if(label != NULL){
+	if(*label){
+	  sprintf(fftdest,"%s-TT-uetc-ref%d-step%d.txt", label, step_then, step_now);
+	}
+      }
+      else{
+	sprintf(fftdest,"TT-uetc-ref%d-step%d.txt", step_then, step_now);
+      }
       FILE *fp = fopen(fftdest,"w");
   
       for(i=0;i<nbins;i++) {
 
-	fprintf(fp, "%lf %g %g %d %d\n",
-		thisk, bins_re[i], bins_im[i], counts[i], step);
+	fprintf(fp, "%lf %g %g %d %d %d\n",
+		thisk, bins_re[i], bins_im[i], counts[i], step_then, step_now);
 
 	thisk = thisk + dk;
       }
@@ -521,16 +203,83 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
     free(counts);
   }
 
-  if(step >= p.uetcstart) {
+  // Tidy up
+
+  free(slice_re);
+  free(slice_im);
 
 
-    printf0(p,"projecting for equal time\n");
+  float end = clock();
 
-    uetc_project(p, x_start, x_thickness, slice_re, slice_im,
-		 outcpts_now, outcpts_now);
+  if(label != NULL){
+    if(*label){
+      printf0(p, "%s tensor (TT) UETC calculation took %lf\n",label,
+	      ((float) (end - start)) / CLOCKS_PER_SEC);
+    }
+  }
+  else{
+    printf0(p, "tensor (TT) UETC calculation took %lf\n",
+	    ((float) (end - start)) / CLOCKS_PER_SEC);
+  }
+}
 
 
-    printf0(p,"binning for equal time\n");
+/**  Calculate the rotatioanl and divergent components of the uetc of
+ * a vector field between two timesteps and store them in an
+ * appropriately named file.
+ */
+void uetc_vector(hydro_params p, fftwf_complex **vector_then,
+		 fftwf_complex **vector_now, int step_then, int step_now,
+		 char *label){
+ 
+
+  ptrdiff_t x_thickness, x_start, alloc_local;
+
+  ptrdiff_t n0 = p.Lx;
+  ptrdiff_t n1 = p.Ly;
+  ptrdiff_t n2 = p.Lz;
+
+  //  int slab;
+
+  MPI_Status status;
+
+  float kmode, modsq;
+
+  int x, y, z;
+  int i;
+
+  if(label != NULL){
+    if(*label){
+      printf0(p, "Starting %s vector UETC calculation.\n",label);
+    }
+  }
+  else{
+   printf0(p, "Starting vector UETC calculation.\n");
+  }
+  float start = clock();
+
+  alloc_local = fftwf_mpi_local_size_3d(n0, n1, n2,
+				       MPI_COMM_WORLD, &x_thickness, &x_start);
+
+  
+  /////////////// Project to get rot and div components of vector uetc ///////////////////
+
+  float *slice_rot_re = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
+  float *slice_rot_im = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
+  float *slice_div_re = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
+  float *slice_div_im = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
+
+
+  // could make strictly > because equal time is just shear stress
+  if(step_now >= p.uetcstart) {
+
+    printf0(p,"projecting\n");
+
+    uetc_split_vector(p, x_start, x_thickness, slice_rot_re, slice_rot_im,
+		      slice_div_re, slice_div_im, vector_then, vector_now);
+
+
+    printf0(p,"binning\n");
 
     int nbins = minof3_int(p.Lx, p.Ly, p.Lz);
     float mink = 0.0;
@@ -538,13 +287,19 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
 
     float dk = (maxk-mink)/((float)nbins);
 
-    float *bins_re = (float *)malloc(nbins*sizeof(float));
-    float *bins_im = (float *)malloc(nbins*sizeof(float));
+    float *bins_rot_re = (float *)malloc(nbins*sizeof(float));
+    float *bins_rot_im = (float *)malloc(nbins*sizeof(float));
+    float *bins_div_re = (float *)malloc(nbins*sizeof(float));
+    float *bins_div_im = (float *)malloc(nbins*sizeof(float));
+
     int *counts = (int *)malloc(nbins*sizeof(int));
 
     for(i=0;i<nbins;i++) {
-      bins_re[i] = 0.0;
-      bins_im[i] = 0.0;
+      bins_rot_re[i] = 0.0;
+      bins_rot_im[i] = 0.0;
+      bins_div_re[i] = 0.0;
+      bins_div_im[i] = 0.0;
+
       counts[i] = 0;
     }
 
@@ -583,8 +338,11 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
 		       )*2.0*M_PI;
 	  
 	  whichbin = (int)floor(kmode/dk);
-	  bins_re[whichbin] += slice_re[x*p.Ly*p.Lz + y*p.Lz + z];
-	  bins_im[whichbin] += slice_im[x*p.Ly*p.Lz + y*p.Lz + z];
+	  bins_rot_re[whichbin] += slice_rot_re[x*p.Ly*p.Lz + y*p.Lz + z];
+	  bins_rot_im[whichbin] += slice_rot_im[x*p.Ly*p.Lz + y*p.Lz + z];
+	  bins_div_re[whichbin] += slice_div_re[x*p.Ly*p.Lz + y*p.Lz + z];
+	  bins_div_im[whichbin] += slice_div_im[x*p.Ly*p.Lz + y*p.Lz + z];
+
 	  counts[whichbin]++;
 
 	}
@@ -597,12 +355,19 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
 
     for(i=0;i<nbins;i++) {
 
-      red_value = reduce_sum(bins_re[i], p);
-      bins_re[i] = red_value;
+      red_value = reduce_sum(bins_rot_re[i], p);
+      bins_rot_re[i] = red_value;
     
-      red_value = reduce_sum(bins_im[i], p);
-      bins_im[i] = red_value;
+      red_value = reduce_sum(bins_rot_im[i], p);
+      bins_rot_im[i] = red_value;
+
+      red_value = reduce_sum(bins_div_re[i], p);
+      bins_div_re[i] = red_value;
     
+      red_value = reduce_sum(bins_div_im[i], p);
+      bins_div_im[i] = red_value;
+
+      
       red_count = reduce_sum_int(counts[i], p);
       counts[i] = red_count;
     }
@@ -611,64 +376,85 @@ void fft_uetc(hydro_fields f, hydro_params p, int step) {
     float thisk = dk/2.0;
 
     // spokesman does the final analysis
+
+    // Do rot first
     if(!p.rank) {
 
       char fftdest[200];
-  
-      sprintf(fftdest,"shearstress-step%d.txt", step);
       
-      FILE *fp = fopen(fftdest,"w");
+      if(label != NULL){
+	if(*label){
+	  sprintf(fftdest,"%s-rot-uetc-ref%d-step%d.txt", label, step_then, step_now);
+	}
+      }
+      else{
+	sprintf(fftdest,"rot-uetc-ref%d-step%d.txt", step_then, step_now);
+      }
+      FILE *fp1 = fopen(fftdest,"w");
   
       for(i=0;i<nbins;i++) {
 
-	fprintf(fp, "%lf %g %g %d %d\n",
-		thisk, bins_re[i], bins_im[i], counts[i], step);
+	fprintf(fp1, "%lf %g %g %d %d %d\n",
+		thisk/(p.a*p.dx), bins_rot_re[i], bins_rot_im[i], counts[i], step_then, step_now);
 
 	thisk = thisk + dk;
       }
 
-      fclose(fp);
+      // Now div
+      
+      if(label != NULL){
+	if(*label){
+	  sprintf(fftdest,"%s-div-uetc-ref%d-step%d.txt", label, step_then, step_now);
+	}
+      }
+      else{
+	sprintf(fftdest,"div-uetc-ref%d-step%d.txt", step_then, step_now);
+      }
+      FILE *fp2 = fopen(fftdest,"w");
+  
+      for(i=0;i<nbins;i++) {
+
+	fprintf(fp2, "%lf %g %g %d %d %d\n",
+		thisk/(p.a*p.dx), bins_div_re[i], bins_div_im[i], counts[i], step_then, step_now);
+
+	thisk = thisk + dk;
+      }
+
+      
+      fclose(fp1);
+      fclose(fp2);
 
     }
 
-    free(bins_re);
-    free(bins_im);
-    free(counts);
+    free(bins_rot_re);
+    free(bins_rot_im);
+    free(bins_div_re);
+    free(bins_div_im);
 
+    free(counts);
   }
 
   // Tidy up
 
-  free(slice_re);
-  free(slice_im);
-  free(slice_then);
-  free(slice_now);
-  free(trim_then);
-  free(trim_now);
+  free(slice_rot_re);
+  free(slice_rot_im);
+  free(slice_div_re);
+  free(slice_div_im);
 
-  fftwf_destroy_plan(plan);
-  
-  fftwf_free(in);
-  fftwf_free(out);
-
-  for(i=0;i<TENSOR_CPTS;i++) {
-    fftwf_free(outcpts_then[i]);
-    fftwf_free(outcpts_now[i]);
-  }
-
-
-  free_tensor(p, Tij);
-
-  fftwf_mpi_cleanup();
 
   float end = clock();
 
-  printf0(p, "UETC FFT calculation took %lf\n",
-	  ((float) (end - start)) / CLOCKS_PER_SEC);
-
+  if(label != NULL){
+    if(*label){
+      printf0(p, "%s vector UETC calculation took %lf\n",label,
+	      ((float) (end - start)) / CLOCKS_PER_SEC);
+    }
+  }
+  else{
+    printf0(p, "vector UETC calculation took %lf\n",
+	    ((float) (end - start)) / CLOCKS_PER_SEC);
+  }
 }
-
-
 
 
 #endif // FFT
