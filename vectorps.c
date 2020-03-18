@@ -333,7 +333,7 @@ void histogram(hydro_params p, float *slice, char *filename,
 /** Main method. Calculate the vector power spectrum.
  *
  */
-void fft_vec(float ****vectorfield, hydro_params p, int step, char *label) {
+void fft_vec(hydro_params p, float ****vectorfield, int step, char *label) {
 
   ptrdiff_t x_thickness, x_start, alloc_local;
 
@@ -562,12 +562,32 @@ void fft_vec(float ****vectorfield, hydro_params p, int step, char *label) {
 
 
   char fftdest[200];
-
-  sprintf(fftdest,"%s-rot-ps-step%d.txt", label,step);
+  if(label != NULL){
+    if(*label){
+      sprintf(fftdest,"%s-rot-ps-step%d.txt", label,step);
+    }
+  }
+  else{
+    sprintf(fftdest,"rot-ps-step%d.txt",step);
+  }
   histogram(p, slice, fftdest, x_thickness, x_start);
-  sprintf(fftdest,"%s-div-ps-step%d.txt", label,step);
+  if(label != NULL){
+    if(*label){
+      sprintf(fftdest,"%s-div-ps-step%d.txt", label,step);
+    }
+  }
+  else{
+    sprintf(fftdest,"div-ps-step%d.txt",step);
+  }
   histogram(p, slice_div, fftdest, x_thickness, x_start);
-  sprintf(fftdest,"%s-tot-ps-step%d.txt", label,step);
+  if(label != NULL){
+    if(*label){
+      sprintf(fftdest,"%s-tot-ps-step%d.txt", label,step);
+    }
+  }
+  else{
+    sprintf(fftdest,"tot-ps-step%d.txt",step);
+  }
   histogram(p, slice_tot, fftdest, x_thickness, x_start);
 
 
@@ -590,33 +610,38 @@ void fft_vec(float ****vectorfield, hydro_params p, int step, char *label) {
   fftwf_mpi_cleanup();
 
   float end = clock();
-
-  printf0(p, "%s power spectrum FFT calculation took %lf\n", label,
-	  ((float) (end - start)) / CLOCKS_PER_SEC);
+  if(label != NULL){
+    if(*label){
+      printf0(p, "%s power spectrum FFT calculation took %lf\n", label,
+        ((float) (end - start)) / CLOCKS_PER_SEC);
+    }
+  }
+  else{
+    printf0(p, "power spectrum FFT calculation took %lf\n",
+      ((float) (end - start)) / CLOCKS_PER_SEC);
+  }
 }
 
 /** Calculate power spectrum of temperature current \f$ J^{i}=T U^{i} \f$.
  *
  */
-void fft_J(hydro_fields f, hydro_params p, int step, char *label){
+void fft_J(hydro_fields f, hydro_params p, int step){
 #ifndef SCALAR
   int x, y, z, i;
   float ****J = make_vector(p);
-  float Tnode;
 
-  // Construct temperature current.
+  // Construct temperature current (centered at cell)
+
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
-	Tnode = 0.125*(f.T[x][y][z] + f.T[x-1][y][z]
-		       + f.T[x][y-1][z] + f.T[x][y][(z-1+p.Lz)%p.Lz]
-		       + f.T[x-1][y-1][z] + f.T[x-1][y][(z-1+p.Lz)%p.Lz]
-		       + f.T[x][y-1][(z-1+p.Lz)%p.Lz]
-		       + f.T[x-1][y-1][(z-1+p.Lz)%p.Lz]
-		       );
-	for(i =0; i < 3; i++){
-	  J[i][x][y][z] = f.U[i][x][y][z]*Tnode;
-	}
+
+	J[0][x][y][z] = 0.5*(f.V[0][x][y][z] + f.V[0][x+1][y][z]
+				)*f.T[x][y][z]*f.W[x][y][z];
+	J[1][x][y][z] = 0.5*(f.V[1][x][y][z] + f.V[1][x][y+1][z]
+				)*f.T[x][y][z]*f.W[x][y][z];
+	J[2][x][y][z] = 0.5*(f.V[2][x][y][z] + f.V[2][x][y][(z+1)%p.Lz]
+				)*f.T[x][y][z]*f.W[x][y][z];
       }
     }
   }
@@ -625,7 +650,7 @@ void fft_J(hydro_fields f, hydro_params p, int step, char *label){
   halo_field(J[1], p);
   halo_field(J[2], p);
 
-  fft_vec(J, p, step, label);
+  fft_vec(p, J, step, "J");
 
   free_vector(p, J);
 
@@ -637,7 +662,7 @@ void fft_J(hydro_fields f, hydro_params p, int step, char *label){
 /** Calculate power spectrum of \f$ X^{i}=\sqrt{w}U^{i} \f$.
  *
  */
-void fft_X(hydro_fields f, hydro_params p, int step, char *label){
+void fft_X(hydro_fields f, hydro_params p, int step){
 #ifndef SCALAR
   int x, y, z, i;
   float ****X = make_vector(p);
@@ -679,7 +704,7 @@ void fft_X(hydro_fields f, hydro_params p, int step, char *label){
   halo_field(X[1], p);
   halo_field(X[2], p);
 
-  fft_vec(X, p, step, label);
+  fft_vec(p, X, step, "X");
 
   free_vector(p, X);
 

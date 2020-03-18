@@ -51,10 +51,11 @@
  * Root finding algorithm from internal energy equation.  Note that if
  * `Tfix` goes negative then at that site `f.T` will become NaN's. If
  * this happens we write out a slice through one of the locations
- * where `Tfix` became negative and kill the run.
+ * where `Tfix` became negative and kill the run. Slice step will be
+ * set to -1.
  *
  */
-void find_Ta(hydro_fields f, hydro_params p, int step) {
+void find_Ta(hydro_fields f, hydro_params p) {
 
 #ifndef SCALAR
 
@@ -129,11 +130,18 @@ void find_Ta(hydro_fields f, hydro_params p, int step) {
   sliceError = reduce_max_int(sliceError, p);
   
   if(TfixError == 1){
+
+#ifdef SILO
     printf0(p,"Writing out a slice where Tfix -ve, then aborting run\n");
-    write_silo_slice_step(f, p, step, sliceError);
+    write_silo_slice_step(f, p, -1, sliceError);
     MPI_Barrier(MPI_COMM_WORLD);
+#else 
+	printf0(p,"Aborting run as Tfix -ve\n");
+#endif //SILO
     die(10);
   }
+
+
 #endif // SCALAR
 }
 
@@ -145,7 +153,7 @@ void find_Ta(hydro_fields f, hydro_params p, int step) {
  * 
  * Calls find_Ta() to obtain the temperature.
  */
-void eq_of_state(hydro_fields f, hydro_params p, int step) {
+void eq_of_state(hydro_fields f, hydro_params p) {
 
 #ifndef SCALAR
 
@@ -160,7 +168,7 @@ void eq_of_state(hydro_fields f, hydro_params p, int step) {
 
   float tolE = 1e-3;
 
-  find_Ta(f, p, step);
+  find_Ta(f, p);
 
 
 
