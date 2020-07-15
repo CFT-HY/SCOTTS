@@ -494,7 +494,7 @@ int main(int argc, char *argv[]) {
 
     // On the last step, do some extra GW power spectra FFTs
 #ifdef FFT
-    if(step == p.steps - 1) {
+    if((p.fftinterval > 0) && (step == p.steps - 1)) {
 
 #ifndef SCALAR
       fft_vec(p, f.V, step, "vel");
@@ -526,14 +526,17 @@ int main(int argc, char *argv[]) {
 
 #ifdef FFT
 
-#ifndef SCALAR
-  fft_vec(p, f.V, step, "vel");
-  fft_J(f, p, step);
-  fft_X(f, p, step);
-#endif // !SCALAR
+  if(p.fftinterval > 0) {
 
-  fft_tensor(f,p,step);
+#ifndef SCALAR
+
+    fft_vec(p, f.V, step, "vel");
+    fft_J(f, p, step);
+    fft_X(f, p, step);
+#endif // !SCALAR
     
+    fft_tensor(f,p,step);
+  }
 #endif // FFT
 
 
