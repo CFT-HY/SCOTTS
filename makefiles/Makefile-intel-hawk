@@ -1,0 +1,42 @@
+# This makefile was last tested with:
+#
+# intel/19.1.0
+# mpt/2.23
+# fftw/3.3.8
+
+
+
+#### CC ####
+
+CC := icc -DMPI -DFFT
+
+#### CFLAGS ####
+
+CFLAGS := -O3 -qopt-prefetch -unroll-aggressive -no-prec-div \
+	-fp-model fast=2 -align -fno-alias -fno-fnalias -ipo
+
+#### LIBS ####
+
+LIBS := -lfftw3f_mpi -lfftw3f -lmpi
+
+#### No user-serviceable parts below ####
+
+OBJECTS := alloc.o checkpoint.o comms.o energy.o \
+	eos.o evolve.o fft.o gw.o initial.o initps.o main.o \
+	output.o papi.o parameters.o potential.o silage.o silage_slice.o \
+	transport.o uetc.o util.o vectorps.o
+
+BINARY := run/hydro
+
+FILES := $(OBJECTS) $(BINARY)
+
+all: hydro
+
+hydro: $(OBJECTS)
+	$(CC) $(CFLAGS) $(OBJECTS) $(LIBS) -o $(BINARY)
+
+clean:
+	rm -f $(FILES) *\~ *\#
+
+veryclean: clean
+	rm -f *\~ *\#
