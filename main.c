@@ -54,8 +54,10 @@ int main(int argc, char *argv[]) {
 
 
   // Seed - make sure everyone gets the same one (if necessary)
-  srandom(p.seed);
-  srand48(p.seed);
+  // srandom(p.seed);
+  // srand48(p.seed);
+  srandom(p.seed + p.rank);
+  srand48(p.seed + p.rank);
 
   // How big is the system
   p.N = p.Lx*p.Ly*p.Lz;
