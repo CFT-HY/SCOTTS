@@ -141,17 +141,17 @@ void project_down(hydro_params p, fftwf_complex **in, int shift_x, int x_thickne
 
 	      // #ifndef DIVPS	      
 	      /* Rot?
-	      in_proj_re[i-1] += vec_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-	      in_proj_im[i-1] += vec_proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+	      in_proj_re[i-1] += proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+	      in_proj_im[i-1] += proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 	      */
 	      // #else
 	      // #warning DIVPS enabled
 	      if(i == j) {
-		in_proj_re[i-1] += (1.0-vec_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-		in_proj_im[i-1] += (1.0-vec_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+		in_proj_re[i-1] += (1.0-proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+		in_proj_im[i-1] += (1.0-proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 	      } else {
-		in_proj_re[i-1] += (-1.0*vec_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-		in_proj_im[i-1] += (-1.0*vec_proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+		in_proj_re[i-1] += (-1.0*proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+		in_proj_im[i-1] += (-1.0*proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 	      }
 	      // #endif
 
@@ -159,14 +159,14 @@ void project_down(hydro_params p, fftwf_complex **in, int shift_x, int x_thickne
 
 
 	      if(i == j) {
-		res_re += (1.0-vec_proj(i*10 + j, kx, ky, kz))
+		res_re += (1.0-proj(i*10 + j, kx, ky, kz))
 		  *in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-		res_im += (1.0-vec_proj(i*10 + j, kx, ky, kz))
+		res_im += (1.0-proj(i*10 + j, kx, ky, kz))
 		  *in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 	      } else {
-		res_re += (-1.0*vec_proj(i*10 + j, kx, ky, kz))
+		res_re += (-1.0*proj(i*10 + j, kx, ky, kz))
 		  *in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-		res_im += (-1.0*vec_proj(i*10 + j, kx, ky, kz))
+		res_im += (-1.0*proj(i*10 + j, kx, ky, kz))
 		  *in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 	      }
 
