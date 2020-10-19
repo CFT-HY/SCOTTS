@@ -26,8 +26,8 @@
  * \f[
  * P_{ij}=\delta_{ij} -\hat{k}_{i}\hat{k}_{j}
  * \f]
- * 
- * 
+ *
+ *
  */
 float proj(int T, float kx, float ky, float kz) {
 
@@ -86,15 +86,15 @@ float proj(int T, float kx, float ky, float kz) {
  *
  * `i`, `j`, `l`, `m` are the indices (NB: one-based)
  * and `kx`, `ky`, `kz` are momentum components.
- * 
+ *
  * The lambda projector object is given by
- * \f[ 
- * \Lambda_{ij,lm}(\mathbf{k}) = P_{im}(\mathbf{k}) P_{jl}(\mathbf{k}) - 
+ * \f[
+ * \Lambda_{ij,lm}(\mathbf{k}) = P_{im}(\mathbf{k}) P_{jl}(\mathbf{k}) -
  *                             \dfrac{1}{2} P_{im}(\mathbf{k})P_{jl}(\mathbf{k})
  * \f]
  */
 float lambda(int i, int j, int l, int m, float kx, float ky, float kz) {
-  
+
   float total = 0.0;
 
   int cpt1, cpt2;
@@ -177,7 +177,7 @@ int indexof(int i, int j)
 }
 
 /** Used to project tensors into the transverse traceless gauge for
- * the power spectrum.  e.g populates `product` with 
+ * the power spectrum.  e.g populates `product` with
  * \f$ p(\mathbf{k}) = \Lambda(\mathbf{k})_{ij,lm} T_{ij}(\mathbf{k})
  * T^*_{lm}(\mathbf{k}) \f$ where \f$ p \f$ is `product` and `T` is
  * `tensor`.
@@ -194,7 +194,7 @@ int indexof(int i, int j)
  * `x_start` is the physical start of this region
  *
  * `y` and `z` have the full spatial extent `p.Ly` and `p.Lz`
- */ 
+ */
 void tens_proj(hydro_params p, int x_start, int slab,
 	       float *product, fftwf_complex **tensor) {
 
@@ -250,7 +250,7 @@ void tens_proj(hydro_params p, int x_start, int slab,
 	kz = s_z*sqrt((2.0 - 2.0*cos(((float)(true_z))*2.0*M_PI/(((float)p.Lz))))/(p.dx*p.dx));
 
 
-	
+
 	product[x*p.Ly*p.Lz + y*p.Lz + z] = 0.0;
 
 	// Sum over indices on lambda_{ij,lm} and udot_{ij}(k)
@@ -337,7 +337,7 @@ void uetc_tens_proj(hydro_params p, int x_start, int slab,
 	ky = ((float)y)*2.0*M_PI/((float)p.Ly);
 	kz = ((float)z)*2.0*M_PI/((float)p.Lz);
 	*/
-	
+
 
         kx = s_x*sqrt((2.0 - 2.0*cos(((float)(true_x))*2.0*M_PI/(((float)p.Lx))))/(p.dx*p.dx));
 	ky = s_y*sqrt((2.0 - 2.0*cos(((float)(true_y))*2.0*M_PI/(((float)p.Ly))))/(p.dx*p.dx));
@@ -380,18 +380,18 @@ void uetc_tens_proj(hydro_params p, int x_start, int slab,
  *
  * Populates the arrays:
  *
- * `product_rot` 
- * \f[ p_{rot}(\mathbf{k}) 
+ * `product_rot`
+ * \f[ p_{rot}(\mathbf{k})
  * = P_{ij}(\mathbf{k}P_{il}(\mathbf{k}) v_j(\mathbf{k}) v^*_l(\mathbf{k}) \f]
  *
- * `product_div` 
- * \f[ p_{div}(\mathbf{k}) 
+ * `product_div`
+ * \f[ p_{div}(\mathbf{k})
  * = (\delta_{ij} - P_{ij}(\mathbf{k}))(\delta_{im} - P_{im}(\mathbf{k}))
- * v_i(\mathbf{k}) v^*_m(\mathbf{k}) \f]
+ * v_j(\mathbf{k}) v^*_m(\mathbf{k}) \f]
  *
  * `product_tot` \f[ p_{tot}(\mathbf{k}) = v_i(\mathbf{k}) v^*_i(\mathbf{k}) \f]
  *
- *  
+ *
  */
 void split_vector(hydro_params p, int x_start, int slab,
 		     float *product_rot, float *product_div, float *product_tot,
@@ -515,16 +515,16 @@ void split_vector(hydro_params p, int x_start, int slab,
  *
  * Populates the arrays:
  *
- * `product_rot_re` and `product_rot_im` with the real and imaginary parts of 
- * \f[ p_{rot}(\mathbf{k}) 
+ * `product_rot_re` and `product_rot_im` with the real and imaginary parts of
+ * \f[ p_{rot}(\mathbf{k})
  * = P_{ij}(\mathbf{k}P_{il}(\mathbf{k}) v_j(\mathbf{k}) u^*_l(\mathbf{k}) \f]
  *
- * `product_div_re` and `product_div_im` with the real and imaginary parts of 
- * \f[ p_{div}(\mathbf{k}) 
+ * `product_div_re` and `product_div_im` with the real and imaginary parts of
+ * \f[ p_{div}(\mathbf{k})
  * = (\delta_{ij} - P_{ij}(\mathbf{k}))(\delta_{im} - P_{im}(\mathbf{k}))
- * v_i(\mathbf{k}) u^*_m(\mathbf{k}) \f]
+ * v_j(\mathbf{k}) u^*_m(\mathbf{k}) \f]
  *
- *  
+ *
  */
 void uetc_split_vector(hydro_params p, int x_start, int slab,
 		       float *product_rot_re, float *product_rot_im,
