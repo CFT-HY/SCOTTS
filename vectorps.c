@@ -51,7 +51,7 @@ void histogram(hydro_params p, float *slice, char *filename,
 	/*
         if(((x+x_start)>p.Lx/2) || (y> p.Ly/2) || (z>p.Lz/2))
           continue;
-	*/	
+	*/
 
         if(x+x_start > p.Lx/2)
           true_x = p.Lx - (x+x_start);
@@ -130,7 +130,7 @@ void histogram(hydro_params p, float *slice, char *filename,
  * power spectrum of said components and write these and the total
  * power spectrum to file.
  *
- * See projectors.c for the projectors used here. 
+ * See projectors.c for the projectors used here.
  *
  * See fft_func.c for the `fft_field` functions to transform fields
  * into fourier space. The momentum space fields are decomposed in pencils.
@@ -173,14 +173,14 @@ void vectorps(hydro_params p, fftwf_complex **outcpts, int step, char *label) {
    * At this point, we should have a normed FFT
    * of each component in outcpts[i][k]
    */
-  
-  float *slice = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
+
+  float *slice_rot = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
   float *slice_div = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
   float *slice_tot = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
 
   // The brains of the operation:
   // Turn the FFT'd vector into projected power spectrum
-  split_vector(p, x_start, x_thickness, slice, slice_div, slice_tot, outcpts);
+  split_vector(p, x_start, x_thickness, slice_rot, slice_div, slice_tot, outcpts);
 
 
 
@@ -193,7 +193,7 @@ void vectorps(hydro_params p, fftwf_complex **outcpts, int step, char *label) {
   else{
     sprintf(fftdest,"rot-ps-step%d.txt",step);
   }
-  histogram(p, slice, fftdest, x_thickness, x_start);
+  histogram(p, slice_rot, fftdest, x_thickness, x_start);
   if(label != NULL){
     if(*label){
       sprintf(fftdest,"%s-div-ps-step%d.txt", label,step);
@@ -201,7 +201,7 @@ void vectorps(hydro_params p, fftwf_complex **outcpts, int step, char *label) {
   }
   else{
     sprintf(fftdest,"div-ps-step%d.txt",step);
-  }  
+  }
   histogram(p, slice_div, fftdest, x_thickness, x_start);
   if(label != NULL){
     if(*label){
@@ -210,13 +210,13 @@ void vectorps(hydro_params p, fftwf_complex **outcpts, int step, char *label) {
   }
   else{
     sprintf(fftdest,"tot-ps-step%d.txt",step);
-  }  
+  }
   histogram(p, slice_tot, fftdest, x_thickness, x_start);
 
 
   // Tidy up
 
-  free(slice);
+  free(slice_rot);
   free(slice_div);
   free(slice_tot);
 
