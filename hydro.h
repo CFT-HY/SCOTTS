@@ -482,16 +482,47 @@ typedef struct {
    */
   float ****udotij;
 
-  // (Only for UETCs)
-
-  /** `initial_Tij` is only used for calculating unequal time
-   *    correlators.
-   */
-  float ****initial_Tij;
-
-
 } hydro_fields;
 
+#ifdef FFT
+
+/** Helper struct for performing fast fourier transforms.
+ * Also contains fields at reference times for UETC's
+ *
+ * This documentation should be extended.
+ */
+typedef struct{
+
+  /** Input field for fast fourier transforms.
+   *
+   */
+  fftwf_complex *in;
+
+  /** Output field for fast fourier transforms.
+   *
+   */
+  fftwf_complex *out;
+
+  /** Reference time field for Tij in momentum space.
+   */
+  fftwf_complex **initial_Tij;
+
+  /** Reference time field for velocity in momentum space.
+   */
+  fftwf_complex **initial_V;
+
+  /** Plan for performing the fast fourier transforms.
+   *
+   */
+  fftwf_plan plan;
+
+  /** Map for which node is responsible for each `x` coordinate.
+   */
+  int *map;
+
+} fft_fields;
+
+#endif //FFT
 
 /** Helper struct for performing MPI_MAXLOC and MPI_MINLOC operations.
  *
@@ -669,32 +700,55 @@ float minof2(float a, float b);
 
 
 #ifdef FFT
-// fft.c
-void fft_field(hydro_params p, float ***field, int step, char *label);
-#ifndef SCALAR
-void fft_e(hydro_fields f, hydro_params p, int step);
-#endif //!SCALAR
+// fft_func.c
+void fft_init(hydro_params p, fft_fields *fft_f);
+void fft_finalise(hydro_params p, fft_fields *fft_f);
+void fft_scalar(hydro_params p, fft_fields fft_f, float ***real_field);
+void fft_vector(hydro_params p, fft_fields fft_f, float ****vector_field,
+		fftwf_complex **outcpts);
+void fft_tensor(hydro_params p, fft_fields fft_f, float ****tensor_field,
+		fftwf_complex **outcpts, float norm);
+void fft_J(hydro_fields f, hydro_params p, fft_fields fft_f, fftwf_complex **outcpts);
+void fft_X(hydro_fields f, hydro_params p, fft_fields fft_f, fftwf_complex **outcpts);
+void fft_e(hydro_fields f, hydro_params p, fft_fields fft_f);
+
+// projectors.c
+float proj(int T, float kx, float ky, float kz);
+float lambda(int i, int j, int l, int m, float kx, float ky, float kz);
+int indexof(int i, int j);
+void tens_proj(hydro_params p, int x_start, int slab,
+	       float *product, fftwf_complex **tensor);
+void uetc_tens_proj(hydro_params p, int x_start, int slab,
+		    float *product_re, float *product_im,
+		    fftwf_complex **tensora, fftwf_complex **tensorb);
+void split_vector(hydro_params p, int x_start, int slab,
+		  float *product_rot, float *product_div, float *product_tot,
+		  fftwf_complex **vec);
+void uetc_split_vector(hydro_params p, int x_start, int slab,
+		       float *product_rot_re, float *product_rot_im,
+		       float *product_div_re, float *product_div_im,
+		       fftwf_complex **veca, fftwf_complex **vecb);
 
 // uetc.c
-void init_uetc(hydro_fields f, hydro_params p);
-void fft_uetc(hydro_fields f, hydro_params p, int step);
+void init_uetc(hydro_fields f, hydro_params p, fft_fields fft_f);
+void uetc_tensor(hydro_params p, fftwf_complex **tensor_then,
+		 fftwf_complex **tensor_now, int step_then, int step_now,
+		 char *label);
+void uetc_vector(hydro_params p, fftwf_complex **vector_then,
+		 fftwf_complex **vector_now, int step_then, int step_now,
+		 char *label);
 
-// gw.c
-float proj(int T, float kx, float ky, float kz);
-float fft_tensor(hydro_fields f, hydro_params p, int step);
-int indexof(int i, int j);
-float lambda(int i, int j, int l, int m, float kx, float ky, float kz);
+// tensorps.c
+float tensorps(hydro_params p, fftwf_complex **outcpts, int step, char *label);
 
 // vectorps.c
-float vec_proj(int T, float kx, float ky, float kz);
-void fft_vec(hydro_params p, float ****vectorfield, int step,char *label);
-void split_and_power(hydro_params p, int x_start, int slab,
-		     float *product, float *product_div, float *product_tot,
-		     fftwf_complex **vk);
 void histogram(hydro_params p, float *slice, char *filename,
-	       int slab, int x_start);
-void fft_J(hydro_fields f, hydro_params p, int step);
-void fft_X(hydro_fields f, hydro_params p, int step);
+	       int slab, int x_start); // Why is this here?
+void vectorps(hydro_params p, fftwf_complex **outcpts, int step, char *label);
+
+// scalarps.c
+void scalarps(hydro_params p, fftwf_complex *field, int step, char *label);
+
 #endif // FFT
 
 

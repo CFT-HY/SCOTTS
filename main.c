@@ -107,6 +107,18 @@ int main(int argc, char *argv[]) {
   // Struct that stores the fields
   hydro_fields f;
 
+  // Struct that stores fields in momentum space and helper fields for FFTs.
+  fft_fields fft_f;
+
+  ptrdiff_t x_thickness, x_start, alloc_local;
+
+  ptrdiff_t n0 = p.Lx;
+  ptrdiff_t n1 = p.Ly;
+  ptrdiff_t n2 = p.Lz;
+
+  alloc_local = fftwf_mpi_local_size_3d(n0, n1, n2,
+					MPI_COMM_WORLD, &x_thickness, &x_start);
+  
   // Counter to specify which order to perform advection
   int adv_order = 0;
 
@@ -120,19 +132,27 @@ int main(int argc, char *argv[]) {
   float cpu_time_used;
 
   clock_t start, end;
+  clock_t fft_start, fft_end;
 
   // What step does the for loop start on? For checkpoint restarts...
   int step_start = 0;
 
 
   int i;
-
+  
   // Just runs malloc on all the fields therein (see alloc.c)
   alloc_fields(&f, p);
 
-  // Managed to get this far, so we probably have enough memory
+
   printf0(p, "- Allocated fields.\n");
 
+#ifdef FFT
+  fft_init(p, &fft_f);
+
+  // Managed to get this far, so we probably have enough memory
+  printf0(p, "- Initialised fft.\n");
+#endif //FFT
+  
   // Restore checkpoint
   if(usable_checkpoint(f, p)) {
     printf0(p, "Found a usable checkpoint file\n");
@@ -390,51 +410,119 @@ int main(int argc, char *argv[]) {
 #ifdef FFT
     if((p.fftinterval > 0) && (step % p.fftinterval == 0)) {
 
+
+      // Perform scalar ffts:
+      
       histo_field(f.phi, p, step);
 
-
-      if(p.uetcstart >= 0 && step >= p.uetcstart) {
-	if(step == p.uetcstart) {
-	  init_uetc(f, p);
-	}
-
-	// Calculate UETCs (not in use)
-	fft_uetc(f, p, step);
-      }      
+      // Fourier transform scalar field:
+      fft_start = clock();
+      fft_scalar(p, fft_f, f.phi);
+      fft_end = clock();
+      printf0(p, "fft scalar took %lf\n", ((float) (fft_end - fft_start))
+	      / CLOCKS_PER_SEC);
 
       // Power spectrum of scalar field
-      fft_field(p, f.phi, step, "phi");
-      
+      scalarps(p,  fft_f.out, step, "phi");
+
 #ifndef SCALAR
       
       // Power spectrum of internal energy e=E/W
-      fft_e(f, p, step);
+      fft_start = clock();
+      fft_e(f, p, fft_f);
+      fft_end = clock();
+      printf0(p, "fft scalar took %lf\n", ((float) (fft_end - fft_start))
+	      / CLOCKS_PER_SEC);
       
-      // Velocity power spectrum
-      fft_vec(p, f.V, step, "vel");
-      // Temperature current power spectrum.
-      fft_J(f, p, step);
+      scalarps(p, fft_f.out, step, "e");
+      
+#endif // SCALAR
+
+      // Initialise uetcs if it is time.
+      if(p.uetcstart >= 0 && step == p.uetcstart) {
+	init_uetc(f, p, fft_f);
+      }     
+      
+      // Vector spectra (and UETCs)
+      
+      fftwf_complex **outcpts_vec = (fftwf_complex **)malloc(3*sizeof(fftwf_complex *));
+      
+      for(i=0;i<3;i++) {
+	outcpts_vec[i] = fftwf_alloc_complex(alloc_local);
+      }
+      
+#ifndef SCALAR
+      
+      // Velocity power spectrum and UETCs
+      fft_vector(p, fft_f, f.V, outcpts_vec);
+      
+      vectorps(p, outcpts_vec, step, "vel");
+
+      if(p.uetcstart >= 0 && step > p.uetcstart) {
+	uetc_vector(p, fft_f.initial_V, outcpts_vec, p.uetcstart, step, "vel");
+      }
+      
+      // Temperature current power spectrum
+      fft_J(f, p, fft_f, outcpts_vec);
+      
+      vectorps(p, outcpts_vec, step, "J");
+      
       // X variable power spectrum.
-      fft_X(f, p, step);
+      fft_X(f, p, fft_f, outcpts_vec);
+      
+      vectorps(p, outcpts_vec, step, "X");
+      
 #endif //!SCALAR
-
+      
+      // Clean up outcpts_vec
+      for(i=0;i<3;i++)
+	fftwf_free(outcpts_vec[i]);
+      
+      free(outcpts_vec);
+      
+      // Tensor spectra & UETCs
+      
+      fftwf_complex **outcpts_tens = (fftwf_complex **)malloc(6*sizeof(fftwf_complex *));
+      
+      for(i=0;i<TENSOR_CPTS;i++) {
+	outcpts_tens[i] = fftwf_alloc_complex(alloc_local);
+      }
+      
       // Gravitational wave power spectrum (returns GW energy)
-      gwen = fft_tensor(f, p, step);
+      fft_tensor(p, fft_f, f.udotij, outcpts_tens, 1/sqrt(32*MPI));
 
-      // Average size of stress-energy tensor components (not used)
-      /*
-      didj(cpts, f, p);
-      printf0(p, "cpts: %g %g %g %g %g %g\n",
-	      cpts[CPT_11],
-	      cpts[CPT_21],
-	      cpts[CPT_31],
-	      cpts[CPT_22],
-	      cpts[CPT_32],
-	      cpts[CPT_33]);
-      */
+      gwen = tensorps(p, outcpts_tens, step, "gw");
+      
+      // Shear stress power spectrum.
+
+      float ****Tij_now = make_tensor(p);
+      
+      stress_energy(f, p, Tij_now);
+      
+      fft_tensor(p, fft_f, Tij_now, outcpts_tens,1.0);
+
+      free_tensor(p, Tij_now);
+      
+      tensorps(p, outcpts_tens, step, "shst");
+
+      // Shear stress UETC
+      
+      if(p.uetcstart >= 0 && step > p.uetcstart) {
+	uetc_tensor(p, fft_f.initial_Tij, outcpts_tens, p.uetcstart, step, "shst");
+      }
+
+      // Cleanup outcpts_tens
+      
+      // Clean up outcpts_vec
+      for(i=0;i<TENSOR_CPTS;i++)
+	fftwf_free(outcpts_tens[i]);
+      
+      free(outcpts_tens);
+
+      
     }
 #endif // FFT
-
+    
     // Measurements
     if((p.interval > 0) && (step % p.interval == 0)) {
 
@@ -490,21 +578,6 @@ int main(int argc, char *argv[]) {
     find_Ta(f, p);
     
     sim_time += p.dt;
-
-
-    // On the last step, do some extra GW power spectra FFTs
-#ifdef FFT
-    if(step == p.steps - 1) {
-
-#ifndef SCALAR
-      fft_vec(p, f.V, step, "vel");
-      fft_J(f, p, step);
-      fft_X(f, p, step);
-#endif // !SCALAR
-
-      fft_tensor(f,p,step);
-    }
-#endif // FFT
     
   } // main loop ends here
 
@@ -520,24 +593,104 @@ int main(int argc, char *argv[]) {
 
 
   
-  // End time, for walltime calculation
-  end = clock();
 
-
+  // Do ffts one last time for final timestep:
 #ifdef FFT
 
-#ifndef SCALAR
-  fft_vec(p, f.V, step, "vel");
-  fft_J(f, p, step);
-  fft_X(f, p, step);
-#endif // !SCALAR
-
-  fft_tensor(f,p,step);
+  // Perform scalar ffts:
+      
+  histo_field(f.phi, p, step);
+  
+  // Fourier transform scalar field:
+  fft_scalar(p, fft_f, f.phi);
     
+  // Power spectrum of scalar field
+  scalarps(p,  fft_f.out, step, "phi");
+  
+#ifndef SCALAR
+      
+  // Power spectrum of internal energy e=E/W
+  fft_e(f, p, fft_f);
+
+  scalarps(p, fft_f.out, step, "e");
+      
+#endif // SCALAR
+      
+  // Vector spectra (and UETCs)
+
+  fftwf_complex **outcpts_vec = (fftwf_complex **)malloc(3*sizeof(fftwf_complex *));
+
+  for(i=0;i<3;i++) {
+    outcpts_vec[i] = fftwf_alloc_complex(alloc_local);
+  }
+
+#ifndef SCALAR
+
+  // Velocity power spectrum
+  fft_vector(p, fft_f, f.V, outcpts_vec);
+      
+  vectorps(p, outcpts_vec, step, "vel");
+
+  // Temperature current power spectrum
+  fft_J(f, p, fft_f, outcpts_vec);
+
+    
+  vectorps(p, outcpts_vec, step, "J");
+      
+  // X variable power spectrum.
+  fft_X(f, p, fft_f, outcpts_vec);
+
+  vectorps(p, outcpts_vec, step, "X");
+      
+#endif //!SCALAR
+
+  // Clean up outcpts_vec
+  for(i=0;i<3;i++)
+    fftwf_free(outcpts_vec[i]);
+      
+  free(outcpts_vec);
+
+  // Tensor spectra
+
+  fftwf_complex **outcpts_tens = (fftwf_complex **)malloc(6*sizeof(fftwf_complex *));
+
+  for(i=0;i<TENSOR_CPTS;i++) {
+    outcpts_tens[i] = fftwf_alloc_complex(alloc_local);
+  }
+      
+  // Gravitational wave power spectrum (returns GW energy)
+  fft_tensor(p, fft_f, f.udotij, outcpts_tens, 1/sqrt(32*M_PI));
+
+  gwen = tensorps(p, outcpts_tens, step, "gw");
+
+  // Shear stress power spectrum.
+
+  float ****Tij_now = make_tensor(p);
+  stress_energy(f, p, Tij_now);
+      
+  fft_tensor(p, fft_f, Tij_now, outcpts_tens,1.0);
+
+  free_tensor(p, Tij_now);
+
+  tensorps(p, outcpts_tens, step, "shst");
+      
+  // Cleanup outcpts_tens
+
+  // Clean up outcpts_vec
+  for(i=0;i<TENSOR_CPTS;i++)
+    fftwf_free(outcpts_tens[i]);
+      
+  free(outcpts_tens);  
+
+  // Cleanup fft related fields
+
+  fft_finalise(p, &fft_f);
+  
 #endif // FFT
 
 
-
+  
+  
 #ifdef PAPI
 
   papi_finalise();
@@ -551,6 +704,8 @@ int main(int argc, char *argv[]) {
 
 #endif // MPI
 
+  // End time, for walltime calculation
+  end = clock();
 
   // Time spent running
   cpu_time_used = ((float) (end - start)) / CLOCKS_PER_SEC;
