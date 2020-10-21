@@ -102,7 +102,7 @@ int main(int argc, char *argv[]) {
 
   // time iterates: count steps and time separately
   int step;
-  float sim_time = 0.0;
+  float t_sim = 0.0;
 
   // Struct that stores the fields
   hydro_fields f;
@@ -351,7 +351,7 @@ int main(int argc, char *argv[]) {
 
     // How many bubbles do we (try to) nucleate this timestep?
     // (Always 0 if initial condition not set to "bubble")
-    howmany = bubbles_at_step(f, p, sim_time, step);
+    howmany = bubbles_at_step(f, p, t_sim, step);
 
     i = 0;
 
@@ -416,7 +416,7 @@ int main(int argc, char *argv[]) {
     // Measurements
     if((p.interval > 0) && (step % p.interval == 0)) {
 
-        write_globals(f, p, gwen, bcount, sim_time, step);
+        write_globals(f, p, gwen, bcount, t_sim, step);
 
         // Statement of energy violation (not shown; better to use KE)
         /*
@@ -467,7 +467,7 @@ int main(int argc, char *argv[]) {
     // Solve for T
     find_Ta(f, p);
 
-    sim_time += p.dt;
+    t_sim += p.dt;
 
   } // main loop ends here
 
@@ -486,7 +486,7 @@ int main(int argc, char *argv[]) {
 #endif // FFT
 
   // Write globals one last time.
-  write_globals(f, p, gwen, bcount, sim_time, step);
+  write_globals(f, p, gwen, bcount, t_sim, step);
 
 #ifdef PAPI
 

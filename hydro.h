@@ -649,7 +649,7 @@ void fluid_sphere(hydro_fields f, hydro_params p);
 // output.c
 void write_global_headers(hydro_fields f, hydro_params p);
 void write_globals(hydro_fields f, hydro_params p, float gwen,
-		    int bcount, float sim_time, int step);
+		    int bcount, float t_sim, int step);
 float get_gamma_max(hydro_fields f, hydro_params p);
 float get_s_max(hydro_fields f, hydro_params p);
 float get_veltot(hydro_fields f, hydro_params p);
