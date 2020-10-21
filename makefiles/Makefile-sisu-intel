@@ -9,7 +9,7 @@
 
 #### CC ####
 
-CC := cc -DMPI -DFFT
+CC := cc -DUSE_MPI -DFFT
 
 #### CFLAGS ####
 
