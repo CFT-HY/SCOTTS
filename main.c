@@ -64,19 +64,19 @@ int main(int argc, char *argv[]) {
 
   // Calculate potential terms, no longer used (potential directly supplied)
   /*
-  p.alpha = 1.0/sqrt(2.0*p.sigma*pow(p.lcorr, 5.0)/3.0);
-  p.gamma = (p.Lheat + 6.0*p.sigma/p.lcorr)/(6.0*p.sigma*p.lcorr);
-  p.lambda = 1.0/(3.0*p.sigma*pow(p.lcorr,3.0));
+    p.alpha = 1.0/sqrt(2.0*p.sigma*pow(p.lcorr, 5.0)/3.0);
+    p.gamma = (p.Lheat + 6.0*p.sigma/p.lcorr)/(6.0*p.sigma*p.lcorr);
+    p.lambda = 1.0/(3.0*p.sigma*pow(p.lcorr,3.0));
 
-  printf0(p,
-	  "-- calculated potential terms\n"
-	  "-- alpha %g, gamma %g, lambda %g\n",
-	  p.alpha, p.gamma, p.lambda);
+    printf0(p,
+    "-- calculated potential terms\n"
+    "-- alpha %g, gamma %g, lambda %g\n",
+    p.alpha, p.gamma, p.lambda);
 
-  p.T0 = sqrt(1.0-2.0*p.alpha*p.alpha/9.0/p.gamma/p.lambda);
+    p.T0 = sqrt(1.0-2.0*p.alpha*p.alpha/9.0/p.gamma/p.lambda);
 
-  printf0(p,
-	  "-- T0 %g\n", p.T0);
+    printf0(p,
+    "-- T0 %g\n", p.T0);
   */
 
 
@@ -111,16 +111,6 @@ int main(int argc, char *argv[]) {
 #ifdef FFT
   // Struct that stores fields in momentum space and helper fields for FFTs.
   fft_fields fft_f;
-
-  ptrdiff_t x_thickness, x_start, alloc_local;
-
-  ptrdiff_t n0 = p.Lx;
-  ptrdiff_t n1 = p.Ly;
-  ptrdiff_t n2 = p.Lz;
-
-  alloc_local = fftwf_mpi_local_size_3d(n0, n1, n2,
-					MPI_COMM_WORLD, &x_thickness, &x_start);
-
 #endif // FFT
 
   // Counter to specify which order to perform advection
@@ -130,13 +120,12 @@ int main(int argc, char *argv[]) {
   //  float cpts[TENSOR_CPTS];
 
   float initial_energy, initial_field_energy;
-  float gwen;
+  float gwen = 0;
 
   // Timing counters
   float cpu_time_used;
 
   clock_t start, end;
-  clock_t fft_start, fft_end;
 
   // What step does the for loop start on? For checkpoint restarts...
   int step_start = 0;
@@ -159,144 +148,144 @@ int main(int argc, char *argv[]) {
 
   // Restore checkpoint
   if(usable_checkpoint(f, p)) {
-    printf0(p, "Found a usable checkpoint file\n");
+      printf0(p, "Found a usable checkpoint file\n");
 
-    step_start = load_checkpoint(f, p);
+      step_start = load_checkpoint(f, p);
 
-    printf0(p, "Checkpoint load done.\n");
-    printf0(p, "WARNING: Bubble count reset after restart!\n");
+      printf0(p, "Checkpoint load done.\n");
+      printf0(p, "WARNING: Bubble count reset after restart!\n");
 
   } else {
-    // For safety, set everything to zero
-    zero_fields(f, p);
+      // For safety, set everything to zero
+      zero_fields(f, p);
 
-    printf0(p, "- Zeroed fields.\n");
+      printf0(p, "- Zeroed fields.\n");
 
-    if(p.initial==INIT_PS){
+      if(p.initial==INIT_PS){
 #if defined (FFT) && ! defined(SCALAR)
-      // If initial is INIT_PS then initialise velocity power spec.
-      // Then no bubbles nucleated.
+          // If initial is INIT_PS then initialise velocity power spec.
+          // Then no bubbles nucleated.
 
-	initial_blank(f,p);
-	init_ps(f, p, f.Z);
-	norm_power(f, p, f.Z);
+          initial_blank(f,p);
+          init_ps(f, p, f.Z);
+          norm_power(f, p, f.Z);
 
-	/*
-	  memcpy(f.V[0][0][0], f.U[0][0][0], (p.slicex+2)*(p.slicey+2)
-	  *(p.Lz)*sizeof(float));
-	  memcpy(f.V[1][0][0], f.U[1][0][0], (p.slicex+2)*(p.slicey+2)
-	  *(p.Lz)*sizeof(float));
-	  memcpy(f.V[2][0][0], f.U[2][0][0], (p.slicex+2)*(p.slicey+2)
-	  *(p.Lz)*sizeof(float));
-	  */
-	// init_ps(f, p, f.V);
-	//    init_ps(f, p, f.Z);
+          /*
+            memcpy(f.V[0][0][0], f.U[0][0][0], (p.slicex+2)*(p.slicey+2)
+            *(p.Lz)*sizeof(float));
+            memcpy(f.V[1][0][0], f.U[1][0][0], (p.slicex+2)*(p.slicey+2)
+            *(p.Lz)*sizeof(float));
+            memcpy(f.V[2][0][0], f.U[2][0][0], (p.slicex+2)*(p.slicey+2)
+            *(p.Lz)*sizeof(float));
+            */
+          // init_ps(f, p, f.V);
+          //    init_ps(f, p, f.Z);
 #else
 
-	printf0(p,"INIT_PS initial conditions invalid with SCALAR compiler flag."
-		" Exiting... \n");
-	die(100);
+          printf0(p,"INIT_PS initial conditions invalid with SCALAR compiler flag."
+                  " Exiting... \n");
+          die(100);
 
 #endif // FFT && !SCALAR
 
 
-    } else if(p.initial==INIT_BUBBLE){
-      if(p.nucleation==NUC_FILE_LOC){
-	initial_blank(f,p);
-	if(p.bubbles > 0){
-	  printf0(p,"Using nucleation location file: \n"
-		  "Ignoring initial bubbles parameter (bubbles %d). \n",
-		  p.bubbles);
-	}
+      } else if(p.initial==INIT_BUBBLE){
+          if(p.nucleation==NUC_FILE_LOC){
+              initial_blank(f,p);
+              if(p.bubbles > 0){
+                  printf0(p,"Using nucleation location file: \n"
+                          "Ignoring initial bubbles parameter (bubbles %d). \n",
+                          p.bubbles);
+              }
+          }
+          //Bubble initial conditions:
+          else if(p.bubbles > 1){
+              // Instead, start off with an empty box
+              initial_blank(f, p);
+
+              start = clock();
+              printf0(p, "Nucleating first bubble\n");
+              nucleate_at(f,p,0,0,0);
+
+              end = clock();
+              if(!p.rank)
+                  fprintf(stderr,"Nucleation attempt took %lf\n",
+                          ((float) (end - start)) / CLOCKS_PER_SEC);
+              bcount+=1;
+
+              // p.bubbles is how many bubbles to make at the start (usually 1)
+              for(step=1;step<p.bubbles;step++) {
+                  start = clock();
+                  still_nucleate = try_nucleate(f, p);
+                  end = clock();
+                  if(!p.rank)
+                      fprintf(stderr,"Nucleation attempt took %lf\n",
+                              ((float) (end - start)) / CLOCKS_PER_SEC);
+
+                  bcount += still_nucleate;
+
+                  // Each is an independent attempt, do not disable!
+                  //      if(!still_nucleate)
+                  //	break;
+
+              }
+          } else if(p.bubbles == 1){
+              // One bubble only (not normally used)
+              initial_blank(f, p);
+
+              printf0(p, "Nucleating just one bubble\n");
+              nucleate_at(f,p,0,0,0);
+              bcount+=1;
+          } else{
+              // Empty system
+              initial_blank(f, p);
+          }
+      }else if(p.initial==INIT_SHOCK_TUBE){
+          fprintf(stderr,"Sorry, shocktube is not implemented! Exiting... \n");
+          die(100);
+      }else if(p.initial==INIT_FLUID_SPHERE){
+          initial_blank(f, p);
+          // Create a sphere of fluid at origin of the simulation box.
+          fluid_sphere(f, p);
+      }else{
+          fprintf(stderr,"Invalid initial condition option! Exiting... \n");
+          die(100);
       }
-      //Bubble initial conditions:
-      else if(p.bubbles > 1){
-	// Instead, start off with an empty box
-	initial_blank(f, p);
-
-	start = clock();
-	printf0(p, "Nucleating first bubble\n");
-	nucleate_at(f,p,0,0,0);
-
-	end = clock();
-	if(!p.rank)
-	  fprintf(stderr,"Nucleation attempt took %lf\n",
-		  ((float) (end - start)) / CLOCKS_PER_SEC);
-	bcount+=1;
-
-	// p.bubbles is how many bubbles to make at the start (usually 1)
-	for(step=1;step<p.bubbles;step++) {
-	  start = clock();
-	  still_nucleate = try_nucleate(f, p);
-	  end = clock();
-	  if(!p.rank)
-	    fprintf(stderr,"Nucleation attempt took %lf\n",
-		    ((float) (end - start)) / CLOCKS_PER_SEC);
-
-	  bcount += still_nucleate;
-
-	  // Each is an independent attempt, do not disable!
-	  //      if(!still_nucleate)
-	  //	break;
-
-	}
-      } else if(p.bubbles == 1){
-	// One bubble only (not normally used)
-	initial_blank(f, p);
-
-	printf0(p, "Nucleating just one bubble\n");
-	nucleate_at(f,p,0,0,0);
-	bcount+=1;
-      } else{
-	// Empty system
-	initial_blank(f, p);
-      }
-    }else if(p.initial==INIT_SHOCK_TUBE){
-      fprintf(stderr,"Sorry, shocktube is not implemented! Exiting... \n");
-      die(100);
-    }else if(p.initial==INIT_FLUID_SPHERE){
-      initial_blank(f, p);
-      // Create a sphere of fluid at origin of the simulation box.
-      fluid_sphere(f, p);
-    }else{
-      fprintf(stderr,"Invalid initial condition option! Exiting... \n");
-      die(100);
-    }
 
 
 
-    // (don't) turn off nucleation after initial stage
-    //  still_nucleate = 0;
+      // (don't) turn off nucleation after initial stage
+      //  still_nucleate = 0;
 
 
 
-    // Communicate everything that neighbours need
-    halo_field(f.phi, p);
-    halo_field(f.pi_future, p);
+      // Communicate everything that neighbours need
+      halo_field(f.phi, p);
+      halo_field(f.pi_future, p);
 #ifndef SCALAR
-    halo_field(f.E, p);
-    halo_field(f.Z[0], p);
-    halo_field(f.Z[1], p);
-    halo_field(f.Z[2], p);
-    halo_field(f.W, p);
+      halo_field(f.E, p);
+      halo_field(f.Z[0], p);
+      halo_field(f.Z[1], p);
+      halo_field(f.Z[2], p);
+      halo_field(f.W, p);
 #endif // SCALAR
 
-    if(!p.rank)
-      fprintf(stderr, "Initial conditions done\n");
+      if(!p.rank)
+          fprintf(stderr, "Initial conditions done\n");
   }
 
   initial_energy = reduce_sum(total_energy(f, p), p);
   initial_field_energy = reduce_sum(field_energy(f, p), p);
 
   printf0(p, "Initial avg energy per site: %g\n",
-	  initial_energy/((float)p.N));
+          initial_energy/((float)p.N));
 
 
 #ifdef SILO
 
   // Are we using silo for visualisation?
   if(p.silointerval > 0 || p.silosliceinterval>0 )
-    silo_init(p);
+      silo_init(p);
 
 #endif // SILO
 
@@ -369,20 +358,20 @@ int main(int argc, char *argv[]) {
     while(i < howmany) {
 
       if(p.nucleation==NUC_FILE_LOC){
-	printf0(p, "Nucleating a bubble on step %d at (%d, %d, %d)"
-		" without any checks.\n", step, p.nuclocs[bub_loc_ind][0],
-		p.nuclocs[bub_loc_ind][1], p.nuclocs[bub_loc_ind][2]);
+          printf0(p, "Nucleating a bubble on step %d at (%d, %d, %d)"
+                  " without any checks.\n", step, p.nuclocs[bub_loc_ind][0],
+                  p.nuclocs[bub_loc_ind][1], p.nuclocs[bub_loc_ind][2]);
 
-	nucleate_at(f, p, p.nuclocs[bub_loc_ind][0], p.nuclocs[bub_loc_ind][1],
-		    p.nuclocs[bub_loc_ind][2]);
-	bub_loc_ind++;
-	bcount++;
-	i++;
+          nucleate_at(f, p, p.nuclocs[bub_loc_ind][0], p.nuclocs[bub_loc_ind][1],
+                      p.nuclocs[bub_loc_ind][2]);
+          bub_loc_ind++;
+          bcount++;
+          i++;
       }
       else{
-	still_nucleate = try_nucleate(f, p);
-	bcount += still_nucleate;
-	i++;
+          still_nucleate = try_nucleate(f, p);
+          bcount += still_nucleate;
+          i++;
       }
     }
 
@@ -393,7 +382,7 @@ int main(int argc, char *argv[]) {
       int wall_start = (int)time(NULL);
       checkpoint(f, p, step);
       printf0(p, "Checkpointing took %d seconds of walltime\n",
-	      ((int)time(NULL))-wall_start);
+              ((int)time(NULL))-wall_start);
     }
 
 
@@ -415,133 +404,28 @@ int main(int argc, char *argv[]) {
 
     // Initialise uetcs if it is time.
     if(p.uetcstart >= 0 && step == p.uetcstart) {
-	init_uetc(f, p, fft_f);
+        init_uetc(f, p, fft_f);
     }
 
 
     if((p.fftinterval > 0) && (step % p.fftinterval == 0)) {
-
-
-      // Perform scalar ffts:
-
-      histo_field(f.phi, p, step);
-
-      // Fourier transform scalar field:
-      fft_start = clock();
-      fft_scalar(p, fft_f, f.phi);
-      fft_end = clock();
-      printf0(p, "fft scalar took %lf\n", ((float) (fft_end - fft_start))
-	      / CLOCKS_PER_SEC);
-
-      // Power spectrum of scalar field
-      scalarps(p,  fft_f.out, step, "phi");
-
-#ifndef SCALAR
-
-      // Power spectrum of internal energy e=E/W
-      fft_start = clock();
-      fft_e(f, p, fft_f);
-      fft_end = clock();
-      printf0(p, "fft scalar took %lf\n", ((float) (fft_end - fft_start))
-	      / CLOCKS_PER_SEC);
-
-      scalarps(p, fft_f.out, step, "e");
-
-#endif // SCALAR
-
-
-      // Vector spectra (and UETCs)
-
-      fftwf_complex **outcpts_vec = (fftwf_complex **)malloc(3*sizeof(fftwf_complex *));
-
-      for(i=0;i<3;i++) {
-	outcpts_vec[i] = fftwf_alloc_complex(alloc_local);
-      }
-
-#ifndef SCALAR
-
-      // Velocity power spectrum and UETCs
-      fft_vector(p, fft_f, f.V, outcpts_vec);
-
-      vectorps(p, outcpts_vec, step, "vel");
-
-      if(p.uetcstart >= 0 && step > p.uetcstart) {
-	uetc_vector(p, fft_f.initial_V, outcpts_vec, p.uetcstart, step, "vel");
-      }
-
-      // Temperature current power spectrum
-      fft_J(f, p, fft_f, outcpts_vec);
-
-      vectorps(p, outcpts_vec, step, "J");
-
-      // X variable power spectrum.
-      fft_X(f, p, fft_f, outcpts_vec);
-
-      vectorps(p, outcpts_vec, step, "X");
-
-#endif //!SCALAR
-
-      // Clean up outcpts_vec
-      for(i=0;i<3;i++)
-	fftwf_free(outcpts_vec[i]);
-
-      free(outcpts_vec);
-
-      // Tensor spectra & UETCs
-
-      fftwf_complex **outcpts_tens = (fftwf_complex **)malloc(6*sizeof(fftwf_complex *));
-
-      for(i=0;i<TENSOR_CPTS;i++) {
-	outcpts_tens[i] = fftwf_alloc_complex(alloc_local);
-      }
-
-      // Gravitational wave power spectrum (returns GW energy)
-      fft_tensor(p, fft_f, f.udotij, outcpts_tens, 1/sqrt(32*M_PI));
-
-      gwen = tensorps(p, outcpts_tens, step, "gw");
-
-      // Shear stress power spectrum.
-
-      float ****Tij_now = make_tensor(p);
-
-      stress_energy(f, p, Tij_now);
-
-      fft_tensor(p, fft_f, Tij_now, outcpts_tens, 1.0);
-
-      free_tensor(p, Tij_now);
-
-      tensorps(p, outcpts_tens, step, "shst");
-
-      // Shear stress UETC
-
-      if(p.uetcstart >= 0 && step > p.uetcstart) {
-	uetc_tensor(p, fft_f.initial_Tij, outcpts_tens, p.uetcstart, step, "shst");
-      }
-
-      // Cleanup outcpts_tens
-
-      for(i=0;i<TENSOR_CPTS;i++)
-	fftwf_free(outcpts_tens[i]);
-
-      free(outcpts_tens);
-
-
+        gwen = output_ps_uetcs(f, p, fft_f, step);
     }
 #endif // FFT
 
     // Measurements
     if((p.interval > 0) && (step % p.interval == 0)) {
 
-      write_globals(f, p, gwen, bcount, sim_time, step);
+        write_globals(f, p, gwen, bcount, sim_time, step);
 
-      // Statement of energy violation (not shown; better to use KE)
-      /*
-      fprintf(stderr, "Energy violation: %.10lf%%, %lf%%\n",
-              100.0*fabs((current_energy-initial_energy)
-			 /initial_energy),
-              100.0*fabs((current_field_energy-initial_field_energy)
-			 /initial_field_energy));
-      */
+        // Statement of energy violation (not shown; better to use KE)
+        /*
+          fprintf(stderr, "Energy violation: %.10lf%%, %lf%%\n",
+          100.0*fabs((current_energy-initial_energy)
+          /initial_energy),
+          100.0*fabs((current_field_energy-initial_field_energy)
+          /initial_field_energy));
+        */
     }
 
     //printf0(p,"step = %d \n", step);
@@ -593,118 +477,16 @@ int main(int argc, char *argv[]) {
     checkpoint(f, p, step);
   }
 
-
-  // Write globals one last time.
-  write_globals(f, p, gwen, bcount, sim_time, step);
-
-
-
-
   // Do ffts one last time for final timestep:
 #ifdef FFT
 
-  // Perform scalar ffts:
-
-  histo_field(f.phi, p, step);
-
-  // Fourier transform scalar field:
-  fft_scalar(p, fft_f, f.phi);
-
-  // Power spectrum of scalar field
-  scalarps(p,  fft_f.out, step, "phi");
-
-#ifndef SCALAR
-
-  // Power spectrum of internal energy e=E/W
-  fft_e(f, p, fft_f);
-
-  scalarps(p, fft_f.out, step, "e");
-
-#endif // SCALAR
-
-  // Vector spectra (and UETCs)
-
-  fftwf_complex **outcpts_vec = (fftwf_complex **)malloc(3*sizeof(fftwf_complex *));
-
-  for(i=0;i<3;i++) {
-    outcpts_vec[i] = fftwf_alloc_complex(alloc_local);
-  }
-
-#ifndef SCALAR
-
-  // Velocity power spectrum
-  fft_vector(p, fft_f, f.V, outcpts_vec);
-
-  vectorps(p, outcpts_vec, step, "vel");
-
-  if(p.uetcstart >= 0 && step > p.uetcstart) {
-      uetc_vector(p, fft_f.initial_V, outcpts_vec, p.uetcstart, step, "vel");
-  }
-
-  // Temperature current power spectrum
-  fft_J(f, p, fft_f, outcpts_vec);
-
-
-  vectorps(p, outcpts_vec, step, "J");
-
-  // X variable power spectrum.
-  fft_X(f, p, fft_f, outcpts_vec);
-
-  vectorps(p, outcpts_vec, step, "X");
-
-#endif //!SCALAR
-
-  // Clean up outcpts_vec
-  for(i=0;i<3;i++)
-    fftwf_free(outcpts_vec[i]);
-
-  free(outcpts_vec);
-
-  // Tensor spectra
-
-  fftwf_complex **outcpts_tens = (fftwf_complex **)malloc(6*sizeof(fftwf_complex *));
-
-  for(i=0;i<TENSOR_CPTS;i++) {
-    outcpts_tens[i] = fftwf_alloc_complex(alloc_local);
-  }
-
-  // Gravitational wave power spectrum (returns GW energy)
-  fft_tensor(p, fft_f, f.udotij, outcpts_tens, 1/sqrt(32*M_PI));
-
-  gwen = tensorps(p, outcpts_tens, step, "gw");
-
-  // Shear stress power spectrum.
-
-  float ****Tij_now = make_tensor(p);
-  stress_energy(f, p, Tij_now);
-
-  fft_tensor(p, fft_f, Tij_now, outcpts_tens,1.0);
-
-  free_tensor(p, Tij_now);
-
-  tensorps(p, outcpts_tens, step, "shst");
-
-  // Shear stress UETC
-
-  if(p.uetcstart >= 0 && step > p.uetcstart) {
-      uetc_tensor(p, fft_f.initial_Tij, outcpts_tens, p.uetcstart, step, "shst");
-  }
-
-  // Cleanup outcpts_tens
-
-  for(i=0;i<TENSOR_CPTS;i++)
-    fftwf_free(outcpts_tens[i]);
-
-  free(outcpts_tens);
-
-  // Cleanup fft related fields
-
+  gwen = output_ps_uetcs(f, p, fft_f, step);
   fft_finalise(p, &fft_f);
 
 #endif // FFT
 
-
-
+  // Write globals one last time.
+  write_globals(f, p, gwen, bcount, sim_time, step);
 
 #ifdef PAPI
 
@@ -726,8 +508,8 @@ int main(int argc, char *argv[]) {
   cpu_time_used = ((float) (end - start)) / CLOCKS_PER_SEC;
 
   printf0(p, "On master node, CPU time in main loop was %lfs,\n"
-	  "of which %lfs was comms\n",
-	  cpu_time_used, get_comms_time(&p));
+          "of which %lfs was comms\n",
+          cpu_time_used, get_comms_time(&p));
 
   // Close pressure measurement file (not used)
   /*
