@@ -496,7 +496,7 @@ int main(int argc, char *argv[]) {
       }
 
       // Gravitational wave power spectrum (returns GW energy)
-      fft_tensor(p, fft_f, f.udotij, outcpts_tens, 1/sqrt(32*MPI));
+      fft_tensor(p, fft_f, f.udotij, outcpts_tens, 1/sqrt(32*M_PI));
 
       gwen = tensorps(p, outcpts_tens, step, "gw");
 
