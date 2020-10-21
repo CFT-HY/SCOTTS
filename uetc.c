@@ -17,8 +17,8 @@
 
 
 /**  Initialise the UETC calculation for all fields for which we
- * calculate UETCs with the momentum space 
- */ 
+ * calculate UETCs with the momentum space
+ */
 void init_uetc(hydro_fields f, hydro_params p, fft_fields fft_f) {
 
 
@@ -45,7 +45,7 @@ void init_uetc(hydro_fields f, hydro_params p, fft_fields fft_f) {
 void uetc_tensor(hydro_params p, fftwf_complex **tensor_then,
 		 fftwf_complex **tensor_now, int step_then, int step_now,
 		 char *label){
- 
+
 
   ptrdiff_t x_thickness, x_start, alloc_local;
 
@@ -75,9 +75,9 @@ void uetc_tensor(hydro_params p, fftwf_complex **tensor_then,
   alloc_local = fftwf_mpi_local_size_3d(n0, n1, n2,
 				       MPI_COMM_WORLD, &x_thickness, &x_start);
 
-  
+
   /////////////// Project to get transverse traceless tensor uetc ///////////////////
-  
+
   float *slice_re = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
   float *slice_im = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
 
@@ -135,14 +135,14 @@ void uetc_tensor(hydro_params p, fftwf_complex **tensor_then,
 	    true_z = p.Lz - z;
 	  else
 	    true_z = z;
-	
+
 
 	  kmode = sqrt(
 		       ((float)(true_x*true_x))/((float)(p.Lx*p.Lx))
 		       + ((float)(true_y*true_y))/((float)(p.Ly*p.Ly))
 		       + ((float)(true_z*true_z))/((float)(p.Lz*p.Lz))
 		       )*2.0*M_PI;
-	  
+
 	  whichbin = (int)floor(kmode/dk);
 	  bins_re[whichbin] += slice_re[x*p.Ly*p.Lz + y*p.Lz + z];
 	  bins_im[whichbin] += slice_im[x*p.Ly*p.Lz + y*p.Lz + z];
@@ -160,10 +160,10 @@ void uetc_tensor(hydro_params p, fftwf_complex **tensor_then,
 
       red_value = reduce_sum(bins_re[i], p);
       bins_re[i] = red_value;
-    
+
       red_value = reduce_sum(bins_im[i], p);
       bins_im[i] = red_value;
-    
+
       red_count = reduce_sum_int(counts[i], p);
       counts[i] = red_count;
     }
@@ -175,7 +175,7 @@ void uetc_tensor(hydro_params p, fftwf_complex **tensor_then,
     if(!p.rank) {
 
       char fftdest[200];
-      
+
       if(label != NULL){
 	if(*label){
 	  sprintf(fftdest,"%s-TT-uetc-ref%d-step%d.txt", label, step_then, step_now);
@@ -185,7 +185,7 @@ void uetc_tensor(hydro_params p, fftwf_complex **tensor_then,
 	sprintf(fftdest,"TT-uetc-ref%d-step%d.txt", step_then, step_now);
       }
       FILE *fp = fopen(fftdest,"w");
-  
+
       for(i=0;i<nbins;i++) {
 
 	fprintf(fp, "%lf %g %g %d %d %d\n",
@@ -231,7 +231,7 @@ void uetc_tensor(hydro_params p, fftwf_complex **tensor_then,
 void uetc_vector(hydro_params p, fftwf_complex **vector_then,
 		 fftwf_complex **vector_now, int step_then, int step_now,
 		 char *label){
- 
+
 
   ptrdiff_t x_thickness, x_start, alloc_local;
 
@@ -261,7 +261,7 @@ void uetc_vector(hydro_params p, fftwf_complex **vector_then,
   alloc_local = fftwf_mpi_local_size_3d(n0, n1, n2,
 				       MPI_COMM_WORLD, &x_thickness, &x_start);
 
-  
+
   /////////////// Project to get rot and div components of vector uetc ///////////////////
 
   float *slice_rot_re = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
@@ -329,14 +329,14 @@ void uetc_vector(hydro_params p, fftwf_complex **vector_then,
 	    true_z = p.Lz - z;
 	  else
 	    true_z = z;
-	
+
 
 	  kmode = sqrt(
 		       ((float)(true_x*true_x))/((float)(p.Lx*p.Lx))
 		       + ((float)(true_y*true_y))/((float)(p.Ly*p.Ly))
 		       + ((float)(true_z*true_z))/((float)(p.Lz*p.Lz))
 		       )*2.0*M_PI;
-	  
+
 	  whichbin = (int)floor(kmode/dk);
 	  bins_rot_re[whichbin] += slice_rot_re[x*p.Ly*p.Lz + y*p.Lz + z];
 	  bins_rot_im[whichbin] += slice_rot_im[x*p.Ly*p.Lz + y*p.Lz + z];
@@ -357,17 +357,17 @@ void uetc_vector(hydro_params p, fftwf_complex **vector_then,
 
       red_value = reduce_sum(bins_rot_re[i], p);
       bins_rot_re[i] = red_value;
-    
+
       red_value = reduce_sum(bins_rot_im[i], p);
       bins_rot_im[i] = red_value;
 
       red_value = reduce_sum(bins_div_re[i], p);
       bins_div_re[i] = red_value;
-    
+
       red_value = reduce_sum(bins_div_im[i], p);
       bins_div_im[i] = red_value;
 
-      
+
       red_count = reduce_sum_int(counts[i], p);
       counts[i] = red_count;
     }
@@ -381,7 +381,7 @@ void uetc_vector(hydro_params p, fftwf_complex **vector_then,
     if(!p.rank) {
 
       char fftdest[200];
-      
+
       if(label != NULL){
 	if(*label){
 	  sprintf(fftdest,"%s-rot-uetc-ref%d-step%d.txt", label, step_then, step_now);
@@ -391,17 +391,19 @@ void uetc_vector(hydro_params p, fftwf_complex **vector_then,
 	sprintf(fftdest,"rot-uetc-ref%d-step%d.txt", step_then, step_now);
       }
       FILE *fp1 = fopen(fftdest,"w");
-  
+
       for(i=0;i<nbins;i++) {
 
 	fprintf(fp1, "%lf %g %g %d %d %d\n",
-		thisk/(p.a*p.dx), bins_rot_re[i], bins_rot_im[i], counts[i], step_then, step_now);
+		thisk/(p.a*p.dx), (float)(i+1)*bins_rot_re[i], (float)(i+1)*bins_rot_im[i], counts[i], step_then, step_now);
 
 	thisk = thisk + dk;
       }
 
       // Now div
-      
+
+      thisk = dk/2.0;
+
       if(label != NULL){
 	if(*label){
 	  sprintf(fftdest,"%s-div-uetc-ref%d-step%d.txt", label, step_then, step_now);
@@ -411,16 +413,16 @@ void uetc_vector(hydro_params p, fftwf_complex **vector_then,
 	sprintf(fftdest,"div-uetc-ref%d-step%d.txt", step_then, step_now);
       }
       FILE *fp2 = fopen(fftdest,"w");
-  
+
       for(i=0;i<nbins;i++) {
 
 	fprintf(fp2, "%lf %g %g %d %d %d\n",
-		thisk/(p.a*p.dx), bins_div_re[i], bins_div_im[i], counts[i], step_then, step_now);
+		thisk/(p.a*p.dx), (float)(i+1)*bins_div_re[i], (float)(i+1)*bins_div_im[i], counts[i], step_then, step_now);
 
 	thisk = thisk + dk;
       }
 
-      
+
       fclose(fp1);
       fclose(fp2);
 
