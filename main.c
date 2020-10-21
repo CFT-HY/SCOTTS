@@ -637,6 +637,10 @@ int main(int argc, char *argv[]) {
 
   vectorps(p, outcpts_vec, step, "vel");
 
+  if(p.uetcstart >= 0 && step > p.uetcstart) {
+      uetc_vector(p, fft_f.initial_V, outcpts_vec, p.uetcstart, step, "vel");
+  }
+
   // Temperature current power spectrum
   fft_J(f, p, fft_f, outcpts_vec);
 
@@ -679,6 +683,12 @@ int main(int argc, char *argv[]) {
   free_tensor(p, Tij_now);
 
   tensorps(p, outcpts_tens, step, "shst");
+
+  // Shear stress UETC
+
+  if(p.uetcstart >= 0 && step > p.uetcstart) {
+      uetc_tensor(p, fft_f.initial_Tij, outcpts_tens, p.uetcstart, step, "shst");
+  }
 
   // Cleanup outcpts_tens
 
