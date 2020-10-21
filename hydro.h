@@ -36,17 +36,17 @@
 #endif // PAPI
 
 // Parallelism with MPI
-#ifdef MPI
+#ifdef USE_MPI
 #include <mpi.h>
-#endif // MPI
+#endif // USE_MPI
 
 #ifdef FFT
 
 // #define FFT_DEBUG
 
-#ifndef MPI
+#ifndef USE_MPI
 #error Cannot use FFTW3 without MPI - local FFTs not implemented!
-#endif // !MPI
+#endif // !USE_MPI
 
 #include <fftw3-mpi.h>
 #endif // FFT
@@ -289,7 +289,7 @@ typedef struct {
    */
   int gwsource;
 
-#ifdef MPI
+#ifdef USE_MPI
 
   /** Rank of neighbour in negative `x` direction.
    */
@@ -324,7 +324,7 @@ typedef struct {
    */
   int myposy;
 
-#endif // MPI
+#endif // USE_MPI
 
   /** Surface tension \f$ \sigma \f$ for the bubble.
    *

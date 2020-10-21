@@ -9,7 +9,7 @@ int main(int argc, char *argv[]) {
 
   hydro_params p;
 
-#ifdef MPI
+#ifdef USE_MPI
 
   MPI_Init(&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &p.rank);
@@ -17,7 +17,7 @@ int main(int argc, char *argv[]) {
 
   printf0(p, "3D hydro port with MPI\n");
 
-#else // not MPI
+#else // not USE_MPI
 
   printf0(p, "3D hydro port (serial)\n");
 
@@ -307,12 +307,12 @@ int main(int argc, char *argv[]) {
 
 
 
-#ifdef MPI
+#ifdef USE_MPI
 
   // Mostly so that the timing is remotely fair
   MPI_Barrier(MPI_COMM_WORLD);
 
-#endif // MPI
+#endif // USE_MPI
 
   // For making sound files of the pressure
   /*
@@ -495,11 +495,11 @@ int main(int argc, char *argv[]) {
 #endif // PAPI
 
 
-#ifdef MPI
+#ifdef USE_MPI
 
   MPI_Finalize();
 
-#endif // MPI
+#endif // USE_MPI
 
   // End time, for walltime calculation
   end = clock();
