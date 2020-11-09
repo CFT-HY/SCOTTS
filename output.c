@@ -1,5 +1,5 @@
 /** @file output.c
- * 
+ *
  * Simple things, some of which we could in principle calculate offline, but
  * that are nice to know (energy-related quantites are in energy.c).
  */
@@ -23,7 +23,7 @@ void write_global_headers(hydro_fields f, hydro_params p){
  * To do: write summary of outputs here.
  */
 void write_globals(hydro_fields f, hydro_params p, float gwen, int bcount,
-		    float sim_time, int step){
+		    float t_sim, int step){
 
   float current_energy, current_field_energy, current_kinetic_field;
   float current_kinetic_fluid, current_gradient_energy, current_rest;
@@ -36,7 +36,7 @@ void write_globals(hydro_fields f, hydro_params p, float gwen, int bcount,
   long long N_broken;
   long long N_links;
 
-  
+
   current_energy = reduce_sum(total_energy(f, p), p);
   current_kinetic_fluid = reduce_sum(kinetic_energy_fluid(f, p), p);
   current_kinetic_field = reduce_sum(kinetic_energy_field(f, p), p);
@@ -52,12 +52,12 @@ void write_globals(hydro_fields f, hydro_params p, float gwen, int bcount,
   divJ_tot = reduce_sum(get_divJ_tot(f,p), p);
   N_broken = reduce_sum(get_N_broken(f,p), p);
   N_links = reduce_sum(get_broken_links(f,p), p);
-      
+
   if(!p.rank) {
     printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf"
 	   "\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%lli\t%lli\n",
 	   step,
-	   sim_time,
+	   t_sim,
 	   current_energy,
 	   current_kinetic_fluid,
 	   current_field_energy,
@@ -88,7 +88,7 @@ float get_gamma_max(hydro_fields f, hydro_params p) {
   int x, y, z, xmax;
 
   float gmax = f.W[0][0][0];
-  
+
   float gtest;
 
   // Just search for maxmimum
@@ -103,7 +103,7 @@ float get_gamma_max(hydro_fields f, hydro_params p) {
       }
     }
   }
-  
+
   return gmax;
 
 #else
@@ -145,10 +145,10 @@ float get_s_max(hydro_fields f, hydro_params p) {
   }
 
   return smax;
-	
+
 }
 
-  
+
 /** The sum of the fluid (3-)velocity everywhere. A strange quantity
  * on its own, but allows calculation of average fluid velocity.
  */
@@ -157,7 +157,7 @@ float get_veltot(hydro_fields f, hydro_params p) {
 #ifndef SCALAR
   int x, y, z, xmax;
 
-  
+
   float veltot = 0.0;
 
   for(x = 1; x <= p.slicex; x++) {
@@ -170,7 +170,7 @@ float get_veltot(hydro_fields f, hydro_params p) {
       }
     }
   }
-  
+
   return veltot;
 #else
   return 0.0;
@@ -184,7 +184,7 @@ long long get_N_broken(hydro_fields f, hydro_params p){
   int x, y, z;
   long long N_broken = 0;
   float phi_broken;
-  
+
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
@@ -219,7 +219,7 @@ long long get_broken_links(hydro_fields f, hydro_params p){
   int x, y, z;
   long long N_links = 0;
   float phi_broken;
-  
+
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
@@ -318,7 +318,7 @@ void histo_field(float ***field, hydro_params p, int step) {
   const double bin_epsilon = 0.01*(overall_max - overall_min);
   overall_min = overall_min - bin_epsilon;
   overall_max = overall_max + bin_epsilon;
-  
+
 
 
   int nbins = 100;
@@ -353,7 +353,7 @@ void histo_field(float ***field, hydro_params p, int step) {
 
   printf0(p, "Doing histogram, %d bins in [%lf,%lf]\n",
 	  nbins, overall_min, overall_max);
-  
+
 
   int ntemp;
 
@@ -367,9 +367,9 @@ void histo_field(float ***field, hydro_params p, int step) {
     FILE *fp;
 
     char histodest[200];
-    
+
     sprintf(histodest,"histo-%d.txt",step);
-    
+
     fp = fopen(histodest, "w");
 
     for(i=0; i<nbins; i++) {
@@ -424,14 +424,14 @@ void didj(float *cpts, hydro_fields f, hydro_params p) {
             0.25*((f.phi[x][y+1][z]
 		   - f.phi[x][y-1][z])/p.dx)
             *((f.phi[x][y+1][z] - f.phi[x][y-1][z])/p.dx);
-	  
+
           cpts_here[CPT_32] +=
-            0.25*((f.phi[x][y][(z+1)%p.Lz] 
+            0.25*((f.phi[x][y][(z+1)%p.Lz]
 		   - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx)
             *((f.phi[x][y+1][z] - f.phi[x][y-1][z])/p.dx);
 
           cpts_here[CPT_33] +=
-            0.25*((f.phi[x][y][(z+1)%p.Lz] 
+            0.25*((f.phi[x][y][(z+1)%p.Lz]
 		   - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx)
             *((f.phi[x][y][(z+1)%p.Lz] - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx);
 
@@ -448,9 +448,9 @@ void didj(float *cpts, hydro_fields f, hydro_params p) {
 
 /** Returns the maximum and its position of a specified field on the lattice.
  *
- * For debugging purposes. 
+ * For debugging purposes.
  * Only ensures that the master node has the correct value.
- * Additional boolean int to determine if we want to find maximum 
+ * Additional boolean int to determine if we want to find maximum
  * of absolute value or just maximum.
  */
 value_loc find_max_loc(float ***field, hydro_params p, int abs_max){
@@ -459,7 +459,7 @@ value_loc find_max_loc(float ***field, hydro_params p, int abs_max){
   int max_loc[3] = {-1,-1,-1};
   value_rank out;
   value_loc max_and_loc;
-  
+
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
@@ -494,15 +494,15 @@ value_loc find_max_loc(float ***field, hydro_params p, int abs_max){
   max_and_loc.loc[0] = max_loc[0];
   max_and_loc.loc[1] = max_loc[1];
   max_and_loc.loc[2] = max_loc[2];
-  
+
   return max_and_loc;
 }
 
 /** Returns the minimum and its position of a specified field on the lattice.
  *
- * For debugging purposes. 
+ * For debugging purposes.
  * Only ensures that the master node has the correct value.
- * Additional boolean int to determine if we want to find minimum 
+ * Additional boolean int to determine if we want to find minimum
  * of absolute value or just minimum.
  */
 value_loc find_min_loc(float ***field, hydro_params p, int abs_min){
@@ -511,7 +511,7 @@ value_loc find_min_loc(float ***field, hydro_params p, int abs_min){
   int min_loc[3] = {-1,-1,-1};
   value_rank out;
   value_loc min_and_loc;
-  
+
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
@@ -546,12 +546,12 @@ value_loc find_min_loc(float ***field, hydro_params p, int abs_min){
   min_and_loc.loc[0] = min_loc[0];
   min_and_loc.loc[1] = min_loc[1];
   min_and_loc.loc[2] = min_loc[2];
-  
+
   return min_and_loc;
 }
 
-/** Dumps maximum and minimum values of all fields and their locations 
- * on the lattice. 
+/** Dumps maximum and minimum values of all fields and their locations
+ * on the lattice.
  *
  * For debugging purposes only, very costly.
  *
@@ -581,27 +581,27 @@ void dump_max_min(hydro_fields f, hydro_params p){
 	  val_loc.loc[0], val_loc.loc[1], val_loc.loc[2]);
 
 #ifndef SCALAR
-  
+
   val_loc = find_max_loc(f.T, p, 0);
 
   printf0(p,"Max of T = %g at (%d, %d, %d) \n", val_loc.value,
-	  val_loc.loc[0], val_loc.loc[1], val_loc.loc[2]);    
+	  val_loc.loc[0], val_loc.loc[1], val_loc.loc[2]);
 
   val_loc = find_min_loc(f.T, p, 0);
 
   printf0(p,"Min of T = %g at (%d, %d, %d) \n", val_loc.value,
-	  val_loc.loc[0], val_loc.loc[1], val_loc.loc[2]);    
+	  val_loc.loc[0], val_loc.loc[1], val_loc.loc[2]);
 
   val_loc = find_max_loc(f.E, p, 0);
-  
+
   printf0(p,"Max of E = %g at (%d, %d, %d) \n", val_loc.value,
 	  val_loc.loc[0], val_loc.loc[1], val_loc.loc[2]);
 
   val_loc = find_min_loc(f.E, p, 0);
-    
+
   printf0(p,"Min of E = %g at (%d, %d, %d) \n", val_loc.value,
 	  val_loc.loc[0], val_loc.loc[1], val_loc.loc[2]);
-  
+
   val_loc = find_max_loc(f.W, p, 0);
 
   printf0(p,"Max of W = %g at (%d, %d, %d) \n", val_loc.value,
@@ -621,7 +621,7 @@ void dump_max_min(hydro_fields f, hydro_params p){
 
   printf0(p,"Min of kappa = %g at (%d, %d, %d) \n", val_loc.value,
 	  val_loc.loc[0], val_loc.loc[1], val_loc.loc[2]);
-  
+
   val_loc = find_max_loc(f.p, p, 0);
 
   printf0(p,"Max of p = %g at (%d, %d, %d) \n", val_loc.value,
@@ -673,7 +673,7 @@ void dump_max_min(hydro_fields f, hydro_params p){
 	  val_loc.loc[0], val_loc.loc[1], val_loc.loc[2]);
 
   val_loc = find_max_loc(f.Z[2], p, 1);
-  
+
   printf0(p,"Max of |Z[2]| = %g at (%d, %d, %d) \n", val_loc.value,
 	  val_loc.loc[0], val_loc.loc[1], val_loc.loc[2]);
 
@@ -723,5 +723,5 @@ void dump_max_min(hydro_fields f, hydro_params p){
 	  val_loc.loc[0], val_loc.loc[1], val_loc.loc[2]);
 
 #endif //!SCALAR
-  
+
 }
