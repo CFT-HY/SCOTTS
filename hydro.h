@@ -36,17 +36,17 @@
 #endif // PAPI
 
 // Parallelism with MPI
-#ifdef MPI
+#ifdef USE_MPI
 #include <mpi.h>
-#endif // MPI
+#endif // USE_MPI
 
 #ifdef FFT
 
 // #define FFT_DEBUG
 
-#ifndef MPI
+#ifndef USE_MPI
 #error Cannot use FFTW3 without MPI - local FFTs not implemented!
-#endif // !MPI
+#endif // !USE_MPI
 
 #include <fftw3-mpi.h>
 #endif // FFT
@@ -138,7 +138,7 @@ typedef struct {
   /** Quadratic potential parameter \f$ \gamma \f$.
    */
   float gamma;
-  
+
   /** Nucleation temperature \f$ T_N \f$ used to initialise the
    *  simulation.
    */
@@ -172,7 +172,7 @@ typedef struct {
    */
   int silosliceinterval;
   int checkpointinterval;
-  
+
   /** `x` coord to slice through for write_silo_slice_step()
    */
   int siloslicecoord;
@@ -183,7 +183,7 @@ typedef struct {
 
   /** Initial conditions type (see #defines above)
    */
-  int initial;  
+  int initial;
 
   /** Scale factor.
    */
@@ -225,7 +225,7 @@ typedef struct {
    * -- i.e. we have `(slicex+2)*(slicey+2)*Lz` sites to ourselves
    */
   int slicey;
-  
+
 
   /** `shiftx` corresponds to where the local `x` coordinate starts in
    * the physical volume.
@@ -240,7 +240,7 @@ typedef struct {
    * NB: the physical position of a site `y` is e.g. `(y+shifty-1)`
    */
   int shifty;
-  
+
   /** Where the silo files go.
    */
   char silodir[500];
@@ -264,13 +264,13 @@ typedef struct {
    */
   int *nucsteps;
 
-  /** Bubble nucleation center locations on the lattice. 
+  /** Bubble nucleation center locations on the lattice.
    *
-   * NB: Only used if nucleation type is `NUC_FILE_LOC`.  
+   * NB: Only used if nucleation type is `NUC_FILE_LOC`.
    */
   int **nuclocs;
-  
-  /** Total number of steps on which we perform nucleation. 
+
+  /** Total number of steps on which we perform nucleation.
    *
    * NB: If a step is repeated it is counted multiple times.
    */
@@ -289,7 +289,7 @@ typedef struct {
    */
   int gwsource;
 
-#ifdef MPI
+#ifdef USE_MPI
 
   /** Rank of neighbour in negative `x` direction.
    */
@@ -324,7 +324,7 @@ typedef struct {
    */
   int myposy;
 
-#endif // MPI
+#endif // USE_MPI
 
   /** Surface tension \f$ \sigma \f$ for the bubble.
    *
@@ -343,7 +343,7 @@ typedef struct {
 
   /** Value of `phi` at the center of the nucleated bubble.
    *
-   * Read from the parameter file, if given as <=0 default to broken 
+   * Read from the parameter file, if given as <=0 default to broken
    * phase value at \f$T=T_N\f$.
    */
   float phimin;
@@ -363,19 +363,19 @@ typedef struct {
    */
   float R_scaled;
 
-  /** Value of temperature in the centre of the fluid sphere, 
+  /** Value of temperature in the centre of the fluid sphere,
    * used in INIT_FLUID_SPHERE ("initfs") only.
    */
   float T_central;
 
-  /** Radius of gaussian sphere of fluid, 
+  /** Radius of gaussian sphere of fluid,
    * used in INIT_FLUID_SPHERE ("initfs") only.
    */
   float sphere_radius;
-  
+
   /** Constant in potential term.
    *
-   * Calculated s.t \f$V(\phi_b,T=0)=0\f$ 
+   * Calculated s.t \f$V(\phi_b,T=0)=0\f$
    * or s.t \f$ V_B(\phi_b)=0\f$ for BAG
    */
   float V0;
@@ -384,14 +384,14 @@ typedef struct {
    */
   double phi_0;
 #endif //BAG
-  
+
 } hydro_params;
 
 
 
 /** Struct containing the fields defined on the lattice that we track
  * at every timestep.
- * 
+ *
  * Scalar field fields:
  *
  * `phi`, `phi_old`, `pi`, `pi_future`.
@@ -404,7 +404,7 @@ typedef struct {
  * Gravity fields:
  *
  * `uij`, `udotij`, and `initial_Tij`.
- * 
+ *
  */
 typedef struct {
 
@@ -432,7 +432,7 @@ typedef struct {
 
 #ifndef SCALAR
   // Fluid
-  
+
   /** `T` is the temperature of the fluid.
    */
   float ***T;
@@ -649,7 +649,7 @@ void fluid_sphere(hydro_fields f, hydro_params p);
 // output.c
 void write_global_headers(hydro_fields f, hydro_params p);
 void write_globals(hydro_fields f, hydro_params p, float gwen,
-		    int bcount, float sim_time, int step);
+		    int bcount, float t_sim, int step);
 float get_gamma_max(hydro_fields f, hydro_params p);
 float get_s_max(hydro_fields f, hydro_params p);
 float get_veltot(hydro_fields f, hydro_params p);
@@ -711,6 +711,7 @@ void fft_tensor(hydro_params p, fft_fields fft_f, float ****tensor_field,
 void fft_J(hydro_fields f, hydro_params p, fft_fields fft_f, fftwf_complex **outcpts);
 void fft_X(hydro_fields f, hydro_params p, fft_fields fft_f, fftwf_complex **outcpts);
 void fft_e(hydro_fields f, hydro_params p, fft_fields fft_f);
+float output_ps_uetcs(hydro_fields f, hydro_params p, fft_fields fft_f, int step);
 
 // projectors.c
 float proj(int T, float kx, float ky, float kz);

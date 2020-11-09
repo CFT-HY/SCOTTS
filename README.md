@@ -5,7 +5,7 @@ https://arxiv.org/abs/1511.04527
 https://arxiv.org/abs/1704.05871
 https://arxiv.org/abs/1906.00480
 
-## The model 
+## The model
 
 Under normal compliation the potential is
 \f[ V_B(\phi, T) = \frac{1}{2} \gamma(T^2 - T_0^2)\phi^2
@@ -25,7 +25,7 @@ and in the code \f$ V_B(\phi_b(0),0)  \f$ is `p.V0`.
 
 The pressure is given by
 \f[
-p =  a T^4 - V(\phi, T) 
+p =  a T^4 - V(\phi, T)
 \f]
 and the internal energy is found through
 \f[
@@ -79,7 +79,7 @@ where, in the code:
 * \f$ \lambda \f$ is `p.lambda`
 
 We normalise the potential to be zero in the broken phase minima
-\f$\phi_b \f$, 
+\f$\phi_b \f$,
 \f[
 V_B(\phi)= V_A(\phi) - V_A(\phi_b)\text.
 \f]
@@ -88,7 +88,7 @@ and in the code \f$ V_A(\phi_b) \f$ is `p.V0`.
 In the bag model the effective degrees of freedom vary with \f$\phi\f$
 and so \f$ a \rightarrow a(\phi) \f$.
 \f[
-p =  a(\phi) T^4 - V_B(\phi) 
+p =  a(\phi) T^4 - V_B(\phi)
 \f]
 \f[
 \epsilon = 3a(\phi) T^4 + V_B(\phi)
@@ -109,7 +109,7 @@ V(\phi,T) = V_B(\phi) - (a(\phi) - a_0) T^4\text,
 \f]
 with
 \f[
-p =  a_0 T^4 - V(\phi,T) 
+p =  a_0 T^4 - V(\phi,T)
 \f]
 \f[
 \epsilon = 3a_0 T^4 + V(\phi, T) - T \frac{\partial V}{\partial T}\text.
@@ -186,7 +186,7 @@ FFTW.
 * `-DINITPS`: compile with an initial power spectrum (requires
   `-DFFT`).
 
-* `-DMPI`: compile with MPI support (necessary for parallelisation).
+* `-DUSE_MPI`: compile with MPI support (necessary for parallelisation).
 
 * `-DSCALAR`: compile without the fluid.
 
