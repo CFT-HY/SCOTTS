@@ -397,7 +397,7 @@ void split_vector(hydro_params p, int x_start, int slab,
 		     float *product_rot, float *product_div, float *product_tot,
 		     fftwf_complex **vec) {
 
-  int i, j,m;
+  int i, j;
   int x, y, z;
   float kx, ky, kz;
 
@@ -442,9 +442,9 @@ void split_vector(hydro_params p, int x_start, int slab,
 	}
 
 
-    kx = s_x*sqrt((2.0 - 2.0*cos(((float)(true_x))*2.0*M_PI/(((float)p.Lx))))/(p.dx*p.dx));
-    ky = s_y*sqrt((2.0 - 2.0*cos(((float)(true_y))*2.0*M_PI/(((float)p.Ly))))/(p.dx*p.dx));
-    kz = s_z*sqrt((2.0 - 2.0*cos(((float)(true_z))*2.0*M_PI/(((float)p.Lz))))/(p.dx*p.dx));
+        kx = s_x*sqrt((2.0 - 2.0*cos(((float)(true_x))*2.0*M_PI/(((float)p.Lx))))/(p.dx*p.dx));
+	ky = s_y*sqrt((2.0 - 2.0*cos(((float)(true_y))*2.0*M_PI/(((float)p.Ly))))/(p.dx*p.dx));
+        kz = s_z*sqrt((2.0 - 2.0*cos(((float)(true_z))*2.0*M_PI/(((float)p.Lz))))/(p.dx*p.dx));
 
 
 	/*
@@ -460,39 +460,53 @@ void split_vector(hydro_params p, int x_start, int slab,
 
         for(i=1; i<=3; i++) {
 
+	  res_r = 0.0;
+	  res_i = 0.0;
+
+	  resid_r = 0.0;
+	  resid_i = 0.0;
+
 	  tot_r = vec[i-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
 	  tot_i = vec[i-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 
           for(j=1; j<=3; j++) {
-              for (m=1;m<=3;m++){
 
-                product_rot[x*p.Ly*p.Lz + y*p.Lz + z] +=
-        	      proj(i*10 + j, kx, ky, kz)
-        	      *proj(i*10 + m, kx, ky, kz)
-        	      *(vec[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0]
-        		* vec[m-1][x*p.Ly*p.Lz + y*p.Lz + z][0]
-        		+ vec[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1]
-        		* vec[m-1][x*p.Ly*p.Lz + y*p.Lz + z][1]);
+	    // Transverse components
+	    res_r += proj(i*10 + j, kx, ky, kz)
+	      *vec[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+	    res_i += proj(i*10 + j, kx, ky, kz)
+	      *vec[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 
+	    // And longitudinal...
+	    if(i == j) {
+	    resid_r += (1.0 - proj(i*10 + j, kx, ky, kz))
+	      *vec[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+	    resid_i += (1.0 - proj(i*10 + j, kx, ky, kz))
+	      *vec[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+	    } else {
+	    resid_r += (-1.0*proj(i*10 + j, kx, ky, kz))
+	      *vec[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+	    resid_i += (-1.0*proj(i*10 + j, kx, ky, kz))
+	      *vec[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+	    }
+	  }
 
-                product_div[x*p.Ly*p.Lz + y*p.Lz + z] +=
-                    ((i==j) - proj(i*10 + j, kx, ky, kz))
-                    *((i==m) - proj(i*10 + m, kx, ky, kz))
-                    *(vec[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0]
-                    * vec[m-1][x*p.Ly*p.Lz + y*p.Lz + z][0]
-                    + vec[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1]
-                    * vec[m-1][x*p.Ly*p.Lz + y*p.Lz + z][1]);
+	  product_rot[x*p.Ly*p.Lz + y*p.Lz + z] +=
+	    res_r*res_r + res_i*res_i;
 
-        }}
+	  product_div[x*p.Ly*p.Lz + y*p.Lz + z] +=
+	    resid_r*resid_r + resid_i*resid_i;
 
 	  product_tot[x*p.Ly*p.Lz + y*p.Lz + z] +=
 	    tot_r*tot_r + tot_i*tot_i;
+
+	}
 
       }
     }
   }
 
-}}
+}
 
 
 /** Like split vector but instead we are splitting into the rotational
@@ -517,7 +531,7 @@ void uetc_split_vector(hydro_params p, int x_start, int slab,
 		       float *product_div_re, float *product_div_im,
 		       fftwf_complex **veca, fftwf_complex **vecb) {
 
-  int i, j,m;
+  int i, j;
   int x, y, z;
   float kx, ky, kz;
 
@@ -577,42 +591,49 @@ void uetc_split_vector(hydro_params p, int x_start, int slab,
 
         for(i=1; i<=3; i++) {
           for(j=1; j<=3; j++) {
-              for (m=1;m<=3;m++){
 
 	    // Transverse components
 	    product_rot_re[x*p.Ly*p.Lz + y*p.Lz + z] +=
 	      proj(i*10 + j, kx, ky, kz)
-	      *proj(i*10 + m, kx, ky, kz)
-	      *(veca[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0]
-		* vecb[m-1][x*p.Ly*p.Lz + y*p.Lz + z][0]
-		+ veca[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1]
-		* vecb[m-1][x*p.Ly*p.Lz + y*p.Lz + z][1]);
+	      *(veca[i-1][x*p.Ly*p.Lz + y*p.Lz + z][0]
+		* vecb[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0]
+		+ veca[i-1][x*p.Ly*p.Lz + y*p.Lz + z][1]
+		* vecb[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1]);
 	    product_rot_im[x*p.Ly*p.Lz + y*p.Lz + z] +=
 	      proj(i*10 + j, kx, ky, kz)
-	      *proj(i*10 + m, kx, ky, kz)
-	      *(veca[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1]
-		* vecb[m-1][x*p.Ly*p.Lz + y*p.Lz + z][0]
-		- veca[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0]
-		* vecb[m-1][x*p.Ly*p.Lz + y*p.Lz + z][1]);
-
+	      *(veca[i-1][x*p.Ly*p.Lz + y*p.Lz + z][1]
+		* vecb[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0]
+		- veca[i-1][x*p.Ly*p.Lz + y*p.Lz + z][0]
+		* vecb[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1]);
 	    // And longitudinal...
-        product_div_re[x*p.Ly*p.Lz + y*p.Lz + z] +=
-            ((i==j) - proj(i*10 + j, kx, ky, kz))
-            *((i==m) - proj(i*10 + m, kx, ky, kz))
-            *(veca[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0]
-            * vecb[m-1][x*p.Ly*p.Lz + y*p.Lz + z][0]
-            + veca[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1]
-            * vecb[m-1][x*p.Ly*p.Lz + y*p.Lz + z][1]);
-        product_div_im[x*p.Ly*p.Lz + y*p.Lz + z] +=
-            ((i==j) - proj(i*10 + j, kx, ky, kz))
-            *((i==m) - proj(i*10 + m, kx, ky, kz))
-            *(veca[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1]
-            * vecb[m-1][x*p.Ly*p.Lz + y*p.Lz + z][0]
-            - veca[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0]
-            * vecb[m-1][x*p.Ly*p.Lz + y*p.Lz + z][1]);
-
+	    if(i == j) {
+	      product_div_re[x*p.Ly*p.Lz + y*p.Lz + z] +=
+		(1.0 - proj(i*10 + j, kx, ky, kz))
+		*(veca[i-1][x*p.Ly*p.Lz + y*p.Lz + z][0]
+		  * vecb[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0]
+		  + veca[i-1][x*p.Ly*p.Lz + y*p.Lz + z][1]
+		  * vecb[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1]);
+	      product_div_im[x*p.Ly*p.Lz + y*p.Lz + z] +=
+		(1.0 - proj(i*10 + j, kx, ky, kz))
+		*(veca[i-1][x*p.Ly*p.Lz + y*p.Lz + z][1]
+		  * vecb[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0]
+		  - veca[i-1][x*p.Ly*p.Lz + y*p.Lz + z][0]
+		  * vecb[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1]);
+	    } else {
+	      product_div_re[x*p.Ly*p.Lz + y*p.Lz + z] +=
+		- 1.0 * proj(i*10 + j, kx, ky, kz)
+		* (veca[i-1][x*p.Ly*p.Lz + y*p.Lz + z][0]
+		   * vecb[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0]
+		   + veca[i-1][x*p.Ly*p.Lz + y*p.Lz + z][1]
+		   * vecb[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1]);
+	      product_div_im[x*p.Ly*p.Lz + y*p.Lz + z] +=
+		- 1.0*proj(i*10 + j, kx, ky, kz)
+		*(veca[i-1][x*p.Ly*p.Lz + y*p.Lz + z][1]
+		  * vecb[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0]
+		  - veca[i-1][x*p.Ly*p.Lz + y*p.Lz + z][0]
+		  * vecb[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1]);
+	    }
 	  }
-    }
 	}
       }
     }
