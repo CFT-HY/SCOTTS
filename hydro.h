@@ -36,17 +36,17 @@
 #endif // PAPI
 
 // Parallelism with MPI
-#ifdef MPI
+#ifdef USE_MPI
 #include <mpi.h>
-#endif // MPI
+#endif // USE_MPI
 
 #ifdef FFT
 
 // #define FFT_DEBUG
 
-#ifndef MPI
+#ifndef USE_MPI
 #error Cannot use FFTW3 without MPI - local FFTs not implemented!
-#endif // !MPI
+#endif // !USE_MPI
 
 #include <fftw3-mpi.h>
 #endif // FFT
@@ -301,7 +301,7 @@ typedef struct {
    */
   int gwsource;
 
-#ifdef MPI
+#ifdef USE_MPI
 
   /** Rank of neighbour in negative `x` direction.
    */
@@ -336,7 +336,7 @@ typedef struct {
    */
   int myposy;
 
-#endif // MPI
+#endif // USE_MPI
 
   /** Surface tension \f$ \sigma \f$ for the bubble.
    *
@@ -661,7 +661,7 @@ void fluid_sphere(hydro_fields f, hydro_params p);
 // output.c
 void write_global_headers(hydro_fields f, hydro_params p);
 void write_globals(hydro_fields f, hydro_params p, float gwen,
-		    int bcount, float sim_time, int step);
+		    int bcount, float t_sim, int step);
 float get_gamma_max(hydro_fields f, hydro_params p);
 float get_s_max(hydro_fields f, hydro_params p);
 float get_veltot(hydro_fields f, hydro_params p);
@@ -723,6 +723,7 @@ void fft_tensor(hydro_params p, fft_fields fft_f, float ****tensor_field,
 void fft_J(hydro_fields f, hydro_params p, fft_fields fft_f, fftwf_complex **outcpts);
 void fft_X(hydro_fields f, hydro_params p, fft_fields fft_f, fftwf_complex **outcpts);
 void fft_e(hydro_fields f, hydro_params p, fft_fields fft_f);
+float output_ps_uetcs(hydro_fields f, hydro_params p, fft_fields fft_f, int step);
 
 // projectors.c
 float proj(int T, float kx, float ky, float kz);

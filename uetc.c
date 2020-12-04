@@ -404,12 +404,13 @@ void uetc_vector(hydro_params p, fftwf_complex **vector_then,
       for(i=0;i<nbins;i++) {
 
 	fprintf(fp1, "%lf %g %g %d %d %d\n",
-		thisk/(p.a*p.dx), ((float)(i+1))*bins_rot_re[i], ((float)(i+1))*bins_rot_im[i], counts[i], step_then, step_now);
+		thisk/(p.a*p.dx), (float)(i+1)*bins_rot_re[i], (float)(i+1)*bins_rot_im[i], counts[i], step_then, step_now);
 
 	thisk = thisk + dk;
       }
 
       // Now div
+
       thisk = dk/2.0;
 
       if(label != NULL){
@@ -425,7 +426,7 @@ void uetc_vector(hydro_params p, fftwf_complex **vector_then,
       for(i=0;i<nbins;i++) {
 
 	fprintf(fp2, "%lf %g %g %d %d %d\n",
-		thisk/(p.a*p.dx), ((float)(i+1))*bins_div_re[i], ((float)(i+1))*bins_div_im[i], counts[i], step_then, step_now);
+		thisk/(p.a*p.dx), (float)(i+1)*bins_div_re[i], (float)(i+1)*bins_div_im[i], counts[i], step_then, step_now);
 
 	thisk = thisk + dk;
       }
