@@ -40,7 +40,7 @@ float comms_time;
  * -- there is no provision to turn off the haloing, but on a single core
  * that's not much of an issue.
  */
-#ifdef MPI
+#ifdef USE_MPI
 
 
 
@@ -491,7 +491,7 @@ void die(int howbad) {
 }
 
 
-#else // not MPI
+#else // not USE_MPI
 
 #warning Not using MPI!!!
 
@@ -713,4 +713,4 @@ void die(int howbad) {
   exit(howbad);
 }
 
-#endif // MPI
+#endif // USE_MPI

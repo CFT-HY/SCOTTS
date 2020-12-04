@@ -387,7 +387,7 @@ void uetc_tens_proj(hydro_params p, int x_start, int slab,
  * `product_div`
  * \f[ p_{div}(\mathbf{k})
  * = (\delta_{ij} - P_{ij}(\mathbf{k}))(\delta_{im} - P_{im}(\mathbf{k}))
- * v_i(\mathbf{k}) v^*_m(\mathbf{k}) \f]
+ * v_j(\mathbf{k}) v^*_m(\mathbf{k}) \f]
  *
  * `product_tot` \f[ p_{tot}(\mathbf{k}) = v_i(\mathbf{k}) v^*_i(\mathbf{k}) \f]
  *
@@ -508,7 +508,7 @@ void split_vector(hydro_params p, int x_start, int slab,
  * `product_div_re` and `product_div_im` with the real and imaginary parts of
  * \f[ p_{div}(\mathbf{k})
  * = (\delta_{ij} - P_{ij}(\mathbf{k}))(\delta_{im} - P_{im}(\mathbf{k}))
- * v_i(\mathbf{k}) u^*_m(\mathbf{k}) \f]
+ * v_j(\mathbf{k}) u^*_m(\mathbf{k}) \f]
  *
  *
  */

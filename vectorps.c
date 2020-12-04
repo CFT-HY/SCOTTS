@@ -202,13 +202,13 @@ void vectorps(hydro_params p, fftwf_complex **outcpts, int step, char *label) {
    * of each component in outcpts[i][k]
    */
 
-  float *slice = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
+  float *slice_rot = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
   float *slice_div = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
   float *slice_tot = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
 
   // The brains of the operation:
   // Turn the FFT'd vector into projected power spectrum
-  split_vector(p, x_start, x_thickness, slice, slice_div, slice_tot, outcpts);
+  split_vector(p, x_start, x_thickness, slice_rot, slice_div, slice_tot, outcpts);
 
 
 
@@ -221,7 +221,7 @@ void vectorps(hydro_params p, fftwf_complex **outcpts, int step, char *label) {
   else{
     sprintf(fftdest,"rot-ps-step%d.txt",step);
   }
-  histogram(p, slice, fftdest, x_thickness, x_start);
+  histogram(p, slice_rot, fftdest, x_thickness, x_start);
   if(label != NULL){
     if(*label){
       sprintf(fftdest,"%s-div-ps-step%d.txt", label,step);
@@ -244,7 +244,7 @@ void vectorps(hydro_params p, fftwf_complex **outcpts, int step, char *label) {
 
   // Tidy up
 
-  free(slice);
+  free(slice_rot);
   free(slice_div);
   free(slice_tot);
 

@@ -1,23 +1,32 @@
+# This Sisu makefile assumes that the Intel programming environment is being
+# used, and that the the 'fftw' module is loaded.
+#
+# This makefile was last tested with:
+#
+# PrgEnv-intel/5.2.82
+# fftw/3.3.4.11
+
+
 #### CC ####
 
-
-CC := mpicc -g -DUSE_MPI -DFFT -DBAG -DSILO
+CC := cc -DMPI -DFFT
 
 #### CFLAGS ####
 
-CFLAGS := -O3 -I/opt/local/include
+CFLAGS := -O3 -qopt-prefetch -unroll-aggressive -no-prec-div \
+	-fp-model fast=2 -align -fno-alias -fno-fnalias -ipo
 
 #### LIBS ####
 
-LIBS := -lfftw3f_mpi -lfftw3f -lsiloh5
+LIBS := -lfftw3f_mpi -lfftw3f
 
 #### No user-serviceable parts below ####
 
 OBJECTS := main.o evolve.o potential.o energy.o eos.o transport.o	\
 	initial.o output.o parameters.o util.o papi.o comms.o		\
 	fft_func.o alloc.o scalarps.o tensorps.o vectorps.o		\
-	checkpoint.o projectors.o uetc.o initps.o silage.o              \
-	silage_slice.o
+	checkpoint.o projectors.o uetc.o initps.o 
+
 
 BINARY := run/hydro
 
