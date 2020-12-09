@@ -1,6 +1,6 @@
 #### CC ####
 
-CC := mpicc -g -DMPI -DFFT
+CC := mpicc -g -DUSE_MPI -DFFT
 
 #### CFLAGS ####
 
@@ -10,7 +10,7 @@ CFLAGS := -O3 -DSILO
 
 LIBS := -L$(HOME)/local/lib/ \
 	-lsiloh5 -lhdf5 -lfftw3f_mpi -lfftw3f -lm -lstdc++ -lz
-	
+
 #### No user-serviceable parts below ####
 
 OBJECTS := main.o evolve.o potential.o energy.o eos.o \
