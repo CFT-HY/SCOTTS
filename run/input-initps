@@ -34,8 +34,6 @@ silointerval 5
 initial initps
 initpsfile initial.txt div
 initpsbins 200
-#initpsfile dogfood.dat
-#initpsbins 240
 
 initnorm 1.0
 initcutoff 1.0
