@@ -197,3 +197,19 @@ damping couplings.
 EIKR formalism.
 
 * `-DVANLEER` Use Van Leer advection insted of donor cell.
+
+## Style guide
+
+In a effort to make the code more human-readable and uniform, we list
+below some basic rules to enhance the overall code quality.
+
+* Tabs should consist of 4 spaces
+* Generally, proper indentation is required
+* Lines should be less than 80 columns
+* `#endif` should refer to the initial conditional expression
+* Prototypes appear in order of their appearance in the appropriate file in `hydro.h`
+* Documentation of the code is strongly encouraged and should follow Doxygen format
+
+If prefered by the developper, a `.clang-format` file allows for automatic
+formatting. It enforces not but not all of the above-mentioned rules.
+In the command line, perform `clang-format -style=file -i file.c`
