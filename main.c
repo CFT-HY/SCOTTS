@@ -52,12 +52,16 @@ int main(int argc, char *argv[]) {
   // Parse parameters from the filename specified on the command line
   get_parameters(argv[1], &p);
 
-
-  // Seed - make sure everyone gets the same one (if necessary)
-  // srandom(p.seed);
-  // srand48(p.seed);
-  srandom(p.seed + p.rank);
-  srand48(p.seed + p.rank);
+    // Seed - for initps, each core throws independent random numbers
+    if(p.initial==INIT_PS){
+        srandom(p.seed + p.rank);
+        srand48(p.seed + p.rank);
+    }
+    // Seed - make sure everyone gets the same one (if necessary)
+    else {
+        srandom(p.seed);
+        srand48(p.seed);
+    }
 
   // How big is the system
   p.N = p.Lx*p.Ly*p.Lz;
@@ -173,22 +177,6 @@ int main(int argc, char *argv[]) {
       init_ps(f, p, f.U);
       eq_of_state(f, p);
       UtoZ(f, p);
-      // fft_vel(f, p, -1, f.U);
-	//	init_ps(f, p, f.Z);
-	//	fft_vel(f, p, -3, f.Z);
-	//	norm_power(f, p, f.Z);
-	// fft_vel(f, p, -2, f.Z);
-
-	/*
-	  memcpy(f.V[0][0][0], f.U[0][0][0], (p.slicex+2)*(p.slicey+2)
-	  *(p.Lz)*sizeof(float));
-	  memcpy(f.V[1][0][0], f.U[1][0][0], (p.slicex+2)*(p.slicey+2)
-	  *(p.Lz)*sizeof(float));
-	  memcpy(f.V[2][0][0], f.U[2][0][0], (p.slicex+2)*(p.slicey+2)
-	  *(p.Lz)*sizeof(float));
-	  */
-	//	init_ps(f, p, f.V);
-	//    init_ps(f, p, f.Z);
 
       end=clock();
 
