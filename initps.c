@@ -1,13 +1,20 @@
-/* fft.c
+/** @file initps.c
 *
-* Fourier transform (and power spectrum) of a field
+* Random Gaussian initial conditions with specified power spectrum.
+* Allows to specifiy either longitudinal waves (div), vortical (rot) or
+*
+* The main entry point is the function init_ps()
 */
 #include "hydro.h"
 
 #if defined(FFT) && ! defined(SCALAR)
 
-// http://people.math.sc.edu/kellerlv/Quadratic_Interpolation.pdf
-// Lagrange Interp formula
+/** Lagrange Interpolating formula, for three fixed points
+ * Finds the polynomial with the lowest order that interpolates between a set of points
+ * \f[ \text{quadratic}(x) = \sum_j y_j \left[\prod_{i \neq j}
+ * \frac{(x - x_i)}{x_j - x_i} \right] \f]
+ * Used in spectrum_interp()
+ */
 float quadratic(float x1, float x2, float x3,float y1, float y2, float y3, float x) {
 
 	return y1*((x - x2)*(x - x3))/((x1 - x2)*(x1 - x3))
@@ -374,8 +381,7 @@ void UtoZ(hydro_fields f, hydro_params p) {
 	halo_field(f.Z[2], p);
 }
 
-/*
- * Initialize the energy density
+/** Initialize the energy density
  *
  * For a rotational-free flow, the energy density is linked to the velocity field
  * For a divergence-free flow, the energy density is set to be constant
@@ -644,10 +650,10 @@ void init_energy(hydro_params p, hydro_fields f, ptrdiff_t x_start, ptrdiff_t x_
 
 }
 
-/* project_down
-*
-* Project out rotational or divergent bits
-*/
+/** project_down
+ *
+ * Project out rotational or divergent bits
+ */
 void project_down(hydro_params p, fftwf_complex **in, int shift_x, int x_thickness, int times) {
 
 	int x, y, z;
@@ -795,11 +801,19 @@ void project_down(hydro_params p, fftwf_complex **in, int shift_x, int x_thickne
 }
 
 
-/* get_normal
-*
-* Lazy and inefficient way of getting gaussian
-* random number
-*/
+/** Box-Muller Gaussian random number generator
+ *
+ * Produces random numbers following Gaussian statistics starting with
+ * \f$ u_1, u_2 \f$ uniformly distributed in \f$[0, 1]\f$ :
+ *
+ * \f[ Z_0 = \sqrt{-2 \ln u_0} \cos(2\pi u_1)\f]
+ * \f[ Z_1 = \sqrt{-2 \ln u_0} \sin(2\pi u_1)\f]
+ *
+ * \f$Z_0, Z_1\f$ are independent random variables with a standard normal distribution
+ * We take \f$Z_1\f$ and rescale using the mean and standard deviation
+ *
+ * We throw away \f$ Z_0 \f$
+ */
 float get_normal(float mean, float dev) {
 	float u1, u2;
 
@@ -902,9 +916,9 @@ void spectrum_interp(float ksq, hydro_params p, fftwf_complex *res, float *k_bin
 
 }
 
-/* spectrum
-*
-*/
+/** spectrum
+ *
+ */
 void spectrum(float ksq, hydro_params p, fftwf_complex *res){
 
 	float phase;
@@ -935,11 +949,20 @@ void spectrum(float ksq, hydro_params p, fftwf_complex *res){
 }
 
 
-/* init_ps(hydro_fields f, hydro_params p, float ***field)
-*
-* Initialises the field with a power spectrum.
-* Used to convince reluctant referees.
-*/
+/** Initialize the simulation with a gaussian velocity field following
+ * a specified power spectrum
+ *
+ * The code is organized as follows :
+ * 1. Set the scalar field in the broken phase / true vacuum
+ * 2. Allocate a 3-dimensional complex grid for FFT spread accross the multiple cores
+ * 3. Builds a map storing which core contains which slice
+ * 4. Reads the input file
+ *
+ * **Note that** the FFTs are performed using a library called FFTW which distributes
+ * 3-dimensional grids on multiple cores very differently. Hence the very tedious
+ * process of mapping/swapping between the FFTW distribution and the distribution
+ * used in the rest of the code
+ */
 void init_ps(hydro_fields f, hydro_params p, float ****field) {
 
 	printf0(p, "Loading initial power spectrum from %s\n", p.initpsfile);
@@ -957,7 +980,9 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 	int i, j;
 	float *trim = (float *)malloc(p.slicex*p.slicey*p.Lz*sizeof(float));
 
-	// initialize the field in the broken phase
+	/*
+	 * 1. Initialize the field in the broken phase
+	 */
 	for(x = 1; x <= p.slicex; x++) {
 		for(y = 1; y <= p.slicey; y++) {
 			for(z = 0; z < p.Lz; z++) {
@@ -967,40 +992,49 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 	}
 
 
+	/*
+	 * 2. Allocates a 3-dimensional complex grid for FFT
+	 */
 	fftwf_mpi_init();
-
 	alloc_local = fftwf_mpi_local_size_3d(n0, n1, n2,
 	   MPI_COMM_WORLD,
 	   &x_thickness, &x_start);
 
 
+	/*
+	 *3. Builds a map storing which core contains which slice
+	 */
 	int *thicknesses = malloc(p.size*sizeof(int));
 	int *starts = malloc(p.size*sizeof(int));
 	int *map = malloc(p.Lx*sizeof(int));
 
+	// If not the main core, then send your caracteristics to the main core
 	if(p.rank) {
 		MPI_Send(&x_thickness, 1, MPI_INTEGER, 0, p.rank, MPI_COMM_WORLD);
 		MPI_Send(&x_start, 1, MPI_INTEGER, 0, p.rank, MPI_COMM_WORLD);
 
-	} else {
+	}
+	// If the main core, receive all the caracteristics
+	else {
 		thicknesses[0] = x_thickness;
 		starts[0] = x_start;
 
+		// Receive MPI messages from other cores
 		for(i=1; i<p.size; i++) {
 			MPI_Recv(&thicknesses[i], 1, MPI_INTEGER, i, i, MPI_COMM_WORLD, &status);
 			MPI_Recv(&starts[i], 1, MPI_INTEGER, i, i, MPI_COMM_WORLD, &status);
-
-			//      fprintf(stderr,"rank %d, thickness %d, start %d\n", i, thicknesses[i], starts[i]);
 		}
+
+		// Computes a map accross the x-axis for the location of each slice
 		for(x=0; x<p.Lx; x++) {
 			map[x] = -1;
 			for(i=0; i<p.size; i++) {
 				if(starts[i] <= x && (starts[i] + thicknesses[i]) > x) {
 					map[x] = i;
-					// fprintf(stderr, "therefore node %d is responsible for x=%d\n", i, x);
 					break;
 				}
 			}
+			// Error message if no one takes responsibility for this slice
 			if(map[x] == -1) {
 				fprintf(stderr,"cannot find a node responsible for x=%d!\n", x);
 				die(-99);
@@ -1009,58 +1043,67 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 		}
 	}
 
+	// Broadcasts the map to the other cores
 	printf0(p, "broadcasting our results\n");
 	MPI_Bcast(map, p.Lx, MPI_INTEGER, 0, MPI_COMM_WORLD);
+
+	/*
+	 * 4. Read the input file and fills in the 3d grids accordingly
+	 */
 	printf0(p, "now to layout\n");
 
-
-
+	// 3-dimensional vector field
 	fftwf_complex **in = (fftwf_complex **)malloc(3*sizeof(fftwf_complex *));
 		in[0] = fftwf_alloc_complex(alloc_local);
 		in[1] = fftwf_alloc_complex(alloc_local);
 		in[2] = fftwf_alloc_complex(alloc_local);
 
+	// 3-dimensional vector field
 	fftwf_complex **swap_in = (fftwf_complex **)malloc(3*sizeof(fftwf_complex *));
-		swap_in[0] = fftwf_alloc_complex(x_thickness*p.Ly*p.Lz);
-		swap_in[1] = fftwf_alloc_complex(x_thickness*p.Ly*p.Lz);
-		swap_in[2] = fftwf_alloc_complex(x_thickness*p.Ly*p.Lz);
+	swap_in[0] = fftwf_alloc_complex(x_thickness*p.Ly*p.Lz);
+	swap_in[1] = fftwf_alloc_complex(x_thickness*p.Ly*p.Lz);
+	swap_in[2] = fftwf_alloc_complex(x_thickness*p.Ly*p.Lz);
 
+	// 3-dimensional vector field
 	fftwf_complex **out = (fftwf_complex **)malloc(3*sizeof(fftwf_complex *));
-		out[0] = fftwf_alloc_complex(alloc_local);
-		out[1] = fftwf_alloc_complex(alloc_local);
-		out[2] = fftwf_alloc_complex(alloc_local);
+	out[0] = fftwf_alloc_complex(alloc_local);
+	out[1] = fftwf_alloc_complex(alloc_local);
+	out[2] = fftwf_alloc_complex(alloc_local);
 
 	int nx = p.Lx/p.slicex;
 	int ny = p.Ly/p.slicey;
 
 	int ry;
 
-	/*
-	* Set up modes with desired power spectrum...
-	*/
 
 	float ksq;
-	//  int i;
 	int true_x, true_y, true_z;
-	//  int n_bins = p.Lx;
+	// Different values for the wave-vector
 	float *k_bins = (float *)malloc(p.initpsbins*sizeof(float));
+	// PMean power per cell
 	float *pow_bins = (float *)malloc(p.initpsbins*sizeof(float));
+	// Volume of the shell [k, k+dk]
 	int in_bin;
 	int items_read;
 	float fudge;
 
+	// Opens the input file
 	FILE *fp = fopen(p.initpsfile, "r");
 
+	// Reads the file line by line
 	for(i = 0; i < p.initpsbins; i++) {
 
+		// If the file ends too soon, raise an error
 		if(feof(fp)) {
 			printf0(p, "Fewer bins in file (%d) than initpsbins suggested (%d)\n",
 				i, p.initpsbins);
 			die(100);
 		}
 
+		// Reads the line, and stores the three columns
 		items_read = fscanf(fp, "%f%g%d", &k_bins[i], &pow_bins[i], &in_bin);
 
+		// If the number of columns is wrong, raise an error
 		if(items_read != 3) {
 			printf0(p,
 				"Initpsfile %s: row %d: did not read a full line (3 items), "
@@ -1069,9 +1112,13 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 			die(100);
 		}
 
+
+		// If the volume if 0, then the power is 0
 		if(in_bin == 0) {
 			pow_bins[i] = 0.0;
-		} else {
+		}
+		// Else, divide by the volume to obtain the mean power per cell
+		else {
 			pow_bins[i] /= ((float)(((long int)in_bin)*((long int)(i+1))));
 		}
 
