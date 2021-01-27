@@ -13,7 +13,7 @@
  * Finds the polynomial with the lowest order that interpolates between a set of points
  * \f[ \text{quadratic}(x) = \sum_j y_j \left[\prod_{i \neq j}
  * \frac{(x - x_i)}{x_j - x_i} \right] \f]
- * Used in spectrum_interp()
+ * Previously used in spectrum_interp()
  */
 float quadratic(float x1, float x2, float x3,float y1, float y2, float y3, float x) {
 
@@ -22,6 +22,7 @@ float quadratic(float x1, float x2, float x3,float y1, float y2, float y3, float
 	+ y3*((x - x1)*(x - x2))/((x3 - x1)*(x3 - x2));
 
 }
+
 
 float get_momtot(hydro_fields f, hydro_params p) {
 
@@ -43,6 +44,7 @@ float get_momtot(hydro_fields f, hydro_params p) {
 	return momtot;
 }
 
+
 void norm_power(hydro_fields f, hydro_params p, float ****field) {
 
 	int i, x, y, z;
@@ -62,6 +64,10 @@ void norm_power(hydro_fields f, hydro_params p, float ****field) {
 	}
 }
 
+
+/** DEBUG : function that writes the power spectra right after initialization
+ *
+ */
 void debug_write_power(hydro_params p, fftwf_complex **in, ptrdiff_t x_start, ptrdiff_t x_thickness) {
 
 	int x, y, z;
@@ -172,6 +178,7 @@ void debug_write_power(hydro_params p, fftwf_complex **in, ptrdiff_t x_start, pt
 	fprintf(stderr,"writing debug PS...\n");
 	histogram(p, product_tot, fftdest, x_thickness, x_start);
 }
+
 
 void UtoZ(hydro_fields f, hydro_params p) {
 
@@ -380,6 +387,7 @@ void UtoZ(hydro_fields f, hydro_params p) {
 	halo_field(f.Z[1], p);
 	halo_field(f.Z[2], p);
 }
+
 
 /** Initialize the energy density
  *
@@ -650,9 +658,22 @@ void init_energy(hydro_params p, hydro_fields f, ptrdiff_t x_start, ptrdiff_t x_
 
 }
 
-/** project_down
+/** Projects a 3-dimensional complex vector field in Fourier space onto either
+ * longitudinal or rotational components (or not at all)
  *
- * Project out rotational or divergent bits
+ * - The rotational projection is given by
+ * \f$ v_i^\perp = P_{ij} v_j \f$
+ * where \f$ P_{ij} = \delta_{ij} - \hat{k}_i \hat{k}_j \f$
+ * and \f$ \hat{k} \f$ is a unit vector in the \f$ k \f$ direction.
+ * - The longitudinal projection is given by \f$ v_i^\parallel = (\delta_{ij}
+ * - P_{ij}) v_j = \hat{k}_i \hat{k}_j v_j \f$
+ *
+ * **Note that** each degree of freedom of the Fourier velocity field follows
+ * the target power spectrum. Hence for the total field, one has to renormalize
+ * by dividing the amplitude by :
+ * - \f$ \sqrt{3} \f$ in case of no projection
+ * - \f$ \sqrt{2} \f$ for the rotational projection
+ * - \f$ 1 \f$ for the divergent projection
  */
 void project_down(hydro_params p, fftwf_complex **in, int shift_x, int x_thickness, int times) {
 
@@ -673,7 +694,7 @@ void project_down(hydro_params p, fftwf_complex **in, int shift_x, int x_thickne
 		dofs = sqrt(1.0);
 	}
 
-	// Project out divergenceless bit!
+	// Renormalize the power by taking into account the various dofs
 	for(x=0;x<x_thickness;x++) {
 		for(y=0;y<p.Ly;y++) {
 			for(z=0;z<p.Lz;z++) {
@@ -688,13 +709,18 @@ void project_down(hydro_params p, fftwf_complex **in, int shift_x, int x_thickne
 		}
 	}
 
+	// TODO : this for-loop was present when I took other the code
+	// Is it still necessary ? One run seems to be enough
 	for(reruns = 0; reruns < times; reruns++) {
 		resid = 0.0;
 		stuff = 0.0;
-		// Project out divergenceless bit!
+
+		// Iterate over the slice
 		for(x=0;x<x_thickness;x++) {
 			for(y=0;y<p.Ly;y++) {
 				for(z=0;z<p.Lz;z++) {
+
+					// Computes the value of the wave-vector
 					if(x+shift_x > p.Lx/2) {
 						true_x = -(p.Lx - (x+shift_x));
 					} else {
@@ -712,9 +738,6 @@ void project_down(hydro_params p, fftwf_complex **in, int shift_x, int x_thickne
 					} else {
 						true_z = z;
 					}
-					// kx = s_x*sqrt((2.0 - 2.0*cos(((float)(true_x))*2.0*M_PI/(((float)p.Lx))))/(p.dx*p.dx));
-					// ky = s_y*sqrt((2.0 - 2.0*cos(((float)(true_y))*2.0*M_PI/(((float)p.Ly))))/(p.dx*p.dx));
-					// kz = s_z*sqrt((2.0 - 2.0*cos(((float)(true_z))*2.0*M_PI/(((float)p.Lz))))/(p.dx*p.dx));
 
 					kx = 2.0*sin(((float)(true_x))*M_PI/(((float)p.Lx)))/p.dx;
 					ky = 2.0*sin(((float)(true_y))*M_PI/(((float)p.Ly)))/p.dx;
@@ -749,6 +772,9 @@ void project_down(hydro_params p, fftwf_complex **in, int shift_x, int x_thickne
 
 
 									// this is delta_{ij} - P_{ij}V_j
+									// TODO : This if-statement could be replaced with a simpler
+									// res_re += ((i==j)-proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+									// res_rm += ((i==j)-proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 									if(i == j) {
 										res_re += (1.0-proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
 										res_im += (1.0-proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
@@ -831,10 +857,10 @@ float get_normal(float mean, float dev) {
 * will not really deal with this systematic error (I have tried quadratic).
 *
 * If this causes undue concern, there are two options as to how to fix it:
-* 1) When saving power spectrums, store the mean $k$ in each bin
+* 1. When saving power spectrums, store the mean $k$ in each bin
 *    as well as the central $k$ for each bin, and use the mean $k$ (at least)
 *    when using power spectra as inputs.
-* 2) Recompute the mean $k$ here when building out the power spectrum again.
+* 2. Recompute the mean $k$ here when building out the power spectrum again.
 *    That would make it harder to change lattice volumes between runs, as
 *    the relevant mode counts per bin for making the interpolation
 *    of the spectral density are for the original simulation
@@ -857,53 +883,22 @@ void spectrum_interp(float ksq, hydro_params p, fftwf_complex *res, float *k_bin
 	amp = 0.0;
 
 	// bin coordinates are midpoints
+	// TODO : Could be replaced by :
+	// k_bins[1] - k_bins[0]
 	float dk = 2.0*k_bins[0];
 
 	float kmode = sqrt(fabs(ksq));
 	int whichbin = (int)floor(kmode/dk);
 
-	/*
-	if(whichbin < (n_bins-1)) {
-	amp = sqrt(pow_bins[whichbin]);
-	}
-	*/
-
-
+	// Interpolates the value of pow_bins at kmode at first order
 	if(whichbin > 0 && whichbin < (n_bins-1)) {
-		// amp_last = sqrt(pow_bins[whichbin-1]);
 		amp_this = sqrt(pow_bins[whichbin]);
 		amp_next = sqrt(pow_bins[whichbin+1]);
 		grad = (amp_next - amp_this)/dk;
 		amp = amp_this + (kmode - ((float)(whichbin))*dk)*grad;
-
-		// quadratic interpolation isn't any better!
-		// amp = quadratic(((float)(whichbin-1))*dk, ((float)(whichbin))*dk,
-		//		    ((float)(whichbin+1))*dk, amp_last, amp_this, amp_next,
-		//		    kmode);
-
-
-		/*
-
-		if(isnan(amp)) {
-		fprintf(stderr, "Our AMP IS A NAN!\n");
-		fprintf(stderr, "kmode: %g, this: %g, bin %d, next: %g, grad: %g, amp: %g\n",
-		kmode, amp_this, whichbin, amp_next, grad, amp);
-		}
-		*/
-
 	}
 
-
-	/*
-	for(i = 0; i < n_bins; i++) {
-	if((k_bins[i] - dk/2.0) <= sqrt(fabs(ksq)) && (k_bins[i] + dk/2.0) > sqrt(fabs(ksq))) {
-	amp = sqrt(pow_bins[i]);
-	break;
-	}
-	}
-	*/
-
-
+	// Draws a random gaussian number with variance amp
 	(*res)[0] = get_normal(0.0, amp);
 	(*res)[1] = (*res)[0];
 
@@ -912,12 +907,12 @@ void spectrum_interp(float ksq, hydro_params p, fftwf_complex *res, float *k_bin
 	// Random phase
 	(*res)[0] = (*res)[0]*cos(2.0*M_PI*phase);
 	(*res)[1] = (*res)[1]*sin(2.0*M_PI*phase);
-
-
 }
 
-/** spectrum
+
+/** OBSOLETE : Hard-coded analytical formula to initialize the power_spectrum
  *
+ * Among other things, does not accept external parameters
  */
 void spectrum(float ksq, hydro_params p, fftwf_complex *res){
 
@@ -957,6 +952,7 @@ void spectrum(float ksq, hydro_params p, fftwf_complex *res){
  * 2. Allocate a 3-dimensional complex grid for FFT spread accross the multiple cores
  * 3. Builds a map storing which core contains which slice
  * 4. Reads the input file
+ * 5. Fills in random gaussian velocity fields in Fourier space
  *
  * **Note that** the FFTs are performed using a library called FFTW which distributes
  * 3-dimensional grids on multiple cores very differently. Hence the very tedious
@@ -1128,6 +1124,8 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 	}
 	fclose(fp);
 
+	// Corrects for the volume of the shell if dk is different between
+	// the input file and the grid
 	fudge = (2.0*M_PI/((float)p.Lx))/((k_bins[1]-k_bins[0])*p.dx);
 	if(fabs(fudge - 1.0) > 1e-6) {
 		printf0(p, "Applying fudge factor %g^3 to power spectrum: "
@@ -1139,10 +1137,20 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 		}
 	}
 
+	/*
+	 * 5. Fills in random gaussian velocity fields in Fourier space
+	 *
+	 * Spans the slice contained in this core
+	 */
 	for(x=x_start;x<x_start+x_thickness;x++) {
 		for(y=0;y<p.Ly;y++) {
 			for(z=0;z<p.Lz;z++) {
 
+				/** TODO : Since we only need the absolute value of true_x
+				 * the if-statement could be replaced by :
+				 * true_x = min(x, p.Lx - x)
+				 * though a min function is not defined in vanilla C
+				 */
 				if(x > p.Lx/2) {
 					true_x = -(p.Lx - x);
 				} else {
@@ -1161,13 +1169,15 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 					true_z = z;
 				}
 
-				ksq = (2.0 - 2.0*cos(((float)true_x)*2.0*M_PI/(((float)p.Lx))))/(p.dx*p.dx);
+				// Computes the magnitude of the wavevector on site (x, y, z)
+				ksq  = (2.0 - 2.0*cos(((float)true_x)*2.0*M_PI/(((float)p.Lx))))/(p.dx*p.dx);
 				ksq += (2.0 - 2.0*cos(((float)true_y)*2.0*M_PI/(((float)p.Ly))))/(p.dx*p.dx);
 				ksq += (2.0 - 2.0*cos(((float)true_z)*2.0*M_PI/(((float)p.Lz))))/(p.dx*p.dx);
 
 
 				for(i=0; i<3; i++) {
-					// spectrum(ksq, p, &(in[i][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z]));
+					// Draws a gaussian random number with variance given by the
+					// interpolated spectrum
 					spectrum_interp(ksq, p,
 						&(in[i][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z]),
 						k_bins, pow_bins, p.initpsbins);
@@ -1176,14 +1186,12 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 		}
 	}
 
+	// Projects the velocity field on longitudinal or vortical comp.
+	// Important even for INITPSFILE_ALL
 	project_down(p, in, x_start, x_thickness, 3);
-	debug_write_power(p, in, x_start, x_thickness);
 
-	/*
-	for(x=x_start; x<(x_start+x_thickness); x++) {
-	fprintf(stderr, "** node %d, x %d:\t%10.3g %10.3g\t **\n", p.rank, x, in[0][(x-x_start)*p.Ly*p.Lz][0], in[0][(x-x_start)*p.Ly*p.Lz][1]);
-	}
-	*/
+	// Debug function that writes the power spectrum
+	debug_write_power(p, in, x_start, x_thickness);
 
 	printf0(p, "Local spectrum initialisation done\n");
 
