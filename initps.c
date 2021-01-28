@@ -3,13 +3,19 @@
 * Random Gaussian initial conditions with specified power spectrum.
 * Allows to specifiy either longitudinal waves (div), vortical (rot) or
 *
-* The main entry point is the function init_ps()
+* The main entry point is the function init_ps() which initialize a vector field
+* (preferably the 4-velocity U) with Gaussian random fluctuations with mean zero
+* and variance set by the input power spectrum. It also initializes the energy
+* density accordingly.
+*
+* Another entry point is UtoZ() which calculates the momentum Z from the
+* initialized 4-velocity U.
 */
 #include "hydro.h"
 
 #if defined(FFT) && ! defined(SCALAR)
 
-/** Lagrange Interpolating formula, for three fixed points
+/** **OBSOLETE** : Lagrange Interpolating formula, for three fixed points
  * Finds the polynomial with the lowest order that interpolates between a set of points
  * \f[ \text{quadratic}(x) = \sum_j y_j \left[\prod_{i \neq j}
  * \frac{(x - x_i)}{x_j - x_i} \right] \f]
@@ -24,6 +30,9 @@ float quadratic(float x1, float x2, float x3,float y1, float y2, float y3, float
 }
 
 
+/** **OBSOLETE**
+ *
+ */
 float get_momtot(hydro_fields f, hydro_params p) {
 
 	int x, y, z, xmax;
@@ -45,6 +54,9 @@ float get_momtot(hydro_fields f, hydro_params p) {
 }
 
 
+/** **OBSOLETE**
+ *
+ */
 void norm_power(hydro_fields f, hydro_params p, float ****field) {
 
 	int i, x, y, z;
@@ -65,7 +77,7 @@ void norm_power(hydro_fields f, hydro_params p, float ****field) {
 }
 
 
-/** DEBUG : function that writes the power spectra right after initialization
+/** **DEBUG** : function that writes the power spectra right after initialization
  *
  */
 void debug_write_power(hydro_params p, fftwf_complex **in, ptrdiff_t x_start, ptrdiff_t x_thickness) {
@@ -179,7 +191,10 @@ void debug_write_power(hydro_params p, fftwf_complex **in, ptrdiff_t x_start, pt
 	histogram(p, product_tot, fftdest, x_thickness, x_start);
 }
 
-
+/** Computes the momentum Z, knowing the 4-velocity U
+ *
+ * Has to be called after init_ps()
+ */
 void UtoZ(hydro_fields f, hydro_params p) {
 
 	int i, x, y, z;
@@ -481,11 +496,11 @@ void init_energy(hydro_params p, hydro_fields f, ptrdiff_t x_start, ptrdiff_t x_
 		}
 		MPI_Barrier(MPI_COMM_WORLD);
 
-		// These are the minimum and maximum (INCLUSIVE) x-slice coordinates needed by this node
+		// These are the minimum and maximum (INCLUSIVE) x-slice coordinates needed by this core
 		int min_needed = p.Lx-(x_start+x_thickness)+1;
 		int max_needed = p.Lx-x_start;
 
-		// At this point each node knows what it ought to have, but we need to 'hermitianise' it
+		// At this point each core knows what it ought to have, but we need to 'hermitianise' it
 		// Need to do swapping
 		int j;
 
@@ -604,7 +619,7 @@ void init_energy(hydro_params p, hydro_fields f, ptrdiff_t x_start, ptrdiff_t x_
 		MPI_Barrier(MPI_COMM_WORLD);
 
 		for(x=0; x<p.Lx; x++) {
-			// Check whether we are the source node for this slab
+			// Check whether we are the source core for this slab
 			if(map[x] == p.rank) {
 				for(ry = 0; ry < ny; ry++) {
 
@@ -910,7 +925,7 @@ void spectrum_interp(float ksq, hydro_params p, fftwf_complex *res, float *k_bin
 }
 
 
-/** OBSOLETE : Hard-coded analytical formula to initialize the power_spectrum
+/** **OBSOLETE** : Hard-coded analytical formula to initialize the power_spectrum
  *
  * Among other things, does not accept external parameters
  */
@@ -953,6 +968,10 @@ void spectrum(float ksq, hydro_params p, fftwf_complex *res){
  * 3. Builds a map storing which core contains which slice
  * 4. Reads the input file
  * 5. Fills in random gaussian velocity fields in Fourier space
+ * 6. Hermitianize the velocity field in Fourier space
+ * 7. Perform the inverse Fourier transform
+ * 8. Convert from FFTW layouts to simulation layouts
+ * 9. Initialize the energy density accordingly
  *
  * **Note that** the FFTs are performed using a library called FFTW which distributes
  * 3-dimensional grids on multiple cores very differently. Hence the very tedious
@@ -992,9 +1011,14 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 	 * 2. Allocates a 3-dimensional complex grid for FFT
 	 */
 	fftwf_mpi_init();
-	alloc_local = fftwf_mpi_local_size_3d(n0, n1, n2,
-	   MPI_COMM_WORLD,
-	   &x_thickness, &x_start);
+	alloc_local = fftwf_mpi_local_size_3d(
+		n0,
+		n1,
+		n2,
+		MPI_COMM_WORLD,
+		&x_thickness,
+		&x_start
+	);
 
 
 	/*
@@ -1032,7 +1056,7 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 			}
 			// Error message if no one takes responsibility for this slice
 			if(map[x] == -1) {
-				fprintf(stderr,"cannot find a node responsible for x=%d!\n", x);
+				fprintf(stderr,"cannot find a core responsible for x=%d!\n", x);
 				die(-99);
 			}
 
@@ -1049,18 +1073,21 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 	printf0(p, "now to layout\n");
 
 	// 3-dimensional vector field
+	// Input for the inverse Fourier transform
 	fftwf_complex **in = (fftwf_complex **)malloc(3*sizeof(fftwf_complex *));
 		in[0] = fftwf_alloc_complex(alloc_local);
 		in[1] = fftwf_alloc_complex(alloc_local);
 		in[2] = fftwf_alloc_complex(alloc_local);
 
 	// 3-dimensional vector field
+	// Temporary memory to hermitianise the Fourier velocity field
 	fftwf_complex **swap_in = (fftwf_complex **)malloc(3*sizeof(fftwf_complex *));
 	swap_in[0] = fftwf_alloc_complex(x_thickness*p.Ly*p.Lz);
 	swap_in[1] = fftwf_alloc_complex(x_thickness*p.Ly*p.Lz);
 	swap_in[2] = fftwf_alloc_complex(x_thickness*p.Ly*p.Lz);
 
 	// 3-dimensional vector field
+	// Output of the inverse Fourier transform, host to the real velocity
 	fftwf_complex **out = (fftwf_complex **)malloc(3*sizeof(fftwf_complex *));
 	out[0] = fftwf_alloc_complex(alloc_local);
 	out[1] = fftwf_alloc_complex(alloc_local);
@@ -1080,6 +1107,7 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 	float *pow_bins = (float *)malloc(p.initpsbins*sizeof(float));
 	// Volume of the shell [k, k+dk]
 	int in_bin;
+
 	int items_read;
 	float fudge;
 
@@ -1089,7 +1117,7 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 	// Reads the file line by line
 	for(i = 0; i < p.initpsbins; i++) {
 
-		// If the file ends too soon, raise an error
+		// If the file ends too soon, raises an error
 		if(feof(fp)) {
 			printf0(p, "Fewer bins in file (%d) than initpsbins suggested (%d)\n",
 				i, p.initpsbins);
@@ -1099,7 +1127,7 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 		// Reads the line, and stores the three columns
 		items_read = fscanf(fp, "%f%g%d", &k_bins[i], &pow_bins[i], &in_bin);
 
-		// If the number of columns is wrong, raise an error
+		// If the number of columns is wrong, raises an error
 		if(items_read != 3) {
 			printf0(p,
 				"Initpsfile %s: row %d: did not read a full line (3 items), "
@@ -1113,7 +1141,8 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 		if(in_bin == 0) {
 			pow_bins[i] = 0.0;
 		}
-		// Else, divide by the volume to obtain the mean power per cell
+		// Else, divides by the volume to obtain the mean power per cell
+		// Factor (i+1) is to convert from d ln k to dk
 		else {
 			pow_bins[i] /= ((float)(((long int)in_bin)*((long int)(i+1))));
 		}
@@ -1140,7 +1169,7 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 	/*
 	 * 5. Fills in random gaussian velocity fields in Fourier space
 	 *
-	 * Spans the slice contained in this core
+	 * Spans the slice contained on this core
 	 */
 	for(x=x_start;x<x_start+x_thickness;x++) {
 		for(y=0;y<p.Ly;y++) {
@@ -1192,57 +1221,82 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 
 	// Debug function that writes the power spectrum
 	debug_write_power(p, in, x_start, x_thickness);
-
 	printf0(p, "Local spectrum initialisation done\n");
 
-	// At this point each node knows what it ought to have, but we need to 'hermitianise' it
+	// At this point each core knows what it ought to have, but we need to 'hermitianise' it
 	// Need to do swapping
 
+	/*
+	 * 6. Hermitianize the velocity field in Fourier space
+	 *
+	 * The velocity field being real, its Fourier transform has to be Hermitian
+	 * We need to communicate between different slices
+	 */
 
-	// These are the minimum and maximum (INCLUSIVE) x-slice coordinates needed by this node
+	// These are the minimum and maximum (INCLUSIVE) x-slice coordinates needed by this code
 	int min_needed = p.Lx-(x_start+x_thickness)+1;
 	int max_needed = p.Lx-x_start;
 
-
-
+	// Three directions of the vector field
 	for(i=0; i<3; i++) {
 
 		printf0(p, "Direction %d being handled\n", i);
 
-		// At this point each node knows what it ought to have, but we need to 'hermitianise' it
+		// At this point each core knows what it ought to have, but we need to 'hermitianise' it
 		// Need to do swapping
 
+		// TODO : Should we really have (<= p.Lx) rather than (< p.Lx)
 		for(j=0; j<=p.Lx; j++) {
+
+			// Sending slices
 			if(j>= x_start && j < x_start+x_thickness) {
+
+				// The (% P.Lx) is for the special case (j = 0)
 				if(map[((p.Lx-j) % p.Lx)] == p.rank) {
+					// Do nothing if the information is already available on
+					// this core
 				} else {
-					MPI_Send(&(((float *)in[i])[((j-x_start)%p.Lx)*p.Ly*p.Lz*2]),
-					2*p.Ly*p.Lz, MPI_FLOAT,
-					map[((p.Lx-j) % p.Lx)], j, MPI_COMM_WORLD);
+					// Else send the information to the core requiring this info
+					MPI_Send(
+						&(((float *)in[i])[((j-x_start)%p.Lx)*p.Ly*p.Lz*2]),
+						2*p.Ly*p.Lz,				// Size (complex numbers)
+						MPI_FLOAT,					// Type
+						map[((p.Lx-j) % p.Lx)],		// Destination
+						j,							// ID
+						MPI_COMM_WORLD);
 				}
 			}
 
+			// Receiving slices
 			if(j>=min_needed && j<=max_needed) {
-				if(map[(j % p.Lx)] == p.rank) {
-					memcpy(&(((fftwf_complex *)swap_in[i])[(j-min_needed)*p.Ly*p.Lz]),
-					&(((fftwf_complex *)in[i])[((j-x_start)%p.Lx)*p.Ly*p.Lz]),
-					p.Ly*p.Lz*sizeof(fftwf_complex));
 
+				if(map[(j % p.Lx)] == p.rank) {
+					// The information is already on this core, copy it
+					memcpy(
+						&(((fftwf_complex *)swap_in[i])[(j-min_needed)*p.Ly*p.Lz]),
+						&(((fftwf_complex *)in[i])[((j-x_start)%p.Lx)*p.Ly*p.Lz]),
+						p.Ly*p.Lz*sizeof(fftwf_complex)
+					);
 
 				} else {
-					MPI_Recv(&(((float *)swap_in[i])[(j-min_needed)*p.Ly*p.Lz*2]),
-					2*p.Ly*p.Lz, MPI_FLOAT,
-					map[(j % p.Lx)], j, MPI_COMM_WORLD, &status);
-
+					MPI_Recv(
+						&(((float *)swap_in[i])[(j-min_needed)*p.Ly*p.Lz*2]),
+						2*p.Ly*p.Lz,				// Size (complex numbers)
+						MPI_FLOAT,					// Type
+						map[(j % p.Lx)],			// Origin
+						j,							// ID
+						MPI_COMM_WORLD,
+						&status
+					);
 				}
 			}
 		}
 
-		// at this point swap_in has the stuff needed to do the conjugate properly
+		// At this point, swap_in has the stuff needed to do the conjugate properly
 		printf0(p, "Starting swap\n");
 
-
-		for(x=x_start; x < x_start+x_thickness; x++) {
+		// Go through the different slices
+		for (x=x_start; x < x_start+x_thickness; x++) {
 			// This is the row in the swap_in where one can find (p.Lx-x)
 			//      int swap_row = (((p.Lx-x) % x_thickness) + x_thickness - 1) % x_thickness;
 			int swap_row = (((p.Lx-x) - min_needed));
@@ -1317,95 +1371,92 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 	MPI_Barrier(MPI_COMM_WORLD);
 	printf0(p, "Done swapping\n");
 
+	/*
+	 * 7. Perform the inverse Fourier transform
+	 */
 
 	// Now planning
-	fftwf_plan plan = fftwf_mpi_plan_dft_3d(p.Lx, p.Ly, p.Lz,
-	in[0], out[0], MPI_COMM_WORLD,
-	FFTW_FORWARD, FFTW_ESTIMATE);
-
-
-	//  MPI_Barrier(MPI_COMM_WORLD);
-	//  printf0(p, "Done planning\n");
-
-	/*
-	for(x=x_start; x<(x_start+x_thickness); x++) {
-	fprintf(stderr, "node %d, x %d:\t%10.3g %10.3g\t ->\n", p.rank, x, in[0][(x-x_start)*p.Ly*p.Lz][0], in[0][(x-x_start)*p.Ly*p.Lz][1]);
-	}
-	*/
+	fftwf_plan plan = fftwf_mpi_plan_dft_3d(
+		p.Lx,
+		p.Ly,
+		p.Lz,
+		in[0],
+		out[0],
+		MPI_COMM_WORLD,
+		FFTW_FORWARD,
+		FFTW_ESTIMATE
+	);
 
 	fftwf_mpi_execute_dft(plan, in[0], out[0]);
 	fftwf_mpi_execute_dft(plan, in[1], out[1]);
 	fftwf_mpi_execute_dft(plan, in[2], out[2]);
 
 
-	//  printf0(p, "Done FFTing, example value %g %g\n", out[0][0][0], out[0][0][1]);
-
 	/*
-	for(x=x_start; x<(x_start+x_thickness); x++) {
-	fprintf(stderr, "node %d, x %d:\t->\t%10.3g %10.3g\t\n", p.rank, x, out[0][(x-x_start)*p.Ly*p.Lz][0], out[0][(x-x_start)*p.Ly*p.Lz][1]);
-	}
+	 * 8. Convert from FFTW layouts to simulation layouts
+	 *
+	 * Indeed, in FFTWs, each core has a pizza box, whereas in the rest of the
+	 * code, each core possesses a pencil
+	 */
 
-	*/
-
+	// Temporary slice
 	float *slice = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
 
-
-	//  float maximag = 0.0;
+	// 3 dimensions of the vector field
 	for(i=0; i<3; i++) {
 
-		// prepare slice
-
+		// Prepare slice
 		for(x=0; x<x_thickness; x++) {
 			for(y=0; y<p.Ly; y++) {
 				for(z=0; z<p.Lz; z++) {
-					/*	  if(fabs(out[i][x*p.Ly*p.Lz + y*p.Lz + z][1]) > fabs(maximag)) {
-					maximag = out[i][x*p.Ly*p.Lz + y*p.Lz + z][1];
-					} */
 					slice[x*p.Ly*p.Lz + y*p.Lz + z] = out[i][x*p.Ly*p.Lz + y*p.Lz + z][0];
 				}
 			}
 		}
 
-		//    fprintf(stderr,"maximag is %g\n", maximag);
 		MPI_Barrier(MPI_COMM_WORLD);
-
 
 		for(x=0; x<p.Lx; x++) {
 
-			// Check whether we are the source node for this slab
+			// Check whether we are the source core for this slab
 			if(map[x] == p.rank) {
 				for(ry = 0; ry < ny; ry++) {
 					if((x/p.slicex == p.myposx) && (ry == p.myposy)) {
 						//      fprintf(stderr, "rank %d: doing memcpy and local thickness is %d\n",
 						//              p.rank, x_thickness);
 
-						memcpy(&trim[(x-p.shiftx)*p.slicey*p.Lz],
+						memcpy(
+							&trim[(x-p.shiftx)*p.slicey*p.Lz],
 							&slice[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
-							p.slicey*p.Lz*sizeof(float));
+							p.slicey*p.Lz*sizeof(float)
+						);
 
 						continue;
 					}
 
-					MPI_Send(&slice[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
-					p.slicey*p.Lz,
-					MPI_FLOAT,
-					ry*nx + x/p.slicex,
-					x*ny + ry,
-					MPI_COMM_WORLD);
+					MPI_Send(
+						&slice[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
+						p.slicey*p.Lz,
+						MPI_FLOAT,
+						ry*nx + x/p.slicex,
+						x*ny + ry,
+						MPI_COMM_WORLD
+					);
 
 				}
 			} else if((x >= p.shiftx) && (x < (p.shiftx + p.slicex))) {
 				//        fprintf(stderr, "rank %d: receiving into location %p\n", p.rank,
 				//		&trim[(x-p.shiftx)*p.slicey*p.Lz]);
 
-				MPI_Recv(&trim[(x-p.shiftx)*p.slicey*p.Lz],
-				p.slicey*p.Lz,
-				MPI_FLOAT,
-				map[x],
-				x*ny + p.myposy,
-				MPI_COMM_WORLD,
-				&status);
-
+				MPI_Recv(
+					&trim[(x-p.shiftx)*p.slicey*p.Lz],
+					p.slicey*p.Lz,
+					MPI_FLOAT,
+					map[x],
+					x*ny + p.myposy,
+					MPI_COMM_WORLD,
+					&status
+				);
 			}
 		}
 
@@ -1426,10 +1477,15 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 
 	}
 
+	/*
+	 * 9. Initialize the energy density accordingly
+	 */
+
 	printf0(p,"Start the energy density initialization\n");
 	init_energy(p, f, x_start, x_thickness, map, alloc_local,k_bins,pow_bins);
 	printf0(p,"Energy density initialized\n");
 
+	// Free the different fields
 	free(map);
 	free(slice);
 	free(trim);
