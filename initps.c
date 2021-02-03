@@ -8,8 +8,6 @@
 * and variance set by the input power spectrum. It also initializes the energy
 * density accordingly.
 *
-* Another entry point is UtoZ() which calculates the momentum Z from the
-* initialized 4-velocity U.
 */
 #include "hydro.h"
 
@@ -193,7 +191,6 @@ void debug_write_power(hydro_params p, fftwf_complex **in, ptrdiff_t x_start, pt
 
 /** Computes the momentum Z, knowing the 4-velocity U
  *
- * Has to be called after init_ps()
  */
 void UtoZ(hydro_fields f, hydro_params p) {
 
@@ -408,6 +405,8 @@ void UtoZ(hydro_fields f, hydro_params p) {
  *
  * For a rotational-free flow, the energy density is linked to the velocity field
  * For a divergence-free flow, the energy density is set to be constant
+ *
+ * See the notes in doc/initial_conditions_initps.pdf
  */
 void init_energy(hydro_params p, hydro_fields f, ptrdiff_t x_start, ptrdiff_t x_thickness, int* map, ptrdiff_t alloc_local,float *k_bins, float *pow_bins){
 	int x, y, z;
@@ -475,6 +474,10 @@ void init_energy(hydro_params p, hydro_fields f, ptrdiff_t x_start, ptrdiff_t x_
 					kmode = sqrt(kx*kx+ky*ky+kz*kz);
 					ksq = kx*kx+ky*ky+kz*kz;
 
+					/*
+					 * Draws a gaussian random number with variance given by the
+					 * interpolated spectrum
+					 */
 					spectrum_interp(ksq, p,&(vec_i),k_bins, pow_bins, p.initpsbins);
 					kiVki[0] = kx * vec_i[0];
 					kiVki[1] = kx * vec_i[1];
@@ -486,6 +489,7 @@ void init_energy(hydro_params p, hydro_fields f, ptrdiff_t x_start, ptrdiff_t x_
 					kiVki[1] += kz * vec_i[1];
 
 					if (kmode != 0){
+						// in corresponds to lambda in the attached notes
 						in[(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0] = 4 / sqrt(3) * kiVki[1] / kmode;
 						in[(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] = - 4 / sqrt(3) * kiVki[0] / kmode;
 
@@ -865,7 +869,8 @@ float get_normal(float mean, float dev) {
 }
 
 
-/** Do a linear interpolation to compute the initial power spectrum.
+/** Draws random Gaussian complex numbers according to the input power spectrum
+* Does a linear interpolation to compute the initial power spectrum.
 *
 * A key assumption is that the k-modes are _evenly distributed_ throughout
 * each bin, which isn't true! And increasing the order of the interpolation
@@ -898,9 +903,7 @@ void spectrum_interp(float ksq, hydro_params p, fftwf_complex *res, float *k_bin
 	amp = 0.0;
 
 	// bin coordinates are midpoints
-	// TODO : Could be replaced by :
-	// k_bins[1] - k_bins[0]
-	float dk = 2.0*k_bins[0];
+	float dk = k_bins[1] - k_bins[0];
 
 	float kmode = sqrt(fabs(ksq));
 	int whichbin = (int)floor(kmode/dk);
@@ -972,6 +975,7 @@ void spectrum(float ksq, hydro_params p, fftwf_complex *res){
  * 7. Perform the inverse Fourier transform
  * 8. Convert from FFTW layouts to simulation layouts
  * 9. Initialize the energy density accordingly
+ * 10. Translate the 4-velocity into momentum Z
  *
  * **Note that** the FFTs are performed using a library called FFTW which distributes
  * 3-dimensional grids on multiple cores very differently. Hence the very tedious
@@ -1149,6 +1153,7 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 
 		if(isnan(pow_bins[i])) {
 			printf0(p, "Bin %d is a NaN\n", i);
+			die(-99);
 		}
 	}
 	fclose(fp);
@@ -1205,8 +1210,10 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 
 
 				for(i=0; i<3; i++) {
-					// Draws a gaussian random number with variance given by the
-					// interpolated spectrum
+					/*
+					 * Draws a gaussian random number with variance given by the
+					 * interpolated spectrum
+					 */
 					spectrum_interp(ksq, p,
 						&(in[i][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z]),
 						k_bins, pow_bins, p.initpsbins);
@@ -1215,8 +1222,8 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 		}
 	}
 
-	// Projects the velocity field on longitudinal or vortical comp.
-	// Important even for INITPSFILE_ALL
+	// Projects the velocity field on longitudinal or vortical comp
+	// Takes into account the number of dofs
 	project_down(p, in, x_start, x_thickness, 3);
 
 	// Debug function that writes the power spectrum
@@ -1484,6 +1491,14 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 	printf0(p,"Start the energy density initialization\n");
 	init_energy(p, f, x_start, x_thickness, map, alloc_local,k_bins,pow_bins);
 	printf0(p,"Energy density initialized\n");
+
+
+	/*
+	 * 10. Translate the 4-velocity into momentum Z
+	 *
+	 */
+	eq_of_state(f, p);
+	UtoZ(f, p);
 
 	// Free the different fields
 	free(map);
