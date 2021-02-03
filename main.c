@@ -175,8 +175,6 @@ int main(int argc, char *argv[]) {
       start=clock();
       initial_blank(f,p);
       init_ps(f, p, f.U);
-      eq_of_state(f, p);
-      UtoZ(f, p);
 
       end=clock();
 

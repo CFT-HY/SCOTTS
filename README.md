@@ -162,6 +162,18 @@ appears to have good energy conservation.
 -# Advection of \f$E\f$ and \f$ Z \f$ [advect_E() & advect_Z()]
 -# Find temperature again [find_Ta()]
 
+## Initial conditions with a given power spectrum INITPS
+
+To launch a simulation with a random gaussian velocity field following a given power spectrum
+\f[
+\frac{\mathrm{d} \langle U^2 \rangle}{\mathrm{d}\ln k}
+\f].
+
+Requirements :
+- `-DFFT` flag in the Makefile, compule with support for FFTs
+- `initial initps` in the initialization file to enable initps
+- `initpsfile initial.txt div` to specify the type of initial conditions. `initial.txt` is the location of the input power spectrum. `div`(resp. `rot`, `all`) stands for longitudinal (resp. vortical, non-projected) initial conditions
+- `initpsbins 200` the number of points in the power spectrum
 
 ## Compilation
 
@@ -183,8 +195,6 @@ FFTW.
 * `-DFFT`: compile with FFT support for power spectra (and initial
   conditions).
 
-* `-DINITPS`: compile with an initial power spectrum (requires
-  `-DFFT`).
 
 * `-DUSE_MPI`: compile with MPI support (necessary for parallelisation).
 

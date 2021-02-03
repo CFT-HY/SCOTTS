@@ -4,9 +4,9 @@
 # Note that if the simulation is checkpointed and restarts the cumulative
 # number of timesteps is counted, so 'steps' would (for example) need to
 # be increased if you wanted to run for longer.
-Lx      32
-Ly	32
-Lz	32
+Lx      128
+Ly	128
+Lz	128
 steps  1000
 
 # How big the simulation is: lattice spacing and timestep
@@ -79,9 +79,7 @@ R_critical -1
 # if less than 0 default to broken phase value.
 phimin -1
 
-<<<<<<< HEAD
-# Nucleation procedure; choices are "off", "list" or "file"
-=======
+
 # Value of T at centre of fluid sphere, used if initial is set to "initfs" only.
 T_central 1
 
@@ -89,8 +87,7 @@ T_central 1
 sphere_radius 10
 
 
-# Nucleation procedure; choices are "off", "list" or "file" 
->>>>>>> master
+# Nucleation procedure; choices are "off", "list" or "file"
 # - "off" does nothing (the number of bubbles given above as 'bubbles' is
 #   still created at the start however)
 # - "list" is a comma-separated list without spaces of timesteps
