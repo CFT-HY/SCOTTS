@@ -187,6 +187,7 @@ void debug_write_power(hydro_params p, fftwf_complex **in, ptrdiff_t x_start, pt
 	if(!p.rank)
 	fprintf(stderr,"writing debug PS...\n");
 	histogram(p, product_tot, fftdest, x_thickness, x_start);
+	free(product_tot);
 }
 
 /** Computes the momentum Z, knowing the 4-velocity U
@@ -672,6 +673,7 @@ void init_energy(hydro_params p, hydro_fields f, ptrdiff_t x_start, ptrdiff_t x_
 		fftwf_destroy_plan(plan);
 		fftwf_free(in);
 		fftwf_free(out);
+		fftwf_free(swap_in);
 	}
 	halo_field(f.E, p);
 
@@ -1503,7 +1505,11 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 	// Free the different fields
 	free(map);
 	free(slice);
+	free(pow_bins);
+	free(k_bins);
 	free(trim);
+	free(thicknesses);
+	free(starts);
 
 	fftwf_destroy_plan(plan);
 
@@ -1519,6 +1525,7 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 
 	free(in);
 	free(out);
+	free(swap_in);
 
 
 
