@@ -116,6 +116,8 @@ void fft_init(hydro_params p, fft_fields *fft_f){
             fft_f->initial_V[i] = fftwf_alloc_complex(alloc_local);
         }
     }
+    free(thicknesses);
+    free(starts);
 }
 
 /** Cleanup the fft_fields fftwf fields, plan and mpi routines.
