@@ -1184,8 +1184,7 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 
 				/** TODO : Since we only need the absolute value of true_x
 				 * the if-statement could be replaced by :
-				 * true_x = min(x, p.Lx - x)
-				 * though a min function is not defined in vanilla C
+				 * true_x = minof_2_int(x, p.Lx - x)
 				 */
 				if(x > p.Lx/2) {
 					true_x = -(p.Lx - x);
