@@ -53,13 +53,13 @@ fftinterval 100
 uetcstart -1
 
 # Initial conditions; choices are "shocktube", "bubble", "initfs" and "initps";
-# only "bubble" should be currently used. "initfs" is for debugging only.
+# "initfs" is for debugging only.
 initial bubble
 
-# If "initps" is used, we need to set some extra parameters
-initnorm -1
-initcutoff -1
-initlength -1
+# Initps input files and options, unused if initial is not initps.
+initpsfile initial.txt div
+initpsbins 200
+
 
 # How many bubbles to start off with. May be zero.
 bubbles 1

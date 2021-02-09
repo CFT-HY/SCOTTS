@@ -11,7 +11,7 @@
 */
 #include "hydro.h"
 
-#if defined(FFT) && ! defined(SCALAR)
+#if defined(FFT) && defined(BAG) && ! defined(SCALAR)
 
 /** **OBSOLETE** : Lagrange Interpolating formula, for three fixed points
  * Finds the polynomial with the lowest order that interpolates between a set of points
@@ -25,53 +25,6 @@ float quadratic(float x1, float x2, float x3,float y1, float y2, float y3, float
 	+ y2*((x - x1)*(x - x3))/((x2 - x1)*(x2 - x3))
 	+ y3*((x - x1)*(x - x2))/((x3 - x1)*(x3 - x2));
 
-}
-
-
-/** **OBSOLETE**
- *
- */
-float get_momtot(hydro_fields f, hydro_params p) {
-
-	int x, y, z, xmax;
-	float momtot = 0.0;
-
-	// Just search for maxmimum
-	for(x = 1; x <= p.slicex; x++) {
-		for(y = 1; y <= p.slicey; y++) {
-			for(z = 0; z < p.Lz; z++) {
-				momtot += sqrt(f.Z[0][x][y][z]*f.Z[0][x][y][z]
-				+ f.Z[1][x][y][z]*f.Z[1][x][y][z]
-				+ f.Z[2][x][y][z]*f.Z[2][x][y][z]);
-
-			}
-		}
-	}
-
-	return momtot;
-}
-
-
-/** **OBSOLETE**
- *
- */
-void norm_power(hydro_fields f, hydro_params p, float ****field) {
-
-	int i, x, y, z;
-	// should be normalised to volume, this makes it okay
-	float momtot = reduce_sum(get_momtot(f, p),p)/((float)p.Lx*p.Ly*p.Lz);
-
-	printf0(p, "momtot per site is %g\n", momtot);
-	for(i=0; i<3; i++) {
-		for(x=1; x<=p.slicex; x++) {
-			for(y=1; y<=p.slicey; y++) {
-				for(z=0; z<p.Lz; z++) {
-					field[i][x][y][z] = p.initnorm*field[i][x][y][z]/momtot;
-				}
-			}
-		}
-		halo_field(field[i], p);
-	}
 }
 
 
@@ -930,40 +883,6 @@ void spectrum_interp(float ksq, hydro_params p, fftwf_complex *res, float *k_bin
 }
 
 
-/** **OBSOLETE** : Hard-coded analytical formula to initialize the power_spectrum
- *
- * Among other things, does not accept external parameters
- */
-void spectrum(float ksq, hydro_params p, fftwf_complex *res){
-
-	float phase;
-	float L = p.Lx;
-
-
-	if(fabs(ksq) < 0.000001 || fabs(ksq) > p.initcutoff) {
-		(*res)[0] = 0.0;
-		(*res)[1] = 0.0;
-	}
-	else {
-
-
-		//  (*res)[0] = p.initnorm*exp(-0.25*sqrt(ksq)*p.dx*((float)L));
-		(*res)[0] = get_normal(0.0, p.initnorm*exp(-0.25*sqrt(ksq)*p.dx*((float)L)));
-		// (*res)[0] = get_normal(0.0, exp(-1.0*sqrt(ksq)*p.dx*p.initlength));
-
-		// (*res)[0] = get_normal(0.0, cherian_spectrum(ksq,p));
-		(*res)[1] = (*res)[0];
-
-		phase = drand48();
-
-		// Random phase
-		(*res)[0] = (*res)[0]*cos(2.0*M_PI*phase);
-		(*res)[1] = (*res)[1]*sin(2.0*M_PI*phase);
-
-	}
-}
-
-
 /** Initialize the simulation with a gaussian velocity field following
  * a specified power spectrum
  *
@@ -1531,4 +1450,4 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 }
 
 
-#endif // FFT && !SCALAR
+#endif // FFT && BAG && !SCALAR
