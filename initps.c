@@ -11,7 +11,7 @@
 */
 #include "hydro.h"
 
-#if defined(FFT) && ! defined(SCALAR)
+#if defined(FFT) && defined(BAG) && ! defined(SCALAR)
 
 /** **OBSOLETE** : Lagrange Interpolating formula, for three fixed points
  * Finds the polynomial with the lowest order that interpolates between a set of points
@@ -1450,4 +1450,4 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 }
 
 
-#endif // FFT && !SCALAR
+#endif // FFT && BAG && !SCALAR

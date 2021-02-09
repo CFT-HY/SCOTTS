@@ -169,7 +169,7 @@ int main(int argc, char *argv[]) {
       printf0(p, "- Zeroed fields.\n");
 
       if(p.initial==INIT_PS){
-#if defined (FFT) && ! defined(SCALAR)
+#if defined (FFT) && (BAG) && ! defined(SCALAR)
       // If initial is INIT_PS then initialise velocity power spec.
       // Then no bubbles nucleated.
       start=clock();
@@ -185,11 +185,12 @@ int main(int argc, char *argv[]) {
 
 #else
 
-          printf0(p,"INIT_PS initial conditions invalid with SCALAR compiler flag."
+          printf0(p,"INIT_PS initial conditions require FFT and BAG flags,"
+                  " invalid with SCALAR flag."
                   " Exiting... \n");
           die(100);
 
-#endif // FFT && !SCALAR
+#endif // FFT && BAG && !SCALAR
 
 
       } else if(p.initial==INIT_BUBBLE){

@@ -761,7 +761,7 @@ void scalarps(hydro_params p, fftwf_complex *field, int step, char *label);
 #endif // FFT
 
 
-#if defined(FFT) && ! defined(SCALAR)
+#if defined(FFT) && defined(BAG) && ! defined(SCALAR)
 // initps.c
 void init_ps(hydro_fields f, hydro_params p, float ****field);
 void spectrum_interp(float ksq, hydro_params p, fftwf_complex *res, float *k_bins, float *pow_bins, int n_bins);
