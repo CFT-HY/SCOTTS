@@ -80,10 +80,6 @@ void get_parameters(char *infile, hydro_params *p)
 
   int set_seed = 0;
 
-  int set_initnorm = 0;
-  int set_initcutoff = 0;
-  int set_initlength = 0;
-
 
   char key[100];
   char value[100];
@@ -255,16 +251,6 @@ void get_parameters(char *infile, hydro_params *p)
     else if(!strcasecmp(key,"sphere_radius")) {
       p->sphere_radius = strtof(value,NULL);
       set_sphere_radius = 1;
-    }
-    else if(!strcasecmp(key,"initnorm")) {
-      p->initnorm = strtof(value,NULL);
-      set_initnorm = 1;
-    } else if(!strcasecmp(key,"initcutoff")) {
-      p->initcutoff = strtod(value,NULL);
-      set_initcutoff = 1;
-    } else if(!strcasecmp(key,"initlength")) {
-      p->initlength = strtod(value,NULL);
-      set_initlength = 1;
     }
     else if(!strcasecmp(key,"initial")) {
       if(!strcasecmp(value, "shocktube")) {
@@ -637,15 +623,6 @@ void get_parameters(char *infile, hydro_params *p)
   }else if(!set_initial) {
     printf0(*p, "Did not set parameter \'initial\'\n");
     die(100);
-  }else if(!set_initnorm) {
-    printf0(*p, "Did not set parameter \'initnorm\'\n");
-    die(100);
-  } else if(!set_initcutoff) {
-    printf0(*p, "Did not set parameter \'initcutoff\'\n");
-    die(100);
-  } else if(!set_initlength) {
-    printf0(*p, "Did not set parameter \'initlength\'\n");
-    die(100);
   }else if(!set_gwsource) {
     printf0(*p, "Did not set parameter \'gwsource\'\n");
     die(100);
@@ -683,9 +660,6 @@ void get_parameters(char *infile, hydro_params *p)
 	    "-- silointerval %d, silosliceinterval %d,checkpointinterval %d\n"
 	    "-- uetcstart %d\n"
 	    "-- bubbles %d, scale %g\n"
-	    "-- initnorm %g\n"
-            "-- initcutoff %g\n"
-            "-- initlength %g\n"
 	    "-- silodir \"%s\"\n"
 	    "-- checkpointdir \"%s\"\n"
 	    "-- seed %d\n",
@@ -700,9 +674,6 @@ void get_parameters(char *infile, hydro_params *p)
 	    p->silointerval, p->silosliceinterval, p->checkpointinterval,
 	    p->uetcstart,
 	    p->bubbles, p->scale,
-	    p->initnorm,
-            p->initcutoff,
-            p->initlength,
 	    p->silodir,
 	    p->checkpointdir,
 	    p->seed);

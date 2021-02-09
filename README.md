@@ -169,8 +169,9 @@ To launch a simulation with a random gaussian velocity field following a given p
 \frac{\mathrm{d} \langle U^2 \rangle}{\mathrm{d}\ln k}
 \f].
 
-### Requirements :
-- `-DFFT` flag in the Makefile, compule with support for FFTs
+Requirements :
+- `-DFFT` flag in the Makefile, compile with support for FFTs
+- `-DBAG` flag in the Makefile, compiles with the bag model equation of state.
 - `initial initps` in the initialization file to enable initps
 - `initpsfile initial.txt div` to specify the type of initial conditions. `initial.txt` is the location of the input power spectrum. `div`(resp. `rot`, `all`) stands for longitudinal (resp. vortical, non-projected) initial conditions
 - `initpsbins 200` the number of points in the power spectrum
@@ -234,4 +235,4 @@ damping couplings.
 * `-DBAG` : Use bag model for equation of state/potential instead of
 EIKR formalism.
 
-* `-DVANLEER` Use Van Leer advection insted of donor cell.
+* `-DVANLEER` Use Van Leer advection instead of donor cell.

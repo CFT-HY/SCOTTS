@@ -153,10 +153,6 @@ typedef struct {
    */
   float T0;
 
-  float initnorm;
-  float initcutoff;
-  float initlength;
-
   /** How frequently to write global outputs to stderr.
    */
   int interval;
@@ -765,13 +761,11 @@ void scalarps(hydro_params p, fftwf_complex *field, int step, char *label);
 #endif // FFT
 
 
-#if defined(FFT) && ! defined(SCALAR)
+#if defined(FFT) && defined(BAG) && ! defined(SCALAR)
 // initps.c
 void init_ps(hydro_fields f, hydro_params p, float ****field);
-void norm_power(hydro_fields f, hydro_params p, float ****field);
 void spectrum_interp(float ksq, hydro_params p, fftwf_complex *res, float *k_bins, float *pow_bins, int n_bins);
 void UtoZ(hydro_fields f, hydro_params p);
-float get_momtot(hydro_fields f, hydro_params p);
 float get_normal(float mean, float dev);
 void init_energy(hydro_params p, hydro_fields f, ptrdiff_t x_start, ptrdiff_t x_thickness, int* map, ptrdiff_t alloc_local,float *k_bins, float *pow_bins);
 #endif // FFT && !SCALAR
