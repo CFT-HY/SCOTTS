@@ -12,7 +12,7 @@ steps  1000
 # How big the simulation is: lattice spacing and timestep
 dx     2.0
 dt     0.2
- 
+
 # Viscosity terms. Cav is the artificial viscosity
 # and is not currently used. C is the 'eta' term that
 # takes energy out of the field and into the fluid.
@@ -33,7 +33,7 @@ Tconst 0.86
 
 # How often to write data. "interval" is how often to write a line of
 # global quantities to output_fname, and do any FFTs/power spectra that are
-# compiled in. 
+# compiled in.
 interval 10
 
 # "silointerval" is the interval for writing visualisation data;
@@ -53,13 +53,13 @@ fftinterval 100
 uetcstart -1
 
 # Initial conditions; choices are "shocktube", "bubble", "initfs" and "initps";
-# only "bubble" should be currently used. "initfs" is for debugging only.
+# "initfs" is for debugging only.
 initial bubble
 
-# If "initps" is used, we need to set some extra parameters
-initnorm -1
-initcutoff -1
-initlength -1
+# Initps input files and options, unused if initial is not initps.
+initpsfile initial.txt div
+initpsbins 200
+
 
 # How many bubbles to start off with. May be zero.
 bubbles 1
@@ -79,6 +79,7 @@ R_critical -1
 # if less than 0 default to broken phase value.
 phimin -1
 
+
 # Value of T at centre of fluid sphere, used if initial is set to "initfs" only.
 T_central 1
 
@@ -86,7 +87,7 @@ T_central 1
 sphere_radius 10
 
 
-# Nucleation procedure; choices are "off", "list" or "file" 
+# Nucleation procedure; choices are "off", "list" or "file"
 # - "off" does nothing (the number of bubbles given above as 'bubbles' is
 #   still created at the start however)
 # - "list" is a comma-separated list without spaces of timesteps
@@ -123,4 +124,3 @@ gwsource fluid
 seed 1234
 
 gstar 106.75
-

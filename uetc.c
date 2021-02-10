@@ -137,11 +137,15 @@ void uetc_tensor(hydro_params p, fftwf_complex **tensor_then,
 	    true_z = z;
 
 
-	  kmode = sqrt(
-		       ((float)(true_x*true_x))/((float)(p.Lx*p.Lx))
-		       + ((float)(true_y*true_y))/((float)(p.Ly*p.Ly))
-		       + ((float)(true_z*true_z))/((float)(p.Lz*p.Lz))
-		       )*2.0*M_PI;
+	  float kx,ky,kz;
+      // kx = sqrt((2.0 - 2.0*cos(((float)(true_x))*2.0*M_PI/(((float)p.Lx)))));
+      // ky = sqrt((2.0 - 2.0*cos(((float)(true_y))*2.0*M_PI/(((float)p.Ly)))));
+      // kz = sqrt((2.0 - 2.0*cos(((float)(true_z))*2.0*M_PI/(((float)p.Lz)))));
+      kx = 2.0*sin(((float)(true_x))*M_PI/(((float)p.Lx)))/p.dx;
+      ky = 2.0*sin(((float)(true_y))*M_PI/(((float)p.Ly)))/p.dx;
+      kz = 2.0*sin(((float)(true_z))*M_PI/(((float)p.Lz)))/p.dx;
+
+      kmode = sqrt(kx*kx+ky*ky+kz*kz);
 
 	  whichbin = (int)floor(kmode/dk);
 	  bins_re[whichbin] += slice_re[x*p.Ly*p.Lz + y*p.Lz + z];
@@ -331,11 +335,15 @@ void uetc_vector(hydro_params p, fftwf_complex **vector_then,
 	    true_z = z;
 
 
-	  kmode = sqrt(
-		       ((float)(true_x*true_x))/((float)(p.Lx*p.Lx))
-		       + ((float)(true_y*true_y))/((float)(p.Ly*p.Ly))
-		       + ((float)(true_z*true_z))/((float)(p.Lz*p.Lz))
-		       )*2.0*M_PI;
+	  float kx,ky,kz;
+      // kx = sqrt((2.0 - 2.0*cos(((float)(true_x))*2.0*M_PI/(((float)p.Lx)))));
+      // ky = sqrt((2.0 - 2.0*cos(((float)(true_y))*2.0*M_PI/(((float)p.Ly)))));
+      // kz = sqrt((2.0 - 2.0*cos(((float)(true_z))*2.0*M_PI/(((float)p.Lz)))));
+      kx = 2.0*sin(((float)(true_x))*M_PI/(((float)p.Lx)))/p.dx;
+      ky = 2.0*sin(((float)(true_y))*M_PI/(((float)p.Ly)))/p.dx;
+      kz = 2.0*sin(((float)(true_z))*M_PI/(((float)p.Lz)))/p.dx;
+
+      kmode = sqrt(kx*kx+ky*ky+kz*kz);
 
 	  whichbin = (int)floor(kmode/dk);
 	  bins_rot_re[whichbin] += slice_rot_re[x*p.Ly*p.Lz + y*p.Lz + z];
@@ -349,6 +357,9 @@ void uetc_vector(hydro_params p, fftwf_complex **vector_then,
       }
     }
 
+    MPI_Barrier(MPI_COMM_WORLD);
+    if(!p.rank)
+      fprintf(stderr,"Got through binning process (bins %d)\n", nbins);
 
     float red_value;
     int red_count;
@@ -371,6 +382,10 @@ void uetc_vector(hydro_params p, fftwf_complex **vector_then,
       red_count = reduce_sum_int(counts[i], p);
       counts[i] = red_count;
     }
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    if(!p.rank)
+      fprintf(stderr,"Got through bin reduction\n");
 
 
     float thisk = dk/2.0;

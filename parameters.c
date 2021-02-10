@@ -64,6 +64,9 @@ void get_parameters(char *infile, hydro_params *p)
   int set_silodir = 0;
   int set_checkpointdir = 0;
 
+  int set_initpsfile = 0;
+  int set_initpsbins = 0;
+
   int set_nucleation = 0;
 
   int set_bubbles = 0;
@@ -76,10 +79,6 @@ void get_parameters(char *infile, hydro_params *p)
   int set_sphere_radius = 0;
 
   int set_seed = 0;
-
-  int set_initnorm = 0;
-  int set_initcutoff = 0;
-  int set_initlength = 0;
 
 
   char key[100];
@@ -252,16 +251,6 @@ void get_parameters(char *infile, hydro_params *p)
     else if(!strcasecmp(key,"sphere_radius")) {
       p->sphere_radius = strtof(value,NULL);
       set_sphere_radius = 1;
-    }
-    else if(!strcasecmp(key,"initnorm")) {
-      p->initnorm = strtof(value,NULL);
-      set_initnorm = 1;
-    } else if(!strcasecmp(key,"initcutoff")) {
-      p->initcutoff = strtod(value,NULL);
-      set_initcutoff = 1;
-    } else if(!strcasecmp(key,"initlength")) {
-      p->initlength = strtod(value,NULL);
-      set_initlength = 1;
     }
     else if(!strcasecmp(key,"initial")) {
       if(!strcasecmp(value, "shocktube")) {
@@ -496,13 +485,59 @@ void get_parameters(char *infile, hydro_params *p)
      
       set_checkpointdir = 1;
     }
+    else if(!strcasecmp(key,"initpsfile")) {
+     
+      if(strlen(value) > 500)
+	printf0(*p,
+		"Warning: initpsfile name \"%s\" may be too long!\n",
+		value);
+
+      strncpy(p->initpsfile, value, 500);
+     
+      if(!strcasecmp(option,"rot")) {
+	  printf0(*p,
+		  "Treating initpsfile as ROT power\n");
+	  p->initpsfile_type = INITPSFILE_ROT;
+      } else if(!strcasecmp(option,"div")) {
+	printf0(*p,
+		"Treating initpsfile as DIV power\n");
+	p->initpsfile_type = INITPSFILE_DIV;
+      } else if(!strcasecmp(option,"all")) {
+	printf0(*p,
+		"Treating initpsfile as ALL power\n");
+	p->initpsfile_type = INITPSFILE_ALL;
+      } else {
+	printf0(*p,
+		"Unrecognised option to initpsfile;"
+		"treating initpsfile as DIV power\n");
+	p->initpsfile_type = INITPSFILE_DIV;
+	  }
+      
+
+      set_initpsfile = 1;
+    }
+    else if(!strcasecmp(key,"initpsbins")) {
+      p->initpsbins = strtol(value,NULL,10);
+      set_initpsbins = 1;
+    }
     else if(!strcasecmp(key,"seed")) {
-      p->seed = strtol(value,NULL,10);
+      if(!strcasecmp(value,"time")) {
+        p->seed = time(NULL);
+      } else if(!strcasecmp(value,"device")) {
+        FILE *ran = fopen("/dev/random","r");
+        if(fread(&(p->seed),sizeof(int),1,ran) != 1) {
+          fprintf(stderr,"Unable to read from /dev/random, using seed 0!\n");
+          p->seed = 0;
+        }
+        fclose(ran);
+      } else {
+        p->seed = strtol(value,NULL,10);
+      }
+
       p->seed = abs(p->seed);
 
       set_seed = 1;
-    } 
-
+    }
 
   }
   
@@ -588,15 +623,6 @@ void get_parameters(char *infile, hydro_params *p)
   }else if(!set_initial) {
     printf0(*p, "Did not set parameter \'initial\'\n");
     die(100);
-  }else if(!set_initnorm) {
-    printf0(*p, "Did not set parameter \'initnorm\'\n");
-    die(100);
-  } else if(!set_initcutoff) {
-    printf0(*p, "Did not set parameter \'initcutoff\'\n");
-    die(100);
-  } else if(!set_initlength) {
-    printf0(*p, "Did not set parameter \'initlength\'\n");
-    die(100);
   }else if(!set_gwsource) {
     printf0(*p, "Did not set parameter \'gwsource\'\n");
     die(100);
@@ -605,15 +631,20 @@ void get_parameters(char *infile, hydro_params *p)
     die(100);
   } else if(!set_silodir) {
     printf0(*p, "Did not set parameter \'silodir\'\n");
-    die(100);
-  } else if(!set_checkpointdir) {
+    die(100); 
+ } else if(!set_checkpointdir) {
     printf0(*p, "Did not set parameter \'checkpointdir\'\n");
     die(100);
   } else if(!set_seed) {
     printf0(*p, "Did not set parameter \'seed\'\n");
     die(100);
+  } else if(p->initial == INIT_PS && !set_initpsfile) {
+    printf0(*p, "Did not set parameter \'initpsfile\' but initps used\n");
+    die(100);
+  } else if(p->initial == INIT_PS && !set_initpsbins) {
+    printf0(*p, "Did not set parameter \'initpsbins\' but initps used\n");
+    die(100);
   }
-
 
 
   if(!p->rank) {
@@ -629,9 +660,6 @@ void get_parameters(char *infile, hydro_params *p)
 	    "-- silointerval %d, silosliceinterval %d,checkpointinterval %d\n"
 	    "-- uetcstart %d\n"
 	    "-- bubbles %d, scale %g\n"
-	    "-- initnorm %g\n"
-            "-- initcutoff %g\n"
-            "-- initlength %g\n"
 	    "-- silodir \"%s\"\n"
 	    "-- checkpointdir \"%s\"\n"
 	    "-- seed %d\n",
@@ -646,9 +674,6 @@ void get_parameters(char *infile, hydro_params *p)
 	    p->silointerval, p->silosliceinterval, p->checkpointinterval,
 	    p->uetcstart,
 	    p->bubbles, p->scale,
-	    p->initnorm,
-            p->initcutoff,
-            p->initlength,
 	    p->silodir,
 	    p->checkpointdir,
 	    p->seed);

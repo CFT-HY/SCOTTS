@@ -4,36 +4,38 @@
 # Note that if the simulation is checkpointed and restarts the cumulative
 # number of timesteps is counted, so 'steps' would (for example) need to
 # be increased if you wanted to run for longer.
-Lx      12
-Ly	12
-Lz	12
-steps  50
+Lx      40
+Ly	40
+Lz      40
+steps  1000
 
 # How big the simulation is: lattice spacing and timestep
-dx     1.0
-dt     0.1
+dx     2.0
+dt     0.2
  
 # Viscosity terms. Cav is the artificial viscosity
 # and is not currently used. C is the 'eta' term that
 # takes energy out of the field and into the fluid.
-# C = 0.93 gives vW = 0.44 with the new parameters
+# C = 0.63 gives vW = 0.44 with the code path.
 Cav    0.0
-C      3.608
+C      0.63
 
-# Example potential parameters (weak case, dimensionless eta).
-alpha 0.150797454
-gamma 0.0658749237857
-lambda 0.019805125
+# Example potential parameters (int BAG case, dimensionful eta).
+alpha 0.167705098312
+gamma 0.0427050983125
+lambda 0.0731762745781
+
+#Not used for BAG model
 T0 0.70710678118654757
 
 # Tconst is the initial temperature everywhere.
 # NB: cooling is faked by nucleating ready-made bubbles.
-Tconst 0.7577
+Tconst 0.44538722
 
 # How often to write data. "interval" is how often to write a line of
 # global quantities to output_fname, and do any FFTs/power spectra that are
 # compiled in. 
-interval 10
+interval 100
 
 # "silointerval" is the interval for writing visualisation data;
 # if it is 0 or -1 then nothing is done
@@ -42,24 +44,23 @@ silointerval -1
 # "silosliceinterval" is the inteval for writing a *slice* of data for
 # visualisation, the slice is taken at the x-coordinate given by
 # "siloslicecoord"
-silosliceinterval -1
+silosliceinterval 250
 siloslicecoord 0
 
 # Power spectra measurements. How often to write FFT's (i.e. field, fluid
 # velocity, and GW power spectra) - set to -1 to disable.
-fftinterval -1
+fftinterval 100
 # .. and when to start writing UETC's
-uetcstart -1
+uetcstart 500
 
 
 # Initial conditions; choices are "shocktube", "bubble" and "initps"; only
 # "bubble" should be currently used.
 initial bubble
 
-# If "initps" is used, we need to set some extra parameters
-initnorm -1
-initcutoff -1
-initlength -1
+# Initps input files and options, unused if initial is not initps.
+initpsfile initial.txt div
+initpsbins 200
 
 # How many bubbles to start off with. May be zero.
 bubbles 1

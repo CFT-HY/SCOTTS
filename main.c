@@ -52,9 +52,16 @@ int main(int argc, char *argv[]) {
   // Parse parameters from the filename specified on the command line
   get_parameters(argv[1], &p);
 
-
-  // Seed - make sure everyone gets the same one (if necessary)
-  srandom(p.seed);
+    // Seed - for initps, each core throws independent random numbers
+    if(p.initial==INIT_PS){
+        srandom(p.seed + p.rank);
+        srand48(p.seed + p.rank);
+    }
+    // Seed - make sure everyone gets the same one (if necessary)
+    else {
+        srandom(p.seed);
+        srand48(p.seed);
+    }
 
   // How big is the system
   p.N = p.Lx*p.Ly*p.Lz;
@@ -162,31 +169,28 @@ int main(int argc, char *argv[]) {
       printf0(p, "- Zeroed fields.\n");
 
       if(p.initial==INIT_PS){
-#if defined (FFT) && ! defined(SCALAR)
-          // If initial is INIT_PS then initialise velocity power spec.
-          // Then no bubbles nucleated.
+#if defined (FFT) && (BAG) && ! defined(SCALAR)
+      // If initial is INIT_PS then initialise velocity power spec.
+      // Then no bubbles nucleated.
+      start=clock();
+      initial_blank(f,p);
+      init_ps(f, p, f.U);
 
-          initial_blank(f,p);
-          init_ps(f, p, f.Z);
-          norm_power(f, p, f.Z);
+      end=clock();
 
-          /*
-            memcpy(f.V[0][0][0], f.U[0][0][0], (p.slicex+2)*(p.slicey+2)
-            *(p.Lz)*sizeof(float));
-            memcpy(f.V[1][0][0], f.U[1][0][0], (p.slicex+2)*(p.slicey+2)
-            *(p.Lz)*sizeof(float));
-            memcpy(f.V[2][0][0], f.U[2][0][0], (p.slicex+2)*(p.slicey+2)
-            *(p.Lz)*sizeof(float));
-            */
-          // init_ps(f, p, f.V);
-          //    init_ps(f, p, f.Z);
+      if(!p.rank){
+	fprintf(stderr,"Init ps initialisation took %lf\n",
+		((float) (end - start)) / CLOCKS_PER_SEC);
+      }
+
 #else
 
-          printf0(p,"INIT_PS initial conditions invalid with SCALAR compiler flag."
+          printf0(p,"INIT_PS initial conditions require FFT and BAG flags,"
+                  " invalid with SCALAR flag."
                   " Exiting... \n");
           die(100);
 
-#endif // FFT && !SCALAR
+#endif // FFT && BAG && !SCALAR
 
 
       } else if(p.initial==INIT_BUBBLE){

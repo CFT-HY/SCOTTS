@@ -325,6 +325,15 @@ void histo_field(float ***field, hydro_params p, int step) {
 
   float df = (overall_max - overall_min)/((float)nbins);
 
+  if(isnan(df)) {
+    printf0(p, "Max: %lf, Min: %lf, df: %lf\n",
+	    overall_max, overall_min, df);
+    printf0(p, "Not doing histogram: bin width not a number\n");
+
+    return;
+  }
+
+
   if(fabs(df) < 0.001) {
     printf0(p, "Max: %lf, Min: %lf, df: %lf\n",
 	    overall_max, overall_min, df);
