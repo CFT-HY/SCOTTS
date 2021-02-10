@@ -25,7 +25,7 @@ LIBS := -lfftw3f_mpi -lfftw3f
 OBJECTS := main.o evolve.o potential.o energy.o eos.o transport.o	\
 	initial.o output.o parameters.o util.o papi.o comms.o		\
 	fft_func.o alloc.o scalarps.o tensorps.o vectorps.o		\
-	checkpoint.o projectors.o uetc.o initps.o 
+	checkpoint.o projectors.o uetc.o initps.o
 
 
 BINARY := run/hydro

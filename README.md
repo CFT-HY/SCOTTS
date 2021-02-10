@@ -162,6 +162,47 @@ appears to have good energy conservation.
 -# Advection of \f$E\f$ and \f$ Z \f$ [advect_E() & advect_Z()]
 -# Find temperature again [find_Ta()]
 
+## Initial conditions with a given power spectrum INITPS
+
+To launch a simulation with a random gaussian velocity field following a given power spectrum
+\f[
+\frac{\mathrm{d} \langle U^2 \rangle}{\mathrm{d}\ln k}
+\f].
+
+Requirements :
+- `-DFFT` flag in the Makefile, compile with support for FFTs
+- `-DBAG` flag in the Makefile, compiles with the bag model equation of state.
+- `initial initps` in the initialization file to enable initps
+- `initpsfile initial.txt div` to specify the type of initial conditions. `initial.txt` is the location of the input power spectrum. `div`(resp. `rot`, `all`) stands for longitudinal (resp. vortical, non-projected) initial conditions
+- `initpsbins 200` the number of points in the power spectrum
+
+### Mock input spectrum
+
+`init_file.py` is a Python3 file to mock input power spectrum.
+It produces power spectra according to the formula :
+
+\f[\frac{{\rm d} \langle v^2 \rangle}{{\rm d} \ln k} =
+C \frac{k^p}{(k_{peak}^s + k^s)^{(q-p)/s}} \exp\left(-\frac{k}{k_{max}}\right)\f]
+
+with parameters
+- `RMS_VELOCITY`: float
+    Root mean square velocity of the fluid
+- `IR_SLOPE`: float
+    Slope of the power spectrum in the infrared, $p$ in the formula
+- `UV_SLOPE`: float
+    Slope of the power spectrum in the ultraviolet, $q$ in the formula
+- `SKEW`: float
+    Parameter $s$ in the formula
+- `K_MAX`: float
+    Wavenumber associated with the ultraviolet cutoff
+- `LATTICE_SIZE`: int
+    Number of lattice sites in one direction (assumes Lx == Ly == Lz)
+- `LATTICE_SPACING`: float
+    Size of a given lattice site
+- `CUTOFF`: float
+    Hard cutoff, just in case
+
+It relies on the libraries `numpy` and `scipy`.
 
 ## Compilation
 
@@ -183,8 +224,6 @@ FFTW.
 * `-DFFT`: compile with FFT support for power spectra (and initial
   conditions).
 
-* `-DINITPS`: compile with an initial power spectrum (requires
-  `-DFFT`).
 
 * `-DUSE_MPI`: compile with MPI support (necessary for parallelisation).
 
@@ -196,4 +235,4 @@ damping couplings.
 * `-DBAG` : Use bag model for equation of state/potential instead of
 EIKR formalism.
 
-* `-DVANLEER` Use Van Leer advection insted of donor cell.
+* `-DVANLEER` Use Van Leer advection instead of donor cell.

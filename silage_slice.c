@@ -5,7 +5,7 @@
  * Slicing is done through a specified x coordinate, typically at
  * `x=p.siloslicecoord` where `p.siloslicecoord` is specified in the
  * input file.
- * 
+ *
  * write_silo_slice_step() makes a silo file containing a slice
  * of the scalar field phi and the kinetic energy density. It calls make_kinetic()
  * to populate an array with the kinetic energy density and make_slice() to create
@@ -28,14 +28,14 @@ void make_kinetic(hydro_fields f, hydro_params p, float ***temp) {
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
-	
+
 	temp[x][y][z] = f.kappa[x][y][z]*(f.E[x][y][z]/f.W[x][y][z])
           *(f.W[x][y][z]*f.W[x][y][z]-1.0)*vol;
-        
+
       }
     }
   }
-  
+
   halo_field(temp, p);
 }
 
@@ -87,7 +87,7 @@ void make_vort(hydro_fields f, hydro_params p, float ****temp){
   halo_field(temp[1], p);
   halo_field(temp[2], p);
 
-  
+
 }
 
 /** Make divergence of velocity field.
@@ -107,7 +107,7 @@ void make_divV(hydro_fields f, hydro_params p, float ***temp){
     halo_field(temp, p);
 }
 
-/** Make curl of temperature current i.e (curl J) with 
+/** Make curl of temperature current i.e (curl J) with
  * \f$ J^{i} = TU \f$.
  */
 void make_curlJ(hydro_fields f, hydro_params p, float ****temp){
@@ -211,18 +211,18 @@ void make_vel(hydro_fields f, hydro_params p, float ***temp) {
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
-   
+
 	temp[x][y][z] = sqrt(0.25*((f.V[0][x][y][z] + f.V[0][x+1][y][z])
-				   *(f.V[0][x][y][z] + f.V[0][x+1][y][z])	  
+				   *(f.V[0][x][y][z] + f.V[0][x+1][y][z])
 				   + (f.V[1][x][y][z] + f.V[1][x][y+1][z])
 				   *(f.V[1][x][y][z] + f.V[1][x][y+1][z])
 				   + (f.V[2][x][y][z] + f.V[2][x][y][z+1])
 				   *(f.V[2][x][y][z] + f.V[2][x][y][z+1])));
-        
+
       }
     }
   }
-  
+
   halo_field(temp, p);
 }
 
@@ -237,15 +237,15 @@ void make_Z(hydro_fields f, hydro_params p, float ***temp) {
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
-   
+
    temp[x][y][z] = sqrt(f.Z[0][x][y][z]*f.Z[0][x][y][z]
                 + f.Z[1][x][y][z]*f.Z[1][x][y][z]
                 + f.Z[2][x][y][z]*f.Z[2][x][y][z]);
-        
+
       }
     }
   }
-  
+
   halo_field(temp, p);
 }
 
@@ -254,36 +254,36 @@ void make_Z(hydro_fields f, hydro_params p, float ***temp) {
 
 /** Populate an array with a scalar quantity in a slice through `temp`.
  *
- * This function takes a 3 dimensional array `temp` 
+ * This function takes a 3 dimensional array `temp`
  * which contains a quanitity defined over the simulation box
- * and populates the 1 dimensional array `slice` with a slice through 
+ * and populates the 1 dimensional array `slice` with a slice through
  * `x=xcoord`.
- * 
- * Only processors containing the coordinate `x=xcoord`
- * will participate in this. 
  *
- * First the 1 dimensional array `trim` is populated with the data on 
+ * Only processors containing the coordinate `x=xcoord`
+ * will participate in this.
+ *
+ * First the 1 dimensional array `trim` is populated with the data on
  * the local slice. The size of trim is `p.slicey*p.Lz`, and it increases
  * first in `z` and then in `y`.
  *
- * Then the array slice is populated on the rank 0 processor 
- * with `trim` from the other processors. 
- * The size of `slice` is `p.Lz*p.Ly` and it increases first in `z` 
+ * Then the array slice is populated on the rank 0 processor
+ * with `trim` from the other processors.
+ * The size of `slice` is `p.Lz*p.Ly` and it increases first in `z`
  * and then in `y`.
- * 
+ *
  *
  */
 
 void make_slice(hydro_fields f, hydro_params p, int xcoord, float *slice, float ***temp)
 {
 
-  
+
   int x, y, z;
 
   x=xcoord;
-  
+
   float *trim = (float *)malloc(p.slicey*p.Lz*sizeof(float));
-  
+
   if(x/p.slicex == p.myposx){
     int localx=x%p.slicex+1;
     for(y=1; y<=p.slicey; y++) {
@@ -358,7 +358,7 @@ void make_slice(hydro_fields f, hydro_params p, int xcoord, float *slice, float 
 void write_silo_slice_step(hydro_fields f, hydro_params p, int step, int xcoord)
 {
 
-  
+
   int x, y, z, i;
 
 
@@ -373,7 +373,7 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step, int xcoord)
 
     /* Create a unique filename for the new Silo file */
     char filename[600];
-    sprintf(filename, "%s/slice-%06d.silo", p.silodir, step);  
+    sprintf(filename, "%s/slice-%06d.silo", p.silodir, step);
     fprintf(stderr,"Writing SLICE to %s\n",filename);
 
     dbfile = DBCreate(filename, DB_CLOBBER, DB_LOCAL,
@@ -421,7 +421,7 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step, int xcoord)
   float *slice = (float *)malloc(p.Ly*p.Lz*sizeof(float));
 
 #ifndef SCALAR
-  
+
   make_kinetic(f, p, temp);
 
   make_slice(f, p, xcoord, slice, temp);
@@ -429,7 +429,7 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step, int xcoord)
   if(!p.rank){
     fprintf(stderr,"Slice coord x=%d\n",xcoord);
   }
-  
+
   //// write kinetic slice ///
 
 
@@ -441,12 +441,12 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step, int xcoord)
 
 
   //// prepare fluid velocity ////
-  
+
   make_vel(f, p, temp);
 
   make_slice(f, p, xcoord, slice, temp);
 
-  
+
   //// write fluid velocity slice ///
 
 
@@ -458,7 +458,7 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step, int xcoord)
 
   //// prepare Z magnitude slice ////
 
-  
+
   make_Z(f, p, temp);
 
   make_slice(f, p, xcoord, slice, temp);
@@ -472,7 +472,7 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step, int xcoord)
 
 
   //// prepare divV slice
-  
+
   make_divV(f, p, temp);
 
   make_slice(f, p, xcoord, slice, temp);
@@ -485,7 +485,7 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step, int xcoord)
   }
 
   //// prepare divJ slice
-  
+
   make_divJ(f, p, temp);
 
   make_slice(f, p, xcoord, slice, temp);
@@ -496,12 +496,11 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step, int xcoord)
     DBPutQuadvar1(dbfile, "divJ", "quadmesh", slice, meshsize, 2,
          NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
   }
-  
+
   free_field(p, temp);
 
   //// Write all vel components slice:
-  
-  /*
+
   // Vx slice
   make_slice(f, p, xcoord, slice, f.V[0]);
   if(!p.rank) {
@@ -545,14 +544,13 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step, int xcoord)
     DBPutQuadvar1(dbfile, "Zz", "quadmesh", slice, meshsize, 2,
 		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
   }
-  */
 
 
   float ****temp_vec = make_vector(p);
 
   //// Write all vorticity (vort) components slice:
 
-  
+
   make_vort(f, p, temp_vec);
 
   // vortx slice
@@ -576,10 +574,10 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step, int xcoord)
 		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
   }
 
-  
+
   //// Write all curl of temperature current (curl J) components slice:
 
-  
+
   make_curlJ(f, p, temp_vec);
 
   // curlJx slice
@@ -603,13 +601,13 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step, int xcoord)
 		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
   }
 
-  
+
   free_vector(p, temp_vec);
 
 
 
-  
-  
+
+
   //// make T slice ///
 
   make_slice(f, p, xcoord, slice, f.T);
@@ -622,7 +620,7 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step, int xcoord)
 		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
   }
 
-  
+
   //// make E slice ///
 
   make_slice(f, p, xcoord, slice, f.E);
@@ -635,10 +633,10 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step, int xcoord)
 		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
   }
 
-  
-  
+
+
 #endif // !SCALAR
-  
+
   //// make phi slice ///
 
   make_slice(f, p, xcoord, slice, f.phi);
@@ -651,9 +649,9 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step, int xcoord)
 		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
   }
 
-  
+
   free(slice);
- 
+
 
 
   if(!p.rank) {
@@ -667,9 +665,8 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step, int xcoord)
 
 
 
-}  
-  
+}
+
 
 
 #endif // SILO
-

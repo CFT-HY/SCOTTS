@@ -21,6 +21,11 @@ void histogram(hydro_params p, float *slice, char *filename,
 	       int slab, int x_start) {
   // The rest proceeds as in gw.c
 
+
+  MPI_Barrier(MPI_COMM_WORLD);
+  if(!p.rank)
+    fprintf(stderr,"Enter histogram\n");
+
   int i, x, y, z;
 
   float kmode;
@@ -42,6 +47,10 @@ void histogram(hydro_params p, float *slice, char *filename,
   int whichbin;
 
   int true_x, true_y, true_z;
+
+  MPI_Barrier(MPI_COMM_WORLD);
+  if(!p.rank)
+    fprintf(stderr,"Start binning process (bins %d)\n", nbins);
 
 
   for(x=0;x<slab;x++) {
@@ -68,11 +77,21 @@ void histogram(hydro_params p, float *slice, char *filename,
 	else
           true_z = z;
 
-	kmode = sqrt(
-		     ((float)(true_x*true_x))/((float)(p.Lx*p.Lx))
-		      + ((float)(true_y*true_y))/((float)(p.Ly*p.Ly))
-		      + ((float)(true_z*true_z))/((float)(p.Lz*p.Lz))
-		     )*2.0*M_PI;
+    float kx,ky,kz;
+    // kx = sqrt((2.0 - 2.0*cos(((float)(true_x))*2.0*M_PI/(((float)p.Lx)))));
+    // ky = sqrt((2.0 - 2.0*cos(((float)(true_y))*2.0*M_PI/(((float)p.Ly)))));
+    // kz = sqrt((2.0 - 2.0*cos(((float)(true_z))*2.0*M_PI/(((float)p.Lz)))));
+    kx = 2.0*sin(((float)(true_x))*M_PI/(((float)p.Lx)));
+    ky = 2.0*sin(((float)(true_y))*M_PI/(((float)p.Ly)));
+    kz = 2.0*sin(((float)(true_z))*M_PI/(((float)p.Lz)));
+
+    kmode = sqrt(kx*kx+ky*ky+kz*kz);
+
+	// kmode = sqrt(
+	// 	     ((float)(true_x*true_x))/((float)(p.Lx*p.Lx))
+	// 	      + ((float)(true_y*true_y))/((float)(p.Ly*p.Ly))
+	// 	      + ((float)(true_z*true_z))/((float)(p.Lz*p.Lz))
+	// 	     )*2.0*M_PI;
 
 	whichbin = (int)floor(kmode/dk);
 	bins[whichbin] += slice[x*p.Ly*p.Lz + y*p.Lz + z];
@@ -82,18 +101,27 @@ void histogram(hydro_params p, float *slice, char *filename,
     }
   }
 
+  MPI_Barrier(MPI_COMM_WORLD);
+  if(!p.rank)
+    fprintf(stderr,"Got through binning process (bins %d)\n", nbins);
+
 
   float red_value;
   int red_count;
 
   for(i=0;i<nbins;i++) {
-
     red_value = reduce_sum(bins[i], p);
     red_count = reduce_sum_int(counts[i], p);
 
     bins[i] = red_value;
     counts[i] = red_count;
+
   }
+
+  MPI_Barrier(MPI_COMM_WORLD);
+  if(!p.rank)
+    fprintf(stderr,"Got through bin reduction\n");
+
 
 
   float thisk = dk/2.0;
