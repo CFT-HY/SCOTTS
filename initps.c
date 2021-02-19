@@ -36,7 +36,7 @@ void debug_write_power(hydro_params p, fftwf_complex **in, ptrdiff_t x_start, pt
   int x, y, z;
   int i, j;
   int true_x, true_y, true_z;
-  float kx, ky, kz;
+  float kxlat, kylat, kzlat;
 
   char fftdest[200];
 
@@ -74,9 +74,10 @@ void debug_write_power(hydro_params p, fftwf_complex **in, ptrdiff_t x_start, pt
 	  true_z = z;
 	}
 	/*
-	kx = 2.0*sin(((float)(true_x))*M_PI/(((float)p.Lx)))/p.dx;
-	ky = 2.0*sin(((float)(true_y))*M_PI/(((float)p.Ly)))/p.dx;
-	kz = 2.0*sin(((float)(true_z))*M_PI/(((float)p.Lz)))/p.dx;
+	// Use lattice derivative in momentum space for projection.
+	kxlat = 2.0*sin(((float)(true_x))*M_PI/(((float)p.Lx)))/p.dx;
+	kylat = 2.0*sin(((float)(true_y))*M_PI/(((float)p.Ly)))/p.dx;
+	kzlat = 2.0*sin(((float)(true_z))*M_PI/(((float)p.Lz)))/p.dx;
 	*/
 	// product[x*p.Ly*p.Lz + y*p.Lz + z] = 0.0;
 	// product_div[x*p.Ly*p.Lz + y*p.Lz + z] = 0.0;
@@ -98,21 +99,21 @@ void debug_write_power(hydro_params p, fftwf_complex **in, ptrdiff_t x_start, pt
 	    for(j=1; j<=3; j++) {
 
 	    // Transverse components
-	    res_r += proj(i*10 + j, kx, ky, kz)
+	    res_r += proj(i*10 + j, kxlat, kylat, kzlat)
 	    *in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-	    res_i += proj(i*10 + j, kx, ky, kz)
+	    res_i += proj(i*10 + j, kxlat, kylat, kzlat)
 	    *in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 
 	    // And longitudinal...
 	    if(i == j) {
-	    resid_r += (1.0 - proj(i*10 + j, kx, ky, kz))
+	    resid_r += (1.0 - proj(i*10 + j, kxlat, kylat, kzlat))
 	    *in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-	    resid_i += (1.0 - proj(i*10 + j, kx, ky, kz))
+	    resid_i += (1.0 - proj(i*10 + j, kxlat, kylat, kzlat))
 	    *in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 	    } else {
-	    resid_r += (-1.0*proj(i*10 + j, kx, ky, kz))
+	    resid_r += (-1.0*proj(i*10 + j, kxlat, kylat, kzlat))
 	    *in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-	    resid_i += (-1.0*proj(i*10 + j, kx, ky, kz))
+	    resid_i += (-1.0*proj(i*10 + j, kxlat, kylat, kzlat))
 	    *in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 	    }
 	    }
@@ -392,7 +393,8 @@ void init_energy(hydro_params p, hydro_fields f, ptrdiff_t x_start, ptrdiff_t x_
 					    in, out, MPI_COMM_WORLD,
 					    FFTW_FORWARD, FFTW_ESTIMATE);
 
-    float kx,ky,kz,kmode,ksq;
+    float kx,ky,kz,ksq;
+    float kxlat,kylat,kzlat,kmodelat;
     int true_x, true_y, true_z;
     fftwf_complex kiVki, vec_i;
     int nx = p.Lx/p.slicex;
@@ -421,31 +423,41 @@ void init_energy(hydro_params p, hydro_fields f, ptrdiff_t x_start, ptrdiff_t x_
 	    true_z = z;
 	  }
 
-	  kx = 2.0*sin(((float)(true_x))*M_PI/(((float)p.Lx)))/p.dx;
-	  ky = 2.0*sin(((float)(true_y))*M_PI/(((float)p.Ly)))/p.dx;
-	  kz = 2.0*sin(((float)(true_z))*M_PI/(((float)p.Lz)))/p.dx;
+	  // Use k site momenta for binning
+	  kx = 2.0*M_PI*(float)(true_x)/((float)(p.Lx)*p.dx);
+	  ky = 2.0*M_PI*(float)(true_y)/((float)(p.Ly)*p.dx);
+	  kz = 2.0*M_PI*(float)(true_z)/((float)(p.Lz)*p.dx);
+					 
 
-	  kmode = sqrt(kx*kx+ky*ky+kz*kz);
-	  ksq = kx*kx+ky*ky+kz*kz;
+	  ksq = (kx*kx + ky*ky + kz*kz);
+
+
+	  // Use lattice derivative representation for spatial derivatives in
+	  // momentum space.
+	  kxlat = 2.0*sin(((float)(true_x))*M_PI/(((float)p.Lx)))/p.dx;
+	  kylat = 2.0*sin(((float)(true_y))*M_PI/(((float)p.Ly)))/p.dx;
+	  kzlat = 2.0*sin(((float)(true_z))*M_PI/(((float)p.Lz)))/p.dx;
+
+	  kmodelat = sqrt(kxlat*kxlat + kylat*kylat + kzlat*kzlat);
 
 	  /*
 	   * Draws a gaussian random number with variance given by the
 	   * interpolated spectrum
 	   */
 	  spectrum_interp(ksq, p,&(vec_i),k_bins, pow_bins, p.initpsbins);
-	  kiVki[0] = kx * vec_i[0];
-	  kiVki[1] = kx * vec_i[1];
+	  kiVki[0] = kxlat * vec_i[0];
+	  kiVki[1] = kxlat * vec_i[1];
 	  spectrum_interp(ksq, p,&(vec_i),k_bins, pow_bins, p.initpsbins);
-	  kiVki[0] += ky * vec_i[0];
-	  kiVki[1] += ky * vec_i[1];
+	  kiVki[0] += kylat * vec_i[0];
+	  kiVki[1] += kylat * vec_i[1];
 	  spectrum_interp(ksq, p,&(vec_i),k_bins, pow_bins, p.initpsbins);
-	  kiVki[0] += kz * vec_i[0];
-	  kiVki[1] += kz * vec_i[1];
+	  kiVki[0] += kzlat * vec_i[0];
+	  kiVki[1] += kzlat * vec_i[1];
 
-	  if (kmode != 0){
+	  if (kmodelat != 0){
 	    // in corresponds to lambda in the attached notes
-	    in[(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0] = 4 / sqrt(3) * kiVki[1] / kmode;
-	    in[(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] = - 4 / sqrt(3) * kiVki[0] / kmode;
+	    in[(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0] = 4 / sqrt(3) * kiVki[1] / kmodelat;
+	    in[(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] = - 4 / sqrt(3) * kiVki[0] / kmodelat;
 
 	  }
 
@@ -652,7 +664,7 @@ void init_energy(hydro_params p, hydro_fields f, ptrdiff_t x_start, ptrdiff_t x_
 void project_down(hydro_params p, fftwf_complex **in, int shift_x, int x_thickness, int times) {
 
   int x, y, z;
-  float kx, ky, kz;
+  float kxlat, kylat, kzlat;
   float in_proj_re[3];
   float in_proj_im[3];
   float res_re, res_im;
@@ -713,9 +725,10 @@ void project_down(hydro_params p, fftwf_complex **in, int shift_x, int x_thickne
 	    true_z = z;
 	  }
 
-	  kx = 2.0*sin(((float)(true_x))*M_PI/(((float)p.Lx)))/p.dx;
-	  ky = 2.0*sin(((float)(true_y))*M_PI/(((float)p.Ly)))/p.dx;
-	  kz = 2.0*sin(((float)(true_z))*M_PI/(((float)p.Lz)))/p.dx;
+	  // Use lattice derivative momentum for projecting.
+	  kxlat = 2.0*sin(((float)(true_x))*M_PI/(((float)p.Lx)))/p.dx;
+	  kylat = 2.0*sin(((float)(true_y))*M_PI/(((float)p.Ly)))/p.dx;
+	  kzlat = 2.0*sin(((float)(true_z))*M_PI/(((float)p.Lz)))/p.dx;
 
 	  in_proj_re[0] = 0.0;
 	  in_proj_re[1] = 0.0;
@@ -741,20 +754,20 @@ void project_down(hydro_params p, fftwf_complex **in, int shift_x, int x_thickne
 		  // v_i^\perp = P_{ij} v_j
 		  // where P_{ij} = \delta_{ij} - \hat{k}_i \hat{k}_j
 		  // and $\hat{k}$ is a unit vector in the $k$ direction.
-		  in_proj_re[i-1] += proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-		  in_proj_im[i-1] += proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+		  in_proj_re[i-1] += proj(i*10 + j, kxlat, kylat, kzlat)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+		  in_proj_im[i-1] += proj(i*10 + j, kxlat, kylat, kzlat)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 
 
 		  // this is delta_{ij} - P_{ij}V_j
 		  // TODO : This if-statement could be replaced with a simpler
-		  // res_re += ((i==j)-proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-		  // res_rm += ((i==j)-proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+		  // res_re += ((i==j)-proj(i*10 + j, kxlat, kylat, kzlat))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+		  // res_rm += ((i==j)-proj(i*10 + j, kxlat, kylat, kzlat))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 		  if(i == j) {
-		    res_re += (1.0-proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-		    res_im += (1.0-proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+		    res_re += (1.0-proj(i*10 + j, kxlat, kylat, kzlat))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+		    res_im += (1.0-proj(i*10 + j, kxlat, kylat, kzlat))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 		  } else {
-		    res_re += (-1.0*proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-		    res_im += (-1.0*proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+		    res_re += (-1.0*proj(i*10 + j, kxlat, kylat, kzlat))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+		    res_im += (-1.0*proj(i*10 + j, kxlat, kylat, kzlat))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 		  }
 
 
@@ -763,16 +776,16 @@ void project_down(hydro_params p, fftwf_complex **in, int shift_x, int x_thickne
 		  // Div?
 		  // v_i^\parallel = (\delta_{ij} - P_{ij}) v_j
 		  if(i == j) {
-		    in_proj_re[i-1] += (1.0-proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-		    in_proj_im[i-1] += (1.0-proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+		    in_proj_re[i-1] += (1.0-proj(i*10 + j, kxlat, kylat, kzlat))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+		    in_proj_im[i-1] += (1.0-proj(i*10 + j, kxlat, kylat, kzlat))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 		  } else {
-		    in_proj_re[i-1] += (-1.0*proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-		    in_proj_im[i-1] += (-1.0*proj(i*10 + j, kx, ky, kz))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+		    in_proj_re[i-1] += (-1.0*proj(i*10 + j, kxlat, kylat, kzlat))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+		    in_proj_im[i-1] += (-1.0*proj(i*10 + j, kxlat, kylat, kzlat))*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 		  }
 		  // #endif
 
-		  res_re += proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-		  res_im += proj(i*10 + j, kx, ky, kz)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
+		  res_re += proj(i*10 + j, kxlat, kylat, kzlat)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
+		  res_im += proj(i*10 + j, kxlat, kylat, kzlat)*in[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 
 		}
 
@@ -1025,6 +1038,7 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 
 
   float ksq;
+  float kx, ky, kz;
   int true_x, true_y, true_z;
   // Different values for the wave-vector
   float *k_bins = (float *)malloc(p.initpsbins*sizeof(float));
@@ -1123,11 +1137,14 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 	  true_z = z;
 	}
 
-	// Computes the magnitude of the wavevector on site (x, y, z)
-	ksq  = (2.0 - 2.0*cos(((float)true_x)*2.0*M_PI/(((float)p.Lx))))/(p.dx*p.dx);
-	ksq += (2.0 - 2.0*cos(((float)true_y)*2.0*M_PI/(((float)p.Ly))))/(p.dx*p.dx);
-	ksq += (2.0 - 2.0*cos(((float)true_z)*2.0*M_PI/(((float)p.Lz))))/(p.dx*p.dx);
 
+	// Use lattice site momenta for binning
+	kx = 2.0*M_PI*(float)(true_x)/((float)(p.Lx)*p.dx);
+	ky = 2.0*M_PI*(float)(true_y)/((float)(p.Ly)*p.dx);
+	kz = 2.0*M_PI*(float)(true_z)/((float)(p.Lz)*p.dx);
+					 
+
+	ksq = (kx*kx + ky*ky + kz*kz);
 
 	for(i=0; i<3; i++) {
 	  /*
