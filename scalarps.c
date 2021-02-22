@@ -123,7 +123,7 @@ void scalarps(hydro_params p, fftwf_complex *field, int step, char *label) {
     red_count = reduce_sum_int(counts[i], p);
 
     // Do normalisation here because we don't do it during fft_scalar...
-    bins[i] = red_value/(fft_norm*fft_norm);
+    bins[i] = red_value*(fft_norm*fft_norm);
     counts[i] = red_count;
   }
 
