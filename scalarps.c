@@ -92,6 +92,8 @@ void scalarps(hydro_params p, fftwf_complex *field, int step, char *label) {
 	else
           true_z = z;
 
+
+	// For binning we use momentum space index
         kmode = sqrt(
                      ((float)(true_x*true_x))/((float)(p.Lx*p.Lx))
                      + ((float)(true_y*true_y))/((float)(p.Ly*p.Ly))
@@ -121,7 +123,7 @@ void scalarps(hydro_params p, fftwf_complex *field, int step, char *label) {
     red_count = reduce_sum_int(counts[i], p);
 
     // Do normalisation here because we don't do it during fft_scalar...
-    bins[i] = red_value/(fft_norm*fft_norm);
+    bins[i] = red_value*(fft_norm*fft_norm);
     counts[i] = red_count;
   }
 

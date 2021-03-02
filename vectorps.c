@@ -77,26 +77,17 @@ void histogram(hydro_params p, float *slice, char *filename,
 	else
           true_z = z;
 
-    float kx,ky,kz;
-    // kx = sqrt((2.0 - 2.0*cos(((float)(true_x))*2.0*M_PI/(((float)p.Lx)))));
-    // ky = sqrt((2.0 - 2.0*cos(((float)(true_y))*2.0*M_PI/(((float)p.Ly)))));
-    // kz = sqrt((2.0 - 2.0*cos(((float)(true_z))*2.0*M_PI/(((float)p.Lz)))));
-    kx = 2.0*sin(((float)(true_x))*M_PI/(((float)p.Lx)));
-    ky = 2.0*sin(((float)(true_y))*M_PI/(((float)p.Ly)));
-    kz = 2.0*sin(((float)(true_z))*M_PI/(((float)p.Lz)));
-
-    kmode = sqrt(kx*kx+ky*ky+kz*kz);
-
-	// kmode = sqrt(
-	// 	     ((float)(true_x*true_x))/((float)(p.Lx*p.Lx))
-	// 	      + ((float)(true_y*true_y))/((float)(p.Ly*p.Ly))
-	// 	      + ((float)(true_z*true_z))/((float)(p.Lz*p.Lz))
-	// 	     )*2.0*M_PI;
+	// For binning we use the momentum space index
+	kmode = sqrt(
+		     ((float)(true_x*true_x))/((float)(p.Lx*p.Lx))
+		     + ((float)(true_y*true_y))/((float)(p.Ly*p.Ly))
+		     + ((float)(true_z*true_z))/((float)(p.Lz*p.Lz))
+		     )*2.0*M_PI;
 
 	whichbin = (int)floor(kmode/dk);
 	bins[whichbin] += slice[x*p.Ly*p.Lz + y*p.Lz + z];
 	counts[whichbin]++;
-
+	
       }
     }
   }

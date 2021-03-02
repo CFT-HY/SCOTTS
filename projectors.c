@@ -200,55 +200,38 @@ void tens_proj(hydro_params p, int x_start, int slab,
 
   int i, j, l, m;
   int x, y, z;
-  float kx, ky, kz;
+  float kxlat, kylat, kzlat;
 
 
   int true_x, true_y, true_z;
-
-  float s_x, s_y, s_z;
 
   for(x=0; x<slab; x++) {
     for(y=0; y<p.Ly; y++) {
       for(z=0; z<p.Lz; z++) {
 
-        s_x = 1.0;
-	s_y = 1.0;
-	s_z = 1.0;
-
         if(x+x_start > p.Lx/2) {
           true_x = -(p.Lx - (x+x_start));
-          s_x = -1.0;
-	} else {
+        } else {
           true_x = x+x_start;
-	  s_x = 1.0;
-        }
+	}
 
         if(y > p.Ly/2) {
           true_y = -(p.Ly - y);
-          s_y = -1.0;
 	} else {
           true_y = y;
-          s_y = 1.0;
-        }
+	}
 
         if(z > p.Lz/2) {
           true_z = -(p.Lz - z);
-          s_z = -1.0;
 	} else {
           true_z = z;
-          s_z = 1.0;
 	}
 
-	/*
-	kx = ((float)(x+x_start))*2.0*M_PI/((float)p.Lx);
-	ky = ((float)y)*2.0*M_PI/((float)p.Ly);
-	kz = ((float)z)*2.0*M_PI/((float)p.Lz);
-	*/
 
-	kx = s_x*sqrt((2.0 - 2.0*cos(((float)(true_x))*2.0*M_PI/(((float)p.Lx))))/(p.dx*p.dx));
-	ky = s_y*sqrt((2.0 - 2.0*cos(((float)(true_y))*2.0*M_PI/(((float)p.Ly))))/(p.dx*p.dx));
-	kz = s_z*sqrt((2.0 - 2.0*cos(((float)(true_z))*2.0*M_PI/(((float)p.Lz))))/(p.dx*p.dx));
-
+	// Use lattice derivative momentum for projection.
+	kxlat = 2.0*sin(((float)(true_x))*M_PI/(((float)p.Lx)))/p.dx;
+	kylat = 2.0*sin(((float)(true_y))*M_PI/(((float)p.Ly)))/p.dx;
+	kzlat = 2.0*sin(((float)(true_z))*M_PI/(((float)p.Lz)))/p.dx;
 
 
 	product[x*p.Ly*p.Lz + y*p.Lz + z] = 0.0;
@@ -260,7 +243,7 @@ void tens_proj(hydro_params p, int x_start, int slab,
 	      for(m=1; m<=3; m++) {
 
 		product[x*p.Ly*p.Lz + y*p.Lz + z] +=
-		  lambda(i, j, l, m, kx, ky, kz)
+		  lambda(i, j, l, m, kxlat, kylat, kzlat)
 		  *(tensor[indexof(i,j)][x*p.Ly*p.Lz + y*p.Lz + z][0]
 		   *tensor[indexof(l,m)][x*p.Ly*p.Lz + y*p.Lz + z][0]
 		    + tensor[indexof(i,j)][x*p.Ly*p.Lz + y*p.Lz + z][1]
@@ -294,54 +277,37 @@ void uetc_tens_proj(hydro_params p, int x_start, int slab,
 
   int i, j, l, m;
   int x, y, z;
-  float kx, ky, kz;
+  float kxlat, kylat, kzlat;
 
   int true_x, true_y, true_z;
-
-  float s_x, s_y, s_z;
 
   for(x=0; x<slab; x++) {
     for(y=0; y<p.Ly; y++) {
       for(z=0; z<p.Lz; z++) {
 
-        s_x = 1.0;
-        s_y = 1.0;
-        s_z = 1.0;
-
         if(x+x_start > p.Lx/2) {
           true_x = -(p.Lx - (x+x_start));
-          s_x = -1.0;
         } else {
           true_x = x+x_start;
-          s_x = 1.0;
-        }
+	}
 
         if(y > p.Ly/2) {
           true_y = -(p.Ly - y);
-          s_y = -1.0;
-        } else {
+	} else {
           true_y = y;
-          s_y = 1.0;
-        }
+	}
 
         if(z > p.Lz/2) {
           true_z = -(p.Lz - z);
-          s_z = -1.0;
-        } else {
+	} else {
           true_z = z;
-          s_z = 1.0;
-        }
-
-	/*
-	kx = ((float)(x+x_start))*2.0*M_PI/((float)p.Lx);
-	ky = ((float)y)*2.0*M_PI/((float)p.Ly);
-	kz = ((float)z)*2.0*M_PI/((float)p.Lz);
-	*/
+	}
 
 
-        kx = s_x*sqrt((2.0 - 2.0*cos(((float)(true_x))*2.0*M_PI/(((float)p.Lx))))/(p.dx*p.dx));
-	ky = s_y*sqrt((2.0 - 2.0*cos(((float)(true_y))*2.0*M_PI/(((float)p.Ly))))/(p.dx*p.dx));
-	kz = s_z*sqrt((2.0 - 2.0*cos(((float)(true_z))*2.0*M_PI/(((float)p.Lz))))/(p.dx*p.dx));
+	// Use lattice derivative momentum for projection.
+	kxlat = 2.0*sin(((float)(true_x))*M_PI/(((float)p.Lx)))/p.dx;
+	kylat = 2.0*sin(((float)(true_y))*M_PI/(((float)p.Ly)))/p.dx;
+	kzlat = 2.0*sin(((float)(true_z))*M_PI/(((float)p.Lz)))/p.dx;
 
 	product_re[x*p.Ly*p.Lz + y*p.Lz + z] = 0.0;
 	product_im[x*p.Ly*p.Lz + y*p.Lz + z] = 0.0;
@@ -353,14 +319,14 @@ void uetc_tens_proj(hydro_params p, int x_start, int slab,
 	      for(m=1; m<=3; m++) {
 
 		product_re[x*p.Ly*p.Lz + y*p.Lz + z] +=
-		  lambda(i, j, l, m, kx, ky, kz)
+		  lambda(i, j, l, m, kxlat, kylat, kzlat)
 		  *(tensora[indexof(i,j)][x*p.Ly*p.Lz + y*p.Lz + z][0]
 		   *tensorb[indexof(l,m)][x*p.Ly*p.Lz + y*p.Lz + z][0]
 		    + tensora[indexof(i,j)][x*p.Ly*p.Lz + y*p.Lz + z][1]
 		    *tensorb[indexof(l,m)][x*p.Ly*p.Lz + y*p.Lz + z][1]);
 
 		product_im[x*p.Ly*p.Lz + y*p.Lz + z] +=
-		  lambda(i, j, l, m, kx, ky, kz)
+		  lambda(i, j, l, m, kxlat, kylat, kzlat)
 		  *(-tensora[indexof(i,j)][x*p.Ly*p.Lz + y*p.Lz + z][0]
 		   *tensorb[indexof(l,m)][x*p.Ly*p.Lz + y*p.Lz + z][1]
 		    + tensora[indexof(i,j)][x*p.Ly*p.Lz + y*p.Lz + z][1]
@@ -399,7 +365,7 @@ void split_vector(hydro_params p, int x_start, int slab,
 
   int i, j;
   int x, y, z;
-  float kx, ky, kz;
+  float kxlat, kylat, kzlat;
 
   float res_r, res_i;
   float resid_r, resid_i;
@@ -407,51 +373,33 @@ void split_vector(hydro_params p, int x_start, int slab,
 
   int true_x, true_y, true_z;
 
-  float s_x, s_y, s_z;
-
   for(x=0; x<slab; x++) {
     for(y=0; y<p.Ly; y++) {
       for(z=0; z<p.Lz; z++) {
 
-	s_x = 1.0;
-	s_y = 1.0;
-	s_z = 1.0;
-
         if(x+x_start > p.Lx/2) {
           true_x = -(p.Lx - (x+x_start));
-	  s_x = -1.0;
         } else {
           true_x = x+x_start;
-	  s_x = 1.0;
 	}
 
         if(y > p.Ly/2) {
           true_y = -(p.Ly - y);
-	  s_y = -1.0;
 	} else {
           true_y = y;
-	  s_y = 1.0;
 	}
 
         if(z > p.Lz/2) {
           true_z = -(p.Lz - z);
-	  s_z = -1.0;
 	} else {
           true_z = z;
-	  s_z = 1.0;
 	}
 
 
-        kx = s_x*sqrt((2.0 - 2.0*cos(((float)(true_x))*2.0*M_PI/(((float)p.Lx))))/(p.dx*p.dx));
-	ky = s_y*sqrt((2.0 - 2.0*cos(((float)(true_y))*2.0*M_PI/(((float)p.Ly))))/(p.dx*p.dx));
-        kz = s_z*sqrt((2.0 - 2.0*cos(((float)(true_z))*2.0*M_PI/(((float)p.Lz))))/(p.dx*p.dx));
-
-
-	/*
-	kx = ((float)true_x)*2.0*M_PI/((float)p.Lx);
-	ky = ((float)true_y)*2.0*M_PI/((float)p.Ly);
-	kz = ((float)true_z)*2.0*M_PI/((float)p.Lz);
-	*/
+	// Use lattice derivative momentum for projection.
+	kxlat = 2.0*sin(((float)(true_x))*M_PI/(((float)p.Lx)))/p.dx;
+	kylat = 2.0*sin(((float)(true_y))*M_PI/(((float)p.Ly)))/p.dx;
+	kzlat = 2.0*sin(((float)(true_z))*M_PI/(((float)p.Lz)))/p.dx;
 
         product_rot[x*p.Ly*p.Lz + y*p.Lz + z] = 0.0;
         product_div[x*p.Ly*p.Lz + y*p.Lz + z] = 0.0;
@@ -472,21 +420,21 @@ void split_vector(hydro_params p, int x_start, int slab,
           for(j=1; j<=3; j++) {
 
 	    // Transverse components
-	    res_r += proj(i*10 + j, kx, ky, kz)
+	    res_r += proj(i*10 + j, kxlat, kylat, kzlat)
 	      *vec[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-	    res_i += proj(i*10 + j, kx, ky, kz)
+	    res_i += proj(i*10 + j, kxlat, kylat, kzlat)
 	      *vec[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 
 	    // And longitudinal...
 	    if(i == j) {
-	    resid_r += (1.0 - proj(i*10 + j, kx, ky, kz))
+	    resid_r += (1.0 - proj(i*10 + j, kxlat, kylat, kzlat))
 	      *vec[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-	    resid_i += (1.0 - proj(i*10 + j, kx, ky, kz))
+	    resid_i += (1.0 - proj(i*10 + j, kxlat, kylat, kzlat))
 	      *vec[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 	    } else {
-	    resid_r += (-1.0*proj(i*10 + j, kx, ky, kz))
+	    resid_r += (-1.0*proj(i*10 + j, kxlat, kylat, kzlat))
 	      *vec[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0];
-	    resid_i += (-1.0*proj(i*10 + j, kx, ky, kz))
+	    resid_i += (-1.0*proj(i*10 + j, kxlat, kylat, kzlat))
 	      *vec[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1];
 	    }
 	  }
@@ -533,55 +481,37 @@ void uetc_split_vector(hydro_params p, int x_start, int slab,
 
   int i, j;
   int x, y, z;
-  float kx, ky, kz;
+  float kxlat, kylat, kzlat;
 
   int true_x, true_y, true_z;
-
-  float s_x, s_y, s_z;
 
   for(x=0; x<slab; x++) {
     for(y=0; y<p.Ly; y++) {
       for(z=0; z<p.Lz; z++) {
 
-	s_x = 1.0;
-	s_y = 1.0;
-	s_z = 1.0;
-
         if(x+x_start > p.Lx/2) {
           true_x = -(p.Lx - (x+x_start));
-	  s_x = -1.0;
         } else {
           true_x = x+x_start;
-	  s_x = 1.0;
 	}
 
         if(y > p.Ly/2) {
           true_y = -(p.Ly - y);
-	  s_y = -1.0;
 	} else {
           true_y = y;
-	  s_y = 1.0;
 	}
 
         if(z > p.Lz/2) {
           true_z = -(p.Lz - z);
-	  s_z = -1.0;
 	} else {
           true_z = z;
-	  s_z = 1.0;
 	}
 
 
-        kx = s_x*sqrt((2.0 - 2.0*cos(((float)(true_x))*2.0*M_PI/(((float)p.Lx))))/(p.dx*p.dx));
-	ky = s_y*sqrt((2.0 - 2.0*cos(((float)(true_y))*2.0*M_PI/(((float)p.Ly))))/(p.dx*p.dx));
-        kz = s_z*sqrt((2.0 - 2.0*cos(((float)(true_z))*2.0*M_PI/(((float)p.Lz))))/(p.dx*p.dx));
-
-
-	/*
-	kx = ((float)true_x)*2.0*M_PI/((float)p.Lx);
-	ky = ((float)true_y)*2.0*M_PI/((float)p.Ly);
-	kz = ((float)true_z)*2.0*M_PI/((float)p.Lz);
-	*/
+	// Use lattice derivative momentum for projection.
+	kxlat = 2.0*sin(((float)(true_x))*M_PI/(((float)p.Lx)))/p.dx;
+	kylat = 2.0*sin(((float)(true_y))*M_PI/(((float)p.Ly)))/p.dx;
+	kzlat = 2.0*sin(((float)(true_z))*M_PI/(((float)p.Lz)))/p.dx;
 
         product_div_re[x*p.Ly*p.Lz + y*p.Lz + z] = 0.0;
         product_div_im[x*p.Ly*p.Lz + y*p.Lz + z] = 0.0;
@@ -594,13 +524,13 @@ void uetc_split_vector(hydro_params p, int x_start, int slab,
 
 	    // Transverse components
 	    product_rot_re[x*p.Ly*p.Lz + y*p.Lz + z] +=
-	      proj(i*10 + j, kx, ky, kz)
+	      proj(i*10 + j, kxlat, kylat, kzlat)
 	      *(veca[i-1][x*p.Ly*p.Lz + y*p.Lz + z][0]
 		* vecb[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0]
 		+ veca[i-1][x*p.Ly*p.Lz + y*p.Lz + z][1]
 		* vecb[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1]);
 	    product_rot_im[x*p.Ly*p.Lz + y*p.Lz + z] +=
-	      proj(i*10 + j, kx, ky, kz)
+	      proj(i*10 + j, kxlat, kylat, kzlat)
 	      *(veca[i-1][x*p.Ly*p.Lz + y*p.Lz + z][1]
 		* vecb[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0]
 		- veca[i-1][x*p.Ly*p.Lz + y*p.Lz + z][0]
@@ -608,26 +538,26 @@ void uetc_split_vector(hydro_params p, int x_start, int slab,
 	    // And longitudinal...
 	    if(i == j) {
 	      product_div_re[x*p.Ly*p.Lz + y*p.Lz + z] +=
-		(1.0 - proj(i*10 + j, kx, ky, kz))
+		(1.0 - proj(i*10 + j, kxlat, kylat, kzlat))
 		*(veca[i-1][x*p.Ly*p.Lz + y*p.Lz + z][0]
 		  * vecb[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0]
 		  + veca[i-1][x*p.Ly*p.Lz + y*p.Lz + z][1]
 		  * vecb[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1]);
 	      product_div_im[x*p.Ly*p.Lz + y*p.Lz + z] +=
-		(1.0 - proj(i*10 + j, kx, ky, kz))
+		(1.0 - proj(i*10 + j, kxlat, kylat, kzlat))
 		*(veca[i-1][x*p.Ly*p.Lz + y*p.Lz + z][1]
 		  * vecb[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0]
 		  - veca[i-1][x*p.Ly*p.Lz + y*p.Lz + z][0]
 		  * vecb[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1]);
 	    } else {
 	      product_div_re[x*p.Ly*p.Lz + y*p.Lz + z] +=
-		- 1.0 * proj(i*10 + j, kx, ky, kz)
+		- 1.0 * proj(i*10 + j, kxlat, kylat, kzlat)
 		* (veca[i-1][x*p.Ly*p.Lz + y*p.Lz + z][0]
 		   * vecb[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0]
 		   + veca[i-1][x*p.Ly*p.Lz + y*p.Lz + z][1]
 		   * vecb[j-1][x*p.Ly*p.Lz + y*p.Lz + z][1]);
 	      product_div_im[x*p.Ly*p.Lz + y*p.Lz + z] +=
-		- 1.0*proj(i*10 + j, kx, ky, kz)
+		- 1.0*proj(i*10 + j, kxlat, kylat, kzlat)
 		*(veca[i-1][x*p.Ly*p.Lz + y*p.Lz + z][1]
 		  * vecb[j-1][x*p.Ly*p.Lz + y*p.Lz + z][0]
 		  - veca[i-1][x*p.Ly*p.Lz + y*p.Lz + z][0]
