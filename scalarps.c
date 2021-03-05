@@ -23,13 +23,6 @@
  */
 void scalarps(hydro_params p, fftwf_complex *field, int step, char *label) {
 
-  ptrdiff_t x_thickness, x_start, alloc_local;
-
-  ptrdiff_t n0 = p.Lx;
-  ptrdiff_t n1 = p.Ly;
-  ptrdiff_t n2 = p.Lz;
-
-  //  int slab;
 
   MPI_Status status;
 
@@ -38,14 +31,31 @@ void scalarps(hydro_params p, fftwf_complex *field, int step, char *label) {
   int x, y, z;
   int i;
 
-  
-
-
   float start = clock();
 
-  alloc_local = fftwf_mpi_local_size_3d(n0, n1, n2,
-					MPI_COMM_WORLD, &x_thickness, &x_start);
+  ptrdiff_t alloc_local, x_thickness, x_start;
 
+  ptrdiff_t n0 = p.Lx;
+  ptrdiff_t n1 = p.Ly;
+  ptrdiff_t n2 = p.Lz;
+  MPI_Comm fftw_comm;
+  int stride = (p.size > p.Lx) ? ((int)(p.size/p.Lx)) : 1;
+  int color = p.rank%stride;
+  MPI_Comm_split(MPI_COMM_WORLD, color, p.rank,
+		 &fftw_comm);
+
+  if(color == 0) {
+    alloc_local = fftwf_mpi_local_size_3d(n0, n1, n2,
+					  fftw_comm,
+					  &x_thickness,
+					  &x_start);
+  } else{
+    alloc_local = 0;
+    x_thickness = 0;
+    x_start = 0;
+  }
+
+  
   // Now we perform binning
   float fft_norm = (1.0/(((float)p.Lx)*((float)p.Ly)*((float)p.Lz)));
 
@@ -162,7 +172,8 @@ void scalarps(hydro_params p, fftwf_complex *field, int step, char *label) {
 
   free(bins);
   free(counts);
-  
+
+  MPI_Comm_free(&fftw_comm);
   float end = clock();
   if(label != NULL){
     if(*label){
