@@ -363,7 +363,7 @@ void UtoZ(hydro_fields f, hydro_params p) {
  *
  * See the notes in doc/initial_conditions_initps.pdf
  */
-void init_energy(hydro_params p, hydro_fields f, ptrdiff_t x_start, ptrdiff_t x_thickness, int* map, ptrdiff_t alloc_local,float *k_bins, float *pow_bins){
+void init_energy(hydro_params p, hydro_fields f, int* map, float *k_bins, float *pow_bins){
   int x, y, z;
   // TODO : INITPSFILE_ALL
 
@@ -378,21 +378,43 @@ void init_energy(hydro_params p, hydro_fields f, ptrdiff_t x_start, ptrdiff_t x_
 
   } else if(p.initpsfile_type == INITPSFILE_DIV) {
 
+    MPI_Status status;
+    fftwf_plan plan_energy;
+
+    ptrdiff_t alloc_local, x_thickness, x_start;
+
     ptrdiff_t n0 = p.Lx;
     ptrdiff_t n1 = p.Ly;
     ptrdiff_t n2 = p.Lz;
-    MPI_Status status;
+    MPI_Comm fftw_comm;
+    int stride = (p.size > p.Lx) ? ((int)(p.size/p.Lx)) : 1;
+    int color = p.rank%stride;
+    MPI_Comm_split(MPI_COMM_WORLD, color, p.rank,
+		   &fftw_comm);
 
+    if(color == 0) {
+      alloc_local = fftwf_mpi_local_size_3d(n0, n1, n2,
+					    fftw_comm,
+					    &x_thickness,
+					    &x_start);
+    } else{
+      alloc_local = 0;
+      x_thickness = 0;
+      x_start = 0;
+    }
+    
     fftwf_complex *in = fftwf_alloc_complex(alloc_local);
     fftwf_complex *out = fftwf_alloc_complex(alloc_local);
     fftwf_complex *swap_in = fftwf_alloc_complex(alloc_local);
     float *slice = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
     float *trim = (float *)malloc(p.slicex*p.slicey*p.Lz*sizeof(float));
 
-    fftwf_plan plan = fftwf_mpi_plan_dft_3d(p.Lx, p.Ly, p.Lz,
-					    in, out, MPI_COMM_WORLD,
-					    FFTW_FORWARD, FFTW_ESTIMATE);
-
+    if (color == 0){
+      plan_energy = fftwf_mpi_plan_dft_3d(p.Lx, p.Ly, p.Lz,
+				   in, out, fftw_comm,
+				   FFTW_FORWARD, FFTW_ESTIMATE);
+    }
+    
     float kx,ky,kz,ksq;
     float kxlat,kylat,kzlat,kmodelat;
     int true_x, true_y, true_z;
@@ -574,7 +596,8 @@ void init_energy(hydro_params p, hydro_fields f, ptrdiff_t x_start, ptrdiff_t x_
     MPI_Barrier(MPI_COMM_WORLD);
 
     // Calculate the inverse fourier transform for the energy
-    fftwf_execute(plan);
+    if (color == 0)
+      fftwf_execute(plan_energy);
     MPI_Barrier(MPI_COMM_WORLD);
 
     // prepare slice
@@ -635,10 +658,14 @@ void init_energy(hydro_params p, hydro_fields f, ptrdiff_t x_start, ptrdiff_t x_
 
     free(slice);
     free(trim);
-    fftwf_destroy_plan(plan);
+    if (color == 0)
+      fftwf_destroy_plan(plan_energy);
+
     fftwf_free(in);
     fftwf_free(out);
     fftwf_free(swap_in);
+    MPI_Comm_free(&fftw_comm);
+
   }
   halo_field(f.E, p);
 
@@ -949,14 +976,30 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
    * 2. Allocates a 3-dimensional complex grid for FFT
    */
   fftwf_mpi_init();
-  alloc_local = fftwf_mpi_local_size_3d(
-					n0,
-					n1,
-					n2,
-					MPI_COMM_WORLD,
-					&x_thickness,
-					&x_start
-					);
+
+  fftwf_plan plan;
+  MPI_Comm fftw_comm;
+  int stride = (p.size > p.Lx) ? ((int)(p.size/p.Lx)) : 1;
+  printf0(p, "Creating new MPI communicators every %d stride\n",
+	  stride);
+
+  int color = p.rank%stride;
+  MPI_Comm_split(MPI_COMM_WORLD, color, p.rank,
+		 &fftw_comm);
+
+  printf0(p,"Creating map for nodes responsible for x coord in slab decomp\n");
+
+
+  if(color == 0) {
+    alloc_local = fftwf_mpi_local_size_3d(n0, n1, n2,
+					  fftw_comm,
+					  &x_thickness,
+					  &x_start);
+  } else{
+    alloc_local = 0;
+    x_thickness = 0;
+    x_start = 0;
+  }
 
 
   /*
@@ -966,13 +1009,13 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
   int *starts = malloc(p.size*sizeof(int));
   int *map = malloc(p.Lx*sizeof(int));
 
-  // If not the main core, then send your caracteristics to the main core
+  // If not the main core, then send your characteristics to the main core
   if(p.rank) {
     MPI_Send(&x_thickness, 1, MPI_INTEGER, 0, p.rank, MPI_COMM_WORLD);
     MPI_Send(&x_start, 1, MPI_INTEGER, 0, p.rank, MPI_COMM_WORLD);
 
   }
-  // If the main core, receive all the caracteristics
+  // If the main core, receive all the characteristics
   else {
     thicknesses[0] = x_thickness;
     starts[0] = x_start;
@@ -1020,9 +1063,9 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
   // 3-dimensional vector field
   // Temporary memory to hermitianise the Fourier velocity field
   fftwf_complex **swap_in = (fftwf_complex **)malloc(3*sizeof(fftwf_complex *));
-  swap_in[0] = fftwf_alloc_complex(x_thickness*p.Ly*p.Lz);
-  swap_in[1] = fftwf_alloc_complex(x_thickness*p.Ly*p.Lz);
-  swap_in[2] = fftwf_alloc_complex(x_thickness*p.Ly*p.Lz);
+  swap_in[0] = fftwf_alloc_complex(alloc_local);
+  swap_in[1] = fftwf_alloc_complex(alloc_local);
+  swap_in[2] = fftwf_alloc_complex(alloc_local);
 
   // 3-dimensional vector field
   // Output of the inverse Fourier transform, host to the real velocity
@@ -1320,21 +1363,22 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
    */
 
   // Now planning
-  fftwf_plan plan = fftwf_mpi_plan_dft_3d(
-					  p.Lx,
-					  p.Ly,
-					  p.Lz,
-					  in[0],
-					  out[0],
-					  MPI_COMM_WORLD,
-					  FFTW_FORWARD,
-					  FFTW_ESTIMATE
-					  );
+  if (color == 0) {
+    plan = fftwf_mpi_plan_dft_3d(
+				 p.Lx,
+				 p.Ly,
+				 p.Lz,
+				 in[0],
+				 out[0],
+				 fftw_comm,
+				 FFTW_FORWARD,
+				 FFTW_ESTIMATE
+				 );
 
-  fftwf_mpi_execute_dft(plan, in[0], out[0]);
-  fftwf_mpi_execute_dft(plan, in[1], out[1]);
-  fftwf_mpi_execute_dft(plan, in[2], out[2]);
-
+    fftwf_mpi_execute_dft(plan, in[0], out[0]);
+    fftwf_mpi_execute_dft(plan, in[1], out[1]);
+    fftwf_mpi_execute_dft(plan, in[2], out[2]);
+  }
 
   /*
    * 8. Convert from FFTW layouts to simulation layouts
@@ -1426,15 +1470,17 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
    */
 
   printf0(p,"Start the energy density initialization\n");
-  init_energy(p, f, x_start, x_thickness, map, alloc_local,k_bins,pow_bins);
+  init_energy(p, f, map, k_bins, pow_bins);
   printf0(p,"Energy density initialized\n");
-
-
+  
+  fprintf(stderr,"%i Reached 1\n", p.rank);
   /*
    * 10. Translate the 4-velocity into momentum Z
    *
    */
   eq_of_state(f, p);
+  fprintf(stderr,"%i Reached 2\n", p.rank);
+
   UtoZ(f, p);
 
   // Free the different fields
@@ -1445,8 +1491,14 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
   free(trim);
   free(thicknesses);
   free(starts);
+  fprintf(stderr,"%i Reached 3\n", p.rank);
 
-  fftwf_destroy_plan(plan);
+  fprintf(stderr,"%i color\n", color);
+  if (color == 0){
+    fprintf(stderr,"%i plan %f\n", p.rank, plan);
+    fftwf_destroy_plan(plan);
+  }
+  fprintf(stderr,"%i Reached 4\n", p.rank);
 
   fftwf_free(in[0]);
   fftwf_free(swap_in[0]);
@@ -1461,7 +1513,10 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
   free(in);
   free(out);
   free(swap_in);
+  fprintf(stderr,"%i Reached 5\n", p.rank);
 
+  MPI_Comm_free(&fftw_comm);
+  fprintf(stderr,"%i Reached 6\n", p.rank);
 
 
 }
