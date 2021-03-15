@@ -54,8 +54,12 @@ int main(int argc, char *argv[]) {
 
     // Seed - for initps, each core throws independent random numbers
     if(p.initial==INIT_PS){
-        srandom(p.seed + p.rank);
-        srand48(p.seed + p.rank);
+
+      int stride = (p.size > p.Lx) ? ((int)(p.size/p.Lx)) : 1;
+
+      srandom(p.seed + (int)(p.rank / stride));
+      srand48(p.seed + (int)(p.rank / stride));
+
     }
     // Seed - make sure everyone gets the same one (if necessary)
     else {
