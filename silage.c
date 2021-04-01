@@ -99,22 +99,22 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
   meshsize[1] = sizey;
   meshsize[2] = sizex;
 
-  float **mesh = (float **)malloc(3*sizeof(float *));
+  double **mesh = (double **)malloc(3*sizeof(double *));
 
   
-  mesh[0] = (float *)malloc(sizez*sizeof(float));
-  mesh[1] = (float *)malloc(sizey*sizeof(float));
-  mesh[2] = (float *)malloc(sizex*sizeof(float));
+  mesh[0] = (double *)malloc(sizez*sizeof(double));
+  mesh[1] = (double *)malloc(sizey*sizeof(double));
+  mesh[2] = (double *)malloc(sizex*sizeof(double));
 
 
   for(x=0; x<sizex; x++) {
-    mesh[2][x] = p.dx*((float)(x + p.shiftx - 1));
+    mesh[2][x] = p.dx*((double)(x + p.shiftx - 1));
   }
   for(x=0; x<sizey; x++) {
-    mesh[1][x] = p.dx*((float)(x + p.shifty - 1));
+    mesh[1][x] = p.dx*((double)(x + p.shifty - 1));
   }
   for(x=0; x<sizez; x++) {
-      mesh[0][x] = p.dx*((float)x);
+      mesh[0][x] = p.dx*((double)x);
   }
 
   
@@ -135,9 +135,9 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
 		NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
 #endif
   
-  float ***temp = make_field(p);
+  double ***temp = make_field(p);
 
-  float vol = p.dx*p.dx*p.dx;
+  double vol = p.dx*p.dx*p.dx;
 
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
@@ -195,7 +195,7 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
   /*
   fprintf(stderr, "Writing vectors\n");
 
-  float **vec_temp = (float **)malloc(3*sizeof(float *));
+  double **vec_temp = (double **)malloc(3*sizeof(double *));
   /* */
 #ifndef SCALAR
   /*
@@ -271,9 +271,9 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
   dphi_names[1] = dphiy_name;
   dphi_names[0] = dphiz_name;
 
-  float ***tempx = make_field(p);
-  float ***tempy = make_field(p);
-  float ***tempz = make_field(p);
+  double ***tempx = make_field(p);
+  double ***tempy = make_field(p);
+  double ***tempz = make_field(p);
   
   
   for(x = 1; x <= p.slicex; x++) {

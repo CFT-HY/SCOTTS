@@ -29,9 +29,9 @@
  *
  *
  */
-float proj(int T, float kx, float ky, float kz) {
+double proj(int T, double kx, double ky, double kz) {
 
-  float mag = sqrt(kx*kx + ky*ky + kz*kz);
+  double mag = sqrt(kx*kx + ky*ky + kz*kz);
 
   // Avoid overflow
   if(fabs(mag) < 0.000001)
@@ -41,7 +41,7 @@ float proj(int T, float kx, float ky, float kz) {
   ky = ky/mag;
   kz = kz/mag;
 
-  float total = 0.0;
+  double total = 0.0;
 
   switch(T) {
 
@@ -93,9 +93,9 @@ float proj(int T, float kx, float ky, float kz) {
  *                             \dfrac{1}{2} P_{im}(\mathbf{k})P_{jl}(\mathbf{k})
  * \f]
  */
-float lambda(int i, int j, int l, int m, float kx, float ky, float kz) {
+double lambda(int i, int j, int l, int m, double kx, double ky, double kz) {
 
-  float total = 0.0;
+  double total = 0.0;
 
   int cpt1, cpt2;
 
@@ -196,11 +196,11 @@ int indexof(int i, int j)
  * `y` and `z` have the full spatial extent `p.Ly` and `p.Lz`
  */
 void tens_proj(hydro_params p, int x_start, int slab,
-	       float *product, fftwf_complex **tensor) {
+	       double *product, fftw_complex **tensor) {
 
   int i, j, l, m;
   int x, y, z;
-  float kxlat, kylat, kzlat;
+  double kxlat, kylat, kzlat;
 
 
   int true_x, true_y, true_z;
@@ -229,9 +229,9 @@ void tens_proj(hydro_params p, int x_start, int slab,
 
 
 	// Use lattice derivative momentum for projection.
-	kxlat = 2.0*sin(((float)(true_x))*M_PI/(((float)p.Lx)))/p.dx;
-	kylat = 2.0*sin(((float)(true_y))*M_PI/(((float)p.Ly)))/p.dx;
-	kzlat = 2.0*sin(((float)(true_z))*M_PI/(((float)p.Lz)))/p.dx;
+	kxlat = 2.0*sin(((double)(true_x))*M_PI/(((double)p.Lx)))/p.dx;
+	kylat = 2.0*sin(((double)(true_y))*M_PI/(((double)p.Ly)))/p.dx;
+	kzlat = 2.0*sin(((double)(true_z))*M_PI/(((double)p.Lz)))/p.dx;
 
 
 	product[x*p.Ly*p.Lz + y*p.Lz + z] = 0.0;
@@ -263,7 +263,7 @@ void tens_proj(hydro_params p, int x_start, int slab,
  * tensor combination.
  *
  *
- * In more detail, this populates two float arrays: `product_re` \f$
+ * In more detail, this populates two double arrays: `product_re` \f$
  * p_{r} \f$ and `product_im` \f$ p_{im} \f$ with:
  *
  * \f[ p_{r}(\mathbf{k}) + i p_{im}(\mathbf{k}) = \Lambda_{ij,lm}
@@ -272,12 +272,12 @@ void tens_proj(hydro_params p, int x_start, int slab,
  * and \f$X\f$ and \f$Y\f$ are `tensora` and `tensorb` respectively.
  */
 void uetc_tens_proj(hydro_params p, int x_start, int slab,
-		  float *product_re, float *product_im,
-		  fftwf_complex **tensora, fftwf_complex **tensorb) {
+		  double *product_re, double *product_im,
+		  fftw_complex **tensora, fftw_complex **tensorb) {
 
   int i, j, l, m;
   int x, y, z;
-  float kxlat, kylat, kzlat;
+  double kxlat, kylat, kzlat;
 
   int true_x, true_y, true_z;
 
@@ -305,9 +305,9 @@ void uetc_tens_proj(hydro_params p, int x_start, int slab,
 
 
 	// Use lattice derivative momentum for projection.
-	kxlat = 2.0*sin(((float)(true_x))*M_PI/(((float)p.Lx)))/p.dx;
-	kylat = 2.0*sin(((float)(true_y))*M_PI/(((float)p.Ly)))/p.dx;
-	kzlat = 2.0*sin(((float)(true_z))*M_PI/(((float)p.Lz)))/p.dx;
+	kxlat = 2.0*sin(((double)(true_x))*M_PI/(((double)p.Lx)))/p.dx;
+	kylat = 2.0*sin(((double)(true_y))*M_PI/(((double)p.Ly)))/p.dx;
+	kzlat = 2.0*sin(((double)(true_z))*M_PI/(((double)p.Lz)))/p.dx;
 
 	product_re[x*p.Ly*p.Lz + y*p.Lz + z] = 0.0;
 	product_im[x*p.Ly*p.Lz + y*p.Lz + z] = 0.0;
@@ -360,16 +360,16 @@ void uetc_tens_proj(hydro_params p, int x_start, int slab,
  *
  */
 void split_vector(hydro_params p, int x_start, int slab,
-		     float *product_rot, float *product_div, float *product_tot,
-		     fftwf_complex **vec) {
+		     double *product_rot, double *product_div, double *product_tot,
+		     fftw_complex **vec) {
 
   int i, j;
   int x, y, z;
-  float kxlat, kylat, kzlat;
+  double kxlat, kylat, kzlat;
 
-  float res_r, res_i;
-  float resid_r, resid_i;
-  float tot_r, tot_i;
+  double res_r, res_i;
+  double resid_r, resid_i;
+  double tot_r, tot_i;
 
   int true_x, true_y, true_z;
 
@@ -397,9 +397,9 @@ void split_vector(hydro_params p, int x_start, int slab,
 
 
 	// Use lattice derivative momentum for projection.
-	kxlat = 2.0*sin(((float)(true_x))*M_PI/(((float)p.Lx)))/p.dx;
-	kylat = 2.0*sin(((float)(true_y))*M_PI/(((float)p.Ly)))/p.dx;
-	kzlat = 2.0*sin(((float)(true_z))*M_PI/(((float)p.Lz)))/p.dx;
+	kxlat = 2.0*sin(((double)(true_x))*M_PI/(((double)p.Lx)))/p.dx;
+	kylat = 2.0*sin(((double)(true_y))*M_PI/(((double)p.Ly)))/p.dx;
+	kzlat = 2.0*sin(((double)(true_z))*M_PI/(((double)p.Lz)))/p.dx;
 
         product_rot[x*p.Ly*p.Lz + y*p.Lz + z] = 0.0;
         product_div[x*p.Ly*p.Lz + y*p.Lz + z] = 0.0;
@@ -475,13 +475,13 @@ void split_vector(hydro_params p, int x_start, int slab,
  *
  */
 void uetc_split_vector(hydro_params p, int x_start, int slab,
-		       float *product_rot_re, float *product_rot_im,
-		       float *product_div_re, float *product_div_im,
-		       fftwf_complex **veca, fftwf_complex **vecb) {
+		       double *product_rot_re, double *product_rot_im,
+		       double *product_div_re, double *product_div_im,
+		       fftw_complex **veca, fftw_complex **vecb) {
 
   int i, j;
   int x, y, z;
-  float kxlat, kylat, kzlat;
+  double kxlat, kylat, kzlat;
 
   int true_x, true_y, true_z;
 
@@ -509,9 +509,9 @@ void uetc_split_vector(hydro_params p, int x_start, int slab,
 
 
 	// Use lattice derivative momentum for projection.
-	kxlat = 2.0*sin(((float)(true_x))*M_PI/(((float)p.Lx)))/p.dx;
-	kylat = 2.0*sin(((float)(true_y))*M_PI/(((float)p.Ly)))/p.dx;
-	kzlat = 2.0*sin(((float)(true_z))*M_PI/(((float)p.Lz)))/p.dx;
+	kxlat = 2.0*sin(((double)(true_x))*M_PI/(((double)p.Lx)))/p.dx;
+	kylat = 2.0*sin(((double)(true_y))*M_PI/(((double)p.Ly)))/p.dx;
+	kzlat = 2.0*sin(((double)(true_z))*M_PI/(((double)p.Lz)))/p.dx;
 
         product_div_re[x*p.Ly*p.Lz + y*p.Lz + z] = 0.0;
         product_div_im[x*p.Ly*p.Lz + y*p.Lz + z] = 0.0;

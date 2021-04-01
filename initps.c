@@ -19,7 +19,7 @@
  * \frac{(x - x_i)}{x_j - x_i} \right] \f]
  * Previously used in spectrum_interp()
  */
-float quadratic(float x1, float x2, float x3,float y1, float y2, float y3, float x) {
+double quadratic(double x1, double x2, double x3,double y1, double y2, double y3, double x) {
 
   return y1*((x - x2)*(x - x3))/((x1 - x2)*(x1 - x3))
     + y2*((x - x1)*(x - x3))/((x2 - x1)*(x2 - x3))
@@ -31,20 +31,20 @@ float quadratic(float x1, float x2, float x3,float y1, float y2, float y3, float
 /** **DEBUG** : function that writes the power spectra right after initialization
  *
  */
-void debug_write_power(hydro_params p, fftwf_complex **in, ptrdiff_t x_start, ptrdiff_t x_thickness) {
+void debug_write_power(hydro_params p, fftw_complex **in, ptrdiff_t x_start, ptrdiff_t x_thickness) {
 
   int x, y, z;
   int i, j;
   int true_x, true_y, true_z;
-  float kxlat, kylat, kzlat;
+  double kxlat, kylat, kzlat;
 
   char fftdest[200];
 
-  // float *product = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
-  // float *product_div = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
-  float *product_tot = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
+  // double *product = (double *)malloc(x_thickness*p.Ly*p.Lz*sizeof(double));
+  // double *product_div = (double *)malloc(x_thickness*p.Ly*p.Lz*sizeof(double));
+  double *product_tot = (double *)malloc(x_thickness*p.Ly*p.Lz*sizeof(double));
 
-  float res_r, res_i, resid_r, resid_i, tot_r, tot_i;
+  double res_r, res_i, resid_r, resid_i, tot_r, tot_i;
 
   MPI_Barrier(MPI_COMM_WORLD);
   fprintf(stderr,"rank: %d starting debug PS... (thickness %d, start %d)\n",
@@ -75,9 +75,9 @@ void debug_write_power(hydro_params p, fftwf_complex **in, ptrdiff_t x_start, pt
 	}
 	/*
 	// Use lattice derivative in momentum space for projection.
-	kxlat = 2.0*sin(((float)(true_x))*M_PI/(((float)p.Lx)))/p.dx;
-	kylat = 2.0*sin(((float)(true_y))*M_PI/(((float)p.Ly)))/p.dx;
-	kzlat = 2.0*sin(((float)(true_z))*M_PI/(((float)p.Lz)))/p.dx;
+	kxlat = 2.0*sin(((double)(true_x))*M_PI/(((double)p.Lx)))/p.dx;
+	kylat = 2.0*sin(((double)(true_y))*M_PI/(((double)p.Ly)))/p.dx;
+	kzlat = 2.0*sin(((double)(true_z))*M_PI/(((double)p.Lz)))/p.dx;
 	*/
 	// product[x*p.Ly*p.Lz + y*p.Lz + z] = 0.0;
 	// product_div[x*p.Ly*p.Lz + y*p.Lz + z] = 0.0;
@@ -150,9 +150,9 @@ void debug_write_power(hydro_params p, fftwf_complex **in, ptrdiff_t x_start, pt
 void UtoZ(hydro_fields f, hydro_params p) {
 
   int i, x, y, z;
-  float ubarx, ubary, ubarz;
-  float utildex, utildey, utildez;
-  float Wfacex, Wfacey, Wfacez;
+  double ubarx, ubary, ubarz;
+  double utildex, utildey, utildez;
+  double Wfacex, Wfacey, Wfacez;
 
 
   // This assumes U has been initialised (but not necessarily haloed)
@@ -317,7 +317,7 @@ void UtoZ(hydro_fields f, hydro_params p) {
   halo_field(f.V[1], p);
   halo_field(f.V[2], p);
 
-  float sigmabar;
+  double sigmabar;
 
   // Following assumes that f.kappa has been set
   // (i.e that eq_of_state has been called.)
@@ -363,7 +363,7 @@ void UtoZ(hydro_fields f, hydro_params p) {
  *
  * See the notes in doc/initial_conditions_initps.pdf
  */
-void init_energy(hydro_params p, hydro_fields f, ptrdiff_t x_start, ptrdiff_t x_thickness, int* map, ptrdiff_t alloc_local,float *k_bins, float *pow_bins){
+void init_energy(hydro_params p, hydro_fields f, ptrdiff_t x_start, ptrdiff_t x_thickness, int* map, ptrdiff_t alloc_local,double *k_bins, double *pow_bins){
   int x, y, z;
   // TODO : INITPSFILE_ALL
 
@@ -383,20 +383,20 @@ void init_energy(hydro_params p, hydro_fields f, ptrdiff_t x_start, ptrdiff_t x_
     ptrdiff_t n2 = p.Lz;
     MPI_Status status;
 
-    fftwf_complex *in = fftwf_alloc_complex(alloc_local);
-    fftwf_complex *out = fftwf_alloc_complex(alloc_local);
-    fftwf_complex *swap_in = fftwf_alloc_complex(alloc_local);
-    float *slice = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
-    float *trim = (float *)malloc(p.slicex*p.slicey*p.Lz*sizeof(float));
+    fftw_complex *in = fftw_alloc_complex(alloc_local);
+    fftw_complex *out = fftw_alloc_complex(alloc_local);
+    fftw_complex *swap_in = fftw_alloc_complex(alloc_local);
+    double *slice = (double *)malloc(x_thickness*p.Ly*p.Lz*sizeof(double));
+    double *trim = (double *)malloc(p.slicex*p.slicey*p.Lz*sizeof(double));
 
-    fftwf_plan plan = fftwf_mpi_plan_dft_3d(p.Lx, p.Ly, p.Lz,
+    fftw_plan plan = fftw_mpi_plan_dft_3d(p.Lx, p.Ly, p.Lz,
 					    in, out, MPI_COMM_WORLD,
 					    FFTW_FORWARD, FFTW_ESTIMATE);
 
-    float kx,ky,kz,ksq;
-    float kxlat,kylat,kzlat,kmodelat;
+    double kx,ky,kz,ksq;
+    double kxlat,kylat,kzlat,kmodelat;
     int true_x, true_y, true_z;
-    fftwf_complex kiVki, vec_i;
+    fftw_complex kiVki, vec_i;
     int nx = p.Lx/p.slicex;
     int ny = p.Ly/p.slicey;
     int ry;
@@ -424,9 +424,9 @@ void init_energy(hydro_params p, hydro_fields f, ptrdiff_t x_start, ptrdiff_t x_
 	  }
 
 	  // Use k site momenta for binning
-	  kx = 2.0*M_PI*(float)(true_x)/((float)(p.Lx)*p.dx);
-	  ky = 2.0*M_PI*(float)(true_y)/((float)(p.Ly)*p.dx);
-	  kz = 2.0*M_PI*(float)(true_z)/((float)(p.Lz)*p.dx);
+	  kx = 2.0*M_PI*(double)(true_x)/((double)(p.Lx)*p.dx);
+	  ky = 2.0*M_PI*(double)(true_y)/((double)(p.Ly)*p.dx);
+	  kz = 2.0*M_PI*(double)(true_z)/((double)(p.Lz)*p.dx);
 					 
 
 	  ksq = (kx*kx + ky*ky + kz*kz);
@@ -434,9 +434,9 @@ void init_energy(hydro_params p, hydro_fields f, ptrdiff_t x_start, ptrdiff_t x_
 
 	  // Use lattice derivative representation for spatial derivatives in
 	  // momentum space.
-	  kxlat = 2.0*sin(((float)(true_x))*M_PI/(((float)p.Lx)))/p.dx;
-	  kylat = 2.0*sin(((float)(true_y))*M_PI/(((float)p.Ly)))/p.dx;
-	  kzlat = 2.0*sin(((float)(true_z))*M_PI/(((float)p.Lz)))/p.dx;
+	  kxlat = 2.0*sin(((double)(true_x))*M_PI/(((double)p.Lx)))/p.dx;
+	  kylat = 2.0*sin(((double)(true_y))*M_PI/(((double)p.Ly)))/p.dx;
+	  kzlat = 2.0*sin(((double)(true_z))*M_PI/(((double)p.Lz)))/p.dx;
 
 	  kmodelat = sqrt(kxlat*kxlat + kylat*kylat + kzlat*kzlat);
 
@@ -478,7 +478,7 @@ void init_energy(hydro_params p, hydro_fields f, ptrdiff_t x_start, ptrdiff_t x_
       if(j>= x_start && j < x_start+x_thickness) {
 	if(map[((p.Lx-j) % p.Lx)] == p.rank) {
 	} else {
-	  MPI_Send(&(((float *)in)[((j-x_start)%p.Lx)*p.Ly*p.Lz*2]),
+	  MPI_Send(&(((double *)in)[((j-x_start)%p.Lx)*p.Ly*p.Lz*2]),
 		   2*p.Ly*p.Lz, MPI_FLOAT,
 		   map[((p.Lx-j) % p.Lx)], j, MPI_COMM_WORLD);
 	}
@@ -486,13 +486,13 @@ void init_energy(hydro_params p, hydro_fields f, ptrdiff_t x_start, ptrdiff_t x_
 
       if(j>=min_needed && j<=max_needed) {
 	if(map[(j % p.Lx)] == p.rank) {
-	  memcpy(&(((fftwf_complex *)swap_in)[(j-min_needed)*p.Ly*p.Lz]),
-		 &(((fftwf_complex *)in)[((j-x_start)%p.Lx)*p.Ly*p.Lz]),
-		 p.Ly*p.Lz*sizeof(fftwf_complex));
+	  memcpy(&(((fftw_complex *)swap_in)[(j-min_needed)*p.Ly*p.Lz]),
+		 &(((fftw_complex *)in)[((j-x_start)%p.Lx)*p.Ly*p.Lz]),
+		 p.Ly*p.Lz*sizeof(fftw_complex));
 
 
 	} else {
-	  MPI_Recv(&(((float *)swap_in)[(j-min_needed)*p.Ly*p.Lz*2]),
+	  MPI_Recv(&(((double *)swap_in)[(j-min_needed)*p.Ly*p.Lz*2]),
 		   2*p.Ly*p.Lz, MPI_FLOAT,
 		   map[(j % p.Lx)], j, MPI_COMM_WORLD, &status);
 
@@ -574,7 +574,7 @@ void init_energy(hydro_params p, hydro_fields f, ptrdiff_t x_start, ptrdiff_t x_
     MPI_Barrier(MPI_COMM_WORLD);
 
     // Calculate the inverse fourier transform for the energy
-    fftwf_execute(plan);
+    fftw_execute(plan);
     MPI_Barrier(MPI_COMM_WORLD);
 
     // prepare slice
@@ -597,7 +597,7 @@ void init_energy(hydro_params p, hydro_fields f, ptrdiff_t x_start, ptrdiff_t x_
 
 	    memcpy(&trim[(x-p.shiftx)*p.slicey*p.Lz],
 		   &slice[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
-		   p.slicey*p.Lz*sizeof(float));
+		   p.slicey*p.Lz*sizeof(double));
 
 	    continue;
 	  }
@@ -635,10 +635,10 @@ void init_energy(hydro_params p, hydro_fields f, ptrdiff_t x_start, ptrdiff_t x_
 
     free(slice);
     free(trim);
-    fftwf_destroy_plan(plan);
-    fftwf_free(in);
-    fftwf_free(out);
-    fftwf_free(swap_in);
+    fftw_destroy_plan(plan);
+    fftw_free(in);
+    fftw_free(out);
+    fftw_free(swap_in);
   }
   halo_field(f.E, p);
 
@@ -661,18 +661,18 @@ void init_energy(hydro_params p, hydro_fields f, ptrdiff_t x_start, ptrdiff_t x_
  * - \f$ \sqrt{2} \f$ for the rotational projection
  * - \f$ 1 \f$ for the divergent projection
  */
-void project_down(hydro_params p, fftwf_complex **in, int shift_x, int x_thickness, int times) {
+void project_down(hydro_params p, fftw_complex **in, int shift_x, int x_thickness, int times) {
 
   int x, y, z;
-  float kxlat, kylat, kzlat;
-  float in_proj_re[3];
-  float in_proj_im[3];
-  float res_re, res_im;
+  double kxlat, kylat, kzlat;
+  double in_proj_re[3];
+  double in_proj_im[3];
+  double res_re, res_im;
   int i, j;
-  float resid, stuff;
+  double resid, stuff;
   int reruns;
   int true_x, true_y, true_z;
-  float dofs = sqrt(3.0);
+  double dofs = sqrt(3.0);
 
   if(p.initpsfile_type == INITPSFILE_ROT) {
     dofs = sqrt(2.0);
@@ -726,9 +726,9 @@ void project_down(hydro_params p, fftwf_complex **in, int shift_x, int x_thickne
 	  }
 
 	  // Use lattice derivative momentum for projecting.
-	  kxlat = 2.0*sin(((float)(true_x))*M_PI/(((float)p.Lx)))/p.dx;
-	  kylat = 2.0*sin(((float)(true_y))*M_PI/(((float)p.Ly)))/p.dx;
-	  kzlat = 2.0*sin(((float)(true_z))*M_PI/(((float)p.Lz)))/p.dx;
+	  kxlat = 2.0*sin(((double)(true_x))*M_PI/(((double)p.Lx)))/p.dx;
+	  kylat = 2.0*sin(((double)(true_y))*M_PI/(((double)p.Ly)))/p.dx;
+	  kzlat = 2.0*sin(((double)(true_z))*M_PI/(((double)p.Lz)))/p.dx;
 
 	  in_proj_re[0] = 0.0;
 	  in_proj_re[1] = 0.0;
@@ -827,8 +827,8 @@ void project_down(hydro_params p, fftwf_complex **in, int shift_x, int x_thickne
  *
  * We throw away \f$ Z_0 \f$
  */
-float get_normal(float mean, float dev) {
-  float u1, u2;
+double get_normal(double mean, double dev) {
+  double u1, u2;
 
   u1 = drand48();
   u2 = drand48();
@@ -854,14 +854,14 @@ float get_normal(float mean, float dev) {
  *    of the spectral density are for the original simulation
  *    that generated the input PS.
  */
-void spectrum_interp(float ksq, hydro_params p, fftwf_complex *res, float *k_bins, float *pow_bins, int n_bins) {
+void spectrum_interp(double ksq, hydro_params p, fftw_complex *res, double *k_bins, double *pow_bins, int n_bins) {
 
-  float phase;
+  double phase;
 
-  float L = p.Lx;
+  double L = p.Lx;
 
 
-  float amp, amp_last, amp_this, amp_next, grad;
+  double amp, amp_last, amp_this, amp_next, grad;
   int i;
 
 
@@ -871,9 +871,9 @@ void spectrum_interp(float ksq, hydro_params p, fftwf_complex *res, float *k_bin
   amp = 0.0;
 
   // bin coordinates are midpoints
-  float dk = k_bins[1] - k_bins[0];
+  double dk = k_bins[1] - k_bins[0];
 
-  float kmode = sqrt(fabs(ksq));
+  double kmode = sqrt(fabs(ksq));
   int whichbin = (int)floor(kmode/dk);
 
   // Interpolates the value of pow_bins at kmode at first order
@@ -881,7 +881,7 @@ void spectrum_interp(float ksq, hydro_params p, fftwf_complex *res, float *k_bin
     amp_this = sqrt(pow_bins[whichbin]);
     amp_next = sqrt(pow_bins[whichbin+1]);
     grad = (amp_next - amp_this)/dk;
-    amp = amp_this + (kmode - ((float)(whichbin))*dk)*grad;
+    amp = amp_this + (kmode - ((double)(whichbin))*dk)*grad;
   }
 
   // Draws a random gaussian number with variance amp
@@ -916,7 +916,7 @@ void spectrum_interp(float ksq, hydro_params p, fftwf_complex *res, float *k_bin
  * process of mapping/swapping between the FFTW distribution and the distribution
  * used in the rest of the code
  */
-void init_ps(hydro_fields f, hydro_params p, float ****field) {
+void init_ps(hydro_fields f, hydro_params p, double ****field) {
 
   printf0(p, "Loading initial power spectrum from %s\n", p.initpsfile);
 
@@ -928,10 +928,10 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 
   MPI_Status status;
 
-  float kmode, modsq;
+  double kmode, modsq;
   int x, y, z;
   int i, j;
-  float *trim = (float *)malloc(p.slicex*p.slicey*p.Lz*sizeof(float));
+  double *trim = (double *)malloc(p.slicex*p.slicey*p.Lz*sizeof(double));
 
   /*
    * 1. Initialize the field in the broken phase
@@ -948,8 +948,8 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
   /*
    * 2. Allocates a 3-dimensional complex grid for FFT
    */
-  fftwf_mpi_init();
-  alloc_local = fftwf_mpi_local_size_3d(
+  fftw_mpi_init();
+  alloc_local = fftw_mpi_local_size_3d(
 					n0,
 					n1,
 					n2,
@@ -1012,24 +1012,24 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 
   // 3-dimensional vector field
   // Input for the inverse Fourier transform
-  fftwf_complex **in = (fftwf_complex **)malloc(3*sizeof(fftwf_complex *));
-  in[0] = fftwf_alloc_complex(alloc_local);
-  in[1] = fftwf_alloc_complex(alloc_local);
-  in[2] = fftwf_alloc_complex(alloc_local);
+  fftw_complex **in = (fftw_complex **)malloc(3*sizeof(fftw_complex *));
+  in[0] = fftw_alloc_complex(alloc_local);
+  in[1] = fftw_alloc_complex(alloc_local);
+  in[2] = fftw_alloc_complex(alloc_local);
 
   // 3-dimensional vector field
   // Temporary memory to hermitianise the Fourier velocity field
-  fftwf_complex **swap_in = (fftwf_complex **)malloc(3*sizeof(fftwf_complex *));
-  swap_in[0] = fftwf_alloc_complex(x_thickness*p.Ly*p.Lz);
-  swap_in[1] = fftwf_alloc_complex(x_thickness*p.Ly*p.Lz);
-  swap_in[2] = fftwf_alloc_complex(x_thickness*p.Ly*p.Lz);
+  fftw_complex **swap_in = (fftw_complex **)malloc(3*sizeof(fftw_complex *));
+  swap_in[0] = fftw_alloc_complex(x_thickness*p.Ly*p.Lz);
+  swap_in[1] = fftw_alloc_complex(x_thickness*p.Ly*p.Lz);
+  swap_in[2] = fftw_alloc_complex(x_thickness*p.Ly*p.Lz);
 
   // 3-dimensional vector field
   // Output of the inverse Fourier transform, host to the real velocity
-  fftwf_complex **out = (fftwf_complex **)malloc(3*sizeof(fftwf_complex *));
-  out[0] = fftwf_alloc_complex(alloc_local);
-  out[1] = fftwf_alloc_complex(alloc_local);
-  out[2] = fftwf_alloc_complex(alloc_local);
+  fftw_complex **out = (fftw_complex **)malloc(3*sizeof(fftw_complex *));
+  out[0] = fftw_alloc_complex(alloc_local);
+  out[1] = fftw_alloc_complex(alloc_local);
+  out[2] = fftw_alloc_complex(alloc_local);
 
   int nx = p.Lx/p.slicex;
   int ny = p.Ly/p.slicey;
@@ -1037,18 +1037,18 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
   int ry;
 
 
-  float ksq;
-  float kx, ky, kz;
+  double ksq;
+  double kx, ky, kz;
   int true_x, true_y, true_z;
   // Different values for the wave-vector
-  float *k_bins = (float *)malloc(p.initpsbins*sizeof(float));
+  double *k_bins = (double *)malloc(p.initpsbins*sizeof(double));
   // PMean power per cell
-  float *pow_bins = (float *)malloc(p.initpsbins*sizeof(float));
+  double *pow_bins = (double *)malloc(p.initpsbins*sizeof(double));
   // Volume of the shell [k, k+dk]
   int in_bin;
 
   int items_read;
-  float fudge;
+  double fudge;
 
   // Opens the input file
   FILE *fp = fopen(p.initpsfile, "r");
@@ -1083,7 +1083,7 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
     // Else, divides by the volume to obtain the mean power per cell
     // Factor (i+1) is to convert from d ln k to dk
     else {
-      pow_bins[i] /= ((float)(((long int)in_bin)*((long int)(i+1))));
+      pow_bins[i] /= ((double)(((long int)in_bin)*((long int)(i+1))));
     }
 
     if(isnan(pow_bins[i])) {
@@ -1095,7 +1095,7 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 
   // Corrects for the volume of the shell if dk is different between
   // the input file and the grid
-  fudge = (2.0*M_PI/((float)p.Lx))/((k_bins[1]-k_bins[0])*p.dx);
+  fudge = (2.0*M_PI/((double)p.Lx))/((k_bins[1]-k_bins[0])*p.dx);
   if(fabs(fudge - 1.0) > 1e-6) {
     printf0(p, "Applying fudge factor %g^3 to power spectrum: "
 	    "seems like dk or volume or dx is different\n",
@@ -1139,9 +1139,9 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 
 
 	// Use lattice site momenta for binning
-	kx = 2.0*M_PI*(float)(true_x)/((float)(p.Lx)*p.dx);
-	ky = 2.0*M_PI*(float)(true_y)/((float)(p.Ly)*p.dx);
-	kz = 2.0*M_PI*(float)(true_z)/((float)(p.Lz)*p.dx);
+	kx = 2.0*M_PI*(double)(true_x)/((double)(p.Lx)*p.dx);
+	ky = 2.0*M_PI*(double)(true_y)/((double)(p.Ly)*p.dx);
+	kz = 2.0*M_PI*(double)(true_z)/((double)(p.Lz)*p.dx);
 					 
 
 	ksq = (kx*kx + ky*ky + kz*kz);
@@ -1202,7 +1202,7 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 	} else {
 	  // Else send the information to the core requiring this info
 	  MPI_Send(
-		   &(((float *)in[i])[((j-x_start)%p.Lx)*p.Ly*p.Lz*2]),
+		   &(((double *)in[i])[((j-x_start)%p.Lx)*p.Ly*p.Lz*2]),
 		   2*p.Ly*p.Lz,				// Size (complex numbers)
 		   MPI_FLOAT,					// Type
 		   map[((p.Lx-j) % p.Lx)],		// Destination
@@ -1217,14 +1217,14 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 	if(map[(j % p.Lx)] == p.rank) {
 	  // The information is already on this core, copy it
 	  memcpy(
-		 &(((fftwf_complex *)swap_in[i])[(j-min_needed)*p.Ly*p.Lz]),
-		 &(((fftwf_complex *)in[i])[((j-x_start)%p.Lx)*p.Ly*p.Lz]),
-		 p.Ly*p.Lz*sizeof(fftwf_complex)
+		 &(((fftw_complex *)swap_in[i])[(j-min_needed)*p.Ly*p.Lz]),
+		 &(((fftw_complex *)in[i])[((j-x_start)%p.Lx)*p.Ly*p.Lz]),
+		 p.Ly*p.Lz*sizeof(fftw_complex)
 		 );
 
 	} else {
 	  MPI_Recv(
-		   &(((float *)swap_in[i])[(j-min_needed)*p.Ly*p.Lz*2]),
+		   &(((double *)swap_in[i])[(j-min_needed)*p.Ly*p.Lz*2]),
 		   2*p.Ly*p.Lz,				// Size (complex numbers)
 		   MPI_FLOAT,					// Type
 		   map[(j % p.Lx)],			// Origin
@@ -1320,7 +1320,7 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
    */
 
   // Now planning
-  fftwf_plan plan = fftwf_mpi_plan_dft_3d(
+  fftw_plan plan = fftw_mpi_plan_dft_3d(
 					  p.Lx,
 					  p.Ly,
 					  p.Lz,
@@ -1331,9 +1331,9 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 					  FFTW_ESTIMATE
 					  );
 
-  fftwf_mpi_execute_dft(plan, in[0], out[0]);
-  fftwf_mpi_execute_dft(plan, in[1], out[1]);
-  fftwf_mpi_execute_dft(plan, in[2], out[2]);
+  fftw_mpi_execute_dft(plan, in[0], out[0]);
+  fftw_mpi_execute_dft(plan, in[1], out[1]);
+  fftw_mpi_execute_dft(plan, in[2], out[2]);
 
 
   /*
@@ -1344,7 +1344,7 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
    */
 
   // Temporary slice
-  float *slice = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
+  double *slice = (double *)malloc(x_thickness*p.Ly*p.Lz*sizeof(double));
 
   // 3 dimensions of the vector field
   for(i=0; i<3; i++) {
@@ -1372,7 +1372,7 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 	    memcpy(
 		   &trim[(x-p.shiftx)*p.slicey*p.Lz],
 		   &slice[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
-		   p.slicey*p.Lz*sizeof(float)
+		   p.slicey*p.Lz*sizeof(double)
 		   );
 
 	    continue;
@@ -1446,17 +1446,17 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
   free(thicknesses);
   free(starts);
 
-  fftwf_destroy_plan(plan);
+  fftw_destroy_plan(plan);
 
-  fftwf_free(in[0]);
-  fftwf_free(swap_in[0]);
-  fftwf_free(out[0]);
-  fftwf_free(in[1]);
-  fftwf_free(swap_in[1]);
-  fftwf_free(out[1]);
-  fftwf_free(in[2]);
-  fftwf_free(swap_in[2]);
-  fftwf_free(out[2]);
+  fftw_free(in[0]);
+  fftw_free(swap_in[0]);
+  fftw_free(out[0]);
+  fftw_free(in[1]);
+  fftw_free(swap_in[1]);
+  fftw_free(out[1]);
+  fftw_free(in[2]);
+  fftw_free(swap_in[2]);
+  fftw_free(out[2]);
 
   free(in);
   free(out);

@@ -10,17 +10,17 @@
  * Separately computes the kinetic, gradient and potential energy of
  * the scalar field and returns the total, summed over all sites.
  */
-float field_energy(hydro_fields f, hydro_params p) {
+double field_energy(hydro_fields f, hydro_params p) {
 
   int x, y, z;
 
-  float vol;
+  double vol;
 
-  float Etot = 0.0;
+  double Etot = 0.0;
 
-  float a = 0.0;
-  float b = 0.0;
-  float c = 0.0;
+  double a = 0.0;
+  double b = 0.0;
+  double c = 0.0;
 
   vol = p.dx*p.dx*p.dx;
 
@@ -50,9 +50,9 @@ float field_energy(hydro_fields f, hydro_params p) {
     }
   }
   
-  float atot = reduce_sum(a, p);
-  float btot = reduce_sum(b, p);
-  float ctot = reduce_sum(c, p);
+  double atot = reduce_sum(a, p);
+  double btot = reduce_sum(b, p);
+  double ctot = reduce_sum(c, p);
 
 #ifdef SCALAR
   printf0(p,"Totals: momentum %g gradient %g potential %g\n", atot, btot, ctot);
@@ -68,13 +68,13 @@ float field_energy(hydro_fields f, hydro_params p) {
  * Note that this does _not_ currently sum over all sites, only those
  * on the current core.
  */
-float gradient_energy_field(hydro_fields f, hydro_params p) {
+double gradient_energy_field(hydro_fields f, hydro_params p) {
 
   int x, y, z;
 
-  float vol;
+  double vol;
 
-  float Etot = 0.0;
+  double Etot = 0.0;
 
 
   vol = p.dx*p.dx*p.dx;
@@ -105,13 +105,13 @@ float gradient_energy_field(hydro_fields f, hydro_params p) {
  * Note that this does _not_ currently sum over all sites, only those
  * on the current core.
  */
-float kinetic_energy_field(hydro_fields f, hydro_params p) {
+double kinetic_energy_field(hydro_fields f, hydro_params p) {
 
   int x, y, z;
 
-  float vol;
+  double vol;
 
-  float Etot = 0.0;
+  double Etot = 0.0;
 
 
   vol = p.dx*p.dx*p.dx;
@@ -138,17 +138,17 @@ float kinetic_energy_field(hydro_fields f, hydro_params p) {
  * NB: This function currently does _not_ sum over all sites, only
  * those on the current core.
  */
-float total_energy(hydro_fields f, hydro_params p) {
+double total_energy(hydro_fields f, hydro_params p) {
 
   int x, y, z;
 
-  float vol;
+  double vol;
 
-  float Etot = 0.0;
-  float restE = 0.0;
-  float kinE = 0.0;
-  float kinphi = 0.0;
-  float grdphi = 0.0;
+  double Etot = 0.0;
+  double restE = 0.0;
+  double kinE = 0.0;
+  double kinphi = 0.0;
+  double grdphi = 0.0;
 
   vol = p.dx*p.dx*p.dx;
 
@@ -201,13 +201,13 @@ float total_energy(hydro_fields f, hydro_params p) {
  *
  * NB: This function does _not_ currently sum over all sites.
  */
-float kinetic_energy_fluid(hydro_fields f, hydro_params p) {
+double kinetic_energy_fluid(hydro_fields f, hydro_params p) {
 
   int x, y, z;
 
-  float vol;
+  double vol;
 
-  float kinE = 0.0;
+  double kinE = 0.0;
 
   vol = p.dx*p.dx*p.dx;
 
@@ -237,13 +237,13 @@ float kinetic_energy_fluid(hydro_fields f, hydro_params p) {
  *
  * NB: This function does _not_ currently sum over all sites.
  */
-float rest_energy(hydro_fields f, hydro_params p) {
+double rest_energy(hydro_fields f, hydro_params p) {
 
   int x, y, z;
 
-  float vol;
+  double vol;
 
-  float restE = 0.0;
+  double restE = 0.0;
 
   vol = p.dx*p.dx*p.dx;
 
@@ -275,13 +275,13 @@ float rest_energy(hydro_fields f, hydro_params p) {
  *
  * NB: This function does _not_ currently sum over all sites.
  */
-float avg_pressure(hydro_fields f, hydro_params p) {
+double avg_pressure(hydro_fields f, hydro_params p) {
 
   int x, y, z;
 
-  float vol;
+  double vol;
 
-  float press;
+  double press;
 
   vol = p.dx*p.dx*p.dx;
 
@@ -315,13 +315,13 @@ float avg_pressure(hydro_fields f, hydro_params p) {
  * basically just a different way of calculating total_energy(), and
  * therefore serves as a cross-check.
  */
-float tzerozero(hydro_fields f, hydro_params p) {
+double tzerozero(hydro_fields f, hydro_params p) {
 
-  float total = 0.0;
+  double total = 0.0;
 
   int x, y, z;
 
-  float vol;
+  double vol;
 
   vol = p.dx*p.dx*p.dx;
 
@@ -385,7 +385,7 @@ float tzerozero(hydro_fields f, hydro_params p) {
  * Terms in the stress-energy tensor that are *LINEAR* in the metric,
  * and therefore source metric perturbations.
  */
-void stress_energy(hydro_fields f, hydro_params p, float ****Tij) {
+void stress_energy(hydro_fields f, hydro_params p, double ****Tij) {
 
   int x, y, z;
 
@@ -489,11 +489,11 @@ void stress_energy(hydro_fields f, hydro_params p, float ****Tij) {
  * As for total_energy() but calculated on a per-lattice-site
  * basis and then stored in en.
  */
-void energy_density(hydro_fields f, hydro_params p, float ***en) {
+void energy_density(hydro_fields f, hydro_params p, double ***en) {
 
   int x, y, z;
 
-  float vol;
+  double vol;
 
   vol = p.dx*p.dx*p.dx;
 
@@ -543,15 +543,15 @@ void energy_density(hydro_fields f, hydro_params p, float ***en) {
  * (curl J)^2 on local core. Allows calculation of enstrophy of J.
  *
  */
-float get_curlJ_tot(hydro_fields f, hydro_params p){
+double get_curlJ_tot(hydro_fields f, hydro_params p){
 #ifndef SCALAR
   int x, y, z;
 
-  float ****J = make_vector(p);
-  float temp;
+  double ****J = make_vector(p);
+  double temp;
 
-  float curlJ_tot = 0;
-  float vol=p.dx*p.dx*p.dx;
+  double curlJ_tot = 0;
+  double vol=p.dx*p.dx*p.dx;
 
   // Construct temperature current (J) (centered at cell)
 
@@ -607,13 +607,13 @@ float get_curlJ_tot(hydro_fields f, hydro_params p){
  * (div J)^2.
  *
  */
-float get_divJ_tot(hydro_fields f, hydro_params p){
+double get_divJ_tot(hydro_fields f, hydro_params p){
 #ifndef SCALAR
   int x, y, z;
-  float ****J = make_vector(p);
-  float divJ_tot = 0;
-  float temp;
-  float vol=p.dx*p.dx*p.dx;
+  double ****J = make_vector(p);
+  double divJ_tot = 0;
+  double temp;
+  double vol=p.dx*p.dx*p.dx;
   // Construct temperature current (centered at cell)
 
   for(x = 1; x <= p.slicex; x++) {

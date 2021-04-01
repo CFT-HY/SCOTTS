@@ -22,17 +22,17 @@ void write_global_headers(hydro_fields f, hydro_params p){
  *
  * To do: write summary of outputs here.
  */
-void write_globals(hydro_fields f, hydro_params p, float gwen, int bcount,
-		    float t_sim, int step){
+void write_globals(hydro_fields f, hydro_params p, double gwen, int bcount,
+		    double t_sim, int step){
 
-  float current_energy, current_field_energy, current_kinetic_field;
-  float current_kinetic_fluid, current_gradient_energy, current_rest;
-  float current_avgpress;
-  float current_veltot;
-  float s_max;
-  float gamma_max;
-  float curlJ_tot;
-  float divJ_tot;
+  double current_energy, current_field_energy, current_kinetic_field;
+  double current_kinetic_fluid, current_gradient_energy, current_rest;
+  double current_avgpress;
+  double current_veltot;
+  double s_max;
+  double gamma_max;
+  double curlJ_tot;
+  double divJ_tot;
   long long N_broken;
   long long N_links;
 
@@ -45,7 +45,7 @@ void write_globals(hydro_fields f, hydro_params p, float gwen, int bcount,
   current_field_energy = reduce_sum(field_energy(f, p), p);
   current_gradient_energy = reduce_sum(gradient_energy_field(f, p), p);
   current_veltot = reduce_sum(get_veltot(f, p), p)
-    /((float)(p.Lx*p.Ly*p.Lz));
+    /((double)(p.Lx*p.Ly*p.Lz));
   s_max = reduce_max(get_s_max(f, p), p);
   gamma_max = reduce_max(get_gamma_max(f, p), p);
   curlJ_tot =  reduce_sum(get_curlJ_tot(f,p),p);
@@ -82,14 +82,14 @@ void write_globals(hydro_fields f, hydro_params p, float gwen, int bcount,
 /** Returns the largest zone-centred gamma factor found anywhere
  * in the simulation box.
  */
-float get_gamma_max(hydro_fields f, hydro_params p) {
+double get_gamma_max(hydro_fields f, hydro_params p) {
 #ifndef SCALAR
 
   int x, y, z, xmax;
 
-  float gmax = f.W[0][0][0];
+  double gmax = f.W[0][0][0];
 
-  float gtest;
+  double gtest;
 
   // Just search for maxmimum
   for(x = 1; x <= p.slicex; x++) {
@@ -114,10 +114,10 @@ float get_gamma_max(hydro_fields f, hydro_params p) {
 /** Returns the largest zone-centred damping factor s found anywhere
  * in the simulation box.
  */
-float get_s_max(hydro_fields f, hydro_params p) {
+double get_s_max(hydro_fields f, hydro_params p) {
   int x, y, z;
-  float smax = 0;
-  float stest;
+  double smax = 0;
+  double stest;
 
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
@@ -152,13 +152,13 @@ float get_s_max(hydro_fields f, hydro_params p) {
 /** The sum of the fluid (3-)velocity everywhere. A strange quantity
  * on its own, but allows calculation of average fluid velocity.
  */
-float get_veltot(hydro_fields f, hydro_params p) {
+double get_veltot(hydro_fields f, hydro_params p) {
 
 #ifndef SCALAR
   int x, y, z, xmax;
 
 
-  float veltot = 0.0;
+  double veltot = 0.0;
 
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
@@ -183,7 +183,7 @@ float get_veltot(hydro_fields f, hydro_params p) {
 long long get_N_broken(hydro_fields f, hydro_params p){
   int x, y, z;
   long long N_broken = 0;
-  float phi_broken;
+  double phi_broken;
 
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
@@ -218,7 +218,7 @@ long long get_N_broken(hydro_fields f, hydro_params p){
 long long get_broken_links(hydro_fields f, hydro_params p){
   int x, y, z;
   long long N_links = 0;
-  float phi_broken;
+  double phi_broken;
 
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
@@ -263,7 +263,7 @@ long long get_broken_links(hydro_fields f, hydro_params p){
 /** Dumps a field to stderr. Expects field to have N entries.
  * For debugging purposes...
  */
-void dump(float *field, hydro_params p) {
+void dump(double *field, hydro_params p) {
   int x;
 
   fprintf(stderr,"%g", field[0]);
@@ -278,15 +278,15 @@ void dump(float *field, hydro_params p) {
 /** Calculate a histogram of the field, and store in a file
  * labelled by the timestep.
  */
-void histo_field(float ***field, hydro_params p, int step) {
+void histo_field(double ***field, hydro_params p, int step) {
   int x, y, z;
 
-  float fmax = 0.0;
-  float fmin = 0.0;
+  double fmax = 0.0;
+  double fmin = 0.0;
 
-  float ftest;
+  double ftest;
 
-  float start = clock();
+  double start = clock();
 
 
   fmax = field[0][0][0];
@@ -307,7 +307,7 @@ void histo_field(float ***field, hydro_params p, int step) {
     }
   }
 
-  float overall_max, overall_min;
+  double overall_max, overall_min;
 
   overall_max = reduce_max(fmax, p);
   overall_min = reduce_min(fmin, p);
@@ -323,7 +323,7 @@ void histo_field(float ***field, hydro_params p, int step) {
 
   int nbins = 100;
 
-  float df = (overall_max - overall_min)/((float)nbins);
+  double df = (overall_max - overall_min)/((double)nbins);
 
   if(isnan(df)) {
     printf0(p, "Max: %lf, Min: %lf, df: %lf\n",
@@ -382,16 +382,16 @@ void histo_field(float ***field, hydro_params p, int step) {
     fp = fopen(histodest, "w");
 
     for(i=0; i<nbins; i++) {
-      fprintf(fp, "%lf %d\n", overall_min + df*((float)i), count[i]);
+      fprintf(fp, "%lf %d\n", overall_min + df*((double)i), count[i]);
     }
 
     fclose(fp);
   }
 
-  float end = clock();
+  double end = clock();
 
   printf0(p, "Histogram stuff took %lf\n",
-	  ((float) (end - start)) / CLOCKS_PER_SEC);
+	  ((double) (end - start)) / CLOCKS_PER_SEC);
 
 
   free(count);
@@ -401,9 +401,9 @@ void histo_field(float ***field, hydro_params p, int step) {
 /** *Average* components of the stress-energy tensor for the scalar
  * field to leading order in the metric perturbation.
  */
-void didj(float *cpts, hydro_fields f, hydro_params p) {
+void didj(double *cpts, hydro_fields f, hydro_params p) {
 
-  float cpts_here[TENSOR_CPTS];
+  double cpts_here[TENSOR_CPTS];
 
   int x, y, z;
   int i;
@@ -450,7 +450,7 @@ void didj(float *cpts, hydro_fields f, hydro_params p) {
 
 
   for(i=0; i<TENSOR_CPTS; i++) {
-    cpts[i] = reduce_sum(cpts_here[i], p)/((float)(p.Lx*p.Ly*p.Lz));
+    cpts[i] = reduce_sum(cpts_here[i], p)/((double)(p.Lx*p.Ly*p.Lz));
   }
 
 }
@@ -462,8 +462,8 @@ void didj(float *cpts, hydro_fields f, hydro_params p) {
  * Additional boolean int to determine if we want to find maximum
  * of absolute value or just maximum.
  */
-value_loc find_max_loc(float ***field, hydro_params p, int abs_max){
-  float field_max= -999999999999;
+value_loc find_max_loc(double ***field, hydro_params p, int abs_max){
+  double field_max= -999999999999;
   int x, y, z;
   int max_loc[3] = {-1,-1,-1};
   value_rank out;
@@ -514,8 +514,8 @@ value_loc find_max_loc(float ***field, hydro_params p, int abs_max){
  * Additional boolean int to determine if we want to find minimum
  * of absolute value or just minimum.
  */
-value_loc find_min_loc(float ***field, hydro_params p, int abs_min){
-  float field_min= +999999999999;
+value_loc find_min_loc(double ***field, hydro_params p, int abs_min){
+  double field_min= +999999999999;
   int x, y, z;
   int min_loc[3] = {-1,-1,-1};
   value_rank out;

@@ -17,7 +17,7 @@
 /** Combine the data from each slice (supplied separately by each
  * rank to this function), bin, compute the histogram and output.
  */
-void histogram(hydro_params p, float *slice, char *filename,
+void histogram(hydro_params p, double *slice, char *filename,
 	       int slab, int x_start) {
   // The rest proceeds as in gw.c
 
@@ -28,15 +28,15 @@ void histogram(hydro_params p, float *slice, char *filename,
 
   int i, x, y, z;
 
-  float kmode;
+  double kmode;
 
   int nbins = minof3_int(p.Lx, p.Ly, p.Lz);
-  float mink = 0.0;
-  float maxk = 2.0*M_PI;
+  double mink = 0.0;
+  double maxk = 2.0*M_PI;
 
-  float dk = (maxk-mink)/((float)nbins);
+  double dk = (maxk-mink)/((double)nbins);
 
-  float *bins = (float *)malloc(nbins*sizeof(float));
+  double *bins = (double *)malloc(nbins*sizeof(double));
   int *counts = (int *)malloc(nbins*sizeof(int));
 
   for(i=0;i<nbins;i++) {
@@ -79,9 +79,9 @@ void histogram(hydro_params p, float *slice, char *filename,
 
 	// For binning we use the momentum space index
 	kmode = sqrt(
-		     ((float)(true_x*true_x))/((float)(p.Lx*p.Lx))
-		     + ((float)(true_y*true_y))/((float)(p.Ly*p.Ly))
-		     + ((float)(true_z*true_z))/((float)(p.Lz*p.Lz))
+		     ((double)(true_x*true_x))/((double)(p.Lx*p.Lx))
+		     + ((double)(true_y*true_y))/((double)(p.Ly*p.Ly))
+		     + ((double)(true_z*true_z))/((double)(p.Lz*p.Lz))
 		     )*2.0*M_PI;
 
 	whichbin = (int)floor(kmode/dk);
@@ -97,7 +97,7 @@ void histogram(hydro_params p, float *slice, char *filename,
     fprintf(stderr,"Got through binning process (bins %d)\n", nbins);
 
 
-  float red_value;
+  double red_value;
   int red_count;
 
   for(i=0;i<nbins;i++) {
@@ -115,7 +115,7 @@ void histogram(hydro_params p, float *slice, char *filename,
 
 
 
-  float thisk = dk/2.0;
+  double thisk = dk/2.0;
 
   // spokesman does the final analysis
   if(!p.rank) {
@@ -127,7 +127,7 @@ void histogram(hydro_params p, float *slice, char *filename,
 
 
       fprintf(fp, "%lf %g %d\n",
-	      thisk/(p.a*p.dx), ((float)(i+1))*bins[i], counts[i]);
+	      thisk/(p.a*p.dx), ((double)(i+1))*bins[i], counts[i]);
 
       thisk = thisk + dk;
     }
@@ -158,7 +158,7 @@ void histogram(hydro_params p, float *slice, char *filename,
  * For tensor power spetra, see tensorps.c
  */
 
-void vectorps(hydro_params p, fftwf_complex **outcpts, int step, char *label) {
+void vectorps(hydro_params p, fftw_complex **outcpts, int step, char *label) {
 
   ptrdiff_t x_thickness, x_start, alloc_local;
 
@@ -170,7 +170,7 @@ void vectorps(hydro_params p, fftwf_complex **outcpts, int step, char *label) {
 
   MPI_Status status;
 
-  float modsq;
+  double modsq;
 
   int x, y, z;
   int i;
@@ -183,9 +183,9 @@ void vectorps(hydro_params p, fftwf_complex **outcpts, int step, char *label) {
   else{
    printf0(p, "Starting vector power spectrum calculation.\n");
   }
-  float start = clock();
+  double start = clock();
 
-  alloc_local = fftwf_mpi_local_size_3d(n0, n1, n2,
+  alloc_local = fftw_mpi_local_size_3d(n0, n1, n2,
 				       MPI_COMM_WORLD, &x_thickness, &x_start);
 
   /*
@@ -193,9 +193,9 @@ void vectorps(hydro_params p, fftwf_complex **outcpts, int step, char *label) {
    * of each component in outcpts[i][k]
    */
 
-  float *slice_rot = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
-  float *slice_div = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
-  float *slice_tot = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
+  double *slice_rot = (double *)malloc(x_thickness*p.Ly*p.Lz*sizeof(double));
+  double *slice_div = (double *)malloc(x_thickness*p.Ly*p.Lz*sizeof(double));
+  double *slice_tot = (double *)malloc(x_thickness*p.Ly*p.Lz*sizeof(double));
 
   // The brains of the operation:
   // Turn the FFT'd vector into projected power spectrum
@@ -240,16 +240,16 @@ void vectorps(hydro_params p, fftwf_complex **outcpts, int step, char *label) {
   free(slice_tot);
 
 
-  float end = clock();
+  double end = clock();
   if(label != NULL){
     if(*label){
       printf0(p, "%s vector power spectrum calculation took %lf\n", label,
-        ((float) (end - start)) / CLOCKS_PER_SEC);
+        ((double) (end - start)) / CLOCKS_PER_SEC);
     }
   }
   else{
     printf0(p, "vector power spectrum calculation took %lf\n",
-      ((float) (end - start)) / CLOCKS_PER_SEC);
+      ((double) (end - start)) / CLOCKS_PER_SEC);
   }
 }
 

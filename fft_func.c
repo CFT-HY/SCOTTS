@@ -37,15 +37,14 @@ void fft_init(hydro_params p, fft_fields *fft_f){
     printf0(p,"initialising fftw mpi\n");
 
 
-    // First things first - initialise fftwf_mpi
-    fftwf_mpi_init();
+    // First things first - initialise fftw_mpi
+    fftw_mpi_init();
 
 
     printf0(p,"Creating map for nodes responsible for x coord in slab decomp\n");
 
-    alloc_local = fftwf_mpi_local_size_3d(n0, n1, n2,
+    alloc_local = fftw_mpi_local_size_3d(n0, n1, n2,
                                           MPI_COMM_WORLD, &x_thickness, &x_start);
-
 
     // Now we initialise the map for which node is responsible for each
     // x coord in the slab decomposition.
@@ -94,26 +93,26 @@ void fft_init(hydro_params p, fft_fields *fft_f){
     // Allocate in and out fields and plan for fourier transforms.
 
 
-    fft_f->in = fftwf_alloc_complex(alloc_local);
-    fft_f->out = fftwf_alloc_complex(alloc_local);
+    fft_f->in = fftw_alloc_complex(alloc_local);
+    fft_f->out = fftw_alloc_complex(alloc_local);
 
-    fft_f->plan = fftwf_mpi_plan_dft_3d(p.Lx, p.Ly, p.Lz,
+    fft_f->plan = fftw_mpi_plan_dft_3d(p.Lx, p.Ly, p.Lz,
                                         fft_f->in, fft_f->out, MPI_COMM_WORLD,
                                         FFTW_FORWARD, FFTW_ESTIMATE);
     // Initialise UETC reference fields
     if (p.uetcstart>=0){
         // Tensor fields
-        fft_f->initial_Tij = (fftwf_complex **)malloc(6*sizeof(fftwf_complex *));
+        fft_f->initial_Tij = (fftw_complex **)malloc(6*sizeof(fftw_complex *));
 
         for(i=0;i<TENSOR_CPTS;i++) {
-            fft_f->initial_Tij[i] = fftwf_alloc_complex(alloc_local);
+            fft_f->initial_Tij[i] = fftw_alloc_complex(alloc_local);
         }
 
         // Vector fields
-        fft_f->initial_V = (fftwf_complex **)malloc(3*sizeof(fftwf_complex *));
+        fft_f->initial_V = (fftw_complex **)malloc(3*sizeof(fftw_complex *));
 
         for(i=0;i<3;i++) {
-            fft_f->initial_V[i] = fftwf_alloc_complex(alloc_local);
+            fft_f->initial_V[i] = fftw_alloc_complex(alloc_local);
         }
     }
     free(thicknesses);
@@ -126,33 +125,33 @@ void fft_finalise(hydro_params p, fft_fields *fft_f){
 
     int i;
 
-    fftwf_destroy_plan(fft_f->plan);
+    fftw_destroy_plan(fft_f->plan);
 
-    fftwf_free(fft_f->in);
-    fftwf_free(fft_f->out);
+    fftw_free(fft_f->in);
+    fftw_free(fft_f->out);
 
     if (p.uetcstart>=0){
 
         for(i=0;i<TENSOR_CPTS;i++)
-            fftwf_free(fft_f->initial_Tij[i]);
+            fftw_free(fft_f->initial_Tij[i]);
 
         free(fft_f->initial_Tij);
 
         for(i=0;i<3;i++)
-            fftwf_free(fft_f->initial_V[i]);
+            fftw_free(fft_f->initial_V[i]);
 
         free(fft_f->initial_V);
     }
 
     free(fft_f->map);
-    fftwf_mpi_cleanup();
+    fftw_mpi_cleanup();
 }
 
 
 /** Populate `out` field in fft_fields with unnormalised fourier
  * transform of supplied real_field.
  *
- * Function which takes in real_field which is a float defined on the
+ * Function which takes in real_field which is a double defined on the
  * lattice in real space (pencil decomposition), and populates the
  * `in` field in fft_fields with real_field now in slab
  * decomposition. Then executes the fftw_plan to populate the `out`
@@ -160,7 +159,7 @@ void fft_finalise(hydro_params p, fft_fields *fft_f){
  * space. Note that no normalisation is applied during this procedure.
  *
  */
-void fft_scalar(hydro_params p, fft_fields fft_f, float ***real_field) {
+void fft_scalar(hydro_params p, fft_fields fft_f, double ***real_field) {
 
     ptrdiff_t x_thickness, x_start, alloc_local;
 
@@ -178,15 +177,15 @@ void fft_scalar(hydro_params p, fft_fields fft_f, float ***real_field) {
 
     //printf0(p, "FFT: alloc_local\n");
 
-    alloc_local = fftwf_mpi_local_size_3d(n0, n1, n2,
+    alloc_local = fftw_mpi_local_size_3d(n0, n1, n2,
                                           MPI_COMM_WORLD, &x_thickness, &x_start);
 
 
-    float *trim_field = (float *)malloc(p.slicex*p.slicey*p.Lz*sizeof(float));
+    double *trim_field = (double *)malloc(p.slicex*p.slicey*p.Lz*sizeof(double));
 
     //printf0(p, "FFT: populating trim field\n");
 
-    float checken = 0.0;
+    double checken = 0.0;
     for(x=1; x<=p.slicex; x++) {
         for(y=1; y<=p.slicey; y++) {
             for(z=0; z<p.Lz; z++) {
@@ -196,7 +195,7 @@ void fft_scalar(hydro_params p, fft_fields fft_f, float ***real_field) {
         }
     }
 
-    float *slice = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
+    double *slice = (double *)malloc(x_thickness*p.Ly*p.Lz*sizeof(double));
 
     int nx = p.Lx/p.slicex;
     int ny = p.Ly/p.slicey;
@@ -214,7 +213,7 @@ void fft_scalar(hydro_params p, fft_fields fft_f, float ***real_field) {
                 if((x/p.slicex == p.myposx) && (ry == p.myposy)) {
                     memcpy(&slice[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
                            &trim_field[(x-p.shiftx)*p.slicey*p.Lz],
-                           p.slicey*p.Lz*sizeof(float));
+                           p.slicey*p.Lz*sizeof(double));
                     continue;
                 }
 
@@ -270,7 +269,7 @@ void fft_scalar(hydro_params p, fft_fields fft_f, float ***real_field) {
 
 
 
-    fftwf_mpi_execute_dft(fft_f.plan, fft_f.in, fft_f.out);
+    fftw_mpi_execute_dft(fft_f.plan, fft_f.in, fft_f.out);
 
     //printf0(p, "Basic FFT done\n");
 
@@ -291,8 +290,8 @@ void fft_scalar(hydro_params p, fft_fields fft_f, float ***real_field) {
  * in slabs.
  *
  */
-void fft_vector(hydro_params p, fft_fields fft_f, float ****vector_field,
-		fftwf_complex **outcpts) {
+void fft_vector(hydro_params p, fft_fields fft_f, double ****vector_field,
+		fftw_complex **outcpts) {
 
     ptrdiff_t x_thickness, x_start, alloc_local;
 
@@ -303,14 +302,14 @@ void fft_vector(hydro_params p, fft_fields fft_f, float ****vector_field,
     int x, y, z;
     int i;
 
-    float start = clock();
+    double start = clock();
 
-    alloc_local = fftwf_mpi_local_size_3d(n0, n1, n2,
+    alloc_local = fftw_mpi_local_size_3d(n0, n1, n2,
                                           MPI_COMM_WORLD, &x_thickness, &x_start);
 
 
 
-    float fft_norm = (1.0/(((float)p.Lx)*((float)p.Ly)*((float)p.Lz)));
+    double fft_norm = (1.0/(((double)p.Lx)*((double)p.Ly)*((double)p.Lz)));
 
 
     for(i = 0; i < 3; i++) {
@@ -330,9 +329,9 @@ void fft_vector(hydro_params p, fft_fields fft_f, float ****vector_field,
         }
         //printf0(p, "FFT vector: Completed fft for cpt %d\n", i);
     }
-    float end = clock();
+    double end = clock();
 
-    printf0(p, "fft vector took %lf\n", ((float) (end - start)) / CLOCKS_PER_SEC);
+    printf0(p, "fft vector took %lf\n", ((double) (end - start)) / CLOCKS_PER_SEC);
 
 }
 
@@ -347,8 +346,8 @@ void fft_vector(hydro_params p, fft_fields fft_f, float ****vector_field,
  * pencils and populate outcpts with the fourier transform decomposed
  * in slabs.
  */
-void fft_tensor(hydro_params p, fft_fields fft_f, float ****tensor_field,
-		fftwf_complex **outcpts, float norm) {
+void fft_tensor(hydro_params p, fft_fields fft_f, double ****tensor_field,
+		fftw_complex **outcpts, double norm) {
 
     ptrdiff_t x_thickness, x_start, alloc_local;
 
@@ -360,16 +359,16 @@ void fft_tensor(hydro_params p, fft_fields fft_f, float ****tensor_field,
     int x, y, z;
     int i;
 
-    float start = clock();
+    double start = clock();
 
-    alloc_local = fftwf_mpi_local_size_3d(n0, n1, n2,
+    alloc_local = fftw_mpi_local_size_3d(n0, n1, n2,
                                           MPI_COMM_WORLD, &x_thickness, &x_start);
 
 
 
 
-    float fft_norm = (1.0/(((float)p.Lx)*((float)p.Ly)*((float)p.Lz)));
-    float tot_norm = fft_norm*norm;
+    double fft_norm = (1.0/(((double)p.Lx)*((double)p.Ly)*((double)p.Lz)));
+    double tot_norm = fft_norm*norm;
     for(i = 0; i < TENSOR_CPTS; i++) {
         fft_scalar(p, fft_f, tensor_field[i]);
 
@@ -389,9 +388,9 @@ void fft_tensor(hydro_params p, fft_fields fft_f, float ****tensor_field,
         //printf0(p, "FFT tensor: Completed fft for cpt %d\n", i);
 
     }
-    float end = clock();
+    double end = clock();
 
-    printf0(p, "fft tensor took %lf\n", ((float) (end - start)) / CLOCKS_PER_SEC);
+    printf0(p, "fft tensor took %lf\n", ((double) (end - start)) / CLOCKS_PER_SEC);
 
 }
 
@@ -401,10 +400,10 @@ void fft_tensor(hydro_params p, fft_fields fft_f, float ****tensor_field,
  *
  */
 void fft_J(hydro_fields f, hydro_params p, fft_fields fft_f,
-	   fftwf_complex **outcpts){
+	   fftw_complex **outcpts){
 #ifndef SCALAR
     int x, y, z, i;
-    float ****J = make_vector(p);
+    double ****J = make_vector(p);
 
     // Construct temperature current (centered at cell)
 
@@ -440,11 +439,11 @@ void fft_J(hydro_fields f, hydro_params p, fft_fields fft_f,
  *
  */
 void fft_X(hydro_fields f, hydro_params p, fft_fields fft_f,
-           fftwf_complex **outcpts){
+           fftw_complex **outcpts){
 #ifndef SCALAR
     int x, y, z, i;
-    float ****X = make_vector(p);
-    float sqrt_enth_node;
+    double ****X = make_vector(p);
+    double sqrt_enth_node;
 
     // Construct X vector.
     for(x = 1; x <= p.slicex; x++) {
@@ -500,7 +499,7 @@ void fft_e(hydro_fields f, hydro_params p, fft_fields fft_f){
 #ifndef SCALAR
 
     int x, y, z;
-    float ***e = make_field(p);
+    double ***e = make_field(p);
     for(x = 1; x <= p.slicex; x++) {
         for(y = 1; y <= p.slicey; y++) {
             for(z = 0; z < p.Lz; z++) {
@@ -524,10 +523,10 @@ void fft_e(hydro_fields f, hydro_params p, fft_fields fft_f){
  * - Consider reorganising files so that code specific fft/powerspectra/UETC
  *   calls live in a different file.
  */
-float output_ps_uetcs(hydro_fields f, hydro_params p, fft_fields fft_f, int step){
+double output_ps_uetcs(hydro_fields f, hydro_params p, fft_fields fft_f, int step){
 
     clock_t fft_start, fft_end;
-    float gwen;
+    double gwen;
     int i;
 
     ptrdiff_t x_thickness, x_start, alloc_local;
@@ -536,7 +535,7 @@ float output_ps_uetcs(hydro_fields f, hydro_params p, fft_fields fft_f, int step
     ptrdiff_t n1 = p.Ly;
     ptrdiff_t n2 = p.Lz;
 
-    alloc_local = fftwf_mpi_local_size_3d(n0, n1, n2,
+    alloc_local = fftw_mpi_local_size_3d(n0, n1, n2,
                                           MPI_COMM_WORLD, &x_thickness, &x_start);
     // Perform scalar ffts:
 
@@ -546,7 +545,7 @@ float output_ps_uetcs(hydro_fields f, hydro_params p, fft_fields fft_f, int step
     fft_start = clock();
     fft_scalar(p, fft_f, f.phi);
     fft_end = clock();
-    printf0(p, "phi fft scalar took %lf\n", ((float) (fft_end - fft_start))
+    printf0(p, "phi fft scalar took %lf\n", ((double) (fft_end - fft_start))
             / CLOCKS_PER_SEC);
 
     // Power spectrum of scalar field
@@ -558,7 +557,7 @@ float output_ps_uetcs(hydro_fields f, hydro_params p, fft_fields fft_f, int step
     fft_start = clock();
     fft_e(f, p, fft_f);
     fft_end = clock();
-    printf0(p, "e fft scalar took %lf\n", ((float) (fft_end - fft_start))
+    printf0(p, "e fft scalar took %lf\n", ((double) (fft_end - fft_start))
             / CLOCKS_PER_SEC);
 
     scalarps(p, fft_f.out, step, "e");
@@ -568,10 +567,10 @@ float output_ps_uetcs(hydro_fields f, hydro_params p, fft_fields fft_f, int step
 
     // Vector spectra (and UETCs)
 
-    fftwf_complex **outcpts_vec = (fftwf_complex **)malloc(3*sizeof(fftwf_complex *));
+    fftw_complex **outcpts_vec = (fftw_complex **)malloc(3*sizeof(fftw_complex *));
 
     for(i=0;i<3;i++) {
-        outcpts_vec[i] = fftwf_alloc_complex(alloc_local);
+        outcpts_vec[i] = fftw_alloc_complex(alloc_local);
     }
 
 #ifndef SCALAR
@@ -599,16 +598,16 @@ float output_ps_uetcs(hydro_fields f, hydro_params p, fft_fields fft_f, int step
 
     // Clean up outcpts_vec
     for(i=0;i<3;i++)
-        fftwf_free(outcpts_vec[i]);
+        fftw_free(outcpts_vec[i]);
 
     free(outcpts_vec);
 
     // Tensor spectra & UETCs
 
-    fftwf_complex **outcpts_tens = (fftwf_complex **)malloc(6*sizeof(fftwf_complex *));
+    fftw_complex **outcpts_tens = (fftw_complex **)malloc(6*sizeof(fftw_complex *));
 
     for(i=0;i<TENSOR_CPTS;i++) {
-        outcpts_tens[i] = fftwf_alloc_complex(alloc_local);
+        outcpts_tens[i] = fftw_alloc_complex(alloc_local);
     }
 
     // Gravitational wave power spectrum (returns GW energy)
@@ -618,7 +617,7 @@ float output_ps_uetcs(hydro_fields f, hydro_params p, fft_fields fft_f, int step
 
     // Shear stress power spectrum.
 
-    float ****Tij_now = make_tensor(p);
+    double ****Tij_now = make_tensor(p);
 
     stress_energy(f, p, Tij_now);
 
@@ -637,7 +636,7 @@ float output_ps_uetcs(hydro_fields f, hydro_params p, fft_fields fft_f, int step
     // Cleanup outcpts_tens
 
     for(i=0;i<TENSOR_CPTS;i++)
-        fftwf_free(outcpts_tens[i]);
+        fftw_free(outcpts_tens[i]);
 
     free(outcpts_tens);
 

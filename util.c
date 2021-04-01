@@ -7,7 +7,7 @@
  */
 #include "hydro.h"
 
-float minof3(float a, float b, float c) {
+double minof3(double a, double b, double c) {
   if (a < b) {
     if (b < c) {
       return a;
@@ -45,7 +45,7 @@ int minof3_int(int a, int b, int c) {
 }
 
 
-float maxof3(float a, float b, float c) {
+double maxof3(double a, double b, double c) {
   if (a > b) {
     if (b > c) {
       return a;
@@ -63,7 +63,7 @@ float maxof3(float a, float b, float c) {
   return c;  
 }
 
-float minof2(float a, float b) {
+double minof2(double a, double b) {
   if (a < b)
     return a;
   return b;

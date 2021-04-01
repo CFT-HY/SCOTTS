@@ -25,7 +25,7 @@ void init_uetc(hydro_fields f, hydro_params p, fft_fields fft_f) {
   int i, x, y, z;
 
   // Initialise UETC for energy momentum tensor.
-  float ****Tij = make_tensor(p);
+  double ****Tij = make_tensor(p);
   stress_energy(f, p, Tij);
 
 
@@ -42,8 +42,8 @@ void init_uetc(hydro_fields f, hydro_params p, fft_fields fft_f) {
 /**  Actually calculate the transverse traceless uetc of a tensor between two timesteps and store in
  * an appropriately named file.
  */
-void uetc_tensor(hydro_params p, fftwf_complex **tensor_then,
-		 fftwf_complex **tensor_now, int step_then, int step_now,
+void uetc_tensor(hydro_params p, fftw_complex **tensor_then,
+		 fftw_complex **tensor_now, int step_then, int step_now,
 		 char *label){
 
 
@@ -57,7 +57,7 @@ void uetc_tensor(hydro_params p, fftwf_complex **tensor_then,
 
   MPI_Status status;
 
-  float kmode, modsq;
+  double kmode, modsq;
 
   int x, y, z;
   int i;
@@ -70,16 +70,16 @@ void uetc_tensor(hydro_params p, fftwf_complex **tensor_then,
   else{
    printf0(p, "Starting tensor (TT) UETC calculation.\n");
   }
-  float start = clock();
+  double start = clock();
 
-  alloc_local = fftwf_mpi_local_size_3d(n0, n1, n2,
+  alloc_local = fftw_mpi_local_size_3d(n0, n1, n2,
 				       MPI_COMM_WORLD, &x_thickness, &x_start);
 
 
   /////////////// Project to get transverse traceless tensor uetc ///////////////////
 
-  float *slice_re = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
-  float *slice_im = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
+  double *slice_re = (double *)malloc(x_thickness*p.Ly*p.Lz*sizeof(double));
+  double *slice_im = (double *)malloc(x_thickness*p.Ly*p.Lz*sizeof(double));
 
 
   // could make strictly > because equal time is just shear stress
@@ -94,13 +94,13 @@ void uetc_tensor(hydro_params p, fftwf_complex **tensor_then,
     printf0(p,"binning\n");
 
     int nbins = minof3_int(p.Lx, p.Ly, p.Lz);
-    float mink = 0.0;
-    float maxk = 2.0*M_PI;
+    double mink = 0.0;
+    double maxk = 2.0*M_PI;
 
-    float dk = (maxk-mink)/((float)nbins);
+    double dk = (maxk-mink)/((double)nbins);
 
-    float *bins_re = (float *)malloc(nbins*sizeof(float));
-    float *bins_im = (float *)malloc(nbins*sizeof(float));
+    double *bins_re = (double *)malloc(nbins*sizeof(double));
+    double *bins_im = (double *)malloc(nbins*sizeof(double));
     int *counts = (int *)malloc(nbins*sizeof(int));
 
     for(i=0;i<nbins;i++) {
@@ -140,9 +140,9 @@ void uetc_tensor(hydro_params p, fftwf_complex **tensor_then,
 	  // For binning we use momentum space index
 
 	  kmode = sqrt(
-		       ((float)(true_x*true_x))/((float)(p.Lx*p.Lx))
-		       + ((float)(true_y*true_y))/((float)(p.Ly*p.Ly))
-		       + ((float)(true_z*true_z))/((float)(p.Lz*p.Lz))
+		       ((double)(true_x*true_x))/((double)(p.Lx*p.Lx))
+		       + ((double)(true_y*true_y))/((double)(p.Ly*p.Ly))
+		       + ((double)(true_z*true_z))/((double)(p.Lz*p.Lz))
 		       )*2.0*M_PI;
 
 	  
@@ -156,7 +156,7 @@ void uetc_tensor(hydro_params p, fftwf_complex **tensor_then,
     }
 
 
-    float red_value;
+    double red_value;
     int red_count;
 
     for(i=0;i<nbins;i++) {
@@ -172,7 +172,7 @@ void uetc_tensor(hydro_params p, fftwf_complex **tensor_then,
     }
 
 
-    float thisk = dk/2.0;
+    double thisk = dk/2.0;
 
     // spokesman does the final analysis
     if(!p.rank) {
@@ -212,17 +212,17 @@ void uetc_tensor(hydro_params p, fftwf_complex **tensor_then,
   free(slice_im);
 
 
-  float end = clock();
+  double end = clock();
 
   if(label != NULL){
     if(*label){
       printf0(p, "%s tensor (TT) UETC calculation took %lf\n",label,
-	      ((float) (end - start)) / CLOCKS_PER_SEC);
+	      ((double) (end - start)) / CLOCKS_PER_SEC);
     }
   }
   else{
     printf0(p, "tensor (TT) UETC calculation took %lf\n",
-	    ((float) (end - start)) / CLOCKS_PER_SEC);
+	    ((double) (end - start)) / CLOCKS_PER_SEC);
   }
 }
 
@@ -231,8 +231,8 @@ void uetc_tensor(hydro_params p, fftwf_complex **tensor_then,
  * a vector field between two timesteps and store them in an
  * appropriately named file.
  */
-void uetc_vector(hydro_params p, fftwf_complex **vector_then,
-		 fftwf_complex **vector_now, int step_then, int step_now,
+void uetc_vector(hydro_params p, fftw_complex **vector_then,
+		 fftw_complex **vector_now, int step_then, int step_now,
 		 char *label){
 
 
@@ -246,7 +246,7 @@ void uetc_vector(hydro_params p, fftwf_complex **vector_then,
 
   MPI_Status status;
 
-  float kmode, modsq;
+  double kmode, modsq;
 
   int x, y, z;
   int i;
@@ -259,18 +259,18 @@ void uetc_vector(hydro_params p, fftwf_complex **vector_then,
   else{
    printf0(p, "Starting vector UETC calculation.\n");
   }
-  float start = clock();
+  double start = clock();
 
-  alloc_local = fftwf_mpi_local_size_3d(n0, n1, n2,
+  alloc_local = fftw_mpi_local_size_3d(n0, n1, n2,
 				       MPI_COMM_WORLD, &x_thickness, &x_start);
 
 
   /////////////// Project to get rot and div components of vector uetc ///////////////////
 
-  float *slice_rot_re = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
-  float *slice_rot_im = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
-  float *slice_div_re = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
-  float *slice_div_im = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
+  double *slice_rot_re = (double *)malloc(x_thickness*p.Ly*p.Lz*sizeof(double));
+  double *slice_rot_im = (double *)malloc(x_thickness*p.Ly*p.Lz*sizeof(double));
+  double *slice_div_re = (double *)malloc(x_thickness*p.Ly*p.Lz*sizeof(double));
+  double *slice_div_im = (double *)malloc(x_thickness*p.Ly*p.Lz*sizeof(double));
 
 
   // could make strictly > because equal time is just shear stress
@@ -285,15 +285,15 @@ void uetc_vector(hydro_params p, fftwf_complex **vector_then,
     printf0(p,"binning\n");
 
     int nbins = minof3_int(p.Lx, p.Ly, p.Lz);
-    float mink = 0.0;
-    float maxk = 2.0*M_PI;
+    double mink = 0.0;
+    double maxk = 2.0*M_PI;
 
-    float dk = (maxk-mink)/((float)nbins);
+    double dk = (maxk-mink)/((double)nbins);
 
-    float *bins_rot_re = (float *)malloc(nbins*sizeof(float));
-    float *bins_rot_im = (float *)malloc(nbins*sizeof(float));
-    float *bins_div_re = (float *)malloc(nbins*sizeof(float));
-    float *bins_div_im = (float *)malloc(nbins*sizeof(float));
+    double *bins_rot_re = (double *)malloc(nbins*sizeof(double));
+    double *bins_rot_im = (double *)malloc(nbins*sizeof(double));
+    double *bins_div_re = (double *)malloc(nbins*sizeof(double));
+    double *bins_div_im = (double *)malloc(nbins*sizeof(double));
 
     int *counts = (int *)malloc(nbins*sizeof(int));
 
@@ -336,9 +336,9 @@ void uetc_vector(hydro_params p, fftwf_complex **vector_then,
 
 	  // Use lattice site index to construct k for binning.
 	  kmode = sqrt(
-		       ((float)(true_x*true_x))/((float)(p.Lx*p.Lx))
-		       + ((float)(true_y*true_y))/((float)(p.Ly*p.Ly))
-		       + ((float)(true_z*true_z))/((float)(p.Lz*p.Lz))
+		       ((double)(true_x*true_x))/((double)(p.Lx*p.Lx))
+		       + ((double)(true_y*true_y))/((double)(p.Ly*p.Ly))
+		       + ((double)(true_z*true_z))/((double)(p.Lz*p.Lz))
 		       )*2.0*M_PI;
 
       
@@ -358,7 +358,7 @@ void uetc_vector(hydro_params p, fftwf_complex **vector_then,
     if(!p.rank)
       fprintf(stderr,"Got through binning process (bins %d)\n", nbins);
 
-    float red_value;
+    double red_value;
     int red_count;
 
     for(i=0;i<nbins;i++) {
@@ -385,7 +385,7 @@ void uetc_vector(hydro_params p, fftwf_complex **vector_then,
       fprintf(stderr,"Got through bin reduction\n");
 
 
-    float thisk = dk/2.0;
+    double thisk = dk/2.0;
 
     // spokesman does the final analysis
 
@@ -407,7 +407,7 @@ void uetc_vector(hydro_params p, fftwf_complex **vector_then,
       for(i=0;i<nbins;i++) {
 
 	fprintf(fp1, "%lf %g %g %d %d %d\n",
-		thisk/(p.a*p.dx), (float)(i+1)*bins_rot_re[i], (float)(i+1)*bins_rot_im[i], counts[i], step_then, step_now);
+		thisk/(p.a*p.dx), (double)(i+1)*bins_rot_re[i], (double)(i+1)*bins_rot_im[i], counts[i], step_then, step_now);
 
 	thisk = thisk + dk;
       }
@@ -429,7 +429,7 @@ void uetc_vector(hydro_params p, fftwf_complex **vector_then,
       for(i=0;i<nbins;i++) {
 
 	fprintf(fp2, "%lf %g %g %d %d %d\n",
-		thisk/(p.a*p.dx), (float)(i+1)*bins_div_re[i], (float)(i+1)*bins_div_im[i], counts[i], step_then, step_now);
+		thisk/(p.a*p.dx), (double)(i+1)*bins_div_re[i], (double)(i+1)*bins_div_im[i], counts[i], step_then, step_now);
 
 	thisk = thisk + dk;
       }
@@ -456,17 +456,17 @@ void uetc_vector(hydro_params p, fftwf_complex **vector_then,
   free(slice_div_im);
 
 
-  float end = clock();
+  double end = clock();
 
   if(label != NULL){
     if(*label){
       printf0(p, "%s vector UETC calculation took %lf\n",label,
-	      ((float) (end - start)) / CLOCKS_PER_SEC);
+	      ((double) (end - start)) / CLOCKS_PER_SEC);
     }
   }
   else{
     printf0(p, "vector UETC calculation took %lf\n",
-	    ((float) (end - start)) / CLOCKS_PER_SEC);
+	    ((double) (end - start)) / CLOCKS_PER_SEC);
   }
 }
 

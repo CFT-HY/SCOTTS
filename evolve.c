@@ -22,7 +22,7 @@ void evolve_field(hydro_fields f, hydro_params p) {
   
   int x, y, z;
 
-  float pi_old, s;
+  double pi_old, s;
   
   // Move conjugate momentum (leapfrog)
   for(x = 1; x <= p.slicex; x++) {
@@ -168,37 +168,37 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
 
   int x, y, z;
   
-  float ***Vdmid = make_field(p); // dV/dphi between timesteps in zone.
-  float ***Wold = make_field(p);
-  float ***phiav = make_field(p); // phi between timesteps in zone.
+  double ***Vdmid = make_field(p); // dV/dphi between timesteps in zone.
+  double ***Wold = make_field(p);
+  double ***phiav = make_field(p); // phi between timesteps in zone.
 
   //d(phi)/dx_i between timesteps on appropriate spatial boundary.
-  float ****dxphi = make_vector(p); 
+  double ****dxphi = make_vector(p); 
 
-  float ***Wfacex =  make_field(p);
-  float ***Wfacey =  make_field(p);
-  float ***Wfacez =  make_field(p);
+  double ***Wfacex =  make_field(p);
+  double ***Wfacey =  make_field(p);
+  double ***Wfacez =  make_field(p);
 
   
-  float gpi, dv, s;
+  double gpi, dv, s;
 
-  float p_bar_x_plus, p_bar_x_minus;
-  float p_bar_y_plus, p_bar_y_minus;
-  float p_bar_z_plus, p_bar_z_minus;
+  double p_bar_x_plus, p_bar_x_minus;
+  double p_bar_y_plus, p_bar_y_minus;
+  double p_bar_z_plus, p_bar_z_minus;
 
-  float utildex, utildey, utildez;
-  float qx, qy, qz, gradv;
-  float divv;
+  double utildex, utildey, utildez;
+  double qx, qy, qz, gradv;
+  double divv;
 
-  float sigmabar;
+  double sigmabar;
 
-  float ubarx, ubary, ubarz, W;
+  double ubarx, ubary, ubarz, W;
 
 #ifdef DIMENSIONLESS
-  float phinb, Tnb;
+  double phinb, Tnb;
 #endif //DIMENSIONLESS
-  float vdnb, pinb, wnb, dxphinb0, dxphinb1, dxphinb2;
-  float velxnb, velynb, velznb;
+  double vdnb, pinb, wnb, dxphinb0, dxphinb1, dxphinb2;
+  double velxnb, velynb, velznb;
 
   
   // Find quantities needed on half timesteps but defined on whole steps
@@ -787,11 +787,11 @@ void evolve_uij(hydro_fields f, hydro_params p) {
 
   int x, y, z, i;
 
-  float ****Tij = make_tensor(p);
+  double ****Tij = make_tensor(p);
 
 
   // c = hbar = mpl = G = 1
-  const float G = 1.0;
+  const double G = 1.0;
 
 
   stress_energy(f, p, Tij);

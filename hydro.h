@@ -100,11 +100,11 @@ typedef struct {
 
   /** Lattice spacing.
    */
-  float dx;
+  double dx;
 
   /** Timestep interval.
    */
-  float dt;
+  double dt;
 
   /** Number of lattice points in `x` direction.
    */
@@ -124,34 +124,34 @@ typedef struct {
    *
    * NB: artificial viscosity not implemented yet!
    */
-  float Cav;
+  double Cav;
 
   /** C aka \f$ \eta \f$, the field viscosity
    */
-  float C;
+  double C;
 
   /** Cubic potential parameter \f$ A \f$.
    */
-  float alpha;
+  double alpha;
 
   /** Quartic potential parameter \f$ \lambda \f$.
    */
-  float lambda;
+  double lambda;
 
   /** Quadratic potential parameter \f$ \gamma \f$.
    */
-  float gamma;
+  double gamma;
 
   /** Nucleation temperature \f$ T_N \f$ used to initialise the
    *  simulation.
    */
-  float Tconst;
+  double Tconst;
 
   /** Potential parameter \f$ T_0 \f$ which corresponds to the
    *  temperature at which the transition is no longer first order.
    *  (Not used in BAG model).
    */
-  float T0;
+  double T0;
 
   /** How frequently to write global outputs to stderr.
    */
@@ -186,15 +186,15 @@ typedef struct {
 
   /** Scale factor.
    */
-  float a;
+  double a;
 
   /** Effective degrees of freedom.
    */
-  float gstar;
+  double gstar;
 
   /** `gdeg` is `gstar` scaled by \f$ (\pi^2/90) \f$.
    */
-  float gdeg;
+  double gdeg;
 
   /** Number of physical sites in volume.
    */
@@ -212,7 +212,7 @@ typedef struct {
    */
   int rank;
 
-  //  float comms_time;
+  //  double comms_time;
 
   /** How many sites in the `x` direction are unique to us.
    *
@@ -286,7 +286,7 @@ typedef struct {
 
   /** Used to rescale bubble size
    */
-  float scale;
+  double scale;
 
   /** Random seed so it is kept the same across nodes.
    */
@@ -347,14 +347,14 @@ typedef struct {
    *              {24 \lambda^{5/2}}
    *  \f]
    */
-  float surface_tension;
+  double surface_tension;
 
   /** Value of `phi` at the center of the nucleated bubble.
    *
    * Read from the parameter file, if given as <=0 default to broken
    * phase value at \f$T=T_N\f$.
    */
-  float phimin;
+  double phimin;
 
   /** Critical radius of the bubble \f$ R_c \f$.
    *
@@ -363,30 +363,30 @@ typedef struct {
    * R_c= -\dfrac{2\sigma}{-V(\phi_b,T_N)}
    * \f]
    */
-  float R_critical;
+  double R_critical;
 
   /** Scaled version of the critical radius.
    *
    * Used to stop bubbles from collapsing when necessary.
    */
-  float R_scaled;
+  double R_scaled;
 
   /** Value of temperature in the centre of the fluid sphere,
    * used in INIT_FLUID_SPHERE ("initfs") only.
    */
-  float T_central;
+  double T_central;
 
   /** Radius of gaussian sphere of fluid,
    * used in INIT_FLUID_SPHERE ("initfs") only.
    */
-  float sphere_radius;
+  double sphere_radius;
 
   /** Constant in potential term.
    *
    * Calculated s.t \f$V(\phi_b,T=0)=0\f$
    * or s.t \f$ V_B(\phi_b)=0\f$ for BAG
    */
-  float V0;
+  double V0;
 #ifdef BAG
   /** Broken phase value of phi in the bag model.
    */
@@ -416,79 +416,79 @@ typedef struct {
  */
 typedef struct {
 
-  float *x_inv;
-  float *phi_inv;
-  float *V_inv;
+  double *x_inv;
+  double *phi_inv;
+  double *V_inv;
 
   // Scalar field
 
   /** `phi` is the scalar field on the current timestep.
    */
-  float ***phi;
+  double ***phi;
 
   /** `pi_future` is the value of `pi` on the same timestep as `phi`.
    */
-  float ***pi_future;
+  double ***pi_future;
 
   /** `pi` is the conjugate momenta of the scalar field.
    */
-  float ***pi;
+  double ***pi;
 
   /** `phi_old` is the scalar field on the last timestep.
    */
-  float ***phi_old;
+  double ***phi_old;
 
 #ifndef SCALAR
   // Fluid
 
   /** `T` is the temperature of the fluid.
    */
-  float ***T;
+  double ***T;
 
   /** `E` is the internal energy density of the fluid.
    */
-  float ***E;
+  double ***E;
 
   /** `W` is the zone-centred boost.
    */
-  float ***W;
+  double ***W;
 
   /** `kappa` is the adiabatic index for the system.
    */
-  float ***kappa;
+  double ***kappa;
 
   /** `p` is the pressure of the fluid. Obtained by eq_of_state() and
    * used in hydro.
    */
-  float ***p;
+  double ***p;
 
   /** `V` is the fluid 3-velocity.
    */
-  float ****V;
+  double ****V;
 
   /** `Z` is the fluid momentum density.
    */
-  float ****Z;
+  double ****Z;
 
   /** `U` is the fluid 4-velocity.
    */
-  float ****U;
+  double ****U;
 
   /** `F` is a temporary variable used in advection.
    */
-  float ****F;
+  double ****F;
 #endif // SCALAR
 
   // Gravity
 
   /** `uij` are the unprojected metric peturbations.
    */
-  float ****uij;
+  double ****uij;
 
   /** `udotij` are the time derivative of the `uij` and are used for
    *    GW power spectrum.
    */
-  float ****udotij;
+  double ****udotij;
 
 } hydro_fields;
 
@@ -504,25 +504,25 @@ typedef struct{
   /** Input field for fast fourier transforms.
    *
    */
-  fftwf_complex *in;
+  fftw_complex *in;
 
   /** Output field for fast fourier transforms.
    *
    */
-  fftwf_complex *out;
+  fftw_complex *out;
 
   /** Reference time field for Tij in momentum space.
    */
-  fftwf_complex **initial_Tij;
+  fftw_complex **initial_Tij;
 
   /** Reference time field for velocity in momentum space.
    */
-  fftwf_complex **initial_V;
+  fftw_complex **initial_V;
 
   /** Plan for performing the fast fourier transforms.
    *
    */
-  fftwf_plan plan;
+  fftw_plan plan;
 
   /** Map for which node is responsible for each `x` coordinate.
    */
@@ -538,7 +538,7 @@ typedef struct{
  * lattice and the processor containing the lattice site.
  */
 typedef struct{
-  float value;
+  double value;
   int rank;
 } value_rank;
 
@@ -548,7 +548,7 @@ typedef struct{
  * lattice and the lattice site where it occurs.
  */
 typedef struct{
-  float value;
+  double value;
   int loc[3];
 } value_loc;
 
@@ -556,14 +556,14 @@ typedef struct{
 
 
 // alloc.c
-float ***make_field(hydro_params p);
-float ****make_vector(hydro_params p);
-float ****make_tensor(hydro_params p);
+double ***make_field(hydro_params p);
+double ****make_vector(hydro_params p);
+double ****make_tensor(hydro_params p);
 
 
-void free_field(hydro_params p, float ***field);
-void free_vector(hydro_params p, float ****vector);
-void free_tensor(hydro_params p, float ****tensor);
+void free_field(hydro_params p, double ***field);
+void free_vector(hydro_params p, double ****vector);
+void free_tensor(hydro_params p, double ****tensor);
 
 void alloc_fields(hydro_fields *f, hydro_params p);
 void zero_fields(hydro_fields f, hydro_params p);
@@ -575,17 +575,17 @@ void layout(hydro_params *p);
 int get_x(int n, hydro_params p);
 int get_y(int n, hydro_params p);
 int get_z(int n, hydro_params p);
-void halo_field(float ***field, hydro_params p);
-float reduce_sum(float result, hydro_params p);
+void halo_field(double ***field, hydro_params p);
+double reduce_sum(double result, hydro_params p);
 int reduce_sum_int(int result, hydro_params p);
-float reduce_max(float result, hydro_params p);
+double reduce_max(double result, hydro_params p);
 int reduce_max_int(int result, hydro_params p);
-float reduce_min(float result, hydro_params p);
+double reduce_min(double result, hydro_params p);
 int reduce_and(int result, hydro_params p);
-value_rank reduce_maxloc(float result, hydro_params p);
-value_rank reduce_minloc(float result, hydro_params p);
+value_rank reduce_maxloc(double result, hydro_params p);
+value_rank reduce_minloc(double result, hydro_params p);
 void init_comms_time(hydro_params *p);
-float get_comms_time(hydro_params *p);
+double get_comms_time(hydro_params *p);
 void printf0(hydro_params p, char *msg, ...);
 void die(int howbad);
 
@@ -604,27 +604,27 @@ void evolve_uij(hydro_fields f, hydro_params p);
 void artificial_viscosity(hydro_fields f, int **nb, hydro_params p);
 
 // potential.c
-float Vf(hydro_params p, float T, float this_phi);
-float Vdf(hydro_params p, float T, float this_phi);
-float VTf(hydro_params p, float T, float this_phi);
-float VTTf(hydro_params p, float T, float this_phi);
-void Vpot(hydro_params p, float ***T, float ***phi, float ***Vprecalc);
-void Vdpot(hydro_params p, float ***T, float ***phi, float ***Vprecalc);
+double Vf(hydro_params p, double T, double this_phi);
+double Vdf(hydro_params p, double T, double this_phi);
+double VTf(hydro_params p, double T, double this_phi);
+double VTTf(hydro_params p, double T, double this_phi);
+void Vpot(hydro_params p, double ***T, double ***phi, double ***Vprecalc);
+void Vdpot(hydro_params p, double ***T, double ***phi, double ***Vprecalc);
 
 
 // energy.c
-float field_energy(hydro_fields f, hydro_params p);
-float gradient_energy_field(hydro_fields f, hydro_params p);
-float kinetic_energy_field(hydro_fields f, hydro_params p);
-float total_energy(hydro_fields f, hydro_params p);
-float kinetic_energy_fluid(hydro_fields f, hydro_params p);
-float rest_energy(hydro_fields f, hydro_params p);
-void energy_density(hydro_fields f, hydro_params p, float ***en);
-void stress_energy(hydro_fields f, hydro_params p, float ****Tij);
-float avg_pressure(hydro_fields f, hydro_params p);
-float tzerozero(hydro_fields f, hydro_params p);
-float get_curlJ_tot(hydro_fields f, hydro_params p);
-float get_divJ_tot(hydro_fields f, hydro_params p);
+double field_energy(hydro_fields f, hydro_params p);
+double gradient_energy_field(hydro_fields f, hydro_params p);
+double kinetic_energy_field(hydro_fields f, hydro_params p);
+double total_energy(hydro_fields f, hydro_params p);
+double kinetic_energy_fluid(hydro_fields f, hydro_params p);
+double rest_energy(hydro_fields f, hydro_params p);
+void energy_density(hydro_fields f, hydro_params p, double ***en);
+void stress_energy(hydro_fields f, hydro_params p, double ****Tij);
+double avg_pressure(hydro_fields f, hydro_params p);
+double tzerozero(hydro_fields f, hydro_params p);
+double get_curlJ_tot(hydro_fields f, hydro_params p);
+double get_divJ_tot(hydro_fields f, hydro_params p);
 
 // eos.c
 
@@ -649,25 +649,25 @@ int can_nucleate(hydro_fields f, hydro_params p, int x0, int y0, int z0);
 void nucleate_at(hydro_fields f, hydro_params p, int x0, int y0, int z0);
 void initial_3D(hydro_fields f, hydro_params p);
 int try_nucleate(hydro_fields f, hydro_params p);
-int bubbles_at_step(hydro_fields f, hydro_params p, float t, int step);
+int bubbles_at_step(hydro_fields f, hydro_params p, double t, int step);
 void init_profile(hydro_fields *f, hydro_params *p);
 void fluid_sphere(hydro_fields f, hydro_params p);
 
 
 // output.c
 void write_global_headers(hydro_fields f, hydro_params p);
-void write_globals(hydro_fields f, hydro_params p, float gwen,
-		    int bcount, float t_sim, int step);
-float get_gamma_max(hydro_fields f, hydro_params p);
-float get_s_max(hydro_fields f, hydro_params p);
-float get_veltot(hydro_fields f, hydro_params p);
+void write_globals(hydro_fields f, hydro_params p, double gwen,
+		    int bcount, double t_sim, int step);
+double get_gamma_max(hydro_fields f, hydro_params p);
+double get_s_max(hydro_fields f, hydro_params p);
+double get_veltot(hydro_fields f, hydro_params p);
 long long get_N_broken(hydro_fields f, hydro_params p);
 long long get_broken_links(hydro_fields f, hydro_params p);
-void dump(float *field, hydro_params p);
-void histo_field(float ***field, hydro_params p, int step);
-void didj(float *cpts, hydro_fields f, hydro_params p);
-value_loc find_max_loc(float ***f, hydro_params p, int abs_max);
-value_loc find_min_loc(float ***f, hydro_params p, int abs_min);
+void dump(double *field, hydro_params p);
+void histo_field(double ***field, hydro_params p, int step);
+void didj(double *cpts, hydro_fields f, hydro_params p);
+value_loc find_max_loc(double ***f, hydro_params p, int abs_max);
+value_loc find_min_loc(double ***f, hydro_params p, int abs_min);
 void dump_max_min(hydro_fields f, hydro_params p);
 
 // papi.c
@@ -686,86 +686,86 @@ void silo_init(hydro_params p);
 void write_silo_step(hydro_fields f, hydro_params p, int step);
 
 // silage_slice.c
-void make_kinetic(hydro_fields f, hydro_params p, float ***temp);
-void make_slice(hydro_fields f, hydro_params p, int xcoord, float *slice,
-		float ***temp);
-void make_vort(hydro_fields f, hydro_params p, float ****temp);
-void make_divV(hydro_fields f, hydro_params p, float ***temp);
-void make_curlJ(hydro_fields f, hydro_params p, float ****temp);
-void make_divJ(hydro_fields f, hydro_params p, float ***temp);
-void make_vel(hydro_fields f, hydro_params p, float ***temp);
-void make_Z(hydro_fields f, hydro_params p, float ***temp);
+void make_kinetic(hydro_fields f, hydro_params p, double ***temp);
+void make_slice(hydro_fields f, hydro_params p, int xcoord, double *slice,
+		double ***temp);
+void make_vort(hydro_fields f, hydro_params p, double ****temp);
+void make_divV(hydro_fields f, hydro_params p, double ***temp);
+void make_curlJ(hydro_fields f, hydro_params p, double ****temp);
+void make_divJ(hydro_fields f, hydro_params p, double ***temp);
+void make_vel(hydro_fields f, hydro_params p, double ***temp);
+void make_Z(hydro_fields f, hydro_params p, double ***temp);
 void write_silo_slice_step(hydro_fields f, hydro_params p, int step,
 			   int xcoord);
 #endif // SILO
 
 
 // util.c
-float minof3(float a, float b, float c);
+double minof3(double a, double b, double c);
 int minof3_int(int a, int b, int c);
-float maxof3(float a, float b, float c);
-float minof2(float a, float b);
+double maxof3(double a, double b, double c);
+double minof2(double a, double b);
 
 
 #ifdef FFT
 // fft_func.c
 void fft_init(hydro_params p, fft_fields *fft_f);
 void fft_finalise(hydro_params p, fft_fields *fft_f);
-void fft_scalar(hydro_params p, fft_fields fft_f, float ***real_field);
-void fft_vector(hydro_params p, fft_fields fft_f, float ****vector_field,
-		fftwf_complex **outcpts);
-void fft_tensor(hydro_params p, fft_fields fft_f, float ****tensor_field,
-		fftwf_complex **outcpts, float norm);
-void fft_J(hydro_fields f, hydro_params p, fft_fields fft_f, fftwf_complex **outcpts);
-void fft_X(hydro_fields f, hydro_params p, fft_fields fft_f, fftwf_complex **outcpts);
+void fft_scalar(hydro_params p, fft_fields fft_f, double ***real_field);
+void fft_vector(hydro_params p, fft_fields fft_f, double ****vector_field,
+		fftw_complex **outcpts);
+void fft_tensor(hydro_params p, fft_fields fft_f, double ****tensor_field,
+		fftw_complex **outcpts, double norm);
+void fft_J(hydro_fields f, hydro_params p, fft_fields fft_f, fftw_complex **outcpts);
+void fft_X(hydro_fields f, hydro_params p, fft_fields fft_f, fftw_complex **outcpts);
 void fft_e(hydro_fields f, hydro_params p, fft_fields fft_f);
-float output_ps_uetcs(hydro_fields f, hydro_params p, fft_fields fft_f, int step);
+double output_ps_uetcs(hydro_fields f, hydro_params p, fft_fields fft_f, int step);
 
 // projectors.c
-float proj(int T, float kx, float ky, float kz);
-float lambda(int i, int j, int l, int m, float kx, float ky, float kz);
+double proj(int T, double kx, double ky, double kz);
+double lambda(int i, int j, int l, int m, double kx, double ky, double kz);
 int indexof(int i, int j);
 void tens_proj(hydro_params p, int x_start, int slab,
-	       float *product, fftwf_complex **tensor);
+	       double *product, fftw_complex **tensor);
 void uetc_tens_proj(hydro_params p, int x_start, int slab,
-		    float *product_re, float *product_im,
-		    fftwf_complex **tensora, fftwf_complex **tensorb);
+		    double *product_re, double *product_im,
+		    fftw_complex **tensora, fftw_complex **tensorb);
 void split_vector(hydro_params p, int x_start, int slab,
-		  float *product_rot, float *product_div, float *product_tot,
-		  fftwf_complex **vec);
+		  double *product_rot, double *product_div, double *product_tot,
+		  fftw_complex **vec);
 void uetc_split_vector(hydro_params p, int x_start, int slab,
-		       float *product_rot_re, float *product_rot_im,
-		       float *product_div_re, float *product_div_im,
-		       fftwf_complex **veca, fftwf_complex **vecb);
+		       double *product_rot_re, double *product_rot_im,
+		       double *product_div_re, double *product_div_im,
+		       fftw_complex **veca, fftw_complex **vecb);
 
 // uetc.c
 void init_uetc(hydro_fields f, hydro_params p, fft_fields fft_f);
-void uetc_tensor(hydro_params p, fftwf_complex **tensor_then,
-		 fftwf_complex **tensor_now, int step_then, int step_now,
+void uetc_tensor(hydro_params p, fftw_complex **tensor_then,
+		 fftw_complex **tensor_now, int step_then, int step_now,
 		 char *label);
-void uetc_vector(hydro_params p, fftwf_complex **vector_then,
-		 fftwf_complex **vector_now, int step_then, int step_now,
+void uetc_vector(hydro_params p, fftw_complex **vector_then,
+		 fftw_complex **vector_now, int step_then, int step_now,
 		 char *label);
 
 // tensorps.c
-float tensorps(hydro_params p, fftwf_complex **outcpts, int step, char *label);
+double tensorps(hydro_params p, fftw_complex **outcpts, int step, char *label);
 
 // vectorps.c
-void histogram(hydro_params p, float *slice, char *filename,
+void histogram(hydro_params p, double *slice, char *filename,
 	       int slab, int x_start); // Why is this here?
-void vectorps(hydro_params p, fftwf_complex **outcpts, int step, char *label);
+void vectorps(hydro_params p, fftw_complex **outcpts, int step, char *label);
 
 // scalarps.c
-void scalarps(hydro_params p, fftwf_complex *field, int step, char *label);
+void scalarps(hydro_params p, fftw_complex *field, int step, char *label);
 
 #endif // FFT
 
 
 #if defined(FFT) && defined(BAG) && ! defined(SCALAR)
 // initps.c
-void init_ps(hydro_fields f, hydro_params p, float ****field);
-void spectrum_interp(float ksq, hydro_params p, fftwf_complex *res, float *k_bins, float *pow_bins, int n_bins);
+void init_ps(hydro_fields f, hydro_params p, double ****field);
+void spectrum_interp(double ksq, hydro_params p, fftw_complex *res, double *k_bins, double *pow_bins, int n_bins);
 void UtoZ(hydro_fields f, hydro_params p);
-float get_normal(float mean, float dev);
-void init_energy(hydro_params p, hydro_fields f, ptrdiff_t x_start, ptrdiff_t x_thickness, int* map, ptrdiff_t alloc_local,float *k_bins, float *pow_bins);
+double get_normal(double mean, double dev);
+void init_energy(hydro_params p, hydro_fields f, ptrdiff_t x_start, ptrdiff_t x_thickness, int* map, ptrdiff_t alloc_local,double *k_bins, double *pow_bins);
 #endif // FFT && !SCALAR

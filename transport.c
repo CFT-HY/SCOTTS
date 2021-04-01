@@ -107,7 +107,7 @@ void donor_Z_dir(hydro_fields f, hydro_params p, int dir) {
     dz = 1;
   }
 
-  float ***Vface = make_field(p);
+  double ***Vface = make_field(p);
 
   
   for(x = 1; x <= p.slicex; x++) {
@@ -194,8 +194,8 @@ void donor_Z_dir(hydro_fields f, hydro_params p, int dir) {
 void van_leer_E_dir(hydro_fields f, hydro_params p, int dir) {
 #ifndef SCALAR
   int x, y, z;
-  float r;
-  float ***delta = make_field(p);
+  double r;
+  double ***delta = make_field(p);
   //  halo_field(f.V[dir],p);
   //  halo_field(f.E,p);
   int dx = 0;
@@ -284,7 +284,7 @@ void van_leer_Z_dir(hydro_fields f, hydro_params p, int dir) {
 #ifndef SCALAR
   int x, y, z, i;
 
-  float r;
+  double r;
   int dx = 0;
   int dy = 0;
   int dz = 0;
@@ -299,8 +299,8 @@ void van_leer_Z_dir(hydro_fields f, hydro_params p, int dir) {
     dz = 1;
   }
 
-  float ***Vface = make_field(p);
-  float ****delta = make_vector(p);
+  double ***Vface = make_field(p);
+  double ****delta = make_vector(p);
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {

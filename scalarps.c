@@ -21,7 +21,7 @@
  * For tensor power spetra, see tensorps.c
  *
  */
-void scalarps(hydro_params p, fftwf_complex *field, int step, char *label) {
+void scalarps(hydro_params p, fftw_complex *field, int step, char *label) {
 
   ptrdiff_t x_thickness, x_start, alloc_local;
 
@@ -33,7 +33,7 @@ void scalarps(hydro_params p, fftwf_complex *field, int step, char *label) {
 
   MPI_Status status;
 
-  float kmode, modsq;
+  double kmode, modsq;
 
   int x, y, z;
   int i;
@@ -41,21 +41,21 @@ void scalarps(hydro_params p, fftwf_complex *field, int step, char *label) {
   
 
 
-  float start = clock();
+  double start = clock();
 
-  alloc_local = fftwf_mpi_local_size_3d(n0, n1, n2,
+  alloc_local = fftw_mpi_local_size_3d(n0, n1, n2,
 					MPI_COMM_WORLD, &x_thickness, &x_start);
 
   // Now we perform binning
-  float fft_norm = (1.0/(((float)p.Lx)*((float)p.Ly)*((float)p.Lz)));
+  double fft_norm = (1.0/(((double)p.Lx)*((double)p.Ly)*((double)p.Lz)));
 
   int nbins = minof3_int(p.Lx, p.Ly, p.Lz);
-  float mink = 0.0;
-  float maxk = 2.0*M_PI;
+  double mink = 0.0;
+  double maxk = 2.0*M_PI;
 
-  float dk = (maxk-mink)/((float)nbins);
+  double dk = (maxk-mink)/((double)nbins);
 
-  float *bins = (float *)malloc(nbins*sizeof(float));
+  double *bins = (double *)malloc(nbins*sizeof(double));
   int *counts = (int *)malloc(nbins*sizeof(int));
 
   for(i=0;i<nbins;i++) {
@@ -95,9 +95,9 @@ void scalarps(hydro_params p, fftwf_complex *field, int step, char *label) {
 
 	// For binning we use momentum space index
         kmode = sqrt(
-                     ((float)(true_x*true_x))/((float)(p.Lx*p.Lx))
-                     + ((float)(true_y*true_y))/((float)(p.Ly*p.Ly))
-                     + ((float)(true_z*true_z))/((float)(p.Lz*p.Lz))
+                     ((double)(true_x*true_x))/((double)(p.Lx*p.Lx))
+                     + ((double)(true_y*true_y))/((double)(p.Ly*p.Ly))
+                     + ((double)(true_z*true_z))/((double)(p.Lz*p.Lz))
                      )*2.0*M_PI;
 
 	modsq = field[x*p.Ly*p.Lz + y*p.Lz + z][0]
@@ -114,7 +114,7 @@ void scalarps(hydro_params p, fftwf_complex *field, int step, char *label) {
   }
 
 
-  float red_value;
+  double red_value;
   int red_count;
 
   for(i=0;i<nbins;i++) {
@@ -128,7 +128,7 @@ void scalarps(hydro_params p, fftwf_complex *field, int step, char *label) {
   }
 
 
-  float thisk = dk/2.0;
+  double thisk = dk/2.0;
 
   if(!p.rank) {
 
@@ -163,16 +163,16 @@ void scalarps(hydro_params p, fftwf_complex *field, int step, char *label) {
   free(bins);
   free(counts);
   
-  float end = clock();
+  double end = clock();
   if(label != NULL){
     if(*label){
       printf0(p, "%s scalar power spectrum calculation took %lf\n", label,
-        ((float) (end - start)) / CLOCKS_PER_SEC);
+        ((double) (end - start)) / CLOCKS_PER_SEC);
     }
   }
   else{
     printf0(p, "scalar power spectrum calculation took %lf\n",
-      ((float) (end - start)) / CLOCKS_PER_SEC);
+      ((double) (end - start)) / CLOCKS_PER_SEC);
   }
     
 }

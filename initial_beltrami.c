@@ -6,10 +6,10 @@
  *  Depends on a velocity V0 and a number of 'turns' n
  *  Field is initilized along the z axis
  */
-void initial_beltrami(hydro_fields f, hydro_params p,float U0, int n){
+void initial_beltrami(hydro_fields f, hydro_params p,double U0, int n){
 
-    float k0 = 2.0*M_PI*n/p.Lz;
-    float eps = 1.0;
+    double k0 = 2.0*M_PI*n/p.Lz;
+    double eps = 1.0;
     int x,y,z;
 
     for(x=1; x<=p.slicex; x++) {
@@ -43,7 +43,7 @@ void initial_beltrami(hydro_fields f, hydro_params p,float U0, int n){
 	halo_field(f.U[1], p);
 	halo_field(f.U[2], p);
 
-	float sigmabar;
+	double sigmabar;
 
 	for(x=1; x<=p.slicex; x++) {
 		for(y=1; y<=p.slicey; y++) {

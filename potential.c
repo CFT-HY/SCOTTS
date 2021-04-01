@@ -33,7 +33,7 @@
  * \f[ V(\phi,T) = \frac{1}{2}\gamma \phi^2 - \frac{1}{3}\alpha \phi^3 -
  * \frac{1}{4} \lambda \phi^4 - (a(\phi) - a_0) T^4 - V_0 \text.  \f]
  */
-float Vf(hydro_params p, float T, float this_phi) {
+double Vf(hydro_params p, double T, double this_phi) {
 #ifdef BAG
   return 0.5*p.gamma*this_phi*this_phi
     - p.alpha*this_phi*this_phi*this_phi/3.0
@@ -66,7 +66,7 @@ float Vf(hydro_params p, float T, float this_phi) {
  *        - \dfrac{\partial a(\phi)}{\partial \phi}
  * \f]
  */
-float Vdf(hydro_params p, float T, float this_phi) {
+double Vdf(hydro_params p, double T, double this_phi) {
 #ifdef BAG
   return p.gamma*this_phi
     - p.alpha*this_phi*this_phi
@@ -94,7 +94,7 @@ float Vdf(hydro_params p, float T, float this_phi) {
  *
  * \f[ \dfrac{\partial V(\phi,T)}{\partial T} = -4 (a(\phi) - a_0)T^3 \f]
  */
-float VTf(hydro_params p, float T, float this_phi) {
+double VTf(hydro_params p, double T, double this_phi) {
 #ifdef BAG
   return -4*T*T*T*p.V0*this_phi*this_phi/(p.phi_0*p.phi_0)
     *(3 - 2*this_phi/(p.phi_0));
@@ -118,7 +118,7 @@ float VTf(hydro_params p, float T, float this_phi) {
  *
  * \f[ \dfrac{\partial V(\phi,T)}{\partial T} = -12 (a(\phi) - a_0)T^2 \f]
  */
-float VTTf(hydro_params p, float T, float this_phi) {
+double VTTf(hydro_params p, double T, double this_phi) {
 #ifdef BAG
   return -12.*T*T*p.V0*this_phi*this_phi/(p.phi_0*p.phi_0)
     *(3.-2.*this_phi/p.phi_0);
@@ -137,9 +137,9 @@ float VTTf(hydro_params p, float T, float this_phi) {
  * using `T` and `phi` arrays.
  */
 void Vpot(hydro_params p,
-	  float ***T,
-	  float ***phi,
-	  float ***Vprecalc) {
+	  double ***T,
+	  double ***phi,
+	  double ***Vprecalc) {
 
   int x, y, z;
 
@@ -162,9 +162,9 @@ void Vpot(hydro_params p,
  * using `T` and `phi` arrays.
  */
 void Vdpot(hydro_params p,
-	   float ***T,
-	   float ***phi,
-	   float ***Vprecalc) {
+	   double ***T,
+	   double ***phi,
+	   double ***Vprecalc) {
 
   int x, y, z;
 

@@ -109,7 +109,7 @@ int main(int argc, char *argv[]) {
 
   // time iterates: count steps and time separately
   int step;
-  float t_sim = 0.0;
+  double t_sim = 0.0;
 
   // Struct that stores the fields
   hydro_fields f;
@@ -124,13 +124,13 @@ int main(int argc, char *argv[]) {
   int adv_order = 0;
 
   // Storage of measurements of average stress-energy tensor (not used)
-  //  float cpts[TENSOR_CPTS];
+  //  double cpts[TENSOR_CPTS];
 
-  float initial_energy, initial_field_energy;
-  float gwen = 0;
+  double initial_energy, initial_field_energy;
+  double gwen = 0;
 
   // Timing counters
-  float cpu_time_used;
+  double cpu_time_used;
 
   clock_t start, end;
 
@@ -180,7 +180,7 @@ int main(int argc, char *argv[]) {
 
       if(!p.rank){
 	fprintf(stderr,"Init ps initialisation took %lf\n",
-		((float) (end - start)) / CLOCKS_PER_SEC);
+		((double) (end - start)) / CLOCKS_PER_SEC);
       }
 
 #else
@@ -214,7 +214,7 @@ int main(int argc, char *argv[]) {
               end = clock();
               if(!p.rank)
                   fprintf(stderr,"Nucleation attempt took %lf\n",
-                          ((float) (end - start)) / CLOCKS_PER_SEC);
+                          ((double) (end - start)) / CLOCKS_PER_SEC);
               bcount+=1;
 
               // p.bubbles is how many bubbles to make at the start (usually 1)
@@ -224,7 +224,7 @@ int main(int argc, char *argv[]) {
                   end = clock();
                   if(!p.rank)
                       fprintf(stderr,"Nucleation attempt took %lf\n",
-                              ((float) (end - start)) / CLOCKS_PER_SEC);
+                              ((double) (end - start)) / CLOCKS_PER_SEC);
 
                   bcount += still_nucleate;
 
@@ -282,7 +282,7 @@ int main(int argc, char *argv[]) {
   initial_field_energy = reduce_sum(field_energy(f, p), p);
 
   printf0(p, "Initial avg energy per site: %g\n",
-          initial_energy/((float)p.N));
+          initial_energy/((double)p.N));
 
 
 #ifdef SILO
@@ -509,7 +509,7 @@ int main(int argc, char *argv[]) {
   end = clock();
 
   // Time spent running
-  cpu_time_used = ((float) (end - start)) / CLOCKS_PER_SEC;
+  cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
 
   printf0(p, "On master node, CPU time in main loop was %lfs,\n"
           "of which %lfs was comms\n",

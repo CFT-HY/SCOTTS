@@ -22,7 +22,7 @@
  * computes the power spectrum.
  *
  */
-float tensorps(hydro_params p, fftwf_complex **outcpts, int step, char *label) {
+double tensorps(hydro_params p, fftw_complex **outcpts, int step, char *label) {
 
   ptrdiff_t x_thickness, x_start, alloc_local;
 
@@ -34,7 +34,7 @@ float tensorps(hydro_params p, fftwf_complex **outcpts, int step, char *label) {
 
   MPI_Status status;
 
-  float kmode, modsq;
+  double kmode, modsq;
 
   int x, y, z;
   int i;
@@ -49,15 +49,15 @@ float tensorps(hydro_params p, fftwf_complex **outcpts, int step, char *label) {
   else{
     printf0(p, "Starting TT tensor PS calculation.\n", label);
   }
-  float start = clock();
+  double start = clock();
 
 
-  alloc_local = fftwf_mpi_local_size_3d(n0, n1, n2,
+  alloc_local = fftw_mpi_local_size_3d(n0, n1, n2,
 				       MPI_COMM_WORLD,
 				       &x_thickness, &x_start);
 
   
-  float *slice = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
+  double *slice = (double *)malloc(x_thickness*p.Ly*p.Lz*sizeof(double));
 
   printf0(p, "Transverse traceless projection...\n");
   // At this point, we should have a normed FFT
@@ -73,7 +73,7 @@ float tensorps(hydro_params p, fftwf_complex **outcpts, int step, char *label) {
   else{
     printf0(p, "Calculating total mod square of TT tensor.\n");
   }
-  float local_TT = 0.0;
+  double local_TT = 0.0;
 
   for(x=0; x<x_thickness; x++) {
     for(y=0; y<p.Ly; y++) {
@@ -86,7 +86,7 @@ float tensorps(hydro_params p, fftwf_complex **outcpts, int step, char *label) {
 
 
 
-  float total_TT = reduce_sum(local_TT, p);
+  double total_TT = reduce_sum(local_TT, p);
 
   if(label != NULL){
     if(*label){
@@ -105,12 +105,12 @@ float tensorps(hydro_params p, fftwf_complex **outcpts, int step, char *label) {
   // Bin the power spectrum on the fly
 
   int nbins = minof3_int(p.Lx, p.Ly, p.Lz);
-  float mink = 0.0;
-  float maxk = 2.0*M_PI;
+  double mink = 0.0;
+  double maxk = 2.0*M_PI;
 
-  float dk = (maxk-mink)/((float)nbins);
+  double dk = (maxk-mink)/((double)nbins);
 
-  float *bins = (float *)malloc(nbins*sizeof(float));
+  double *bins = (double *)malloc(nbins*sizeof(double));
   int *counts = (int *)malloc(nbins*sizeof(int));
 
   for(i=0;i<nbins;i++) {
@@ -148,9 +148,9 @@ float tensorps(hydro_params p, fftwf_complex **outcpts, int step, char *label) {
 
 	// For binning we use momentum space index
 	kmode = sqrt(
-		     ((float)(true_x*true_x))/((float)(p.Lx*p.Lx))
-		     + ((float)(true_y*true_y))/((float)(p.Ly*p.Ly))
-		     + ((float)(true_z*true_z))/((float)(p.Lz*p.Lz))
+		     ((double)(true_x*true_x))/((double)(p.Lx*p.Lx))
+		     + ((double)(true_y*true_y))/((double)(p.Ly*p.Ly))
+		     + ((double)(true_z*true_z))/((double)(p.Lz*p.Lz))
 		     )*2.0*M_PI;
 
 	whichbin = (int)floor(kmode/dk);
@@ -162,7 +162,7 @@ float tensorps(hydro_params p, fftwf_complex **outcpts, int step, char *label) {
   }
 
 
-  float red_value;
+  double red_value;
   int red_count;
 
   for(i=0;i<nbins;i++) {
@@ -175,13 +175,13 @@ float tensorps(hydro_params p, fftwf_complex **outcpts, int step, char *label) {
   }
 
 
-  float thisk = dk/2.0;
-  //  float comovingk, thisf, thisdiff, thisomega;
+  double thisk = dk/2.0;
+  //  double comovingk, thisf, thisdiff, thisomega;
 
   // not sure (includes h^2)
-  //  float omegarad = 3.5e-5;
+  //  double omegarad = 3.5e-5;
 
-  //  float doffrac = pow(1.0/100.0,1.0/3.0);
+  //  double doffrac = pow(1.0/100.0,1.0/3.0);
 
   // spokesman does the final analysis
   if(!p.rank) {
@@ -202,7 +202,7 @@ float tensorps(hydro_params p, fftwf_complex **outcpts, int step, char *label) {
     for(i=0;i<nbins;i++) {
       
       fprintf(fp, "%lf %g %d\n",
-	      thisk/(p.dx*p.a), ((float)(i+1))*bins[i], counts[i]);
+	      thisk/(p.dx*p.a), ((double)(i+1))*bins[i], counts[i]);
 
       thisk = thisk + dk;
     }
@@ -220,17 +220,17 @@ float tensorps(hydro_params p, fftwf_complex **outcpts, int step, char *label) {
   free(slice);
 
 
-  float end = clock();
+  double end = clock();
 
   if(label != NULL){
     if(*label){
       printf0(p, "%s TT tensor PS calculation took %lf\n", label,
-	      ((float) (end - start)) / CLOCKS_PER_SEC);
+	      ((double) (end - start)) / CLOCKS_PER_SEC);
     }
   }
   else{
   printf0(p, "TT tensor PS calculation took %lf\n",
-	  ((float) (end - start)) / CLOCKS_PER_SEC);
+	  ((double) (end - start)) / CLOCKS_PER_SEC);
   }
 
   return total_TT;

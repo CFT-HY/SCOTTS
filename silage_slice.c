@@ -20,8 +20,8 @@
 /** Populate an array with kinetic energy density.
  *
  */
-void make_kinetic(hydro_fields f, hydro_params p, float ***temp) {
-  float vol = p.dx*p.dx*p.dx;
+void make_kinetic(hydro_fields f, hydro_params p, double ***temp) {
+  double vol = p.dx*p.dx*p.dx;
 
   int x, y, z;
 
@@ -41,10 +41,10 @@ void make_kinetic(hydro_fields f, hydro_params p, float ***temp) {
 
 /** Make ordinary vorticity i.e vort = curl V
  */
-void make_vort(hydro_fields f, hydro_params p, float ****temp){
+void make_vort(hydro_fields f, hydro_params p, double ****temp){
 
   int x, y, z;
-  float ****Vcell= make_vector(p);
+  double ****Vcell= make_vector(p);
 
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
@@ -92,7 +92,7 @@ void make_vort(hydro_fields f, hydro_params p, float ****temp){
 
 /** Make divergence of velocity field.
  */
-void make_divV(hydro_fields f, hydro_params p, float ***temp){
+void make_divV(hydro_fields f, hydro_params p, double ***temp){
   int x, y, z;
     for(x = 1; x <= p.slicex; x++) {
       for(y = 1; y <= p.slicey; y++) {
@@ -110,10 +110,10 @@ void make_divV(hydro_fields f, hydro_params p, float ***temp){
 /** Make curl of temperature current i.e (curl J) with
  * \f$ J^{i} = TU \f$.
  */
-void make_curlJ(hydro_fields f, hydro_params p, float ****temp){
+void make_curlJ(hydro_fields f, hydro_params p, double ****temp){
   int x, y, z;
 
-  float ****J = make_vector(p);
+  double ****J = make_vector(p);
 
   // Construct temperature current (centered at cell)
 
@@ -160,9 +160,9 @@ void make_curlJ(hydro_fields f, hydro_params p, float ****temp){
 
 /** Make divergence of temperature current \f$ J^{i} = TU \f$.
  */
-void make_divJ(hydro_fields f, hydro_params p, float ***temp){
+void make_divJ(hydro_fields f, hydro_params p, double ***temp){
   int x, y, z;
-  float ****J = make_vector(p);
+  double ****J = make_vector(p);
 
   // Construct temperature current (centered at cell)
 
@@ -203,8 +203,8 @@ void make_divJ(hydro_fields f, hydro_params p, float ***temp){
 /** Populate an array with velocity magnitude.
  *
  */
-void make_vel(hydro_fields f, hydro_params p, float ***temp) {
-  float vol = p.dx*p.dx*p.dx;
+void make_vel(hydro_fields f, hydro_params p, double ***temp) {
+  double vol = p.dx*p.dx*p.dx;
 
   int x, y, z;
 
@@ -229,8 +229,8 @@ void make_vel(hydro_fields f, hydro_params p, float ***temp) {
 /** Populate an array with Z magnitude.
  *
  */
-void make_Z(hydro_fields f, hydro_params p, float ***temp) {
-  float vol = p.dx*p.dx*p.dx;
+void make_Z(hydro_fields f, hydro_params p, double ***temp) {
+  double vol = p.dx*p.dx*p.dx;
 
   int x, y, z;
 
@@ -274,7 +274,7 @@ void make_Z(hydro_fields f, hydro_params p, float ***temp) {
  *
  */
 
-void make_slice(hydro_fields f, hydro_params p, int xcoord, float *slice, float ***temp)
+void make_slice(hydro_fields f, hydro_params p, int xcoord, double *slice, double ***temp)
 {
 
 
@@ -282,7 +282,7 @@ void make_slice(hydro_fields f, hydro_params p, int xcoord, float *slice, float 
 
   x=xcoord;
 
-  float *trim = (float *)malloc(p.slicey*p.Lz*sizeof(float));
+  double *trim = (double *)malloc(p.slicey*p.Lz*sizeof(double));
 
   if(x/p.slicex == p.myposx){
     int localx=x%p.slicex+1;
@@ -310,7 +310,7 @@ void make_slice(hydro_fields f, hydro_params p, int xcoord, float *slice, float 
 
 	  memcpy(&slice[ry*p.slicey*p.Lz],
 		 &trim[0],
-		 p.slicey*p.Lz*sizeof(float));
+		 p.slicey*p.Lz*sizeof(double));
 	  continue;
 	}
 
@@ -364,7 +364,7 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step, int xcoord)
 
   DBfile *dbfile = NULL;
   int *meshsize = NULL;
-  float **mesh = NULL;
+  double **mesh = NULL;
   DBoptlist *dboptlist = NULL;
 
   //// set up silage ////
@@ -397,16 +397,16 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step, int xcoord)
     meshsize[0] = sizey;
     meshsize[1] = sizez;
 
-    mesh = (float **)malloc(2*sizeof(float *));
+    mesh = (double **)malloc(2*sizeof(double *));
 
-    mesh[0] = (float *)malloc(sizey*sizeof(float));
-    mesh[1] = (float *)malloc(sizez*sizeof(float));
+    mesh[0] = (double *)malloc(sizey*sizeof(double));
+    mesh[1] = (double *)malloc(sizez*sizeof(double));
 
     for(x=0; x<sizey; x++) {
-      mesh[0][x] = p.dx*((float)(x));
+      mesh[0][x] = p.dx*((double)(x));
     }
     for(x=0; x<sizez; x++) {
-      mesh[1][x] = p.dx*((float)(x));
+      mesh[1][x] = p.dx*((double)(x));
     }
 
     DBPutQuadmesh(dbfile, "quadmesh", NULL, mesh, meshsize, 2,
@@ -417,8 +417,8 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step, int xcoord)
 
   /////// prepare slice ///////
 
-  float ***temp = make_field(p);
-  float *slice = (float *)malloc(p.Ly*p.Lz*sizeof(float));
+  double ***temp = make_field(p);
+  double *slice = (double *)malloc(p.Ly*p.Lz*sizeof(double));
 
 #ifndef SCALAR
 
@@ -546,7 +546,7 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step, int xcoord)
   }
 
 
-  float ****temp_vec = make_vector(p);
+  double ****temp_vec = make_vector(p);
 
   //// Write all vorticity (vort) components slice:
 
