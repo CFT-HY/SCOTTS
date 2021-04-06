@@ -296,7 +296,7 @@ void checkpoint(hydro_fields f, hydro_params p, int step)
   }
 
   DBPutQuadmesh(dbfile, "quadmesh", NULL, mesh, meshsize, 3,
-		DB_FLOAT, DB_COLLINEAR, NULL);
+		DB_DOUBLE, DB_COLLINEAR, NULL);
 
 
   int scalardims = 1;
@@ -308,34 +308,34 @@ void checkpoint(hydro_fields f, hydro_params p, int step)
 
 
   DBPutQuadvar1(dbfile, "phi", "quadmesh", f.phi[0][0], meshsize, 3,
-                NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+                NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
 
   DBPutQuadvar1(dbfile, "pi_future", "quadmesh", f.pi_future[0][0], meshsize, 3,
-                NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+                NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
 
   DBPutQuadvar1(dbfile, "pi", "quadmesh", f.pi[0][0], meshsize, 3,
-                NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+                NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
 
   DBPutQuadvar1(dbfile, "phi_old", "quadmesh", f.phi_old[0][0], meshsize, 3,
-                NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+                NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
 
 
 #ifndef SCALAR
 
   DBPutQuadvar1(dbfile, "T", "quadmesh", f.T[0][0], meshsize, 3,
-                NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+                NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
 
   DBPutQuadvar1(dbfile, "E", "quadmesh", f.E[0][0], meshsize, 3,
-                NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+                NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
 
   DBPutQuadvar1(dbfile, "W", "quadmesh", f.W[0][0], meshsize, 3,
-                NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+                NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
 
   DBPutQuadvar1(dbfile, "kappa", "quadmesh", f.kappa[0][0], meshsize, 3,
-                NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+                NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
 
   DBPutQuadvar1(dbfile, "p", "quadmesh", f.p[0][0], meshsize, 3,
-                NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+                NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
 
 
 
@@ -357,7 +357,7 @@ void checkpoint(hydro_fields f, hydro_params p, int step)
   Vtemp[2] = f.V[2][0][0];
   
   DBPutQuadvar(dbfile, "V", "quadmesh", 3, v_names, Vtemp, meshsize, 3, 
-	       NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);       
+	       NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);       
 
 
 
@@ -378,7 +378,7 @@ void checkpoint(hydro_fields f, hydro_params p, int step)
   Ztemp[2] = f.Z[2][0][0];
   
   DBPutQuadvar(dbfile, "Z", "quadmesh", 3, z_names, Ztemp, meshsize, 3, 
-	       NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);       
+	       NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);       
 
 
 
@@ -398,7 +398,7 @@ void checkpoint(hydro_fields f, hydro_params p, int step)
   Utemp[2] = f.U[2][0][0];
   
   DBPutQuadvar(dbfile, "U", "quadmesh", 3, U_names, Utemp, meshsize, 3, 
-	       NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);       
+	       NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);       
 
 
 
@@ -418,7 +418,7 @@ void checkpoint(hydro_fields f, hydro_params p, int step)
   Ftemp[2] = f.F[2][0][0];
   
   DBPutQuadvar(dbfile, "F", "quadmesh", 3, f_names, Ftemp, meshsize, 3, 
-	       NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);       
+	       NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);       
 
 #endif // SCALAR
 
@@ -448,7 +448,7 @@ void checkpoint(hydro_fields f, hydro_params p, int step)
   utemp[5] = f.uij[5][0][0];
   
   DBPutQuadvar(dbfile, "uij", "quadmesh", 6, u_names, utemp, meshsize, 3, 
-	       NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);       
+	       NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);       
 
 
 
@@ -480,7 +480,7 @@ void checkpoint(hydro_fields f, hydro_params p, int step)
   
   DBPutQuadvar(dbfile, "udotij", "quadmesh", 6,
 	       udot_names, udottemp, meshsize, 3, 
-	       NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);       
+	       NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);       
 
 
   DBClose(dbfile);

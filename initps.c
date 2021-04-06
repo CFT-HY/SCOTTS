@@ -479,7 +479,7 @@ void init_energy(hydro_params p, hydro_fields f, ptrdiff_t x_start, ptrdiff_t x_
 	if(map[((p.Lx-j) % p.Lx)] == p.rank) {
 	} else {
 	  MPI_Send(&(((double *)in)[((j-x_start)%p.Lx)*p.Ly*p.Lz*2]),
-		   2*p.Ly*p.Lz, MPI_FLOAT,
+		   2*p.Ly*p.Lz, MPI_DOUBLE,
 		   map[((p.Lx-j) % p.Lx)], j, MPI_COMM_WORLD);
 	}
       }
@@ -493,7 +493,7 @@ void init_energy(hydro_params p, hydro_fields f, ptrdiff_t x_start, ptrdiff_t x_
 
 	} else {
 	  MPI_Recv(&(((double *)swap_in)[(j-min_needed)*p.Ly*p.Lz*2]),
-		   2*p.Ly*p.Lz, MPI_FLOAT,
+		   2*p.Ly*p.Lz, MPI_DOUBLE,
 		   map[(j % p.Lx)], j, MPI_COMM_WORLD, &status);
 
 	}
@@ -605,7 +605,7 @@ void init_energy(hydro_params p, hydro_fields f, ptrdiff_t x_start, ptrdiff_t x_
 
 	  MPI_Send(&slice[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
 		   p.slicey*p.Lz,
-		   MPI_FLOAT,
+		   MPI_DOUBLE,
 		   ry*nx + x/p.slicex,
 		   x*ny + ry,
 		   MPI_COMM_WORLD);
@@ -615,7 +615,7 @@ void init_energy(hydro_params p, hydro_fields f, ptrdiff_t x_start, ptrdiff_t x_
 
 	MPI_Recv(&trim[(x-p.shiftx)*p.slicey*p.Lz],
 		 p.slicey*p.Lz,
-		 MPI_FLOAT,
+		 MPI_DOUBLE,
 		 map[x],
 		 x*ny + p.myposy,
 		 MPI_COMM_WORLD,
@@ -1204,7 +1204,7 @@ void init_ps(hydro_fields f, hydro_params p, double ****field) {
 	  MPI_Send(
 		   &(((double *)in[i])[((j-x_start)%p.Lx)*p.Ly*p.Lz*2]),
 		   2*p.Ly*p.Lz,				// Size (complex numbers)
-		   MPI_FLOAT,					// Type
+		   MPI_DOUBLE,					// Type
 		   map[((p.Lx-j) % p.Lx)],		// Destination
 		   j,							// ID
 		   MPI_COMM_WORLD);
@@ -1226,7 +1226,7 @@ void init_ps(hydro_fields f, hydro_params p, double ****field) {
 	  MPI_Recv(
 		   &(((double *)swap_in[i])[(j-min_needed)*p.Ly*p.Lz*2]),
 		   2*p.Ly*p.Lz,				// Size (complex numbers)
-		   MPI_FLOAT,					// Type
+		   MPI_DOUBLE,					// Type
 		   map[(j % p.Lx)],			// Origin
 		   j,							// ID
 		   MPI_COMM_WORLD,
@@ -1381,7 +1381,7 @@ void init_ps(hydro_fields f, hydro_params p, double ****field) {
 	  MPI_Send(
 		   &slice[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
 		   p.slicey*p.Lz,
-		   MPI_FLOAT,
+		   MPI_DOUBLE,
 		   ry*nx + x/p.slicex,
 		   x*ny + ry,
 		   MPI_COMM_WORLD
@@ -1395,7 +1395,7 @@ void init_ps(hydro_fields f, hydro_params p, double ****field) {
 	MPI_Recv(
 		 &trim[(x-p.shiftx)*p.slicey*p.Lz],
 		 p.slicey*p.Lz,
-		 MPI_FLOAT,
+		 MPI_DOUBLE,
 		 map[x],
 		 x*ny + p.myposy,
 		 MPI_COMM_WORLD,

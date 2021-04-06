@@ -121,18 +121,18 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
 
 
   DBPutQuadmesh(dbfile, "quadmesh", NULL, mesh, meshsize, 3,
-		DB_FLOAT, DB_COLLINEAR, NULL);
+		DB_DOUBLE, DB_COLLINEAR, NULL);
 
   DBPutQuadvar1(dbfile, "phi", "quadmesh", f.phi[0][0], meshsize, 3,
-		NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+		NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
 
 #ifndef SCALAR
   DBPutQuadvar1(dbfile, "E", "quadmesh", f.E[0][0], meshsize, 3,
-		NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+		NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
 
   
   DBPutQuadvar1(dbfile, "T", "quadmesh", f.T[0][0], meshsize, 3,
-		NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+		NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
 #endif
   
   double ***temp = make_field(p);
@@ -161,7 +161,7 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
   halo_field(temp, p);
   
   DBPutQuadvar1(dbfile, "gradphi", "quadmesh", temp[0][0], meshsize, 3,
-		NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+		NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
 
 
 #ifndef SCALAR
@@ -181,7 +181,7 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
 
 
   DBPutQuadvar1(dbfile, "kinetic", "quadmesh", temp[0][0], meshsize, 3,
-		NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+		NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
 
 
 #endif
@@ -215,7 +215,7 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
   vec_temp[2] = f.U[0][0][0];
 
   DBPutQuadvar(dbfile, "U", "quadmesh", 3, u_names, vec_temp, meshsize, 3,
-	       NULL, 0, DB_FLOAT, DB_NODECENT, NULL);
+	       NULL, 0, DB_DOUBLE, DB_NODECENT, NULL);
 
   
 
@@ -238,7 +238,7 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
 
 
   DBPutQuadvar(dbfile, "V", "quadmesh", 3, v_names, vec_temp, meshsize, 3,
-  	       NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+  	       NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
 
 
 
@@ -258,7 +258,7 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
 
 
   DBPutQuadvar(dbfile, "Z", "quadmesh", 3, z_names, vec_temp, meshsize, 3,
-	       NULL, 0, DB_FLOAT, DB_NODECENT, NULL);
+	       NULL, 0, DB_DOUBLE, DB_NODECENT, NULL);
   /* */
 #endif //!SCALAR
   /*
@@ -296,7 +296,7 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
   vec_temp[0] = tempz[0][0];
 
   DBPutQuadvar(dbfile, "dphi", "quadmesh", 3, dphi_names, vec_temp, meshsize, 3,
-	       NULL, 0, DB_FLOAT, DB_NODECENT, NULL);
+	       NULL, 0, DB_DOUBLE, DB_NODECENT, NULL);
 
   DBClose(dbfile);
 

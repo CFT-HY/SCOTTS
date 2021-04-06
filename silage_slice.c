@@ -317,7 +317,7 @@ void make_slice(hydro_fields f, hydro_params p, int xcoord, double *slice, doubl
 
 	MPI_Recv(&slice[ry*p.slicey*p.Lz],
 		 p.slicey*p.Lz,
-		 MPI_FLOAT,
+		 MPI_DOUBLE,
 		 ry*nx + x/p.slicex,
 		 ry,
 		 MPI_COMM_WORLD,
@@ -330,7 +330,7 @@ void make_slice(hydro_fields f, hydro_params p, int xcoord, double *slice, doubl
 
       MPI_Send(&trim[0],
                p.slicey*p.Lz,
-               MPI_FLOAT,
+               MPI_DOUBLE,
 	       0,
                p.myposy,
 	       MPI_COMM_WORLD);
@@ -410,7 +410,7 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step, int xcoord)
     }
 
     DBPutQuadmesh(dbfile, "quadmesh", NULL, mesh, meshsize, 2,
-		  DB_FLOAT, DB_COLLINEAR, NULL);
+		  DB_DOUBLE, DB_COLLINEAR, NULL);
 
   }
 
@@ -435,7 +435,7 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step, int xcoord)
 
   if(!p.rank) {
     DBPutQuadvar1(dbfile, "kinetic", "quadmesh", slice, meshsize, 2,
-		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+		  NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
   }
 
 
@@ -452,7 +452,7 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step, int xcoord)
 
   if(!p.rank) {
     DBPutQuadvar1(dbfile, "V", "quadmesh", slice, meshsize, 2,
-         NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+         NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
   }
 
 
@@ -467,7 +467,7 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step, int xcoord)
 
   if(!p.rank) {
     DBPutQuadvar1(dbfile, "Z", "quadmesh", slice, meshsize, 2,
-         NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+         NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
   }
 
 
@@ -481,7 +481,7 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step, int xcoord)
 
   if(!p.rank) {
     DBPutQuadvar1(dbfile, "divV", "quadmesh", slice, meshsize, 2,
-         NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+         NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
   }
 
   //// prepare divJ slice
@@ -494,7 +494,7 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step, int xcoord)
 
   if(!p.rank) {
     DBPutQuadvar1(dbfile, "divJ", "quadmesh", slice, meshsize, 2,
-         NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+         NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
   }
 
   free_field(p, temp);
@@ -505,21 +505,21 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step, int xcoord)
   make_slice(f, p, xcoord, slice, f.V[0]);
   if(!p.rank) {
     DBPutQuadvar1(dbfile, "Vx", "quadmesh", slice, meshsize, 2,
-		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+		  NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
   }
 
   // Vy slice
   make_slice(f, p, xcoord, slice, f.V[1]);
   if(!p.rank) {
     DBPutQuadvar1(dbfile, "Vy", "quadmesh", slice, meshsize, 2,
-		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+		  NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
   }
 
   // Vz slice
   make_slice(f, p, xcoord, slice, f.V[2]);
   if(!p.rank) {
     DBPutQuadvar1(dbfile, "Vz", "quadmesh", slice, meshsize, 2,
-		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+		  NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
   }
 
   //// Write all Z components slice:
@@ -528,21 +528,21 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step, int xcoord)
   make_slice(f, p, xcoord, slice, f.Z[0]);
   if(!p.rank) {
     DBPutQuadvar1(dbfile, "Zx", "quadmesh", slice, meshsize, 2,
-		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+		  NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
   }
 
   // Zy slice
   make_slice(f, p, xcoord, slice, f.Z[1]);
   if(!p.rank) {
     DBPutQuadvar1(dbfile, "Zy", "quadmesh", slice, meshsize, 2,
-		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+		  NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
   }
 
   // Zz slice
   make_slice(f, p, xcoord, slice, f.Z[2]);
   if(!p.rank) {
     DBPutQuadvar1(dbfile, "Zz", "quadmesh", slice, meshsize, 2,
-		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+		  NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
   }
 
 
@@ -557,21 +557,21 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step, int xcoord)
   make_slice(f, p, xcoord, slice, temp_vec[0]);
   if(!p.rank) {
     DBPutQuadvar1(dbfile, "vortx", "quadmesh", slice, meshsize, 2,
-		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+		  NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
   }
 
   // vorty slice
   make_slice(f, p, xcoord, slice, temp_vec[1]);
   if(!p.rank) {
     DBPutQuadvar1(dbfile, "vorty", "quadmesh", slice, meshsize, 2,
-		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+		  NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
   }
 
   // vortz slice
   make_slice(f, p, xcoord, slice, temp_vec[2]);
   if(!p.rank) {
     DBPutQuadvar1(dbfile, "vortz", "quadmesh", slice, meshsize, 2,
-		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+		  NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
   }
 
 
@@ -584,21 +584,21 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step, int xcoord)
   make_slice(f, p, xcoord, slice, temp_vec[0]);
   if(!p.rank) {
     DBPutQuadvar1(dbfile, "curlJx", "quadmesh", slice, meshsize, 2,
-		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+		  NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
   }
 
   // curlJy slice
   make_slice(f, p, xcoord, slice, temp_vec[1]);
   if(!p.rank) {
     DBPutQuadvar1(dbfile, "curlJy", "quadmesh", slice, meshsize, 2,
-		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+		  NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
   }
 
   // curlJz slice
   make_slice(f, p, xcoord, slice, temp_vec[2]);
   if(!p.rank) {
     DBPutQuadvar1(dbfile, "curlJz", "quadmesh", slice, meshsize, 2,
-		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+		  NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
   }
 
 
@@ -617,7 +617,7 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step, int xcoord)
 
   if(!p.rank) {
     DBPutQuadvar1(dbfile, "T", "quadmesh", slice, meshsize, 2,
-		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+		  NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
   }
 
 
@@ -630,7 +630,7 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step, int xcoord)
 
   if(!p.rank) {
     DBPutQuadvar1(dbfile, "E", "quadmesh", slice, meshsize, 2,
-		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+		  NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
   }
 
 
@@ -646,7 +646,7 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step, int xcoord)
 
   if(!p.rank) {
     DBPutQuadvar1(dbfile, "phi", "quadmesh", slice, meshsize, 2,
-		  NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+		  NULL, 0, DB_DOUBLE, DB_NODECENT, dboptlist);
   }
 
 

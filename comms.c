@@ -227,9 +227,9 @@ void halo_field(double ***field, hydro_params p) {
   for(y = 1; y <= p.slicey; y++) {
 
     MPI_Sendrecv(&field[1][y][0],
-		 p.Lz, MPI_FLOAT, p.rank_xM, mpi_counter,
+		 p.Lz, MPI_DOUBLE, p.rank_xM, mpi_counter,
 		 &field[p.slicex+1][y][0],
-		 p.Lz, MPI_FLOAT, p.rank_xP, mpi_counter,
+		 p.Lz, MPI_DOUBLE, p.rank_xP, mpi_counter,
 		 MPI_COMM_WORLD, &stat);
 
     mpi_counter++;
@@ -244,9 +244,9 @@ void halo_field(double ***field, hydro_params p) {
   for(y = 1; y <= p.slicey; y++) {
 
     MPI_Sendrecv(&field[p.slicex][y][0],
-		 p.Lz, MPI_FLOAT, p.rank_xP, mpi_counter,
+		 p.Lz, MPI_DOUBLE, p.rank_xP, mpi_counter,
 		 &field[0][y][0],
-		 p.Lz, MPI_FLOAT, p.rank_xM, mpi_counter,
+		 p.Lz, MPI_DOUBLE, p.rank_xM, mpi_counter,
 		 MPI_COMM_WORLD, &stat);
 
     mpi_counter++;
@@ -263,9 +263,9 @@ void halo_field(double ***field, hydro_params p) {
   for(x = 1; x <= p.slicex; x++) {
 
       MPI_Sendrecv(&field[x][p.slicey][0],
-		   p.Lz, MPI_FLOAT, p.rank_yP, mpi_counter,
+		   p.Lz, MPI_DOUBLE, p.rank_yP, mpi_counter,
 		   &field[x][0][0],
-		   p.Lz, MPI_FLOAT, p.rank_yM, mpi_counter,
+		   p.Lz, MPI_DOUBLE, p.rank_yM, mpi_counter,
 		   MPI_COMM_WORLD, &stat);
 
       mpi_counter++;
@@ -280,9 +280,9 @@ void halo_field(double ***field, hydro_params p) {
 
 
       MPI_Sendrecv(&field[x][1][0],
-		   p.Lz, MPI_FLOAT, p.rank_yM, mpi_counter,
+		   p.Lz, MPI_DOUBLE, p.rank_yM, mpi_counter,
 		   &field[x][p.slicey+1][0],
-		   p.Lz, MPI_FLOAT, p.rank_yP, mpi_counter,
+		   p.Lz, MPI_DOUBLE, p.rank_yP, mpi_counter,
 		   MPI_COMM_WORLD, &stat);
 
 
@@ -295,9 +295,9 @@ void halo_field(double ***field, hydro_params p) {
    * SEND UP AND RIGHT
    */
   MPI_Sendrecv(&field[p.slicex][p.slicey][0],
-	       p.Lz, MPI_FLOAT, p.rank_xPyP, mpi_counter,
+	       p.Lz, MPI_DOUBLE, p.rank_xPyP, mpi_counter,
 	       &field[0][0][0],
-	       p.Lz, MPI_FLOAT, p.rank_xMyM, mpi_counter,
+	       p.Lz, MPI_DOUBLE, p.rank_xMyM, mpi_counter,
 	       MPI_COMM_WORLD, &stat);
 
   mpi_counter++;
@@ -308,9 +308,9 @@ void halo_field(double ***field, hydro_params p) {
    * SEND DOWN AND LEFT
    */
   MPI_Sendrecv(&field[1][1][0],
-	       p.Lz, MPI_FLOAT, p.rank_xMyM, mpi_counter,
+	       p.Lz, MPI_DOUBLE, p.rank_xMyM, mpi_counter,
 	       &field[p.slicex+1][p.slicey+1][0],
-	       p.Lz, MPI_FLOAT, p.rank_xPyP, mpi_counter,
+	       p.Lz, MPI_DOUBLE, p.rank_xPyP, mpi_counter,
 	       MPI_COMM_WORLD, &stat);
 
   mpi_counter++;
@@ -321,9 +321,9 @@ void halo_field(double ***field, hydro_params p) {
    * SEND UP AND LEFT
    */
   MPI_Sendrecv(&field[1][p.slicey][0],
-	       p.Lz, MPI_FLOAT, p.rank_xMyP, mpi_counter,
+	       p.Lz, MPI_DOUBLE, p.rank_xMyP, mpi_counter,
 	       &field[p.slicex+1][0][0],
-	       p.Lz, MPI_FLOAT, p.rank_xPyM, mpi_counter,
+	       p.Lz, MPI_DOUBLE, p.rank_xPyM, mpi_counter,
 	       MPI_COMM_WORLD, &stat);
 
   mpi_counter++;
@@ -334,9 +334,9 @@ void halo_field(double ***field, hydro_params p) {
    * SEND DOWN AND RIGHT
    */
   MPI_Sendrecv(&field[p.slicex][1][0],
-	       p.Lz, MPI_FLOAT, p.rank_xPyM, mpi_counter,
+	       p.Lz, MPI_DOUBLE, p.rank_xPyM, mpi_counter,
 	       &field[0][p.slicey+1][0],
-	       p.Lz, MPI_FLOAT, p.rank_xMyP, mpi_counter,
+	       p.Lz, MPI_DOUBLE, p.rank_xMyP, mpi_counter,
 	       MPI_COMM_WORLD, &stat);
 
   mpi_counter++;
@@ -359,7 +359,7 @@ void halo_field(double ***field, hydro_params p) {
 double reduce_sum(double result, hydro_params p) {
 
   double total = 0.0;
-  MPI_Allreduce(&result, &total, 1, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(&result, &total, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
   return total;
 
 }
@@ -385,7 +385,7 @@ int reduce_sum_int(int result, hydro_params p) {
 double reduce_max(double result, hydro_params p) {
 
   double total = 0.0;
-  MPI_Allreduce(&result, &total, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD);
+  MPI_Allreduce(&result, &total, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
   return total;
 
 }
@@ -410,7 +410,7 @@ int reduce_max_int(int result, hydro_params p) {
 double reduce_min(double result, hydro_params p) {
 
   double total = 0.0;
-  MPI_Allreduce(&result, &total, 1, MPI_FLOAT, MPI_MIN, MPI_COMM_WORLD);
+  MPI_Allreduce(&result, &total, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
   return total;
 
 }
@@ -436,7 +436,7 @@ value_rank reduce_maxloc(double result, hydro_params p) {
   value_rank in, out;
   in.value=result;
   in.rank=p.rank;
-  MPI_Allreduce(&in,&out,1,MPI_FLOAT_INT,MPI_MAXLOC,MPI_COMM_WORLD);
+  MPI_Allreduce(&in,&out,1,MPI_DOUBLE_INT,MPI_MAXLOC,MPI_COMM_WORLD);
   return out;
 }
 
@@ -450,7 +450,7 @@ value_rank reduce_minloc(double result, hydro_params p) {
   value_rank in, out;
   in.value=result;
   in.rank=p.rank;
-  MPI_Allreduce(&in,&out,1,MPI_FLOAT_INT,MPI_MINLOC,MPI_COMM_WORLD);
+  MPI_Allreduce(&in,&out,1,MPI_DOUBLE_INT,MPI_MINLOC,MPI_COMM_WORLD);
   return out;
 }
 

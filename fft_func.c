@@ -219,7 +219,7 @@ void fft_scalar(hydro_params p, fft_fields fft_f, double ***real_field) {
 
                 MPI_Recv(&slice[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
                          p.slicey*p.Lz,
-                         MPI_FLOAT,
+                         MPI_DOUBLE,
                          ry*nx + x/p.slicex,
                          x*ny + ry,
                          MPI_COMM_WORLD,
@@ -241,7 +241,7 @@ void fft_scalar(hydro_params p, fft_fields fft_f, double ***real_field) {
 
             MPI_Send(&trim_field[(x-p.shiftx)*p.slicey*p.Lz],
                      p.slicey*p.Lz,
-                     MPI_FLOAT,
+                     MPI_DOUBLE,
                      fft_f.map[x],
                      x*ny + p.myposy,
                      MPI_COMM_WORLD);
