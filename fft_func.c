@@ -20,132 +20,157 @@
  */
 void fft_init(hydro_params p, fft_fields *fft_f){
 
-    ptrdiff_t x_thickness, x_start, alloc_local;
+  ptrdiff_t alloc_local, x_thickness, x_start;
 
-    ptrdiff_t n0 = p.Lx;
-    ptrdiff_t n1 = p.Ly;
-    ptrdiff_t n2 = p.Lz;
+  ptrdiff_t n0 = p.Lx;
+  ptrdiff_t n1 = p.Ly;
+  ptrdiff_t n2 = p.Lz;
 
-    //  int slab;
+  //  int slab;
 
-    MPI_Status status;
+  MPI_Status status;
 
-    int x, y, z;
-    int i;
-
-
-    printf0(p,"initialising fftw mpi\n");
+  int x, y, z;
+  int i;
 
 
-    // First things first - initialise fftwf_mpi
-    fftwf_mpi_init();
+  printf0(p,"initialising fftw mpi\n");
 
 
-    printf0(p,"Creating map for nodes responsible for x coord in slab decomp\n");
+  // First things first - initialise fftwf_mpi
+  fftwf_mpi_init();
 
+  MPI_Comm fftw_comm;
+  int stride = (p.size > p.Lx) ? ((int)(p.size/p.Lx)) : 1;
+  printf0(p, "Creating new MPI communicators every %d stride\n",
+	  stride);
+
+  int color = p.rank%stride;
+  MPI_Comm_split(MPI_COMM_WORLD, color, p.rank,
+		 &fftw_comm);
+
+  printf0(p,"Creating map for nodes responsible for x coord in slab decomp\n");
+
+
+  if(color == 0) {
     alloc_local = fftwf_mpi_local_size_3d(n0, n1, n2,
-                                          MPI_COMM_WORLD, &x_thickness, &x_start);
+					  fftw_comm,
+					  &x_thickness,
+					  &x_start);
+  } else{
+    alloc_local = 0;
+    x_thickness = 0;
+    x_start = 0;
+  }
 
+  // Now we initialise the map for which node is responsible for each
+  // x coord in the slab decomposition.
+  int *thicknesses = malloc(p.size*sizeof(int));
+  int *starts = malloc(p.size*sizeof(int));
+  fft_f->map = malloc(p.Lx*sizeof(int));
 
-    // Now we initialise the map for which node is responsible for each
-    // x coord in the slab decomposition.
-    int *thicknesses = malloc(p.size*sizeof(int));
-    int *starts = malloc(p.size*sizeof(int));
-    fft_f->map = malloc(p.Lx*sizeof(int));
+  if(p.rank) {
+    MPI_Send(&x_thickness, 1, MPI_INTEGER, 0, p.rank, MPI_COMM_WORLD);
+    MPI_Send(&x_start, 1, MPI_INTEGER, 0, p.rank, MPI_COMM_WORLD);
 
+  } else {
+    thicknesses[0] = x_thickness;
+    starts[0] = x_start;
 
-    if(p.rank) {
-        MPI_Send(&x_thickness, 1, MPI_INTEGER, 0, p.rank, MPI_COMM_WORLD);
-        MPI_Send(&x_start, 1, MPI_INTEGER, 0, p.rank, MPI_COMM_WORLD);
+    for(i=1; i<p.size; i++) {
+      MPI_Recv(&thicknesses[i], 1, MPI_INTEGER, i, i, MPI_COMM_WORLD, &status);
+      MPI_Recv(&starts[i], 1, MPI_INTEGER, i, i, MPI_COMM_WORLD, &status);
 
-    } else {
-        thicknesses[0] = x_thickness;
-        starts[0] = x_start;
-
-        for(i=1; i<p.size; i++) {
-            MPI_Recv(&thicknesses[i], 1, MPI_INTEGER, i, i, MPI_COMM_WORLD, &status);
-            MPI_Recv(&starts[i], 1, MPI_INTEGER, i, i, MPI_COMM_WORLD, &status);
-
-            //      fprintf(stderr,"rank %d, thickness %d, start %d\n", i, thicknesses[i], starts[i]);
-        }
-
-
-        for(x=0; x<p.Lx; x++) {
-            fft_f->map[x] = -1;
-            for(i=0; i<p.size; i++) {
-                if(starts[i] <= x && (starts[i] + thicknesses[i]) > x) {
-                    fft_f->map[x] = i;
-                    //	  fprintf(stderr, "therefore node %d is responsible for x=%d\n", i, x);
-                    break;
-                }
-            }
-            if(fft_f->map[x] == -1) {
-                fprintf(stderr,"cannot find a node responsible for x=%d!\n", x);
-                die(-99);
-            }
-
-        }
+      //      fprintf(stderr,"rank %d, thickness %d, start %d\n", i, thicknesses[i], starts[i]);
     }
 
-    printf0(p,"broadcasting our results\n");
-    MPI_Bcast(fft_f->map, p.Lx, MPI_INTEGER, 0, MPI_COMM_WORLD);
+
+    for(x=0; x<p.Lx; x++) {
+      fft_f->map[x] = -1;
+      for(i=0; i<p.size; i++) {
+	if(starts[i] <= x && (starts[i] + thicknesses[i]) > x) {
+	  fft_f->map[x] = i;
+	  //	  fprintf(stderr, "therefore node %d is responsible for x=%d\n", i, x);
+	  break;
+	}
+      }
+      if(fft_f->map[x] == -1) {
+	fprintf(stderr,"cannot find a node responsible for x=%d!\n", x);
+	die(-99);
+      }
+
+    }
+  }
+
+  printf0(p,"broadcasting our results\n");
+  MPI_Bcast(fft_f->map, p.Lx, MPI_INTEGER, 0, MPI_COMM_WORLD);
 
 
-    // Allocate in and out fields and plan for fourier transforms.
+  // Allocate in and out fields and plan for fourier transforms.
+    
+  fft_f->in = fftwf_alloc_complex(alloc_local);
+  fft_f->out = fftwf_alloc_complex(alloc_local);
 
-
-    fft_f->in = fftwf_alloc_complex(alloc_local);
-    fft_f->out = fftwf_alloc_complex(alloc_local);
-
+  if (color == 0){
     fft_f->plan = fftwf_mpi_plan_dft_3d(p.Lx, p.Ly, p.Lz,
-                                        fft_f->in, fft_f->out, MPI_COMM_WORLD,
-                                        FFTW_FORWARD, FFTW_ESTIMATE);
-    // Initialise UETC reference fields
-    if (p.uetcstart>=0){
-        // Tensor fields
-        fft_f->initial_Tij = (fftwf_complex **)malloc(6*sizeof(fftwf_complex *));
+					fft_f->in, fft_f->out, fftw_comm,
+					FFTW_FORWARD, FFTW_ESTIMATE);
+  }
+  // Initialise UETC reference fields
+  if (p.uetcstart>=0){
+    // Tensor fields
+    fft_f->initial_Tij = (fftwf_complex **)malloc(6*sizeof(fftwf_complex *));
 
-        for(i=0;i<TENSOR_CPTS;i++) {
-            fft_f->initial_Tij[i] = fftwf_alloc_complex(alloc_local);
-        }
-
-        // Vector fields
-        fft_f->initial_V = (fftwf_complex **)malloc(3*sizeof(fftwf_complex *));
-
-        for(i=0;i<3;i++) {
-            fft_f->initial_V[i] = fftwf_alloc_complex(alloc_local);
-        }
+    for(i=0;i<TENSOR_CPTS;i++) {
+      fft_f->initial_Tij[i] = fftwf_alloc_complex(alloc_local);
     }
-    free(thicknesses);
-    free(starts);
+
+    // Vector fields
+    fft_f->initial_V = (fftwf_complex **)malloc(3*sizeof(fftwf_complex *));
+
+    for(i=0;i<3;i++) {
+      fft_f->initial_V[i] = fftwf_alloc_complex(alloc_local);
+    }
+  }
+    
+    
+    
+  free(thicknesses);
+  free(starts);
+
+
+  MPI_Comm_free(&fftw_comm);
 }
 
 /** Cleanup the fft_fields fftwf fields, plan and mpi routines.
  */
 void fft_finalise(hydro_params p, fft_fields *fft_f){
+  
+  int stride = (p.size > p.Lx) ? ((int)(p.size/p.Lx)) : 1;
+  int color = p.rank%stride;
+  int i;
 
-    int i;
-
+  if (color == 0)
     fftwf_destroy_plan(fft_f->plan);
 
-    fftwf_free(fft_f->in);
-    fftwf_free(fft_f->out);
+  fftwf_free(fft_f->in);
+  fftwf_free(fft_f->out);
 
-    if (p.uetcstart>=0){
+  if (p.uetcstart>=0){
 
-        for(i=0;i<TENSOR_CPTS;i++)
-            fftwf_free(fft_f->initial_Tij[i]);
+    for(i=0;i<TENSOR_CPTS;i++)
+      fftwf_free(fft_f->initial_Tij[i]);
 
-        free(fft_f->initial_Tij);
+    free(fft_f->initial_Tij);
 
-        for(i=0;i<3;i++)
-            fftwf_free(fft_f->initial_V[i]);
+    for(i=0;i<3;i++)
+      fftwf_free(fft_f->initial_V[i]);
 
-        free(fft_f->initial_V);
-    }
+    free(fft_f->initial_V);
+  }
 
-    free(fft_f->map);
-    fftwf_mpi_cleanup();
+  free(fft_f->map);
+  fftwf_mpi_cleanup();
 }
 
 
@@ -162,125 +187,135 @@ void fft_finalise(hydro_params p, fft_fields *fft_f){
  */
 void fft_scalar(hydro_params p, fft_fields fft_f, float ***real_field) {
 
-    ptrdiff_t x_thickness, x_start, alloc_local;
+  //  int slab;
+  ptrdiff_t alloc_local, x_thickness, x_start;
 
-    ptrdiff_t n0 = p.Lx;
-    ptrdiff_t n1 = p.Ly;
-    ptrdiff_t n2 = p.Lz;
+  ptrdiff_t n0 = p.Lx;
+  ptrdiff_t n1 = p.Ly;
+  ptrdiff_t n2 = p.Lz;
+  MPI_Comm fftw_comm;
+  int stride = (p.size > p.Lx) ? ((int)(p.size/p.Lx)) : 1;
+  int color = p.rank%stride;
+  MPI_Comm_split(MPI_COMM_WORLD, color, p.rank,
+		 &fftw_comm);
 
-
-    //  int slab;
-
-    MPI_Status status;
-
-    int x, y, z;
-    int i;
-
-    //printf0(p, "FFT: alloc_local\n");
-
+  if(color == 0) {
     alloc_local = fftwf_mpi_local_size_3d(n0, n1, n2,
-                                          MPI_COMM_WORLD, &x_thickness, &x_start);
+					  fftw_comm,
+					  &x_thickness,
+					  &x_start);
+  } else{
+    alloc_local = 0;
+    x_thickness = 0;
+    x_start = 0;
+  }
+
+  MPI_Status status;
+
+  int x, y, z;
+  int i;
+
+  //printf0(p, "FFT: alloc_local\n");
+
+  float *trim_field = (float *)malloc(p.slicex*p.slicey*p.Lz*sizeof(float));
+
+  //printf0(p, "FFT: populating trim field\n");
+
+  float checken = 0.0;
+  for(x=1; x<=p.slicex; x++) {
+    for(y=1; y<=p.slicey; y++) {
+      for(z=0; z<p.Lz; z++) {
+
+	trim_field[(x-1)*p.slicey*p.Lz + (y-1)*p.Lz + z] = real_field[x][y][z];
+      }
+    }
+  }
+
+  float *slice = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
+
+  int nx = p.Lx/p.slicex;
+  int ny = p.Ly/p.slicey;
+
+  int ry;
+
+  for(x=0; x<p.Lx; x++) {
+
+    // Check whether we are the target node for this slab
+    if(fft_f.map[x] == p.rank) {
+
+      //fprintf(stderr, "%d: my slice, x=%d\n", p.rank, x);
+      for(ry = 0; ry < ny; ry++) {
+
+	if((x/p.slicex == p.myposx) && (ry == p.myposy)) {
+	  memcpy(&slice[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
+		 &trim_field[(x-p.shiftx)*p.slicey*p.Lz],
+		 p.slicey*p.Lz*sizeof(float));
+	  continue;
+	}
+
+	MPI_Recv(&slice[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
+		 p.slicey*p.Lz,
+		 MPI_FLOAT,
+		 ry*nx + x/p.slicex,
+		 x*ny + ry,
+		 MPI_COMM_WORLD,
+		 &status);
 
 
-    float *trim_field = (float *)malloc(p.slicex*p.slicey*p.Lz*sizeof(float));
+	//fprintf(stderr, "%d: got pencil with x=%d\n", p.rank,
+	//	x);
 
-    //printf0(p, "FFT: populating trim field\n");
 
-    float checken = 0.0;
-    for(x=1; x<=p.slicex; x++) {
-        for(y=1; y<=p.slicey; y++) {
-            for(z=0; z<p.Lz; z++) {
+      }
 
-                trim_field[(x-1)*p.slicey*p.Lz + (y-1)*p.Lz + z] = real_field[x][y][z];
-            }
-        }
+    } else if((x >= p.shiftx) && (x < (p.shiftx + p.slicex))) {
+
+
+      //fprintf(stderr, "%d: my pencil, x=%d to dest %d/%d\n",
+      //	      p.rank, x, x, fft_f.map[x]);
+
+
+      MPI_Send(&trim_field[(x-p.shiftx)*p.slicey*p.Lz],
+	       p.slicey*p.Lz,
+	       MPI_FLOAT,
+	       fft_f.map[x],
+	       x*ny + p.myposy,
+	       MPI_COMM_WORLD);
     }
 
-    float *slice = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
+    // then wait until that slice of x is sorted
 
-    int nx = p.Lx/p.slicex;
-    int ny = p.Ly/p.slicey;
+  }
+  // Alloc slab array and do communication to get it into place
 
-    int ry;
-
-    for(x=0; x<p.Lx; x++) {
-
-        // Check whether we are the target node for this slab
-        if(fft_f.map[x] == p.rank) {
-
-            //fprintf(stderr, "%d: my slice, x=%d\n", p.rank, x);
-            for(ry = 0; ry < ny; ry++) {
-
-                if((x/p.slicex == p.myposx) && (ry == p.myposy)) {
-                    memcpy(&slice[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
-                           &trim_field[(x-p.shiftx)*p.slicey*p.Lz],
-                           p.slicey*p.Lz*sizeof(float));
-                    continue;
-                }
-
-                MPI_Recv(&slice[(x-x_start)*p.Ly*p.Lz + ry*p.slicey*p.Lz],
-                         p.slicey*p.Lz,
-                         MPI_FLOAT,
-                         ry*nx + x/p.slicex,
-                         x*ny + ry,
-                         MPI_COMM_WORLD,
-                         &status);
+  //printf0(p, "FFT: Done slicing\n");
 
 
-                //fprintf(stderr, "%d: got pencil with x=%d\n", p.rank,
-                //	x);
 
+  for(x=0;x<x_thickness;x++) {
+    for(y=0;y<p.Ly;y++) {
+      for(z=0;z<p.Lz;z++) {
 
-            }
-
-        } else if((x >= p.shiftx) && (x < (p.shiftx + p.slicex))) {
-
-
-            //fprintf(stderr, "%d: my pencil, x=%d to dest %d/%d\n",
-            //	      p.rank, x, x, fft_f.map[x]);
-
-
-            MPI_Send(&trim_field[(x-p.shiftx)*p.slicey*p.Lz],
-                     p.slicey*p.Lz,
-                     MPI_FLOAT,
-                     fft_f.map[x],
-                     x*ny + p.myposy,
-                     MPI_COMM_WORLD);
-        }
-
-        // then wait until that slice of x is sorted
-
+	fft_f.in[x*p.Ly*p.Lz + y*p.Lz + z][0] = slice[x*p.Ly*p.Lz + y*p.Lz + z];
+	fft_f.in[x*p.Ly*p.Lz + y*p.Lz + z][1] = 0.0;
+      }
     }
-    // Alloc slab array and do communication to get it into place
-
-    //printf0(p, "FFT: Done slicing\n");
+  }
 
 
-
-    for(x=0;x<x_thickness;x++) {
-        for(y=0;y<p.Ly;y++) {
-            for(z=0;z<p.Lz;z++) {
-
-                fft_f.in[x*p.Ly*p.Lz + y*p.Lz + z][0] = slice[x*p.Ly*p.Lz + y*p.Lz + z];
-                fft_f.in[x*p.Ly*p.Lz + y*p.Lz + z][1] = 0.0;
-            }
-        }
-    }
-
-
-
-
+  if (color == 0)
     fftwf_mpi_execute_dft(fft_f.plan, fft_f.in, fft_f.out);
 
-    //printf0(p, "Basic FFT done\n");
+  //printf0(p, "Basic FFT done\n");
 
 
-    // Perform cleanup on declared fields.
+  // Perform cleanup on declared fields.
 
-    free(trim_field);
+  free(trim_field);
 
-    free(slice);
+  free(slice);
 
+  MPI_Comm_free(&fftw_comm);
 }
 
 /** Populate outcpts with normalised fourier transform of
@@ -294,45 +329,61 @@ void fft_scalar(hydro_params p, fft_fields fft_f, float ***real_field) {
 void fft_vector(hydro_params p, fft_fields fft_f, float ****vector_field,
 		fftwf_complex **outcpts) {
 
-    ptrdiff_t x_thickness, x_start, alloc_local;
 
-    ptrdiff_t n0 = p.Lx;
-    ptrdiff_t n1 = p.Ly;
-    ptrdiff_t n2 = p.Lz;
+  ptrdiff_t alloc_local, x_thickness, x_start;
 
-    int x, y, z;
-    int i;
+  ptrdiff_t n0 = p.Lx;
+  ptrdiff_t n1 = p.Ly;
+  ptrdiff_t n2 = p.Lz;
+  MPI_Comm fftw_comm;
+  int stride = (p.size > p.Lx) ? ((int)(p.size/p.Lx)) : 1;
+  int color = p.rank%stride;
+  MPI_Comm_split(MPI_COMM_WORLD, color, p.rank,
+		 &fftw_comm);
 
-    float start = clock();
-
+  if(color == 0) {
     alloc_local = fftwf_mpi_local_size_3d(n0, n1, n2,
-                                          MPI_COMM_WORLD, &x_thickness, &x_start);
+					  fftw_comm,
+					  &x_thickness,
+					  &x_start);
+  } else{
+    alloc_local = 0;
+    x_thickness = 0;
+    x_start = 0;
+  }
+
+  
+  int x, y, z;
+  int i;
+
+  float start = clock();
+
+  float fft_norm = (1.0/(((float)p.Lx)*((float)p.Ly)*((float)p.Lz)));
 
 
+  for(i = 0; i < 3; i++) {
+    fft_scalar(p, fft_f, vector_field[i]);
 
-    float fft_norm = (1.0/(((float)p.Lx)*((float)p.Ly)*((float)p.Lz)));
+    for(x=0;x<x_thickness;x++) {
+      for(y=0;y<p.Ly;y++) {
+	for(z=0;z<p.Lz;z++) {
+	  outcpts[i][x*p.Ly*p.Lz + y*p.Lz + z][0]
+	    = fft_norm*fft_f.out[x*p.Ly*p.Lz + y*p.Lz + z][0];
+	  outcpts[i][x*p.Ly*p.Lz + y*p.Lz + z][1]
+	    = fft_norm*fft_f.out[x*p.Ly*p.Lz + y*p.Lz + z][1];
 
-
-    for(i = 0; i < 3; i++) {
-        fft_scalar(p, fft_f, vector_field[i]);
-
-        for(x=0;x<x_thickness;x++) {
-            for(y=0;y<p.Ly;y++) {
-                for(z=0;z<p.Lz;z++) {
-                    outcpts[i][x*p.Ly*p.Lz + y*p.Lz + z][0]
-                        = fft_norm*fft_f.out[x*p.Ly*p.Lz + y*p.Lz + z][0];
-                    outcpts[i][x*p.Ly*p.Lz + y*p.Lz + z][1]
-                        = fft_norm*fft_f.out[x*p.Ly*p.Lz + y*p.Lz + z][1];
-
-                    //	  total += outcpts[i][x*p.Ly*p.Lz + y*p.Lz + z][0];
-                }
-            }
-        }
-        //printf0(p, "FFT vector: Completed fft for cpt %d\n", i);
+	  //	  total += outcpts[i][x*p.Ly*p.Lz + y*p.Lz + z][0];
+	}
+      }
     }
-    float end = clock();
+    //printf0(p, "FFT vector: Completed fft for cpt %d\n", i);
+  }
 
-    printf0(p, "fft vector took %lf\n", ((float) (end - start)) / CLOCKS_PER_SEC);
+  
+  MPI_Comm_free(&fftw_comm);
+  float end = clock();
+
+  printf0(p, "fft vector took %lf\n", ((float) (end - start)) / CLOCKS_PER_SEC);
 
 }
 
@@ -350,48 +401,61 @@ void fft_vector(hydro_params p, fft_fields fft_f, float ****vector_field,
 void fft_tensor(hydro_params p, fft_fields fft_f, float ****tensor_field,
 		fftwf_complex **outcpts, float norm) {
 
-    ptrdiff_t x_thickness, x_start, alloc_local;
 
-    ptrdiff_t n0 = p.Lx;
-    ptrdiff_t n1 = p.Ly;
-    ptrdiff_t n2 = p.Lz;
+  ptrdiff_t alloc_local, x_thickness, x_start;
 
+  ptrdiff_t n0 = p.Lx;
+  ptrdiff_t n1 = p.Ly;
+  ptrdiff_t n2 = p.Lz;
+  MPI_Comm fftw_comm;
+  int stride = (p.size > p.Lx) ? ((int)(p.size/p.Lx)) : 1;
+  int color = p.rank%stride;
+  MPI_Comm_split(MPI_COMM_WORLD, color, p.rank,
+		 &fftw_comm);
 
-    int x, y, z;
-    int i;
-
-    float start = clock();
-
+  if(color == 0) {
     alloc_local = fftwf_mpi_local_size_3d(n0, n1, n2,
-                                          MPI_COMM_WORLD, &x_thickness, &x_start);
+					  fftw_comm,
+					  &x_thickness,
+					  &x_start);
+  } else{
+    alloc_local = 0;
+    x_thickness = 0;
+    x_start = 0;
+  }
 
+  
+  int x, y, z;
+  int i;
 
+  float start = clock();
 
+  float fft_norm = (1.0/(((float)p.Lx)*((float)p.Ly)*((float)p.Lz)));
+  float tot_norm = fft_norm*norm;
+  for(i = 0; i < TENSOR_CPTS; i++) {
+    fft_scalar(p, fft_f, tensor_field[i]);
 
-    float fft_norm = (1.0/(((float)p.Lx)*((float)p.Ly)*((float)p.Lz)));
-    float tot_norm = fft_norm*norm;
-    for(i = 0; i < TENSOR_CPTS; i++) {
-        fft_scalar(p, fft_f, tensor_field[i]);
+    for(x=0;x<x_thickness;x++) {
+      for(y=0;y<p.Ly;y++) {
+	for(z=0;z<p.Lz;z++) {
+	  outcpts[i][x*p.Ly*p.Lz + y*p.Lz + z][0]
+	    = tot_norm*fft_f.out[x*p.Ly*p.Lz + y*p.Lz + z][0];
+	  outcpts[i][x*p.Ly*p.Lz + y*p.Lz + z][1]
+	    = tot_norm*fft_f.out[x*p.Ly*p.Lz + y*p.Lz + z][1];
 
-        for(x=0;x<x_thickness;x++) {
-            for(y=0;y<p.Ly;y++) {
-                for(z=0;z<p.Lz;z++) {
-                    outcpts[i][x*p.Ly*p.Lz + y*p.Lz + z][0]
-                        = tot_norm*fft_f.out[x*p.Ly*p.Lz + y*p.Lz + z][0];
-                    outcpts[i][x*p.Ly*p.Lz + y*p.Lz + z][1]
-                        = tot_norm*fft_f.out[x*p.Ly*p.Lz + y*p.Lz + z][1];
-
-                    //	  total += outcpts[i][x*p.Ly*p.Lz + y*p.Lz + z][0];
-                }
-            }
-        }
-
-        //printf0(p, "FFT tensor: Completed fft for cpt %d\n", i);
-
+	  //	  total += outcpts[i][x*p.Ly*p.Lz + y*p.Lz + z][0];
+	}
+      }
     }
-    float end = clock();
 
-    printf0(p, "fft tensor took %lf\n", ((float) (end - start)) / CLOCKS_PER_SEC);
+    //printf0(p, "FFT tensor: Completed fft for cpt %d\n", i);
+
+  }
+  
+  MPI_Comm_free(&fftw_comm);
+  float end = clock();
+
+  printf0(p, "fft tensor took %lf\n", ((float) (end - start)) / CLOCKS_PER_SEC);
 
 }
 
@@ -530,14 +594,29 @@ float output_ps_uetcs(hydro_fields f, hydro_params p, fft_fields fft_f, int step
     float gwen;
     int i;
 
-    ptrdiff_t x_thickness, x_start, alloc_local;
+    ptrdiff_t alloc_local, x_thickness, x_start;
 
     ptrdiff_t n0 = p.Lx;
     ptrdiff_t n1 = p.Ly;
     ptrdiff_t n2 = p.Lz;
+    MPI_Comm fftw_comm;
+    int stride = (p.size > p.Lx) ? ((int)(p.size/p.Lx)) : 1;
+    int color = p.rank%stride;
+    MPI_Comm_split(MPI_COMM_WORLD, color, p.rank,
+		   &fftw_comm);
 
-    alloc_local = fftwf_mpi_local_size_3d(n0, n1, n2,
-                                          MPI_COMM_WORLD, &x_thickness, &x_start);
+    if(color == 0) {
+      alloc_local = fftwf_mpi_local_size_3d(n0, n1, n2,
+					    fftw_comm,
+					    &x_thickness,
+					    &x_start);
+    } else{
+      alloc_local = 0;
+      x_thickness = 0;
+      x_start = 0;
+    }
+
+
     // Perform scalar ffts:
 
     histo_field(f.phi, p, step);
@@ -641,6 +720,8 @@ float output_ps_uetcs(hydro_fields f, hydro_params p, fft_fields fft_f, int step
 
     free(outcpts_tens);
 
+    
+    MPI_Comm_free(&fftw_comm);
     // Return total gravitational wave energy.
     return gwen;
 }
