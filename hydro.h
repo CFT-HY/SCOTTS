@@ -14,7 +14,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <stdarg.h>
-
+#include <sys/stat.h>
 
 
 // Apple doesn't seem to believe in malloc.h
