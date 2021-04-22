@@ -54,13 +54,13 @@ void get_parameters(char *infile, hydro_params *p)
   int set_checkpointinterval = 0;
   int set_siloslicecoord=0;
 
-  
+  int set_fftoptions = 0;
   int set_uetcstart = 0;
 
   int set_initial = 0;
 
   int set_gwsource = 0;
-
+  
   int set_silodir = 0;
   int set_checkpointdir = 0;
 
@@ -267,6 +267,59 @@ void get_parameters(char *infile, hydro_params *p)
 	p->initial = INIT_BUBBLE;
       }
       set_initial = 1;
+    }
+    else if(!strcasecmp(key,"fftoptions")) {
+      if(!strcasecmp(value, "all")) {
+	p->fft_scalars = 1;
+	p->fft_vel = 1;
+	p->fft_J = 1;
+	p->fft_X = 1;
+	p->fft_gw = 1;
+	p->fft_shst = 1;
+      } else if(!strcasecmp(value,"none")) {
+	p->fft_scalars = 0;
+	p->fft_vel = 0;
+	p->fft_J = 0;
+	p->fft_X = 0;
+	p->fft_gw = 0;
+	p->fft_shst = 0;
+      } else if(!strcasecmp(value,"list")) {
+	char *curr = strtok(option,",");
+	
+	p->fft_scalars = 0;
+	p->fft_vel = 0;
+	p->fft_J = 0;
+	p->fft_X = 0;
+	p->fft_gw = 0;
+	p->fft_shst = 0;
+	
+	while (curr != NULL){
+	  if(!strcasecmp(curr,"scalars")){
+	    p->fft_scalars = 1;
+	  } else if(!strcasecmp(curr,"vel")){
+	    p->fft_vel = 1;
+	  } else if(!strcasecmp(curr,"J")){
+	    p->fft_J = 1;
+	  } else if(!strcasecmp(curr,"X")){
+	    p->fft_X = 1;
+	  } else if(!strcasecmp(curr,"gw")){
+	    p->fft_gw = 1;
+	  } else if(!strcasecmp(curr,"shst")){
+	    p->fft_shst = 1;
+	  } else {
+	    printf0(*p,"warning, unrecognised fftoption: (%s),"
+		    " ignoring. \n", curr);
+	  }
+	  
+	  curr = strtok(NULL, ",");
+	}
+	
+      } else {
+	printf0(*p, "warning, unrecognised value for fft_options"
+		" (%s); giving up!\n", value);
+	die(123);
+      }
+      set_fftoptions = 1;
     }
     else if(!strcasecmp(key,"gwsource")) {
       if(!strcasecmp(value, "both")) {
@@ -511,7 +564,7 @@ void get_parameters(char *infile, hydro_params *p)
 		"Unrecognised option to initpsfile;"
 		"treating initpsfile as DIV power\n");
 	p->initpsfile_type = INITPSFILE_DIV;
-	  }
+      }
       
 
       set_initpsfile = 1;
@@ -623,6 +676,9 @@ void get_parameters(char *infile, hydro_params *p)
   }else if(!set_initial) {
     printf0(*p, "Did not set parameter \'initial\'\n");
     die(100);
+  }else if(!set_fftoptions) {
+    printf0(*p, "Did not set parameter \'fftoptions\'\n");
+    die(100);
   }else if(!set_gwsource) {
     printf0(*p, "Did not set parameter \'gwsource\'\n");
     die(100);
@@ -692,6 +748,21 @@ void get_parameters(char *infile, hydro_params *p)
       printf0(*p, "-- warning, somehow have unknown initial conds.\n");
     }
 
+    printf0(*p, " -- Doing following FFTs: \n" "--");
+    if(p->fft_scalars)
+      printf0(*p, " scalars");
+    if(p->fft_vel)
+      printf0(*p, " vel");
+    if(p->fft_J)
+      printf0(*p, " J");
+    if(p->fft_X)
+      printf0(*p, " X");
+    if(p->fft_gw)
+      printf0(*p, " gw");
+    if(p->fft_shst)
+      printf0(*p, " shst");
+    printf0(*p, "\n");
+    
     if(p->gwsource == GW_FIELD) {
       printf0(*p, "-- gws sourced by FIELD only\n");
     } else if(p->gwsource == GW_FLUID) {
