@@ -119,17 +119,21 @@ void fft_init(hydro_params p, fft_fields *fft_f){
   // Initialise UETC reference fields
   if (p.uetcstart>=0){
     // Tensor fields
-    fft_f->initial_Tij = (fftwf_complex **)malloc(6*sizeof(fftwf_complex *));
+    if(p.fft_shst){
+      fft_f->initial_Tij = (fftwf_complex **)malloc(6*sizeof(fftwf_complex *));
 
-    for(i=0;i<TENSOR_CPTS;i++) {
-      fft_f->initial_Tij[i] = fftwf_alloc_complex(alloc_local);
+      for(i=0;i<TENSOR_CPTS;i++) {
+	fft_f->initial_Tij[i] = fftwf_alloc_complex(alloc_local);
+      }
     }
 
-    // Vector fields
-    fft_f->initial_V = (fftwf_complex **)malloc(3*sizeof(fftwf_complex *));
+    if(p.fft_vel){
+      // Vector fields
+      fft_f->initial_V = (fftwf_complex **)malloc(3*sizeof(fftwf_complex *));
 
-    for(i=0;i<3;i++) {
-      fft_f->initial_V[i] = fftwf_alloc_complex(alloc_local);
+      for(i=0;i<3;i++) {
+	fft_f->initial_V[i] = fftwf_alloc_complex(alloc_local);
+      }
     }
   }
     
@@ -158,15 +162,18 @@ void fft_finalise(hydro_params p, fft_fields *fft_f){
 
   if (p.uetcstart>=0){
 
-    for(i=0;i<TENSOR_CPTS;i++)
-      fftwf_free(fft_f->initial_Tij[i]);
+    if (p.fft_shst){
+      for(i=0;i<TENSOR_CPTS;i++)
+	fftwf_free(fft_f->initial_Tij[i]);
 
-    free(fft_f->initial_Tij);
+      free(fft_f->initial_Tij);
+    }
+    if (p.fft_vel){
+      for(i=0;i<3;i++)
+	fftwf_free(fft_f->initial_V[i]);
 
-    for(i=0;i<3;i++)
-      fftwf_free(fft_f->initial_V[i]);
-
-    free(fft_f->initial_V);
+      free(fft_f->initial_V);
+    }
   }
 
   free(fft_f->map);
@@ -591,7 +598,7 @@ void fft_e(hydro_fields f, hydro_params p, fft_fields fft_f){
 float output_ps_uetcs(hydro_fields f, hydro_params p, fft_fields fft_f, int step){
 
     clock_t fft_start, fft_end;
-    float gwen;
+    float gwen = 0;
     int i;
 
     ptrdiff_t alloc_local, x_thickness, x_start;
@@ -621,6 +628,7 @@ float output_ps_uetcs(hydro_fields f, hydro_params p, fft_fields fft_f, int step
 
     histo_field(f.phi, p, step);
 
+    if (p.fft_scalars){
     // Fourier transform scalar field:
     fft_start = clock();
     fft_scalar(p, fft_f, f.phi);
@@ -643,83 +651,93 @@ float output_ps_uetcs(hydro_fields f, hydro_params p, fft_fields fft_f, int step
     scalarps(p, fft_f.out, step, "e");
 
 #endif // SCALAR
-
+    }
 
     // Vector spectra (and UETCs)
 
     fftwf_complex **outcpts_vec = (fftwf_complex **)malloc(3*sizeof(fftwf_complex *));
 
-    for(i=0;i<3;i++) {
+    if (p.fft_vel || p.fft_J || p.fft_X){
+      for(i=0;i<3;i++) {
         outcpts_vec[i] = fftwf_alloc_complex(alloc_local);
-    }
+      }
+    
 
 #ifndef SCALAR
 
-    // Velocity power spectrum and UETCs
-    fft_vector(p, fft_f, f.V, outcpts_vec);
+      if (p.fft_vel){
+	// Velocity power spectrum and UETCs
+	fft_vector(p, fft_f, f.V, outcpts_vec);
 
-    vectorps(p, outcpts_vec, step, "vel");
+	vectorps(p, outcpts_vec, step, "vel");
 
-    if(p.uetcstart >= 0 && step > p.uetcstart) {
-        uetc_vector(p, fft_f.initial_V, outcpts_vec, p.uetcstart, step, "vel");
-    }
+	if(p.uetcstart >= 0 && step > p.uetcstart) {
+	  uetc_vector(p, fft_f.initial_V, outcpts_vec, p.uetcstart, step, "vel");
+	}
+      }
 
-    // Temperature current power spectrum
-    fft_J(f, p, fft_f, outcpts_vec);
+      if (p.fft_J){
+	// Temperature current power spectrum
+	fft_J(f, p, fft_f, outcpts_vec);
 
-    vectorps(p, outcpts_vec, step, "J");
+	vectorps(p, outcpts_vec, step, "J");
+      }
+      if (p.fft_X){
+	// X variable power spectrum.
+	fft_X(f, p, fft_f, outcpts_vec);
 
-    // X variable power spectrum.
-    fft_X(f, p, fft_f, outcpts_vec);
-
-    vectorps(p, outcpts_vec, step, "X");
-
+	vectorps(p, outcpts_vec, step, "X");
+      }
 #endif //!SCALAR
 
-    // Clean up outcpts_vec
-    for(i=0;i<3;i++)
+      // Clean up outcpts_vec
+      for(i=0;i<3;i++)
         fftwf_free(outcpts_vec[i]);
 
-    free(outcpts_vec);
+      free(outcpts_vec);
+    }
 
-    // Tensor spectra & UETCs
+    if (p.fft_gw || p.fft_shst){
+      // Tensor spectra & UETCs
 
-    fftwf_complex **outcpts_tens = (fftwf_complex **)malloc(6*sizeof(fftwf_complex *));
+      fftwf_complex **outcpts_tens = (fftwf_complex **)malloc(6*sizeof(fftwf_complex *));
 
-    for(i=0;i<TENSOR_CPTS;i++) {
+      for(i=0;i<TENSOR_CPTS;i++) {
         outcpts_tens[i] = fftwf_alloc_complex(alloc_local);
-    }
+      }
 
-    // Gravitational wave power spectrum (returns GW energy)
-    fft_tensor(p, fft_f, f.udotij, outcpts_tens, 1/sqrt(32*M_PI));
+      if (p.fft_gw){
+	// Gravitational wave power spectrum (returns GW energy)
+	fft_tensor(p, fft_f, f.udotij, outcpts_tens, 1/sqrt(32*M_PI));
 
-    gwen = tensorps(p, outcpts_tens, step, "gw");
+	gwen = tensorps(p, outcpts_tens, step, "gw");
+      }
+      if (p.fft_shst){
+	// Shear stress power spectrum.
 
-    // Shear stress power spectrum.
+	float ****Tij_now = make_tensor(p);
 
-    float ****Tij_now = make_tensor(p);
+	stress_energy(f, p, Tij_now);
 
-    stress_energy(f, p, Tij_now);
+	fft_tensor(p, fft_f, Tij_now, outcpts_tens, 1.0);
 
-    fft_tensor(p, fft_f, Tij_now, outcpts_tens, 1.0);
+	free_tensor(p, Tij_now);
 
-    free_tensor(p, Tij_now);
+	tensorps(p, outcpts_tens, step, "shst");
 
-    tensorps(p, outcpts_tens, step, "shst");
+	// Shear stress UETC
 
-    // Shear stress UETC
+	if(p.uetcstart >= 0 && step > p.uetcstart) {
+	  uetc_tensor(p, fft_f.initial_Tij, outcpts_tens, p.uetcstart, step, "shst");
+	}
+      }
+      // Cleanup outcpts_tens
 
-    if(p.uetcstart >= 0 && step > p.uetcstart) {
-        uetc_tensor(p, fft_f.initial_Tij, outcpts_tens, p.uetcstart, step, "shst");
-    }
-
-    // Cleanup outcpts_tens
-
-    for(i=0;i<TENSOR_CPTS;i++)
+      for(i=0;i<TENSOR_CPTS;i++)
         fftwf_free(outcpts_tens[i]);
 
-    free(outcpts_tens);
-
+      free(outcpts_tens);
+    }
     
     MPI_Comm_free(&fftw_comm);
     // Return total gravitational wave energy.
