@@ -113,6 +113,17 @@ nucleation off
 checkpointdir cp/
 checkpointinterval -1
 
+
+# Which ffts/uetcs do we want to do?
+# fftoptions can be set to three different values:
+# all - enable all ffts
+# none - disable all ffts
+# list - provide a comma seperated list of ffts to perform
+#        from the following options:
+#        scalars,vel,J,X,gw,shst.
+fftoptions all
+
+
 # What the gravitational wave power spectrum is sourced by
 # choices are 'fluid', 'field' or 'both'. The default (if the choice
 # is unrecognisable) is 'both'.
