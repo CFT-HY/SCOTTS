@@ -378,8 +378,6 @@ void uetc_vector(hydro_params p, fftwf_complex **vector_then,
     }
 
     MPI_Barrier(MPI_COMM_WORLD);
-    if(!p.rank)
-      fprintf(stderr,"Got through binning process (bins %d)\n", nbins);
 
     float red_value;
     int red_count;
@@ -402,10 +400,6 @@ void uetc_vector(hydro_params p, fftwf_complex **vector_then,
       red_count = reduce_sum_int(counts[i], p);
       counts[i] = red_count;
     }
-
-    MPI_Barrier(MPI_COMM_WORLD);
-    if(!p.rank)
-      fprintf(stderr,"Got through bin reduction\n");
 
 
     float thisk = dk/2.0;
