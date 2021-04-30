@@ -60,7 +60,7 @@ void get_parameters(char *infile, hydro_params *p)
   int set_initial = 0;
 
   int set_gwsource = 0;
-  int set_gw_turn_on = 0;
+  int set_metricstart = 0;
   
   int set_silodir = 0;
   int set_checkpointdir = 0;
@@ -336,9 +336,9 @@ void get_parameters(char *infile, hydro_params *p)
       }
       set_gwsource = 1;
     }
-    else if(!strcasecmp(key,"gw_turn_on")) {
-      p->gw_turn_on = strtol(value,NULL,10);
-      set_gw_turn_on = 1;
+    else if(!strcasecmp(key,"metricstart")) {
+      p->metricstart = strtol(value,NULL,10);
+      set_metricstart = 1;
     }
     else if(!strcasecmp(key,"nucleation")) {
       if(!strcasecmp(value, "off")) {
@@ -687,8 +687,8 @@ void get_parameters(char *infile, hydro_params *p)
   }else if(!set_gwsource) {
     printf0(*p, "Did not set parameter \'gwsource\'\n");
     die(100);
-  }else if(!set_gw_turn_on) {
-    printf0(*p, "Did not set parameter \'gw_turn_on\'\n");
+  }else if(!set_metricstart) {
+    printf0(*p, "Did not set parameter \'metricstart\'\n");
     die(100);
   } else if(!set_nucleation) {
     printf0(*p, "Did not set parameter \'nucleation\'\n");
@@ -727,7 +727,7 @@ void get_parameters(char *infile, hydro_params *p)
 	    "-- silodir \"%s\"\n"
 	    "-- checkpointdir \"%s\"\n"
 	    "-- seed %d\n"
-	    "-- gw_turn_on %d\n",
+	    "-- metricstart %d\n",
 	    infile,
 	    p->dx, p->dt, p->steps,
 	    p->Lx, p->Ly, p->Lz,
@@ -742,7 +742,7 @@ void get_parameters(char *infile, hydro_params *p)
 	    p->silodir,
 	    p->checkpointdir,
 	    p->seed,
-	    p->gw_turn_on);
+	    p->metricstart);
     
     if(p->initial == INIT_SHOCK_TUBE) {
       printf0(*p, "-- shock tube\n");
