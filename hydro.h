@@ -299,7 +299,7 @@ typedef struct {
 
   /** Step at which we start evolving metric perturbations.
    */
-  int gw_turn_on;
+  int metricstart;
   
 #ifdef USE_MPI
 

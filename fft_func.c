@@ -707,7 +707,7 @@ float output_ps_uetcs(hydro_fields f, hydro_params p, fft_fields fft_f, int step
       }
 
       if (p.fft_gw){
-	if (step>=p.gw_turn_on){
+	if (step>=p.metricstart){
 	  // Gravitational wave power spectrum (returns GW energy)
 	  fft_tensor(p, fft_f, f.udotij, outcpts_tens, 1/sqrt(32*M_PI));
 
