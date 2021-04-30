@@ -707,10 +707,12 @@ float output_ps_uetcs(hydro_fields f, hydro_params p, fft_fields fft_f, int step
       }
 
       if (p.fft_gw){
-	// Gravitational wave power spectrum (returns GW energy)
-	fft_tensor(p, fft_f, f.udotij, outcpts_tens, 1/sqrt(32*M_PI));
+	if (step>=p.gw_turn_on){
+	  // Gravitational wave power spectrum (returns GW energy)
+	  fft_tensor(p, fft_f, f.udotij, outcpts_tens, 1/sqrt(32*M_PI));
 
-	gwen = tensorps(p, outcpts_tens, step, "gw");
+	  gwen = tensorps(p, outcpts_tens, step, "gw");
+	}
       }
       if (p.fft_shst){
 	// Shear stress power spectrum.

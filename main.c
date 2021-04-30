@@ -455,6 +455,7 @@ int main(int argc, char *argv[]) {
     //dump_max_min(f, p);
 
     // Evolve metric perturbations
+    if (step >= p.gw_turn_on) 
     evolve_uij(f, p);
 
     // Advection of state variables
