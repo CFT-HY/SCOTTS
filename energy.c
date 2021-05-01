@@ -478,15 +478,16 @@ void stress_energy(hydro_fields f, hydro_params p, float ****Tij) {
 	    *((f.phi[x][y][(z+1)%p.Lz] - f.phi[x][y][(z-1+p.Lz)%p.Lz])/p.dx);
 	}
 
-
-	// Now remove the trace as in single precision this can cause trace of
-	// udot to become large and leak into hdot:
+#ifdef TRACEFREE
+	// If trace free compiler flag then remove the trace. In single
+	// precision the trace of Tij can cause trace of udot to become large and leak into
+	// hdot:
 	traceTij = (Tij[CPT_11][x][y][z] + Tij[CPT_22][x][y][z] + Tij[CPT_33][x][y][z])/3.;
 
 	Tij[CPT_11][x][y][z] -= traceTij;
 	Tij[CPT_22][x][y][z] -= traceTij;
 	Tij[CPT_33][x][y][z] -= traceTij;
-	
+#endif // TRACEFREE
       }
     }
   }
