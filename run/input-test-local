@@ -122,6 +122,11 @@ fftoptions all
 # is unrecognisable) is 'both'.
 gwsource fluid
 
+# What step should we turn on the evolution of the metric perturbations?
+# This should be set to zero unless you have a reason to want to only study
+# gws produced after a certain time.
+metricstart 0
+
 # The random seed. This must be set. The seed is 'salted' with the
 # timestep every update so that results are reproducible across
 # simulations. The randomness is used for bubble locations only.
