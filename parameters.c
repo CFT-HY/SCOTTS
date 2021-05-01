@@ -60,6 +60,7 @@ void get_parameters(char *infile, hydro_params *p)
   int set_initial = 0;
 
   int set_gwsource = 0;
+  int set_metricstart = 0;
   
   int set_silodir = 0;
   int set_checkpointdir = 0;
@@ -334,6 +335,10 @@ void get_parameters(char *infile, hydro_params *p)
 	p->gwsource = GW_BOTH;
       }
       set_gwsource = 1;
+    }
+    else if(!strcasecmp(key,"metricstart")) {
+      p->metricstart = strtol(value,NULL,10);
+      set_metricstart = 1;
     }
     else if(!strcasecmp(key,"nucleation")) {
       if(!strcasecmp(value, "off")) {
@@ -682,6 +687,9 @@ void get_parameters(char *infile, hydro_params *p)
   }else if(!set_gwsource) {
     printf0(*p, "Did not set parameter \'gwsource\'\n");
     die(100);
+  }else if(!set_metricstart) {
+    printf0(*p, "Did not set parameter \'metricstart\'\n");
+    die(100);
   } else if(!set_nucleation) {
     printf0(*p, "Did not set parameter \'nucleation\'\n");
     die(100);
@@ -718,7 +726,8 @@ void get_parameters(char *infile, hydro_params *p)
 	    "-- bubbles %d, scale %g\n"
 	    "-- silodir \"%s\"\n"
 	    "-- checkpointdir \"%s\"\n"
-	    "-- seed %d\n",
+	    "-- seed %d\n"
+	    "-- metricstart %d\n",
 	    infile,
 	    p->dx, p->dt, p->steps,
 	    p->Lx, p->Ly, p->Lz,
@@ -732,7 +741,8 @@ void get_parameters(char *infile, hydro_params *p)
 	    p->bubbles, p->scale,
 	    p->silodir,
 	    p->checkpointdir,
-	    p->seed);
+	    p->seed,
+	    p->metricstart);
     
     if(p->initial == INIT_SHOCK_TUBE) {
       printf0(*p, "-- shock tube\n");

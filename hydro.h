@@ -297,6 +297,10 @@ typedef struct {
    */
   int gwsource;
 
+  /** Step at which we start evolving metric perturbations.
+   */
+  int metricstart;
+  
 #ifdef USE_MPI
 
   /** Rank of neighbour in negative `x` direction.
