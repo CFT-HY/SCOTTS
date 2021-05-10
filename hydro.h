@@ -198,7 +198,7 @@ typedef struct {
 
   /** Number of physical sites in volume.
    */
-  int N;
+  long long N;
 
   /** Sites in local area (including halo).
    */
@@ -600,6 +600,7 @@ int get_y(int n, hydro_params p);
 int get_z(int n, hydro_params p);
 void halo_field(float ***field, hydro_params p);
 float reduce_sum(float result, hydro_params p);
+void reduce_sum_array(float *result, hydro_params p, int size);
 int reduce_sum_int(int result, hydro_params p);
 float reduce_max(float result, hydro_params p);
 int reduce_max_int(int result, hydro_params p);
@@ -636,6 +637,9 @@ void Vdpot(hydro_params p, float ***T, float ***phi, float ***Vprecalc);
 
 
 // energy.c
+void calculate_energies(hydro_fields f, hydro_params p, float *energies);
+void calculate_T_sum(hydro_fields f, hydro_params p, float *T_sum);
+void calculate_pressure_sum(hydro_fields f, hydro_params p, float *press_sum);
 float field_energy(hydro_fields f, hydro_params p);
 float gradient_energy_field(hydro_fields f, hydro_params p);
 float kinetic_energy_field(hydro_fields f, hydro_params p);
@@ -644,7 +648,6 @@ float kinetic_energy_fluid(hydro_fields f, hydro_params p);
 float rest_energy(hydro_fields f, hydro_params p);
 void energy_density(hydro_fields f, hydro_params p, float ***en);
 void stress_energy(hydro_fields f, hydro_params p, float ****Tij);
-float avg_pressure(hydro_fields f, hydro_params p);
 float tzerozero(hydro_fields f, hydro_params p);
 float get_curlJ_tot(hydro_fields f, hydro_params p);
 float get_divJ_tot(hydro_fields f, hydro_params p);
@@ -683,7 +686,7 @@ void write_globals(hydro_fields f, hydro_params p, float gwen,
 		    int bcount, float t_sim, int step);
 float get_gamma_max(hydro_fields f, hydro_params p);
 float get_s_max(hydro_fields f, hydro_params p);
-float get_veltot(hydro_fields f, hydro_params p);
+void calculate_Vsq_sum(hydro_fields f, hydro_params p, float *Vsq_sum);
 long long get_N_broken(hydro_fields f, hydro_params p);
 long long get_broken_links(hydro_fields f, hydro_params p);
 void dump(float *field, hydro_params p);

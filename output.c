@@ -11,8 +11,12 @@
  */
 void write_global_headers(hydro_fields f, hydro_params p){
   if(!p.rank) {
-    printf("step\ttime\ttot_E\tkin_E_fl\ttot_E_fi\tgrad_E_fi\tV^2_tot\tgwen\tNb\trest_E"
-	   "\tpress\ts_max\tgmma_max\tcurl_J\tkin_E_fi\tdiv_J\tN_broken\tN_links\n");
+    printf("step,time,rest E sym,rest E broken,kin fluid sym,kin fluid broken,"
+	   "kin phi sym,kin phi broken,grad phi symm,grad phi broken,"
+	   "pot phi sym,pot phi broken,pressure sym,pressure broken,"
+	   "T sym,T broken,V^2 tot sym,V^2 tot broken,"
+	   "GW Energy,Nb,s_max,"
+	   "gamma_max,curl J,div J,N broken,N links,\n");
   }
 }
 
@@ -20,14 +24,41 @@ void write_global_headers(hydro_fields f, hydro_params p){
  * from fft_tensor, number of bubbles at current time, and the
  * simulation time and timestep.
  *
- * To do: write summary of outputs here.
+ * Summary of global outputs in order:
+ *
+ * step: timestep at output
+ * time: time at output
+ * rest E sym: sum over rest energy in symmetric phase
+ * rest E broken: sum over rest energy in broken phase
+ * kin fluid sym: sum over kinetic energy in fluid in symmetric phase
+ * kin fluid broken: sum over kinetic energy in fluid in broken phase
+ * kin phi sym: sum over kinetic energy in scalar field in symmetric phase
+ * kin phi broken: sum over kinetic energy in scalar field in broken phase
+ * grad phi sym: sum over gradient energy in scalar field in symmetric phase.
+ * grad phi broken: sum over gradient energy in scalar field in broken phase.
+ * pot phi sym: sum over potential energy in scalar field in symmetric phase. 
+ * pot phi broken: sum over potential energy in scalar field in broken phase.
+ * pressure sym: sum over pressure in symmetric phase.
+ * pressure broken: sum over pressure in broken phase.
+ * T sym: sum over temperature at each site in symmetric phase 
+ *        (divide by (p.N - N_broken) to get average temperature in symmetric phase)
+ * T broken: sum over temperature at each site in broken phase
+ *           (divide by (N_broken) to get average temperature in broken phase)
+ * V^2 tot sym: sum over V^2 in symmetric phase. Can be used to find vrms
+ * V^2 tot broken: sum over V^2 in broken phase. Can be used to find vrms
+ * GW Energy: Average gravitational wave energy. (In units with G = 1).
+ * Nb: Number of bubbles in the simulation.
+ * s_max: Maximum s parameter in Crank-Nicholson update (see evolve_scalar)
+ * gamma_max: Maximum gamma factor of fluid velocity in simulation.
+ * curl J: sum over (curl J)^2 for all sites.
+ * div J: sum over (div J)^2 for all sites.
+ * N broken: Number of sites in broken phase.
+ * N links: Number of faces over which the scalar field changes between
+ *          symmetric and broken phase.
  */
 void write_globals(hydro_fields f, hydro_params p, float gwen, int bcount,
 		    float t_sim, int step){
 
-  float current_energy, current_field_energy, current_kinetic_field;
-  float current_kinetic_fluid, current_gradient_energy, current_rest;
-  float current_avgpress;
   float current_veltot;
   float s_max;
   float gamma_max;
@@ -36,16 +67,25 @@ void write_globals(hydro_fields f, hydro_params p, float gwen, int bcount,
   long long N_broken;
   long long N_links;
 
+  float energies[10];
+  float T_sum[2];
+  float pressure_sum[2];
+  float Vsq_sum[2];
 
-  current_energy = reduce_sum(total_energy(f, p), p);
-  current_kinetic_fluid = reduce_sum(kinetic_energy_fluid(f, p), p);
-  current_kinetic_field = reduce_sum(kinetic_energy_field(f, p), p);
-  current_rest = reduce_sum(rest_energy(f, p), p);
-  current_avgpress = reduce_sum(avg_pressure(f, p), p);
-  current_field_energy = reduce_sum(field_energy(f, p), p);
-  current_gradient_energy = reduce_sum(gradient_energy_field(f, p), p);
-  current_veltot = reduce_sum(get_veltot(f, p), p)
-    /((float)(p.Lx*p.Ly*p.Lz));
+  calculate_energies(f, p, energies);
+  calculate_T_sum(f, p, T_sum);
+  calculate_pressure_sum(f, p, pressure_sum);
+  calculate_Vsq_sum(f, p, Vsq_sum);
+
+  reduce_sum_array(energies, p, 10);
+  reduce_sum_array(T_sum, p, 2);
+  reduce_sum_array(pressure_sum, p, 2);
+  reduce_sum_array(Vsq_sum, p, 2);
+
+  
+  N_broken = reduce_sum(get_N_broken(f,p), p);
+  N_links = reduce_sum(get_broken_links(f,p), p);
+
   s_max = reduce_max(get_s_max(f, p), p);
   gamma_max = reduce_max(get_gamma_max(f, p), p);
   curlJ_tot =  reduce_sum(get_curlJ_tot(f,p),p);
@@ -53,31 +93,43 @@ void write_globals(hydro_fields f, hydro_params p, float gwen, int bcount,
   N_broken = reduce_sum(get_N_broken(f,p), p);
   N_links = reduce_sum(get_broken_links(f,p), p);
 
+
+
+  
   if(!p.rank) {
-    printf("%04d\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%d\t%6lf"
-	   "\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%6lf\t%lli\t%lli\n",
+    printf("%06d,%6lf,%6lf,%6lf,%6lf,%6lf,%6lf,%6lf,"
+	   "%6lf,%6lf,%6lf,%6lf,%6lf,%6lf,"
+	   "%6lf,%6lf,%6lf,%6lf,%6lf,"
+	   "%d,%6lf,%6lf,%6lf,%6lf,%lli,%lli\n",
 	   step,
 	   t_sim,
-	   current_energy,
-	   current_kinetic_fluid,
-	   current_field_energy,
-	   current_gradient_energy,
-	   current_veltot,
+	   energies[0],
+	   energies[1],
+	   energies[2],
+	   energies[3],
+	   energies[4],
+	   energies[5],
+	   energies[6],
+	   energies[7],
+	   energies[8],
+	   energies[9],
+	   pressure_sum[0],
+	   pressure_sum[1],
+	   T_sum[0],
+	   T_sum[1],
+	   Vsq_sum[0],
+	   Vsq_sum[1],
 	   gwen,
 	   bcount,
-	   current_rest,
-	   current_avgpress,
 	   s_max,
 	   gamma_max,
 	   curlJ_tot,
-	   current_kinetic_field,
 	   divJ_tot,
 	   N_broken,
 	   N_links);
   }
 
 }
-
 
 /** Returns the largest zone-centred gamma factor found anywhere
  * in the simulation box.
@@ -148,34 +200,57 @@ float get_s_max(hydro_fields f, hydro_params p) {
 
 }
 
-
-/** The sum of the fluid (3-)velocity everywhere. A strange quantity
- * on its own, but allows calculation of average fluid velocity.
+/** Calculate sum over V^2 within this core. Populate array with result split
+ *  into symmetric and broken phase.
  */
-float get_veltot(hydro_fields f, hydro_params p) {
+void calculate_Vsq_sum(hydro_fields f, hydro_params p, float *V_sq_sum){
+  
+  int x, y, z;
 
+  float Vsq_symm = 0;
+  float Vsq_broken = 0;
+  float phi_broken;
+  
 #ifndef SCALAR
-  int x, y, z, xmax;
-
-
-  float veltot = 0.0;
-
+#ifdef BAG
+  phi_broken = p.phi_0;
+#endif
+  
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
-	veltot += sqrt(f.V[0][x][y][z]*f.V[0][x][y][z]
-	  + f.V[1][x][y][z]*f.V[1][x][y][z]
-	  + f.V[2][x][y][z]*f.V[2][x][y][z]);
 
+#ifndef BAG
+	phi_broken =  (p.alpha*f.T[x][y][z]
+		       + sqrt((p.alpha*p.Tconst)*(p.alpha*f.T[x][y][z])
+			      - 4.0*p.lambda*p.gamma
+			      *(f.T[x][y][z]*f.T[x][y][z] - p.T0*p.T0))
+		       )/(2.0*p.lambda);
+#endif
+
+	if (f.phi[x][y][z] < phi_broken/2){
+	  Vsq_symm += (f.V[0][x][y][z]*f.V[0][x][y][z]
+		       + f.V[1][x][y][z]*f.V[1][x][y][z]
+		       + f.V[2][x][y][z]*f.V[2][x][y][z]);
+
+	}
+	else {
+	  Vsq_broken += (f.V[0][x][y][z]*f.V[0][x][y][z]
+			 + f.V[1][x][y][z]*f.V[1][x][y][z]
+			 + f.V[2][x][y][z]*f.V[2][x][y][z]);
+	}
       }
     }
   }
+#endif // !SCALAR
 
-  return veltot;
-#else
-  return 0.0;
-#endif
+  V_sq_sum[0] = Vsq_symm;
+  V_sq_sum[1] = Vsq_broken;
+
+  
 }
+
+
 
 /** Find number of sites in the broken phase. Allows for calculation
  * of volume of broken phase, and therefore wall speed.
