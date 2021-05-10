@@ -364,6 +364,19 @@ float reduce_sum(float result, hydro_params p) {
 
 }
 
+/** Adds together floats for each element in an array across node. Modifies
+ * array in place on the root node.
+ *
+ */
+void reduce_sum_array(float *result, hydro_params p, int size) {
+  if(!p.rank){
+    MPI_Reduce(MPI_IN_PLACE, result, size, MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
+  }
+  else{
+    MPI_Reduce(result, result, size, MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
+  }
+}
+
 
 /** Add together integers from each node.
  *
