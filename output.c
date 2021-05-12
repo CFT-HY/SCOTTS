@@ -12,11 +12,11 @@
 void write_global_headers(hydro_fields f, hydro_params p){
   if(!p.rank) {
     printf("step,time,rest E sym,rest E broken,kin fluid sym,kin fluid broken,"
-	   "kin phi sym,kin phi broken,grad phi symm,grad phi broken,"
+	   "kin phi sym,kin phi broken,grad phi sym,grad phi broken,"
 	   "pot phi sym,pot phi broken,pressure sym,pressure broken,"
 	   "T sym,T broken,V^2 tot sym,V^2 tot broken,"
 	   "GW Energy,Nb,s_max,"
-	   "gamma_max,curl J,div J,N broken,N links,\n");
+	   "gamma_max,curl J,div J,N broken,N links\n");
   }
 }
 
@@ -59,7 +59,6 @@ void write_global_headers(hydro_fields f, hydro_params p){
 void write_globals(hydro_fields f, hydro_params p, float gwen, int bcount,
 		    float t_sim, int step){
 
-  float current_veltot;
   float s_max;
   float gamma_max;
   float curlJ_tot;
