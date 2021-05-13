@@ -30,26 +30,33 @@ void calculate_energies(hydro_fields f, hydro_params p, float *energies) {
   float pot_phi_broken = 0;
 
   float vol = p.dx*p.dx*p.dx;
-
-  float phi_broken;
   
   int x, y, z;
 
+  float phi_broken;
 #ifdef BAG
-  phi_broken = p.phi_0;
-#endif
+  phi_broken = p.phi_0/2.;
+#else
+#ifdef SCALAR
+  phi_broken =  (p.alpha*p.Tconst
+		 + sqrt((p.alpha*p.Tconst)*(p.alpha*p.Tconst)
+			- 4.0*p.lambda*p.gamma
+			*(p.Tconst*p.Tconst - p.T0*p.T0))
+		 )/(2.0*p.lambda);
+
+#endif // SCALAR
+#endif // BAG
   
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
-
-#ifndef BAG
+#if !defined(SCALAR) && !defined(BAG)
 	phi_broken =  (p.alpha*f.T[x][y][z]
 		       + sqrt((p.alpha*p.Tconst)*(p.alpha*f.T[x][y][z])
 			      - 4.0*p.lambda*p.gamma
 			      *(f.T[x][y][z]*f.T[x][y][z] - p.T0*p.T0))
 		       )/(2.0*p.lambda);
-#endif
+#endif // !SCALAR && !BAG
 
 	if (f.phi[x][y][z] < phi_broken/2){
 #ifndef SCALAR
@@ -57,6 +64,10 @@ void calculate_energies(hydro_fields f, hydro_params p, float *energies) {
 
 	  kin_fluid_symm += f.kappa[x][y][z]*(f.E[x][y][z]/f.W[x][y][z])
 	    *(f.W[x][y][z]*f.W[x][y][z]-1.0)*vol;
+
+	  pot_phi_symm += Vf(p, f.T[x][y][z], f.phi[x][y][z])*vol;
+#else
+	  pot_phi_symm += Vf(p, p.Tconst, f.phi[x][y][z])*vol;
 	    
 #endif
 
@@ -71,7 +82,6 @@ void calculate_energies(hydro_fields f, hydro_params p, float *energies) {
 	    *((f.phi[x][y][(z+1)%p.Lz] 
 	       - f.phi[x][y][z])/p.dx)*vol;
 
-	  pot_phi_symm += Vf(p, f.T[x][y][z], f.phi[x][y][z])*vol;
 
 	  kin_phi_symm += 0.5*f.pi_future[x][y][z]*f.pi_future[x][y][z]*vol;
 	}
@@ -81,9 +91,14 @@ void calculate_energies(hydro_fields f, hydro_params p, float *energies) {
 
 	  kin_fluid_broken += f.kappa[x][y][z]*(f.E[x][y][z]/f.W[x][y][z])
 	    *(f.W[x][y][z]*f.W[x][y][z]-1.0)*vol;
-	    
+
+	  pot_phi_broken += Vf(p, f.T[x][y][z], f.phi[x][y][z])*vol;
+#else
+	  pot_phi_broken += Vf(p, p.Tconst, f.phi[x][y][z])*vol;
+	  
 #endif
 
+	  
 	  grad_phi_broken += 0.5*((f.phi[x+1][y][z] - f.phi[x][y][z])/p.dx)
 	    *((f.phi[x+1][y][z] - f.phi[x][y][z])/p.dx)*vol;
 	
@@ -95,7 +110,7 @@ void calculate_energies(hydro_fields f, hydro_params p, float *energies) {
 	    *((f.phi[x][y][(z+1)%p.Lz] 
 	       - f.phi[x][y][z])/p.dx)*vol;
 
-	  pot_phi_broken += Vf(p, f.T[x][y][z], f.phi[x][y][z])*vol;
+	  
 
 	  kin_phi_broken += 0.5*f.pi_future[x][y][z]*f.pi_future[x][y][z]*vol;
 	}
@@ -125,8 +140,6 @@ void calculate_T_sum(hydro_fields f, hydro_params p, float *T_sum) {
 
   float T_sum_symm = 0;
   float T_sum_broken = 0;
-
-  float vol = p.dx*p.dx*p.dx;
 
   float phi_broken;
   
@@ -177,25 +190,23 @@ void calculate_pressure_sum(hydro_fields f, hydro_params p, float *pressure_sum)
 
   float press_symm = 0;
   float press_broken = 0;
-  float phi_broken;
-  
-  vol = p.dx*p.dx*p.dx;
 #ifndef SCALAR
+  vol = p.dx*p.dx*p.dx;
+  float phi_broken;
 #ifdef BAG
-  phi_broken = p.phi_0;
-#endif
+  phi_broken = p.phi_0/2.;
+#endif // BAG
   
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
-
 #ifndef BAG
 	phi_broken =  (p.alpha*f.T[x][y][z]
 		       + sqrt((p.alpha*p.Tconst)*(p.alpha*f.T[x][y][z])
 			      - 4.0*p.lambda*p.gamma
 			      *(f.T[x][y][z]*f.T[x][y][z] - p.T0*p.T0))
 		       )/(2.0*p.lambda);
-#endif
+#endif // !BAG
 
 	if (f.phi[x][y][z] < phi_broken/2){
 	  press_symm += f.p[x][y][z]*vol;
@@ -715,118 +726,3 @@ void energy_density(hydro_fields f, hydro_params p, float ***en) {
 
 }
 
-/** Compute total vorticity of temperature current 
- * (curl J)^2 on local core. Allows calculation of enstrophy of J.
- *
- */
-float get_curlJ_tot(hydro_fields f, hydro_params p){
-#ifndef SCALAR
-  int x, y, z;
-
-  float ****J = make_vector(p);
-  float temp;
-
-  float curlJ_tot = 0;
-  float vol=p.dx*p.dx*p.dx;
-
-  // Construct temperature current (J) (centered at cell)
-
-  for(x = 1; x <= p.slicex; x++) {
-    for(y = 1; y <= p.slicey; y++) {
-      for(z = 0; z < p.Lz; z++) {
-
-	J[0][x][y][z] = 0.5*(f.V[0][x][y][z] + f.V[0][x+1][y][z]
-				)*f.T[x][y][z]*f.W[x][y][z];
-	J[1][x][y][z] = 0.5*(f.V[1][x][y][z] + f.V[1][x][y+1][z]
-				)*f.T[x][y][z]*f.W[x][y][z];
-	J[2][x][y][z] = 0.5*(f.V[2][x][y][z] + f.V[2][x][y][(z+1)%p.Lz]
-				)*f.T[x][y][z]*f.W[x][y][z];
-      }
-    }
-  }
-
-  halo_field(J[0], p);
-  halo_field(J[1], p);
-  halo_field(J[2], p);
-
-
-  // Construct (curl J)^2.
-  // Use centered first-order difference so all components live in the same place,
-  // and we avoid generation of spurious vorticity.
-  for(x = 1; x <= p.slicex; x++) {
-    for(y = 1; y <= p.slicey; y++) {
-      for(z = 0; z < p.Lz; z++) {
-	temp = (J[2][x][y+1][z] - J[2][x][y-1][z]
-			  - J[1][x][y][(z+1)%p.Lz]
-			  + J[1][x][y][(z-1+p.Lz)%p.Lz])/(2*p.dx);
-	curlJ_tot += temp*temp*vol;
-	
-	temp = (J[0][x][y][(z+1)%p.Lz]
-			  - J[0][x][y][(z-1+p.Lz)%p.Lz]
-			  - J[2][x+1][y][z] + J[2][x-1][y][z])/(2*p.dx);
-	curlJ_tot += temp*temp*vol;
-
-	temp = (J[1][x+1][y][z] - J[1][x-1][y][z]
-			  - J[0][x][y+1][z] + J[0][x][y-1][z])/(2*p.dx);
-	curlJ_tot += temp*temp*vol;
-      }
-    }
-  }
-  free_vector(p, J);
-  return curlJ_tot;
-#else
-  return 0;
-#endif //!SCALAR   
-}
-
-/** Compute total divergence of temperature current on local core
- * (div J)^2.
- *
- */
-float get_divJ_tot(hydro_fields f, hydro_params p){
-#ifndef SCALAR
-  int x, y, z;
-  float ****J = make_vector(p);
-  float divJ_tot = 0;
-  float temp;
-  float vol=p.dx*p.dx*p.dx;
-  // Construct temperature current (centered at cell)
-
-  for(x = 1; x <= p.slicex; x++) {
-    for(y = 1; y <= p.slicey; y++) {
-      for(z = 0; z < p.Lz; z++) {
-
-	J[0][x][y][z] = 0.5*(f.V[0][x][y][z] + f.V[0][x+1][y][z]
-				)*f.T[x][y][z]*f.W[x][y][z];
-	J[1][x][y][z] = 0.5*(f.V[1][x][y][z] + f.V[1][x][y+1][z]
-				)*f.T[x][y][z]*f.W[x][y][z];
-	J[2][x][y][z] = 0.5*(f.V[2][x][y][z] + f.V[2][x][y][(z+1)%p.Lz]
-				)*f.T[x][y][z]*f.W[x][y][z];
-      }
-    }
-  }
-
-  halo_field(J[0], p);
-  halo_field(J[1], p);
-  halo_field(J[2], p);
-
-  // Construct (div J)^2
-  // Use centered first-order difference so all components live in the same place,
-  for(x = 1; x <= p.slicex; x++) {
-    for(y = 1; y <= p.slicey; y++) {
-      for(z = 0; z < p.Lz; z++) {
-	temp = (J[0][x+1][y][z] - J[0][x-1][y][z]
-		+ J[1][x][y+1][z] - J[1][x][y-1][z]
-		+ J[2][x][y][(z+1)%p.Lz] - J[2][x][y][(z-1+p.Lz)%p.Lz])/(2*p.dx);
-	divJ_tot += temp*temp*vol;
-      }
-    }
-  }
-
-  free_vector(p, J);
-  return divJ_tot;
-  
-#else
-  return 0;
-#endif //!SCALAR
-}

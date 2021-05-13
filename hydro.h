@@ -659,8 +659,6 @@ float rest_energy(hydro_fields f, hydro_params p);
 void energy_density(hydro_fields f, hydro_params p, float ***en);
 void stress_energy(hydro_fields f, hydro_params p, float ****Tij);
 float tzerozero(hydro_fields f, hydro_params p);
-float get_curlJ_tot(hydro_fields f, hydro_params p);
-float get_divJ_tot(hydro_fields f, hydro_params p);
 
 // eos.c
 
@@ -697,6 +695,8 @@ void write_globals(hydro_fields f, hydro_params p, float gwen,
 float get_gamma_max(hydro_fields f, hydro_params p);
 float get_s_max(hydro_fields f, hydro_params p);
 void calculate_Vsq_sum(hydro_fields f, hydro_params p, float *Vsq_sum);
+void calculate_curlJ_sum(hydro_fields f, hydro_params p, float *curlJ_sum);
+void calculate_divJ_sum(hydro_fields f, hydro_params p, float *divJ_sum);
 long long get_N_broken(hydro_fields f, hydro_params p);
 long long get_broken_links(hydro_fields f, hydro_params p);
 void dump(float *field, hydro_params p);

@@ -34,10 +34,11 @@ void init_uetc(hydro_fields f, hydro_params p, fft_fields fft_f) {
   
   free_tensor(p, Tij);
   }
-
+#ifndef SCALAR
   if(p.fft_vel){
     fft_vector(p, fft_f, f.V, fft_f.initial_V);
   }
+#endif
 }
 
 
