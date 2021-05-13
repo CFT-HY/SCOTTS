@@ -117,7 +117,7 @@ void fft_init(hydro_params p, fft_fields *fft_f){
 					FFTW_FORWARD, FFTW_ESTIMATE);
   }
   // Initialise UETC reference fields
-  if (p.uetcstart>=0){
+  if (p.uetcstart>=0 || p.uetcscalar == 1){
     // Tensor fields
     if(p.fft_shst){
       fft_f->initial_Tij = (fftwf_complex **)malloc(6*sizeof(fftwf_complex *));
@@ -160,7 +160,7 @@ void fft_finalise(hydro_params p, fft_fields *fft_f){
   fftwf_free(fft_f->in);
   fftwf_free(fft_f->out);
 
-  if (p.uetcstart>=0){
+  if (p.uetcstart >= 0 || p.uetcscalar == 1){
 
     if (p.fft_shst){
       for(i=0;i<TENSOR_CPTS;i++)
