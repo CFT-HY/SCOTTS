@@ -180,6 +180,16 @@ typedef struct {
    */
   int uetcstart;
 
+  /** Do we turn on uetcs when broken phase fraction reaches a certain value?
+   * 1 if we do, 0 if we don't.
+   */
+  int uetcscalar;
+
+  /** If uetcscalar is 1, this is the broken phase fraction at which we turn on
+   * uetcs. Only check every fft interval.
+   */
+  float uetcbrokenthresh;
+
   /** Initial conditions type (see #defines above)
    */
   int initial;

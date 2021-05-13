@@ -409,7 +409,7 @@ int main(int argc, char *argv[]) {
 
 
 #ifdef FFT
-
+    
     // Initialise uetcs if it is time.
     if(p.uetcstart >= 0 && step == p.uetcstart) {
         init_uetc(f, p, fft_f);
@@ -417,7 +417,17 @@ int main(int argc, char *argv[]) {
 
 
     if((p.fftinterval > 0) && (step % p.fftinterval == 0)) {
-        gwen = output_ps_uetcs(f, p, fft_f, step);
+      if (p.uetcscalar == 1){
+	long long N_broken = reduce_sum(get_N_broken(f, p), p);
+	if (N_broken/p.N > p.uetcbrokenthresh){
+	  p.uetcstart = step;
+	  printf0(p, "Broken phase fraction threshold exceeded"
+		  " starting uetcs on step %d\n",step);
+	  init_uetc(f, p, fft_f);
+	  p.uetcscalar = 0;
+	}
+      }
+      gwen = output_ps_uetcs(f, p, fft_f, step);
     }
 #endif // FFT
 
