@@ -226,7 +226,16 @@ void get_parameters(char *infile, hydro_params *p)
       set_siloslicecoord = 1;
     }
     else if(!strcasecmp(key,"uetcstart")) {
-      p->uetcstart = strtol(value,NULL,10);
+      if(strcasecmp(value,"scalar")){
+	p->uetcstart = -1;
+	p->uetcscalar = 1;
+	p->uetcbrokenthresh = strtof(option,NULL);
+      }
+      else{
+	p->uetcscalar = 0;
+	p->uetcbrokenthresh = -1;
+	p->uetcstart = strtol(value,NULL,10);
+      }
       set_uetcstart = 1;
     }
     else if(!strcasecmp(key,"bubbles")) {
@@ -723,6 +732,7 @@ void get_parameters(char *infile, hydro_params *p)
 	    "-- interval %d, fftinterval %d\n"
 	    "-- silointerval %d, silosliceinterval %d,checkpointinterval %d\n"
 	    "-- uetcstart %d\n"
+	    "-- uetcscalar %d, uetcbrokenthresh %g\n"
 	    "-- bubbles %d, scale %g\n"
 	    "-- silodir \"%s\"\n"
 	    "-- checkpointdir \"%s\"\n"
@@ -738,6 +748,7 @@ void get_parameters(char *infile, hydro_params *p)
 	    p->interval, p->fftinterval,
 	    p->silointerval, p->silosliceinterval, p->checkpointinterval,
 	    p->uetcstart,
+	    p->uetcscalar, p->uetcbrokenthresh,
 	    p->bubbles, p->scale,
 	    p->silodir,
 	    p->checkpointdir,
