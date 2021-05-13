@@ -226,7 +226,7 @@ void get_parameters(char *infile, hydro_params *p)
       set_siloslicecoord = 1;
     }
     else if(!strcasecmp(key,"uetcstart")) {
-      if(strcasecmp(value,"scalar")){
+      if(!strcasecmp(value,"scalar")){
 	p->uetcstart = -1;
 	p->uetcscalar = 1;
 	p->uetcbrokenthresh = strtof(option,NULL);
