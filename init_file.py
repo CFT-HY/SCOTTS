@@ -1,4 +1,4 @@
-r"""Module to generate input velocity power spectra.
+"""Module to generate input velocity power spectra.
 
 The velocity power spectrum is defined as :
 $$ \frac{{\rm d} \langle v^2 \rangle}{{\rm d} \ln k} =
@@ -120,8 +120,8 @@ if __name__ == "__main__":
         data[i, 1] = normalized_power_spectrum(wave_number, normalization, k_peak)
         data[i, 2] = int(np.pi * (i * 2) ** 2)
 
-    filename = "dbpl_p-{:1.1f}_q-{:1.1f}_vrms-{:1.1e}_xi-{:1.1f}.txt".format(
-        IR_SLOPE, UV_SLOPE, RMS_VELOCITY, INTEGRAL_SCALE
+    filename = "dbpl_p-{:1.1f}_q-{:1.1f}_vrms-{:1.1e}_xi-{:1.1f}-s-{:1.1f}-kmax-{:1.2e}.txt".format(
+        IR_SLOPE, UV_SLOPE, RMS_VELOCITY, INTEGRAL_SCALE, SKEW, K_MAX
     )
 
     np.savetxt(filename, data, fmt=["%.8f", "%.8e", "%.i"])
