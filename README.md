@@ -187,6 +187,8 @@ C \frac{k^p}{(k_{peak}^s + k^s)^{(q-p)/s}} \exp\left(-\frac{k}{k_{max}}\right)\f
 with parameters
 - `RMS_VELOCITY`: float
     Root mean square velocity of the fluid
+- `INTEGRAL_SCALE`: float
+   Integral scale of the fluid, in physical units
 - `IR_SLOPE`: float
     Slope of the power spectrum in the infrared, $p$ in the formula
 - `UV_SLOPE`: float
