@@ -238,3 +238,7 @@ damping couplings.
 EIKR formalism.
 
 * `-DVANLEER` Use Van Leer advection instead of donor cell.
+
+* `-DTRACEFREE` Remove trace of shear stress term sourcing gravitational waves.
+  Useful as it can cause udot to grow large and leak into the gravitational
+  waves spectrum in the UV.
