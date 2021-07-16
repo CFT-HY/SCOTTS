@@ -1,11 +1,11 @@
 /** @file initps.c
  *
- * Random Gaussian initial conditions with specified power spectrum.
+ * Random Gaussian initial conditions with specified spectral density spectrum.
  * Allows to specifiy either longitudinal waves (div), vortical (rot) or
  *
  * The main entry point is the function init_ps() which initialize a vector field
  * (preferably the 4-velocity U) with Gaussian random fluctuations with mean zero
- * and variance set by the input power spectrum. It also initializes the energy
+ * and variance set by the input spectral density spectrum. It also initializes the energy
  * density accordingly.
  *
  */
@@ -918,7 +918,7 @@ void spectrum_interp(float ksq, hydro_params p, fftwf_complex *res, float *k_bin
 
 
 /** Initialize the simulation with a gaussian velocity field following
- * a specified power spectrum
+ * a specified spectral density spectrum
  *
  * The code is organized as follows :
  * 1. Set the scalar field in the broken phase / true vacuum
@@ -1081,8 +1081,7 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
   float *k_bins = (float *)malloc(p.initpsbins*sizeof(float));
   // PMean power per cell
   float *pow_bins = (float *)malloc(p.initpsbins*sizeof(float));
-  // Volume of the shell [k, k+dk]
-  int in_bin;
+ 
 
   int items_read;
   float fudge;
@@ -1100,28 +1099,18 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
       die(100);
     }
 
-    // Reads the line, and stores the three columns
-    items_read = fscanf(fp, "%f%g%d", &k_bins[i], &pow_bins[i], &in_bin);
+    // Reads the line, and stores the two columns columns
+    items_read = fscanf(fp, "%f%g", &k_bins[i], &pow_bins[i]);
 
     // If the number of columns is wrong, raises an error
-    if(items_read != 3) {
+    if(items_read != 2) {
       printf0(p,
-	      "Initpsfile %s: row %d: did not read a full line (3 items), "
+	      "Initpsfile %s: row %d: did not read a full line (2 items), "
 	      "just %d\n",
 	      p.initpsfile, i, items_read);
       die(100);
     }
 
-
-    // If the volume if 0, then the power is 0
-    if(in_bin == 0) {
-      pow_bins[i] = 0.0;
-    }
-    // Else, divides by the volume to obtain the mean power per cell
-    // Factor (i+1) is to convert from d ln k to dk
-    else {
-      pow_bins[i] /= ((float)(((long int)in_bin)*((long int)(i+1))));
-    }
 
     if(isnan(pow_bins[i])) {
       printf0(p, "Bin %d is a NaN\n", i);
@@ -1130,18 +1119,6 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
   }
   fclose(fp);
 
-  // Corrects for the volume of the shell if dk is different between
-  // the input file and the grid
-  fudge = (2.0*M_PI/((float)p.Lx))/((k_bins[1]-k_bins[0])*p.dx);
-  if(fabs(fudge - 1.0) > 1e-6) {
-    printf0(p, "Applying fudge factor %g^3 to power spectrum: "
-	    "seems like dk or volume or dx is different\n",
-	    fudge);
-
-    for(i = 0; i < p.initpsbins; i++) {
-      pow_bins[i] *= fudge*fudge*fudge;
-    }
-  }
 
   /*
    * 5. Fills in random gaussian velocity fields in Fourier space
@@ -1183,6 +1160,16 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 
 	ksq = (kx*kx + ky*ky + kz*kz);
 
+	// Set zero mode to zero.
+	if (ksq == 0){
+	  in[0][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0] = 0;
+	  in[0][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] = 0;
+	  in[1][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0] = 0;
+	  in[1][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] = 0;
+	  in[2][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0] = 0;
+	  in[2][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] = 0;
+	}
+	
 	for(i=0; i<3; i++) {
 	  /*
 	   * Draws a gaussian random number with variance given by the
