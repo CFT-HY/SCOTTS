@@ -946,6 +946,9 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
   ptrdiff_t n1 = p.Ly;
   ptrdiff_t n2 = p.Lz;
 
+  float sim_volume = p.Lx*p.Ly*p.Lz*p.dx*p.dx*p.dx;
+
+
 
   MPI_Status status;
 
@@ -1116,6 +1119,12 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
       printf0(p, "Bin %d is a NaN\n", i);
       die(-99);
     }
+
+    // Multiply by volume for normalisation
+    // (Fourier modes are x(k)= sqrt(P_{x}(k) / V).
+    pow_bins[i] /= sim_volume;
+
+
   }
   fclose(fp);
 
@@ -1125,6 +1134,8 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
    *
    * Spans the slice contained on this core
    */
+
+  
   for(x=x_start;x<x_start+x_thickness;x++) {
     for(y=0;y<p.Ly;y++) {
       for(z=0;z<p.Lz;z++) {
