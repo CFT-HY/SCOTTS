@@ -409,8 +409,8 @@ void init_energy(hydro_params p, hydro_fields f, int* map, float *k_bins, float 
 				   FFTW_FORWARD, FFTW_ESTIMATE);
     }
     
-    float kx,ky,kz,ksq;
-    float kxlat,kylat,kzlat,kmodelat;
+    double kx,ky,kz,ksq;
+    double kxlat,kylat,kzlat,kmodelat;
     int true_x, true_y, true_z;
     fftwf_complex kiVki, vec_i;
     int nx = p.Lx/p.slicex;
@@ -440,9 +440,9 @@ void init_energy(hydro_params p, hydro_fields f, int* map, float *k_bins, float 
 	  }
 
 	  // Use k site momenta for binning
-	  kx = 2.0*M_PI*(float)(true_x)/((float)(p.Lx)*p.dx);
-	  ky = 2.0*M_PI*(float)(true_y)/((float)(p.Ly)*p.dx);
-	  kz = 2.0*M_PI*(float)(true_z)/((float)(p.Lz)*p.dx);
+	  kx = 2.0*M_PI*(double)(true_x)/((double)(p.Lx)*p.dx);
+	  ky = 2.0*M_PI*(double)(true_y)/((double)(p.Ly)*p.dx);
+	  kz = 2.0*M_PI*(double)(true_z)/((double)(p.Lz)*p.dx);
 					 
 
 	  ksq = (kx*kx + ky*ky + kz*kz);
@@ -450,9 +450,9 @@ void init_energy(hydro_params p, hydro_fields f, int* map, float *k_bins, float 
 
 	  // Use lattice derivative representation for spatial derivatives in
 	  // momentum space.
-	  kxlat = 2.0*sin(((float)(true_x))*M_PI/(((float)p.Lx)))/p.dx;
-	  kylat = 2.0*sin(((float)(true_y))*M_PI/(((float)p.Ly)))/p.dx;
-	  kzlat = 2.0*sin(((float)(true_z))*M_PI/(((float)p.Lz)))/p.dx;
+	  kxlat = 2.0*sin(((double)(true_x))*M_PI/(((double)p.Lx)))/p.dx;
+	  kylat = 2.0*sin(((double)(true_y))*M_PI/(((double)p.Ly)))/p.dx;
+	  kzlat = 2.0*sin(((double)(true_z))*M_PI/(((double)p.Lz)))/p.dx;
 
 	  kmodelat = sqrt(kxlat*kxlat + kylat*kylat + kzlat*kzlat);
 
@@ -685,7 +685,7 @@ void init_energy(hydro_params p, hydro_fields f, int* map, float *k_bins, float 
 void project_down(hydro_params p, fftwf_complex **in, int shift_x, int x_thickness, int times) {
 
   int x, y, z;
-  float kxlat, kylat, kzlat;
+  double kxlat, kylat, kzlat;
   float in_proj_re[3];
   float in_proj_im[3];
   float res_re, res_im;
@@ -747,9 +747,9 @@ void project_down(hydro_params p, fftwf_complex **in, int shift_x, int x_thickne
 	  }
 
 	  // Use lattice derivative momentum for projecting.
-	  kxlat = 2.0*sin(((float)(true_x))*M_PI/(((float)p.Lx)))/p.dx;
-	  kylat = 2.0*sin(((float)(true_y))*M_PI/(((float)p.Ly)))/p.dx;
-	  kzlat = 2.0*sin(((float)(true_z))*M_PI/(((float)p.Lz)))/p.dx;
+	  kxlat = 2.0*sin(((double)(true_x))*M_PI/(((double)p.Lx)))/p.dx;
+	  kylat = 2.0*sin(((double)(true_y))*M_PI/(((double)p.Ly)))/p.dx;
+	  kzlat = 2.0*sin(((double)(true_z))*M_PI/(((double)p.Lz)))/p.dx;
 
 	  in_proj_re[0] = 0.0;
 	  in_proj_re[1] = 0.0;
@@ -875,7 +875,7 @@ float get_normal(float mean, float dev) {
  *    of the spectral density are for the original simulation
  *    that generated the input PS.
  */
-void spectrum_interp(float ksq, hydro_params p, fftwf_complex *res, float *k_bins, float *pow_bins, int n_bins) {
+void spectrum_interp(double ksq, hydro_params p, fftwf_complex *res, float *k_bins, float *pow_bins, int n_bins) {
 
   float phase;
 
@@ -893,9 +893,10 @@ void spectrum_interp(float ksq, hydro_params p, fftwf_complex *res, float *k_bin
 
   // bin coordinates are midpoints
   float dk = k_bins[1] - k_bins[0];
+  float epsilon = 1e-5;
 
-  float kmode = sqrt(fabs(ksq));
-  int whichbin = (int)floor(kmode/dk);
+  double kmode = sqrt(fabs(ksq));
+  int whichbin = (int)floor(kmode/dk + epsilon);
 
   // Interpolates the value of pow_bins at kmode at first order
   if(whichbin > 0 && whichbin < (n_bins-1)) {
@@ -1077,8 +1078,8 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
   int ry;
 
 
-  float ksq;
-  float kx, ky, kz;
+  double ksq;
+  double kx, ky, kz;
   int true_x, true_y, true_z;
   // Different values for the wave-vector
   float *k_bins = (float *)malloc(p.initpsbins*sizeof(float));
@@ -1164,9 +1165,9 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 
 
 	// Use lattice site momenta for binning
-	kx = 2.0*M_PI*(float)(true_x)/((float)(p.Lx)*p.dx);
-	ky = 2.0*M_PI*(float)(true_y)/((float)(p.Ly)*p.dx);
-	kz = 2.0*M_PI*(float)(true_z)/((float)(p.Lz)*p.dx);
+	kx = 2.0*M_PI*(double)(true_x)/((double)(p.Lx)*p.dx);
+	ky = 2.0*M_PI*(double)(true_y)/((double)(p.Ly)*p.dx);
+	kz = 2.0*M_PI*(double)(true_z)/((double)(p.Lz)*p.dx);
 					 
 
 	ksq = (kx*kx + ky*ky + kz*kz);
