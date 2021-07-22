@@ -800,7 +800,7 @@ void scalarps(hydro_params p, fftwf_complex *field, int step, char *label);
 #if defined(FFT) && defined(BAG) && ! defined(SCALAR)
 // initps.c
 void init_ps(hydro_fields f, hydro_params p, float ****field);
-void spectrum_interp(double ksq, hydro_params p, fftwf_complex *res, float *k_bins, float *pow_bins, int n_bins);
+void draw_mode(double ksq, hydro_params p, fftwf_complex *res, float *k_bins, float *pow_bins, int n_bins);
 void UtoZ(hydro_fields f, hydro_params p);
 float get_normal(float mean, float dev);
 void init_energy(hydro_params p, hydro_fields f, int* map, float *k_bins, float *pow_bins);
