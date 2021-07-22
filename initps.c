@@ -17,7 +17,7 @@
  * Finds the polynomial with the lowest order that interpolates between a set of points
  * \f[ \text{quadratic}(x) = \sum_j y_j \left[\prod_{i \neq j}
  * \frac{(x - x_i)}{x_j - x_i} \right] \f]
- * Previously used in spectrum_interp()
+ * Previously used in draw_mode()
  */
 float quadratic(float x1, float x2, float x3,float y1, float y2, float y3, float x) {
 
@@ -460,13 +460,13 @@ void init_energy(hydro_params p, hydro_fields f, int* map, float *k_bins, float 
 	   * Draws a gaussian random number with variance given by the
 	   * interpolated spectrum
 	   */
-	  spectrum_interp(ksq, p,&(vec_i),k_bins, pow_bins, p.initpsbins);
+	  draw_mode(ksq, p,&(vec_i),k_bins, pow_bins, p.initpsbins);
 	  kiVki[0] = kxlat * vec_i[0];
 	  kiVki[1] = kxlat * vec_i[1];
-	  spectrum_interp(ksq, p,&(vec_i),k_bins, pow_bins, p.initpsbins);
+	  draw_mode(ksq, p,&(vec_i),k_bins, pow_bins, p.initpsbins);
 	  kiVki[0] += kylat * vec_i[0];
 	  kiVki[1] += kylat * vec_i[1];
-	  spectrum_interp(ksq, p,&(vec_i),k_bins, pow_bins, p.initpsbins);
+	  draw_mode(ksq, p,&(vec_i),k_bins, pow_bins, p.initpsbins);
 	  kiVki[0] += kzlat * vec_i[0];
 	  kiVki[1] += kzlat * vec_i[1];
 
@@ -861,21 +861,8 @@ float get_normal(float mean, float dev) {
 /** Draws random Gaussian complex numbers according to the input power spectrum
  * Does a linear interpolation to compute the initial power spectrum.
  *
- * A key assumption is that the k-modes are _evenly distributed_ throughout
- * each bin, which isn't true! And increasing the order of the interpolation
- * will not really deal with this systematic error (I have tried quadratic).
- *
- * If this causes undue concern, there are two options as to how to fix it:
- * 1. When saving power spectrums, store the mean $k$ in each bin
- *    as well as the central $k$ for each bin, and use the mean $k$ (at least)
- *    when using power spectra as inputs.
- * 2. Recompute the mean $k$ here when building out the power spectrum again.
- *    That would make it harder to change lattice volumes between runs, as
- *    the relevant mode counts per bin for making the interpolation
- *    of the spectral density are for the original simulation
- *    that generated the input PS.
  */
-void spectrum_interp(double ksq, hydro_params p, fftwf_complex *res, float *k_bins, float *pow_bins, int n_bins) {
+void draw_mode(double ksq, hydro_params p, fftwf_complex *res, float *k_bins, float *pow_bins, int n_bins) {
 
   float phase;
 
@@ -900,10 +887,20 @@ void spectrum_interp(double ksq, hydro_params p, fftwf_complex *res, float *k_bi
 
   // Interpolates the value of pow_bins at kmode at first order
   if(whichbin > 0 && whichbin < (n_bins-1)) {
-    amp_this = sqrt(pow_bins[whichbin]);
-    amp_next = sqrt(pow_bins[whichbin+1]);
-    grad = (amp_next - amp_this)/dk;
-    amp = amp_this + (kmode - ((float)(whichbin))*dk)*grad;
+    if(kmode > whichbin+0.5){
+      // Past bin midpoint interpolate towards next bin
+      amp_this = sqrt(pow_bins[whichbin]);
+      amp_next = sqrt(pow_bins[whichbin+1]);
+      grad = (amp_next - amp_this)/dk;
+      amp = amp_this + (kmode - ((float)(whichbin)+0.5)*dk)*grad;
+    }
+    if(kmode < whichbin+0.5){
+      // Before bin midpoint interpolate towards previous bin
+      amp_this = sqrt(pow_bins[whichbin]);
+      amp_last = sqrt(pow_bins[whichbin-1]);
+      grad = (amp_this - amp_last)/dk;
+      amp = amp_this + (kmode - ((float)(whichbin)+0.5)*dk)*grad;
+    }
   }
 
   // Draws a random gaussian number with variance amp
@@ -1187,7 +1184,7 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 	   * Draws a gaussian random number with variance given by the
 	   * interpolated spectrum
 	   */
-	  spectrum_interp(ksq, p,
+	  draw_mode(ksq, p,
 			  &(in[i][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z]),
 			  k_bins, pow_bins, p.initpsbins);
 	}
