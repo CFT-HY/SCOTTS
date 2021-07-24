@@ -944,7 +944,7 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
   ptrdiff_t n1 = p.Ly;
   ptrdiff_t n2 = p.Lz;
 
-  float sim_volume = p.Lx*p.Ly*p.Lz*p.dx*p.dx*p.dx;
+  float sim_volume = p.N*p.dx*p.dx*p.dx;
 
 
 
