@@ -858,8 +858,12 @@ float get_normal(float mean, float dev) {
 }
 
 
-/** Draws random Gaussian complex numbers according to the input power spectrum
- * Does a linear interpolation to compute the initial power spectrum.
+/** Draws a complex Fourier mode using random Gaussian complex numbers with
+ * variance set by the input power spectral density
+ *
+ * Used to do a linear interpolation on spectral density to populate Fourier
+ * modes, but this behaviour has been disabled to better match the output
+ * spectra onto the input power spectra.
  *
  */
 void draw_mode(double ksq, hydro_params p, fftwf_complex *res, float *k_bins, float *pow_bins, int n_bins) {
@@ -887,20 +891,25 @@ void draw_mode(double ksq, hydro_params p, fftwf_complex *res, float *k_bins, fl
 
   // Interpolates the value of pow_bins at kmode at first order
   if(whichbin > 0 && whichbin < (n_bins-1)) {
-    if(kmode > whichbin+0.5){
-      // Past bin midpoint interpolate towards next bin
-      amp_this = sqrt(pow_bins[whichbin]);
-      amp_next = sqrt(pow_bins[whichbin+1]);
-      grad = (amp_next - amp_this)/dk;
-      amp = amp_this + (kmode - ((float)(whichbin)+0.5)*dk)*grad;
-    }
-    if(kmode < whichbin+0.5){
-      // Before bin midpoint interpolate towards previous bin
-      amp_this = sqrt(pow_bins[whichbin]);
-      amp_last = sqrt(pow_bins[whichbin-1]);
-      grad = (amp_this - amp_last)/dk;
-      amp = amp_this + (kmode - ((float)(whichbin)+0.5)*dk)*grad;
-    }
+    /* if(kmode > whichbin+0.5){ */
+    /*   // Past bin midpoint interpolate towards next bin */
+    /*   amp_this = sqrt(pow_bins[whichbin]); */
+    /*   amp_next = sqrt(pow_bins[whichbin+1]); */
+    /*   grad = (amp_next - amp_this)/dk; */
+    /*   amp = amp_this + (kmode - ((float)(whichbin)+0.5)*dk)*grad; */
+    /* } */
+    /* if(kmode < whichbin+0.5){ */
+    /*   // Before bin midpoint interpolate towards previous bin */
+    /*   amp_this = sqrt(pow_bins[whichbin]); */
+    /*   amp_last = sqrt(pow_bins[whichbin-1]); */
+    /*   grad = (amp_this - amp_last)/dk; */
+    /*   amp = amp_this + (kmode - ((float)(whichbin)+0.5)*dk)*grad; */
+    /* } */
+
+    
+    // Turn off interpolation to better match the output power
+    // spectra to the input power spectra.
+    amp = sqrt(pow_bins[whichbin]);
   }
 
   // Draws a random gaussian number with variance amp
