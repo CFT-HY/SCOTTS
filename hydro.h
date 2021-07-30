@@ -300,7 +300,7 @@ typedef struct {
 
   /** Random seed so it is kept the same across nodes.
    */
-  int seed;
+  long seed;
 
   /** What is used to source gravitational waves? (fluid, scalar or
    *  both)
