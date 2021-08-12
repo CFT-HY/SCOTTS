@@ -87,6 +87,8 @@
 #define INITPSFILE_ROT 1
 #define INITPSFILE_ALL 2
 
+#define FILENAME_PARAMETER_LENGTH 500
+
 /** Struct containing parameters that are not changed during the
  * simulation.
  *
@@ -252,15 +254,15 @@ typedef struct {
 
   /** Where the silo files go.
    */
-  char silodir[500];
+  char silodir[FILENAME_PARAMETER_LENGTH];
 
   /** Where checkpoint files go
    */
-  char checkpointdir[500];
+  char checkpointdir[FILENAME_PARAMETER_LENGTH];
 
   /** Where to find the initial power spectrum
    */
-  char initpsfile[500];
+  char initpsfile[FILENAME_PARAMETER_LENGTH];
   int initpsfile_type;
 
   /** Number of bins.

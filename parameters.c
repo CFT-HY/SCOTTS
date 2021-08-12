@@ -81,8 +81,8 @@ void get_parameters(char *infile, hydro_params *p)
 
   int set_seed = 0;
 
-  const int KEY_LENGTH = 1000;
-  const int VALUE_LENGTH = 1000;
+  const int KEY_LENGTH = 100;
+  const int VALUE_LENGTH = FILENAME_PARAMETER_LENGTH;
   const int OPTION_LENGTH = 2000;
   
   char key[KEY_LENGTH];
@@ -771,7 +771,9 @@ void get_parameters(char *infile, hydro_params *p)
     } else if(p->initial == INIT_BUBBLE) {
       printf0(*p, "-- bubble\n");
     } else if(p->initial == INIT_PS) {
-      printf0(*p, "-- init_ps\n");
+      printf0(*p, "-- initps, type; %d\n", p->initpsfile_type);
+      printf0(*p, "   file: \"%s\"\n", p->initpsfile);
+      printf0(*p, "   bins: %d\n", p->initpsbins);
     } else if(p->initial == INIT_FLUID_SPHERE) {
       printf0(*p, "-- T_central %g, sphere_radius %g\n"
 	      "-- initfs\n",
