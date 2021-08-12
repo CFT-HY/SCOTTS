@@ -81,11 +81,14 @@ void get_parameters(char *infile, hydro_params *p)
 
   int set_seed = 0;
 
-
-  char key[100];
-  char value[100];
-  char option[2800];
-  char total[3000];
+  const int KEY_LENGTH = 1000;
+  const int VALUE_LENGTH = 1000;
+  const int OPTION_LENGTH = 2000;
+  
+  char key[KEY_LENGTH];
+  char value[VALUE_LENGTH];
+  char option[OPTION_LENGTH];
+  char total[KEY_LENGTH + VALUE_LENGTH + OPTION_LENGTH];
 
   int ret;
   char *retptr;
@@ -93,6 +96,8 @@ void get_parameters(char *infile, hydro_params *p)
   FILE *fp;
 
   int i;
+
+  int line;
 
   if(access(infile, R_OK) != 0) {
     printf0(*p, "Cannot read parameter file: %s\n", infile);
@@ -104,7 +109,7 @@ void get_parameters(char *infile, hydro_params *p)
   while(!feof(fp)) {
 
     // gets is dodgy, fgets less so
-    retptr = fgets(total,2997,fp);
+    retptr = fgets(total,KEY_LENGTH + VALUE_LENGTH + OPTION_LENGTH - 3,fp);
 
     // probably EOF
     if(retptr == NULL)
@@ -533,34 +538,39 @@ void get_parameters(char *infile, hydro_params *p)
     }
     else if(!strcasecmp(key,"silodir")) {
      
-      if(strlen(value) > 500)
+      /*      if(strlen(value) > 500)
 	printf0(*p,
 		"Warning: silodir name \"%s\" may be too long!\n",
 		value);
-
-      strncpy(p->silodir, value, 500);
+      */
+      
+      strncpy(p->silodir, value, VALUE_LENGTH);
      
       set_silodir = 1;
     }
     else if(!strcasecmp(key,"checkpointdir")) {
-     
+
+      /*
       if(strlen(value) > 500)
 	printf0(*p,
 		"Warning: checkpointdir name \"%s\" may be too long!\n",
 		value);
+      */
 
-      strncpy(p->checkpointdir, value, 500);
+      strncpy(p->checkpointdir, value, VALUE_LENGTH);
      
       set_checkpointdir = 1;
     }
     else if(!strcasecmp(key,"initpsfile")) {
-     
+
+      /*
       if(strlen(value) > 500)
 	printf0(*p,
 		"Warning: initpsfile name \"%s\" may be too long!\n",
 		value);
+      */
 
-      strncpy(p->initpsfile, value, 500);
+      strncpy(p->initpsfile, value, VALUE_LENGTH);
      
       if(!strcasecmp(option,"rot")) {
 	  printf0(*p,
