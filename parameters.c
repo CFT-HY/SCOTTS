@@ -129,7 +129,8 @@ void get_parameters(char *infile, hydro_params *p)
 
     // Not of the form "<key> <value>"
     // -- other reason
-    if (ret < 2) {
+    if (ret < 2 && total[0] != '#') {
+      
       // Get rid of the newline
       // -- doesn't leak memory, we're on the stack
       *(index(total, '\n')) = '\0';

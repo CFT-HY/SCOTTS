@@ -1096,6 +1096,12 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
   int items_read;
   float fudge;
 
+  if(access(p.initpsfile, R_OK) != 0) {
+    printf0(p, "Cannot read initial power spectrum file: %s\n", p.initpsfile);
+    die(-1);
+  }
+
+
   // Opens the input file
   FILE *fp = fopen(p.initpsfile, "r");
 
