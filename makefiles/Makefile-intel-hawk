@@ -1,0 +1,43 @@
+# Hawk Makefile - David Weir
+#
+# This makefile was last tested with:
+#  1) system/site_names   3) system/wrappers/1.0   5) mpt/2.23
+#  2) system/ws/1.3.4     4) intel/19.1.0          6) fftw/3.3.8
+
+
+#### CC ####
+
+CC := mpicc -DUSE_MPI -DFFT -DBAG -DVANLEER -DTRACEFREE
+
+#### CFLAGS ####
+
+CFLAGS := -O3 -qopt-prefetch -unroll-aggressive -no-prec-div \
+	-fp-model fast=2 -align -fno-alias -fno-fnalias -ipo #\
+#        -I{C_INCLUDE_PATH}
+
+#### LIBS ####
+
+LIBS :=  -lfftw3f_mpi -lfftw3f -lmpi
+
+#### No user-serviceable parts below ####
+
+OBJECTS := main.o evolve.o potential.o energy.o eos.o transport.o \
+        initial.o output.o parameters.o util.o papi.o comms.o \
+        fft_func.o alloc.o scalarps.o tensorps.o vectorps.o \
+        checkpoint.o projectors.o uetc.o initps.o silage.o \
+        silage_slice.o
+
+BINARY := run/hydro
+
+FILES := $(OBJECTS) $(BINARY)
+
+all: hydro
+
+hydro: $(OBJECTS)
+	$(CC) $(CFLAGS) $(OBJECTS) $(LIBS) -o $(BINARY)
+
+clean:
+	rm -f $(FILES) *\~ *\#
+
+veryclean: clean
+	rm -f *\~ *\#
