@@ -275,6 +275,14 @@ typedef struct {
    */
   int nucleation;
 
+  /** Number of attempts to nucleate a bubble. Set to 1 for independent
+   *  attempts. 
+   *  
+   *  If nucleating close to the number of bubbles that fit in the
+   *  box, do not set too large or nucleation will take a very long time. 
+   */
+  int maxattempts;
+  
   /** Steps on which to perform nucleation.
    *
    * NB: The same step can appear more than once to indicate to try to

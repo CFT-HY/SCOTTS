@@ -108,6 +108,12 @@ phimin -1
 #   The program utils/nucproc.py produces output in this format.
 nucleation off
 
+# Number of attempts to nucleate a bubble. Set to 1 for independent
+# attempts. 
+# If nucleating close to the number of bubbles that fit in the
+# box, do not set too large or nucleation will take a very long time. 
+maxattempts 1
+
 # The checkpoint directory is always checked for a valid checkpoint
 # (assuming it exists; if it does not then the code will run anyway)
 # If checkpointinterval is 0 or -1 then no attempt will be made

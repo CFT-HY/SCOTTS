@@ -108,6 +108,9 @@ int main(int argc, char *argv[]) {
   // On this timestep, do we continue to nucleate?
   int still_nucleate = 1;
 
+  // Track failed number of attempts at nucleating a bubble
+  int current_attempts = 0;
+  
   // How many bubbles to nucleate on a given timestep
   int howmany;
 
@@ -224,7 +227,16 @@ int main(int argc, char *argv[]) {
               // p.bubbles is how many bubbles to make at the start (usually 1)
               for(step=1;step<p.bubbles;step++) {
                   start = clock();
-                  still_nucleate = try_nucleate(f, p);
+		  current_attempts = 0;
+		  while(current_attempts < p.maxattempts){
+		    still_nucleate = try_nucleate(f, p);
+		    if (still_nucleate){
+		      break;
+		    }
+		    else{
+		      current_attempts++;
+		    }
+		  }
                   end = clock();
                   if(!p.rank)
                       fprintf(stderr,"Nucleation attempt took %lf\n",
@@ -363,8 +375,9 @@ int main(int argc, char *argv[]) {
 
     i = 0;
 
-    while(i < howmany) {
 
+    
+    while(i < howmany) {
       if(p.nucleation==NUC_FILE_LOC){
           printf0(p, "Nucleating a bubble on step %d at (%d, %d, %d)"
                   " without any checks.\n", step, p.nuclocs[bub_loc_ind][0],
@@ -377,9 +390,17 @@ int main(int argc, char *argv[]) {
           i++;
       }
       else{
-          still_nucleate = try_nucleate(f, p);
-          bcount += still_nucleate;
-          i++;
+	current_attempts = 0;
+	while(current_attempts < p.maxattempts){
+	  still_nucleate = try_nucleate(f, p);
+	  if (still_nucleate){
+	    break;
+	  }
+	  else{
+	    current_attempts++;
+	  }
+	}
+	bcount += still_nucleate;
       }
     }
 

@@ -69,7 +69,8 @@ void get_parameters(char *infile, hydro_params *p)
   int set_initpsbins = 0;
 
   int set_nucleation = 0;
-
+  int set_maxattempts = 0;
+  
   int set_bubbles = 0;
 
   int set_R_critical = 0;
@@ -530,6 +531,10 @@ void get_parameters(char *infile, hydro_params *p)
       }
       set_nucleation = 1;
     }
+    else if(!strcasecmp(key,"maxattempts")) {
+      p->maxattempts = strtol(value,NULL,10);
+      set_maxattempts = 1;
+    }
     else if(!strcasecmp(key,"silodir")) {
      
       if(strlen(value) > 500)
@@ -702,6 +707,9 @@ void get_parameters(char *infile, hydro_params *p)
   } else if(!set_nucleation) {
     printf0(*p, "Did not set parameter \'nucleation\'\n");
     die(100);
+  } else if(!set_maxattempts) {
+    printf0(*p, "Did not set parameter \'maxattempts\'\n");
+    die(100);
   } else if(!set_silodir) {
     printf0(*p, "Did not set parameter \'silodir\'\n");
     die(100); 
@@ -733,7 +741,7 @@ void get_parameters(char *infile, hydro_params *p)
 	    "-- silointerval %d, silosliceinterval %d,checkpointinterval %d\n"
 	    "-- uetcstart %d\n"
 	    "-- uetcscalar %d, uetcbrokenthresh %g\n"
-	    "-- bubbles %d, scale %g\n"
+	    "-- maxattempts %d, bubbles %d, scale %g\n"
 	    "-- silodir \"%s\"\n"
 	    "-- checkpointdir \"%s\"\n"
 	    "-- seed %d\n"
@@ -749,7 +757,7 @@ void get_parameters(char *infile, hydro_params *p)
 	    p->silointerval, p->silosliceinterval, p->checkpointinterval,
 	    p->uetcstart,
 	    p->uetcscalar, p->uetcbrokenthresh,
-	    p->bubbles, p->scale,
+	    p->maxattempts, p->bubbles, p->scale,
 	    p->silodir,
 	    p->checkpointdir,
 	    p->seed,
