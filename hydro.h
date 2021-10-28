@@ -531,6 +531,12 @@ typedef struct {
    */
   float ****udotij;
 
+
+  float ***Wfacex;
+  float ***Wfacey;
+  float ***Wfacez;
+  float ***Wold;
+  
 } hydro_fields;
 
 #ifdef FFT
@@ -639,7 +645,10 @@ int load_checkpoint(hydro_fields f, hydro_params p);
 // evolve.c
 void evolve_backstep(hydro_fields f, hydro_params p);
 void evolve_field(hydro_fields f, hydro_params p);
-void evolve_hydro(hydro_fields f, hydro_params p);
+void evolve_hydro_fieldfluid(hydro_fields f, hydro_params p);
+void evolve_hydro_pressureacceleration(hydro_fields f, hydro_params p);
+void evolve_hydro_velocities(hydro_fields f, hydro_params p);
+void evolve_hydro_pressurework(hydro_fields f, hydro_params p);
 void evolve_uij(hydro_fields f, hydro_params p);
 
 // Not implemented yet
@@ -681,7 +690,7 @@ void donor_E_dir(hydro_fields f, hydro_params p, int dir);
 void donor_Z_dir(hydro_fields f, hydro_params p, int dir);
 void van_leer_E(hydro_fields f, hydro_params p, int dir);
 void van_leer_Z(hydro_fields f, hydro_params p, int dir);
-
+void advect(hydro_fields f, hydro_params p);
 
 
 // initial.c

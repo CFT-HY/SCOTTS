@@ -240,6 +240,13 @@ void alloc_fields(hydro_fields *f, hydro_params p) {
   f->F = make_vector(p);
 #endif // SCALAR
 
+  f->Wfacex = make_field(p);
+  f->Wfacey = make_field(p);
+  f->Wfacez = make_field(p);
+
+  f->Wold = make_field(p);
+    
+  
 
   // GRAVITY
 
@@ -322,6 +329,11 @@ void free_fields(hydro_fields *f, hydro_params p) {
   free_vector(p, f->U);
   free_vector(p, f->F);
 #endif // SCALAR
+
+  free_field(p, f->Wfacex);
+  free_field(p, f->Wfacey);
+  free_field(p, f->Wfacez);
+  free_field(p, f->Wold);
 
   free_tensor(p, f->uij);
   free_tensor(p, f->udotij);

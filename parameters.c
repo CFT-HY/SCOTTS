@@ -558,7 +558,13 @@ void get_parameters(char *infile, hydro_params *p)
       set_checkpointdir = 1;
     }
     else if(!strcasecmp(key,"initpsfile")) {
-     
+
+        if(access(value, R_OK) != 0) {
+          printf0(*p ,"Unable to read initial power spectrum file \"%s\", giving up!\n",
+                  value);
+          die(123);
+	}
+      
       if(strlen(value) > 500)
 	printf0(*p,
 		"Warning: initpsfile name \"%s\" may be too long!\n",

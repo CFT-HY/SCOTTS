@@ -162,37 +162,19 @@ void evolve_field(hydro_fields f, hydro_params p) {
  *       now placed first (otherwise order is from CW).
  *
  */
-void evolve_hydro(hydro_fields f, hydro_params p) {
+void evolve_hydro_fieldfluid(hydro_fields f, hydro_params p) {
 
 #ifndef SCALAR
 
   int x, y, z;
   
   float ***Vdmid = make_field(p); // dV/dphi between timesteps in zone.
-  float ***Wold = make_field(p);
   float ***phiav = make_field(p); // phi between timesteps in zone.
 
   //d(phi)/dx_i between timesteps on appropriate spatial boundary.
   float ****dxphi = make_vector(p); 
 
-  float ***Wfacex =  make_field(p);
-  float ***Wfacey =  make_field(p);
-  float ***Wfacez =  make_field(p);
-
-  
-  float gpi, dv, s;
-
-  float p_bar_x_plus, p_bar_x_minus;
-  float p_bar_y_plus, p_bar_y_minus;
-  float p_bar_z_plus, p_bar_z_minus;
-
-  float utildex, utildey, utildez;
-  float qx, qy, qz, gradv;
-  float divv;
-
-  float sigmabar;
-
-  float ubarx, ubary, ubarz, W;
+  float gpi, s;
 
 #ifdef DIMENSIONLESS
   float phinb, Tnb;
@@ -407,7 +389,34 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
   halo_field(f.Z[0], p);
   halo_field(f.Z[1], p);
   halo_field(f.Z[2], p);
-  //  halo_field(f.E, p);
+  //  halo_field(f.E, p);  
+  
+  // Clean up memory. Surely we don't need all these temporary arrays?
+
+  
+  free_field(p, Vdmid);
+
+  free_field(p, phiav);
+
+  free_vector(p, dxphi);
+
+
+#endif // SCALAR
+}
+
+
+
+
+void evolve_hydro_pressureacceleration(hydro_fields f, hydro_params p) {
+
+#ifndef SCALAR
+
+  int x, y, z;
+  
+  float p_bar_x_plus, p_bar_x_minus;
+  float p_bar_y_plus, p_bar_y_minus;
+  float p_bar_z_plus, p_bar_z_minus;
+
 
 
 
@@ -474,9 +483,27 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
     }
   }
 
- 
+  halo_field(f.Z[0], p);
+  halo_field(f.Z[1], p);
+  halo_field(f.Z[2], p); 
+
+#endif // SCALAR
+  
+}
 
 
+void evolve_hydro_velocities(hydro_fields f, hydro_params p) {
+
+#ifndef SCALAR
+
+  int x, y, z;
+  
+
+  float utildex, utildey, utildez;
+  
+  float sigmabar;
+
+  float ubarx, ubary, ubarz;
 
   // update velocity v; denominator is W&M eq (2.85)
   // but note grid is Eulerian, see readme for conversion 
@@ -555,9 +582,9 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
 		 + f.U[2][x][y+1][((z+1)%p.Lz)]
 		 )/4.0;
 	
-	Wfacex[x][y][z] = sqrt(1.0 + ubarx*ubarx + ubary*ubary + ubarz*ubarz);
+	f.Wfacex[x][y][z] = sqrt(1.0 + ubarx*ubarx + ubary*ubary + ubarz*ubarz);
 	
-	f.V[0][x][y][z] = ubarx/Wfacex[x][y][z];
+	f.V[0][x][y][z] = ubarx/f.Wfacex[x][y][z];
       }
     }
   }
@@ -588,9 +615,9 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
 		 + f.U[2][x+1][y][((z+1)%p.Lz)]
 		 )/4.0;
 
-	Wfacey[x][y][z] = sqrt(1.0 + ubarx*ubarx + ubary*ubary + ubarz*ubarz);
+	f.Wfacey[x][y][z] = sqrt(1.0 + ubarx*ubarx + ubary*ubary + ubarz*ubarz);
 
-	f.V[1][x][y][z] = ubary/Wfacey[x][y][z];
+	f.V[1][x][y][z] = ubary/f.Wfacey[x][y][z];
 	
       }
     }
@@ -619,12 +646,12 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
 		 + f.U[2][x+1][y+1][z]
 		 )/4.0;
 	
-	Wfacez[x][y][z] = sqrt(1.0 
+	f.Wfacez[x][y][z] = sqrt(1.0 
 			       + ubarx*ubarx
 			       + ubary*ubary
 			       + ubarz*ubarz);
     
-	f.V[2][x][y][z] = ubarz/Wfacez[x][y][z];
+	f.V[2][x][y][z] = ubarz/f.Wfacez[x][y][z];
       }
     }
   }
@@ -682,14 +709,48 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
 	//    if(x < 3 || x > p.N-3)
 	//      fprintf(stderr,"utildex %d = %lf\n", x, utildex);
      
-	Wold[x][y][z] = f.W[x][y][z];
+	f.Wold[x][y][z] = f.W[x][y][z];
 	f.W[x][y][z] = sqrt(1.0 
 			    + utildex*utildex 
 			    + utildey*utildey 
 			    + utildez*utildez);
+      }
+    }
+  }
+
+
+  halo_field(f.Wold, p);
+  halo_field(f.W, p);
+
+  halo_field(f.Wfacex, p);
+  halo_field(f.Wfacey, p);
+  halo_field(f.Wfacez, p);
+
+    
+
+#endif // SCALAR
+}
+
+
+void evolve_hydro_pressurework(hydro_fields f, hydro_params p) {
+
+#ifndef SCALAR
+
+  int x, y, z;
+
+  float qx, qy, qz, gradv;
+  float divv;
+  
+
+  // Section 3.4.6
+  // Update Lorentz factor f.W, then update E with first pressure work term.
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+		
 	        
 	// Top of p90 ch 3
-	f.E[x][y][z] = f.E[x][y][z]*pow(Wold[x][y][z]/f.W[x][y][z],
+	f.E[x][y][z] = f.E[x][y][z]*pow(f.Wold[x][y][z]/f.W[x][y][z],
 					f.kappa[x][y][z]-1.0);
 
 
@@ -697,13 +758,6 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
     }
   }
 
-
-
-  halo_field(f.W, p);
-
-  halo_field(Wfacex, p);
-  halo_field(Wfacey, p);
-  halo_field(Wfacez, p);
 
   // Section 3.4.4 -- Update E with another pressure work term
   for(x = 1; x <= p.slicex; x++) {
@@ -735,13 +789,13 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
       for(z = 0; z < p.Lz; z++) {
 
 	qx = (f.V[0][x][y][z] + f.V[0][x+1][y][z])
-	  *(Wfacex[x+1][y][z] - Wfacex[x][y][z])*p.dt/(2.0*p.dx);
+	  *(f.Wfacex[x+1][y][z] - f.Wfacex[x][y][z])*p.dt/(2.0*p.dx);
 	
 	qy = (f.V[1][x][y][z] + f.V[1][x][y+1][z])
-	  *(Wfacey[x][y+1][z] - Wfacey[x][y][z])*p.dt/(2.0*p.dx);
+	  *(f.Wfacey[x][y+1][z] - f.Wfacey[x][y][z])*p.dt/(2.0*p.dx);
 	
 	qz = (f.V[2][x][y][z] + f.V[2][x][y][((z+1)%p.Lz)])
-	  *(Wfacez[x][y][((z+1)%p.Lz)] - Wfacez[x][y][z])*p.dt/(2.0*p.dx);
+	  *(f.Wfacez[x][y][((z+1)%p.Lz)] - f.Wfacez[x][y][z])*p.dt/(2.0*p.dx);
 	
 	gradv = (qx+qy+qz)/f.W[x][y][z];
 	
@@ -754,24 +808,9 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
 
   halo_field(f.E, p);
   
-  
-  
-  // Clean up memory. Surely we don't need all these temporary arrays?
-
-  
-  free_field(p, Vdmid);
-  free_field(p, Wold);
-
-  free_field(p, phiav);
-
-  free_vector(p, dxphi);
-
-  free_field(p, Wfacex);
-  free_field(p, Wfacey);
-  free_field(p, Wfacez);
-
 #endif // SCALAR
 }
+
 
 
 
