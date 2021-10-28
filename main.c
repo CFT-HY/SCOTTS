@@ -469,19 +469,54 @@ int main(int argc, char *argv[]) {
 
     //printf0(p,"step = %d \n", step);
     // Do field step
-    evolve_field(f, p);
+
     //printf0(p,"Evolved field \n");
     //dump_max_min(f, p);
 
     // Calculate EOS
-    eq_of_state(f, p);
+
     //printf0(p,"Calculated eos \n");
     //dump_max_min(f, p);
 
 
+    evolve_field(f, p);
+    eq_of_state(f, p);
+    
     // Do the hydro bits
-    evolve_hydro(f, p);
+    evolve_hydro_fieldfluid(f, p);
+    eq_of_state(f, p);
+    evolve_hydro_pressureacceleration(f, p);
+    // viscosity
+    evolve_hydro_velocities(f, p);
+    evolve_hydro_pressurework(f, p);
+    eq_of_state(f, p);
+    advect(f, p);
+    eq_of_state(f, p);
+    evolve_hydro_velocities(f, p);
+    evolve_hydro_pressurework(f, p);
+    eq_of_state(f, p);
+    // time step
+    // grid update
+    
+    // Advection of state variables
+    //advect_E(f, p, adv_order);
+    //printf0(p,"Advected E \n");
+    //dump_max_min(f, p);
 
+    // Advection of momentum
+    //advect_Z(f, p, adv_order);
+    //printf0(p,"Advected Z \n");
+    //dump_max_min(f, p);
+
+    //    adv_order +=1;
+
+    // Don't bother with art viscosity, yet
+    //    artificial_viscosity(f, nb, p);
+
+    // Solve for T
+    find_Ta(f, p);
+
+    
     //printf0(p,"Evolved hydro \n");
     //dump_max_min(f, p);
 
@@ -489,23 +524,6 @@ int main(int argc, char *argv[]) {
     if (step >= p.metricstart) 
     evolve_uij(f, p);
 
-    // Advection of state variables
-    advect_E(f, p, adv_order);
-    //printf0(p,"Advected E \n");
-    //dump_max_min(f, p);
-
-    // Advection of momentum
-    advect_Z(f, p, adv_order);
-    //printf0(p,"Advected Z \n");
-    //dump_max_min(f, p);
-
-    adv_order +=1;
-
-    // Don't bother with art viscosity, yet
-    //    artificial_viscosity(f, nb, p);
-
-    // Solve for T
-    find_Ta(f, p);
 
     t_sim += p.dt;
 
