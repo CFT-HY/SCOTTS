@@ -216,8 +216,8 @@ void van_leer_E_dir(hydro_fields f, hydro_params p, int dir) {
 	r = ((f.E[x+dx][y+dy][(z+dz)%p.Lz] - f.E[x][y][z])
 	     *(f.E[x][y][z]-f.E[x-dx][y-dy][(z-dz+p.Lz)%p.Lz]));
 	if(r>0) {
-	  delta[x][y][z] =  2*r/(f.E[x+dx][y+dy][(z+dz)%p.Lz]
-				   - f.E[x-dx][y-dy][(z-dz+p.Lz)%p.Lz]);
+	  delta[x][y][z] =  2*r/(p.dx*(f.E[x+dx][y+dy][(z+dz)%p.Lz]
+				       - f.E[x-dx][y-dy][(z-dz+p.Lz)%p.Lz]));
 	}
 	else {
 	  delta[x][y][z] = 0;
@@ -309,8 +309,8 @@ void van_leer_Z_dir(hydro_fields f, hydro_params p, int dir) {
 	       *(f.Z[i][x][y][z] - f.Z[i][x-dx][y-dy][(z-dz+p.Lz)%p.Lz]));
 
 	  if(r>0){
-	    delta[i][x][y][z] = 2*r/(f.Z[i][x+dx][y+dy][(z+dz)%p.Lz]
-				  - f.Z[i][x-dx][y-dy][(z-dz+p.Lz)%p.Lz]);
+	    delta[i][x][y][z] = 2*r/(p.dx*(f.Z[i][x+dx][y+dy][(z+dz)%p.Lz]
+					   - f.Z[i][x-dx][y-dy][(z-dz+p.Lz)%p.Lz]));
 	  }
 	  else{
 	    delta[i][x][y][z] = 0;
