@@ -184,18 +184,49 @@ void donor_Z_dir(hydro_fields f, hydro_params p, int dir) {
 }
 
 
+
+/** Slope limiter, multiple options that can be specified using compiler flags.
+ * An attempt to go beyond the Van Leer limiter from Anninos and Fragile.
+ *
+ *
+ */
+static inline float flux_limiter(float r){
+#if defined VANLEER
+  if (r>0){
+    return 2*r/(1+r);
+  }
+  else {
+    return 0;
+  }
+#elif defined SUPERBEE
+  return fmaxf(fmaxf(0,fminf(2*r,1)),fminf(r,2));
+#elif defined MINMOD
+  return fmaxf(0,fminf(1,r));
+#elif defined OSPRE
+  return 1.5*(r*(r+1))/(r*(r+1)+1);
+#elif defined VANALBADA
+  return r*(r+1)/(r*r+1);
+#else
+  fprintf(stderr, "In slope limiter, should never reach here, dying\n");
+  die(101);
+  return -1;
+#endif  
+}
+
 /** Advection for `f.E` in direction `dir` using Van Leer.
  *
  * Does nothing ifdef `SCALAR`. 
  *
- * Advects using the Van Leer flux limiter described in 
- * Anninos and Fragile (2002).
+ * Advects using the algorithm described in 
+ * Anninos and Fragile (2002), but now with additional flux limiter options.
  */
-void van_leer_E_dir(hydro_fields f, hydro_params p, int dir) {
+void transport_E_dir(hydro_fields f, hydro_params p, int dir) {
 #ifndef SCALAR
   int x, y, z;
   float r;
+  float phi;
   float ***delta = make_field(p);
+  float epsilon = 1e-20;
   //  halo_field(f.V[dir],p);
   //  halo_field(f.E,p);
   int dx = 0;
@@ -209,41 +240,41 @@ void van_leer_E_dir(hydro_fields f, hydro_params p, int dir) {
   if(dir == 2)
     dz = 1;
 
-  // This loop constructs equivalent of (3-14) from Anninos and Fragile (2002).
+  // Construct backwards derivative of E
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
-	r = ((f.E[x+dx][y+dy][(z+dz)%p.Lz] - f.E[x][y][z])
-	     *(f.E[x][y][z]-f.E[x-dx][y-dy][(z-dz+p.Lz)%p.Lz]));
-	if(r>0) {
-	  delta[x][y][z] =  2*r/(p.dx*(f.E[x+dx][y+dy][(z+dz)%p.Lz]
-				       - f.E[x-dx][y-dy][(z-dz+p.Lz)%p.Lz]));
-	}
-	else {
-	  delta[x][y][z] = 0;
-	}
+	delta[x][y][z] = (f.E[x][y][z]-f.E[x-dx][y-dy][(z-dz+p.Lz)%p.Lz])/p.dx;
       }
     }
   }
+  
 
   halo_field(delta, p);
 
   // This loop constructs the terms in the brackets of (3-12) using (3-13)
   // from Anninos and Fragile (2002).
+  // This should be equivalent to the notes in section 4.4.3 of the advection
+  // notes included in doc folder.
+  // Now allow for more than Van Leer flux limiters
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
 	if(f.V[dir][x][y][z]>0){
+	  r = delta[x-dx][y-dy][(z-dz+p.Lz)%p.Lz]/(delta[x][y][z]+epsilon);
+	  phi = flux_limiter(r);
 	  f.F[dir][x][y][z] = (f.V[dir][x][y][z]
 			       *(f.E[x-dx][y-dy][(z-dz+p.Lz)%p.Lz]
 				 + 0.5*(p.dx - f.V[dir][x][y][z]*p.dt)
-				 *delta[x-dx][y-dy][(z-dz+p.Lz)%p.Lz]));
+				 *phi*delta[x][y][z]));
 	}
 	else{
+	  r = delta[x+dx][y+dy][(z+dz)%p.Lz]/(delta[x][y][z]+epsilon);
+	  phi = flux_limiter(r);
 	  f.F[dir][x][y][z] = (f.V[dir][x][y][z]
 			       *(f.E[x][y][z]
 				 - 0.5*(p.dx + f.V[dir][x][y][z]*p.dt)
-				 *delta[x][y][z]));
+				 *phi*delta[x][y][z]));
 	}
       }
     }
@@ -265,26 +296,27 @@ void van_leer_E_dir(hydro_fields f, hydro_params p, int dir) {
 
   free_field(p, delta);
 #endif
+}  
 
 
-  
-}
 
 
 /** Advection for `f.Z` in direction `dir` using Van Leer.
  *
  * Does nothing ifdef `SCALAR`. 
  *
- * Advects using the Van Leer flux limiter described in 
- * Anninos and Fragile (2002).
+ * Advects using the algorithm described in 
+ * Anninos and Fragile (2002), but now with additional flux limiters.
  * This advects each component of Z in the direction `dir`.
  */
-void van_leer_Z_dir(hydro_fields f, hydro_params p, int dir) {
+void transport_Z_dir(hydro_fields f, hydro_params p, int dir) {
 
 #ifndef SCALAR
   int x, y, z, i;
 
   float r;
+  float phi;
+  float epsilon = 1e-20;
   int dx = 0;
   int dy = 0;
   int dz = 0;
@@ -301,21 +333,14 @@ void van_leer_Z_dir(hydro_fields f, hydro_params p, int dir) {
 
   float ***Vface = make_field(p);
   float ****delta = make_vector(p);
+
+  // Construct backwards derivative.
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
 	for(i = 0; i < 3; i++){
-	  r = ((f.Z[i][x+dx][y+dy][(z+dz)%p.Lz] - f.Z[i][x][y][z])
-	       *(f.Z[i][x][y][z] - f.Z[i][x-dx][y-dy][(z-dz+p.Lz)%p.Lz]));
-
-	  if(r>0){
-	    delta[i][x][y][z] = 2*r/(p.dx*(f.Z[i][x+dx][y+dy][(z+dz)%p.Lz]
-					   - f.Z[i][x-dx][y-dy][(z-dz+p.Lz)%p.Lz]));
-	  }
-	  else{
-	    delta[i][x][y][z] = 0;
-	  }
-
+	  delta[i][x][y][z] = (f.Z[i][x][y][z]
+			       - f.Z[i][x-dx][y-dy][(z-dz+p.Lz)%p.Lz])/p.dx;
 	}
       }
     }
@@ -364,16 +389,20 @@ void van_leer_Z_dir(hydro_fields f, hydro_params p, int dir) {
 
 	for(i = 0; i < 3; i++){
 	  if(Vface[x][y][z] >= 0.0){
+	    r = delta[i][x-dx][y-dy][(z-dz+p.Lz)%p.Lz]/(delta[i][x][y][z]+epsilon);
+	    phi = flux_limiter(r);
 	    f.F[i][x][y][z] = (Vface[x][y][z]*
 			       (f.Z[i][x-dx][y-dy][(z-dz+p.Lz)%p.Lz]
 				+ 0.5*(p.dx - Vface[x][y][z]*p.dt)
-				*delta[i][x-dx][y-dy][(z-dz+p.Lz)%p.Lz]));
+				*phi*delta[i][x][y][z]));
 	  }
 	  else{
+	    r = delta[i][x+dx][y+dy][(z+dz)%p.Lz]/(delta[i][x][y][z]+epsilon);
+	    phi = flux_limiter(r);
 	    f.F[i][x][y][z] = (Vface[x][y][z]*
 			       (f.Z[i][x][y][z]
 				- 0.5*(p.dx + Vface[x][y][z]*p.dt)
-				*delta[i][x][y][z]));
+				*phi*delta[i][x][y][z]));
 	  }
 	}
       }
@@ -427,9 +456,9 @@ void advect_E(hydro_fields f, hydro_params p, int adv_order) {
 			0,2,1};
   
 #ifdef VANLEER
-  van_leer_E_dir(f, p, directions[(adv_order % 6)*3]);    
-  van_leer_E_dir(f, p, directions[(adv_order % 6)*3 + 1]);
-  van_leer_E_dir(f, p, directions[(adv_order % 6)*3 + 2]);
+  transport_E_dir(f, p, directions[(adv_order % 6)*3]);    
+  transport_E_dir(f, p, directions[(adv_order % 6)*3 + 1]);
+  transport_E_dir(f, p, directions[(adv_order % 6)*3 + 2]);
 #else
   donor_E_dir(f, p, directions[(adv_order % 6)*3]);    
   donor_E_dir(f, p, directions[(adv_order % 6)*3 + 1]);
@@ -456,10 +485,10 @@ void advect_Z(hydro_fields f, hydro_params p, int adv_order) {
 			1,2,0,
 			0,2,1};
   
-#ifdef VANLEER
-  van_leer_Z_dir(f, p, directions[(adv_order % 6)*3]);
-  van_leer_Z_dir(f, p, directions[(adv_order % 6)*3 + 1]);
-  van_leer_Z_dir(f, p, directions[(adv_order % 6)*3 + 2]);
+#if defined VANLEER || defined SUPERBEE || defined OSPRE || defined MINMOD || defined VANALBADA
+  transport_Z_dir(f, p, directions[(adv_order % 6)*3]);
+  transport_Z_dir(f, p, directions[(adv_order % 6)*3 + 1]);
+  transport_Z_dir(f, p, directions[(adv_order % 6)*3 + 2]);
 #else
   donor_Z_dir(f, p, directions[(adv_order % 6)*3]);    
   donor_Z_dir(f, p, directions[(adv_order % 6)*3 + 1]);
