@@ -599,21 +599,27 @@ void get_parameters(char *infile, hydro_params *p)
       set_initpsbins = 1;
     }
     else if(!strcasecmp(key,"seed")) {
-      if(!strcasecmp(value,"time")) {
-        p->seed = time(NULL);
-      } else if(!strcasecmp(value,"device")) {
-        FILE *ran = fopen("/dev/random","r");
-        if(fread(&(p->seed),sizeof(int),1,ran) != 1) {
-          fprintf(stderr,"Unable to read from /dev/random, using seed 0!\n");
-          p->seed = 0;
-        }
-        fclose(ran);
-      } else {
-        p->seed = strtol(value,NULL,10);
+      if(!p->rank){
+	if(!strcasecmp(value,"time")) {
+	  p->seed = time(NULL);
+	} else if(!strcasecmp(value,"device")) {
+	  FILE *ran = fopen("/dev/random","r");
+	  if(fread(&(p->seed),sizeof(int),1,ran) != 1) {
+	    fprintf(stderr,"Unable to read from /dev/random, using seed 0!\n");
+	    p->seed = 0;
+	  }
+	  fclose(ran);
+	} else {
+	  p->seed = strtol(value,NULL,10);
+	}
+
+	p->seed = abs(p->seed);
+	p->seed = reduce_sum_int(p->seed,*p);
       }
-
-      p->seed = abs(p->seed);
-
+      else{
+	p->seed = 0;
+	p->seed = reduce_sum_int(p->seed,*p);
+      }
       set_seed = 1;
     }
 
