@@ -237,7 +237,7 @@ static inline float flux_limiter(float r){
 #elif defined VANALBADA
   return r*(r+1)/(r*r+1);
 #elif defined MONOCENT
-  return fmaxf(0,fminf((r+1)/2,fminf(2r,2)));
+  return fmaxf(0,fminf(0.5*(r+1),fminf(2*r,2)));
 #else
   fprintf(stderr, "In flux limiter but no flux scheme defined.\n"
 	  "Should never reach here, dying\n");
