@@ -6,11 +6,42 @@
  * We have two versions, depending on whether the field being advected
  * lives on lattice sites or between them.
  *
- * Currently we use simple donor cell advection, with a compiler flag
- * enabling Van Leer advection. We may need to look into fancier
+ * Currently we use simple donor cell advection, with compiler flags
+ * enabling 2nd order flux reconstruction with a corresponding flux limiter
+ * for advection. 
+ * We may need to look into fancier
  * advection methods to avoid getting strong shocks.
  */
 #include "hydro.h"
+
+// Not sure if I need to set FLX to zero if not defined.
+// When testing I could actually just put e.g VANLEER in place of FL1 in
+// expression below but I worry that might be compiler dependent.
+// Maybe this should go in hydro.h
+#ifdef VANLEER
+#define FL1 1
+#endif
+#ifdef SUPERBEE
+#define FL2 1
+#endif
+#ifdef MINMOD
+#define FL3 1
+#endif
+#ifdef OSPRE
+#define FL4 1
+#endif
+#ifdef VANALBADA
+#define FL5 1
+#endif
+#ifdef MONOCENT
+#define FL6 1
+#endif
+
+#if (FL1 + FL2 + FL3 + FL4 + FL5 + FL6 == 1)
+#define TRANSPORT
+#elif (FL1 + FL2 + FL3 + FL4 + FL5 + FL6 > 1)
+#error "Only one flux limiter compilation option allowed."
+#endif
 
 
 
@@ -185,9 +216,8 @@ void donor_Z_dir(hydro_fields f, hydro_params p, int dir) {
 
 
 
-/** Slope limiter, multiple options that can be specified using compiler flags.
+/** Flux limiter, multiple options that can be specified using compiler flags.
  * An attempt to go beyond the Van Leer limiter from Anninos and Fragile.
- *
  *
  */
 static inline float flux_limiter(float r){
@@ -206,18 +236,22 @@ static inline float flux_limiter(float r){
   return 1.5*(r*(r+1))/(r*(r+1)+1);
 #elif defined VANALBADA
   return r*(r+1)/(r*r+1);
+#elif defined MONOCENT
+  return fmaxf(0,fminf((r+1)/2,fminf(2r,2)));
 #else
-  fprintf(stderr, "In slope limiter, should never reach here, dying\n");
+  fprintf(stderr, "In flux limiter but no flux scheme defined.\n"
+	  "Should never reach here, dying\n");
   die(101);
   return -1;
 #endif  
 }
 
-/** Advection for `f.E` in direction `dir` using Van Leer.
+/** Advection for `f.E` in direction `dir` using monotonic interpolation for the
+ * flux at the boundary.
  *
  * Does nothing ifdef `SCALAR`. 
  *
- * Advects using the algorithm described in 
+ * Advects using a similar algorithm to that described in 
  * Anninos and Fragile (2002), but now with additional flux limiter options.
  */
 void transport_E_dir(hydro_fields f, hydro_params p, int dir) {
@@ -226,6 +260,8 @@ void transport_E_dir(hydro_fields f, hydro_params p, int dir) {
   float r;
   float phi;
   float ***delta = make_field(p);
+  // Guarding against division by zero when constructing the flux limiter
+  // argument r. Either because Delta is exactly zero or denormalised.
   float epsilon = 1e-20;
   //  halo_field(f.V[dir],p);
   //  halo_field(f.E,p);
@@ -254,9 +290,11 @@ void transport_E_dir(hydro_fields f, hydro_params p, int dir) {
 
   // This loop constructs the terms in the brackets of (3-12) using (3-13)
   // from Anninos and Fragile (2002).
+  // Our F_i corresponds to \tilde{D}_i*V_i. We allow for alternative flux
+  // limiters to just Van Leer.
+      
   // This should be equivalent to the notes in section 4.4.3 of the advection
   // notes included in doc folder.
-  // Now allow for more than Van Leer flux limiters
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
@@ -301,11 +339,12 @@ void transport_E_dir(hydro_fields f, hydro_params p, int dir) {
 
 
 
-/** Advection for `f.Z` in direction `dir` using Van Leer.
+/** Advection for `f.Z` in direction `dir` using monotonic interpolation for the
+ * flux at the boundary.
  *
  * Does nothing ifdef `SCALAR`. 
  *
- * Advects using the algorithm described in 
+ * Advects using a similar  algorithm to that described in 
  * Anninos and Fragile (2002), but now with additional flux limiters.
  * This advects each component of Z in the direction `dir`.
  */
@@ -316,6 +355,8 @@ void transport_Z_dir(hydro_fields f, hydro_params p, int dir) {
 
   float r;
   float phi;
+  // Guarding against division by zero when constructing the flux limiter
+  // argument r. Either because Delta is exactly zero or denormalised.
   float epsilon = 1e-20;
   int dx = 0;
   int dy = 0;
@@ -354,7 +395,11 @@ void transport_Z_dir(hydro_fields f, hydro_params p, int dir) {
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
-	// Get corrected gradients (3-14) in Anninos and Fragile (2002)
+	// Construct interpolated fluxes in equation (3-12) of Anninos and
+	// Fragile (2002).
+	// Our F_i corresponds to \tilde{D}_i*V_i. We allow for alternative flux
+	// limiters to just Van Leer.
+      
 
 	// We need to find the flux between nodes which requires us to find the
 	// velocity on the appropriate 'face' between nodes.
@@ -440,9 +485,7 @@ void transport_Z_dir(hydro_fields f, hydro_params p, int dir) {
 
 /** Advection for `E` in all directions.
  *
- * Currently the order in which each direction is advected is
- * fixed. This can be changed to be random by switching to the code in
- * the comment. Note that this is not what the Grant and Wilson
+ *  Note that this is not what the Grant and Wilson
  * suggest, rather they state the update should be split into two half
  * steps, and the order should be reversed for each half.
  */
@@ -455,7 +498,7 @@ void advect_E(hydro_fields f, hydro_params p, int adv_order) {
 			1,2,0,
 			0,2,1};
   
-#ifdef VANLEER
+#ifdef TRANSPORT
   transport_E_dir(f, p, directions[(adv_order % 6)*3]);    
   transport_E_dir(f, p, directions[(adv_order % 6)*3 + 1]);
   transport_E_dir(f, p, directions[(adv_order % 6)*3 + 2]);
@@ -463,16 +506,14 @@ void advect_E(hydro_fields f, hydro_params p, int adv_order) {
   donor_E_dir(f, p, directions[(adv_order % 6)*3]);    
   donor_E_dir(f, p, directions[(adv_order % 6)*3 + 1]);
   donor_E_dir(f, p, directions[(adv_order % 6)*3 + 2]);
-#endif //VANLEER
+#endif 
 }
 
 
 
 /** Advection for `f.Z` in all directions.
  *
- * Currently the order in which component of `f.Z` is advected is
- * fixed. This can be changed to be random by switching to the code in
- * the comment. Note that this is not what the Grant and Wilson
+ * Note that this is not what the Grant and Wilson
  * suggest, rather they state the update should be split into two half
  * steps, and the order of advection should be reversed for each half.
  */
@@ -485,7 +526,7 @@ void advect_Z(hydro_fields f, hydro_params p, int adv_order) {
 			1,2,0,
 			0,2,1};
   
-#if defined VANLEER || defined SUPERBEE || defined OSPRE || defined MINMOD || defined VANALBADA
+#ifdef TRANSPORT
   transport_Z_dir(f, p, directions[(adv_order % 6)*3]);
   transport_Z_dir(f, p, directions[(adv_order % 6)*3 + 1]);
   transport_Z_dir(f, p, directions[(adv_order % 6)*3 + 2]);
@@ -493,7 +534,7 @@ void advect_Z(hydro_fields f, hydro_params p, int adv_order) {
   donor_Z_dir(f, p, directions[(adv_order % 6)*3]);    
   donor_Z_dir(f, p, directions[(adv_order % 6)*3 + 1]);
   donor_Z_dir(f, p, directions[(adv_order % 6)*3 + 2]);
-#endif //VANLEER
+#endif 
 }
 
 
