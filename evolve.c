@@ -403,10 +403,12 @@ void evolve_hydro(hydro_fields f, hydro_params p) {
     }
   }
 
+  // Technically unnecessary as f.Z only accessed away from [x][y][z] in donor_Z_dir
+  // and transport_Z_dir.
+  //halo_field(f.Z[0], p);
+  //halo_field(f.Z[1], p);
+  //halo_field(f.Z[2], p);
 
-  halo_field(f.Z[0], p);
-  halo_field(f.Z[1], p);
-  halo_field(f.Z[2], p);
   //  halo_field(f.E, p);
 
 
