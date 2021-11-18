@@ -244,6 +244,8 @@ EIKR formalism.
 * One of `-DVANLEER`, `-DMINMOD`, `-DSUPERBEE`, `-DMODCENT`, `-DOSPRE`,
   `-DVANALBADA`: Use second order flux reconstruction with the corresponding
   flux limiter for the advection. If none of the above is defined, just use donor cell.
+* `-DWMMOMADVECT`: perform advection of momentum according to procedure outlined
+  in Wilson and Mathews. Not valid with donor cell. 
 
 * `-DTRACEFREE` Remove trace of shear stress term sourcing gravitational waves.
   Useful as it can cause udot to grow large and leak into the gravitational
