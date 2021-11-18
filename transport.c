@@ -142,7 +142,7 @@ void donor_Z_dir(hydro_fields f, hydro_params p, int dir)
     dz = 1;
   }
 
-  float*** Vface = make_field(p);
+  float Vface;
 
   for (x = 1; x <= p.slicex; x++) {
     xcell1 = x - (dy + dz);
@@ -159,25 +159,25 @@ void donor_Z_dir(hydro_fields f, hydro_params p, int dir)
 
         // need to find V on node
         // centered face instead of zone centered.
-        Vface[x][y][z] = 0.125
-                         * ((f.V[dir][x][y][z]
-                             + f.V[dir][x - dx][y - dy][(z - dz + p.Lz) % p.Lz])
-                            + (f.V[dir][xcell1][ycell1][(zcell1 + p.Lz) % p.Lz]
-                               + f.V[dir][xcell1 - dx][ycell1 - dy]
-                                    [(zcell1 - dz + p.Lz) % p.Lz])
-                            + (f.V[dir][xcell2][ycell2][(zcell2 + p.Lz) % p.Lz]
-                               + f.V[dir][xcell2 - dx][ycell2 - dy]
-                                    [(zcell2 - dz + p.Lz) % p.Lz])
-                            + (f.V[dir][xcell3][ycell3][(zcell3 + p.Lz) % p.Lz]
-                               + f.V[dir][xcell3 - dx][ycell3 - dy]
-                                    [(zcell3 - dz + p.Lz) % p.Lz]));
+        Vface = 0.125
+                * ((f.V[dir][x][y][z]
+                    + f.V[dir][x - dx][y - dy][(z - dz + p.Lz) % p.Lz])
+                   + (f.V[dir][xcell1][ycell1][(zcell1 + p.Lz) % p.Lz]
+                      + f.V[dir][xcell1 - dx][ycell1 - dy]
+                           [(zcell1 - dz + p.Lz) % p.Lz])
+                   + (f.V[dir][xcell2][ycell2][(zcell2 + p.Lz) % p.Lz]
+                      + f.V[dir][xcell2 - dx][ycell2 - dy]
+                           [(zcell2 - dz + p.Lz) % p.Lz])
+                   + (f.V[dir][xcell3][ycell3][(zcell3 + p.Lz) % p.Lz]
+                      + f.V[dir][xcell3 - dx][ycell3 - dy]
+                           [(zcell3 - dz + p.Lz) % p.Lz]));
 
         for (i = 0; i < 3; i++) {
-          if (Vface[x][y][z] >= 0.0) {
-            f.F[i][x][y][z] = Vface[x][y][z]
-                              * f.Z[i][x - dx][y - dy][(z - dz + p.Lz) % p.Lz];
+          if (Vface >= 0.0) {
+            f.F[i][x][y][z]
+                = Vface * f.Z[i][x - dx][y - dy][(z - dz + p.Lz) % p.Lz];
           } else {
-            f.F[i][x][y][z] = Vface[x][y][z] * f.Z[i][x][y][z];
+            f.F[i][x][y][z] = Vface * f.Z[i][x][y][z];
           }
         }
       }
@@ -204,8 +204,6 @@ void donor_Z_dir(hydro_fields f, hydro_params p, int dir)
   halo_field(f.Z[0], p);
   halo_field(f.Z[1], p);
   halo_field(f.Z[2], p);
-
-  free_field(p, Vface);
 
 #endif
 }
@@ -375,7 +373,7 @@ void transport_Z_dir(hydro_fields f, hydro_params p, int dir)
     dz = 1;
   }
 
-  float*** Vface = make_field(p);
+  float Vface;
   float**** delta = make_vector(p);
 
   // Construct backwards derivative.
@@ -409,43 +407,35 @@ void transport_Z_dir(hydro_fields f, hydro_params p, int dir)
 
         // Need to find V on node
         // centered face instead of zone centered.
-        Vface[x][y][z] = 0.125
-                         * ((f.V[dir][x][y][z]
-                             + f.V[dir][x - dx][y - dy][(z - dz + p.Lz) % p.Lz])
-                            + (f.V[dir][xcell1][ycell1][(zcell1 + p.Lz) % p.Lz]
-                               + f.V[dir][xcell1 - dx][ycell1 - dy]
-                                    [(zcell1 - dz + p.Lz) % p.Lz])
-                            + (f.V[dir][xcell2][ycell2][(zcell2 + p.Lz) % p.Lz]
-                               + f.V[dir][xcell2 - dx][ycell2 - dy]
-                                    [(zcell2 - dz + p.Lz) % p.Lz])
-                            + (f.V[dir][xcell3][ycell3][(zcell3 + p.Lz) % p.Lz]
-                               + f.V[dir][xcell3 - dx][ycell3 - dy]
-                                    [(zcell3 - dz + p.Lz) % p.Lz]));
-      }
-    }
-  }
+        Vface = 0.125
+                * ((f.V[dir][x][y][z]
+                    + f.V[dir][x - dx][y - dy][(z - dz + p.Lz) % p.Lz])
+                   + (f.V[dir][xcell1][ycell1][(zcell1 + p.Lz) % p.Lz]
+                      + f.V[dir][xcell1 - dx][ycell1 - dy]
+                           [(zcell1 - dz + p.Lz) % p.Lz])
+                   + (f.V[dir][xcell2][ycell2][(zcell2 + p.Lz) % p.Lz]
+                      + f.V[dir][xcell2 - dx][ycell2 - dy]
+                           [(zcell2 - dz + p.Lz) % p.Lz])
+                   + (f.V[dir][xcell3][ycell3][(zcell3 + p.Lz) % p.Lz]
+                      + f.V[dir][xcell3 - dx][ycell3 - dy]
+                           [(zcell3 - dz + p.Lz) % p.Lz]));
 
-  for (x = 1; x <= p.slicex; x++) {
-    for (y = 1; y <= p.slicey; y++) {
-      for (z = 0; z < p.Lz; z++) {
-        for (i = 0; i < 3; i++) {
-          if (Vface[x][y][z] >= 0.0) {
-            r = delta[i][x - dx][y - dy][(z - dz + p.Lz) % p.Lz]
-                / (delta[i][x][y][z] + epsilon);
-            phi = flux_limiter(r);
-            f.F[i][x][y][z] = (Vface[x][y][z]
-                               * (f.Z[i][x - dx][y - dy][(z - dz + p.Lz) % p.Lz]
-                                  + 0.5 * (p.dx - Vface[x][y][z] * p.dt) * phi
-                                        * delta[i][x][y][z]));
-          } else {
-            r = delta[i][x + dx][y + dy][(z + dz) % p.Lz]
-                / (delta[i][x][y][z] + epsilon);
-            phi = flux_limiter(r);
-            f.F[i][x][y][z] = (Vface[x][y][z]
-                               * (f.Z[i][x][y][z]
-                                  - 0.5 * (p.dx + Vface[x][y][z] * p.dt) * phi
-                                        * delta[i][x][y][z]));
-          }
+        if (Vface >= 0.0) {
+          r = delta[i][x - dx][y - dy][(z - dz + p.Lz) % p.Lz]
+              / (delta[i][x][y][z] + epsilon);
+          phi = flux_limiter(r);
+          f.F[i][x][y][z]
+              = (Vface
+                 * (f.Z[i][x - dx][y - dy][(z - dz + p.Lz) % p.Lz]
+                    + 0.5 * (p.dx - Vface * p.dt) * phi * delta[i][x][y][z]));
+        } else {
+          r = delta[i][x + dx][y + dy][(z + dz) % p.Lz]
+              / (delta[i][x][y][z] + epsilon);
+          phi = flux_limiter(r);
+          f.F[i][x][y][z]
+              = (Vface
+                 * (f.Z[i][x][y][z]
+                    - 0.5 * (p.dx + Vface * p.dt) * phi * delta[i][x][y][z]));
         }
       }
     }
@@ -473,8 +463,6 @@ void transport_Z_dir(hydro_fields f, hydro_params p, int dir)
   halo_field(f.Z[1], p);
   halo_field(f.Z[2], p);
 
-  free_field(p, Vface);
-
   free_vector(p, delta);
 
 #endif
@@ -495,13 +483,6 @@ void transport_Z_WM_dir(hydro_fields f, hydro_params p, int dir)
 {
 #ifndef SCALAR
 
-  float**** delta = make_vector(p);
-  // Node centered flux of kappa*E in direction dir
-  float*** F_node = make_field(p);
-  // Transfer of Z constructed from F_node and interpolation of U.
-  float**** F_node_Z = make_vector(p);
-  float*** Vface = make_field(p);
-
   float phi;
   float r;
   // Guarding against division by zero when constructing the flux limiter
@@ -509,7 +490,10 @@ void transport_Z_WM_dir(hydro_fields f, hydro_params p, int dir)
   float epsilon = 1e-20;
 
   int x, y, z, i;
-  int dx , dy, dz;
+  int dx = 0;
+  int dy = 0;
+  int dz = 0;
+
   // Used to define the other three cells for face averaging in direction
   // general manner.
   int xcell1, xcell2, xcell3;
@@ -519,22 +503,24 @@ void transport_Z_WM_dir(hydro_fields f, hydro_params p, int dir)
   // U^2 at x,y,z, and at x,y,z shifted one site in the negative direction dir.
   float Usq, Usqminus;
 
+  float**** delta = make_vector(p);
+  // Transfer of Z constructed from F_node and interpolation of U.
+  float**** F_node_Z = make_vector(p);
+  // Flux of kappa*E in direction dir on node centered face
+  float F_node;
+  // Velocity in direction dir on node centered face
+  float Vface;
+
   // Assume F is populated with flux of E. Want to turn this into flux of
   // \kappa E. Might as well reuse field rather than requiring even more
   // temporary arrays.
   if (dir == 0) {
     dx = 1;
-    dy = 0;
-    dz = 0;
   }
   if (dir == 1) {
-    dx = 0;
     dy = 1;
-    dz = 0;
   }
   if (dir == 2) {
-    dx = 0;
-    dy = 0;
     dz = 1;
   }
   for (x = 1; x <= p.slicex; x++) {
@@ -544,11 +530,22 @@ void transport_Z_WM_dir(hydro_fields f, hydro_params p, int dir)
             = 0.5 * f.F[dir][x][y][z]
               * (f.kappa[x][y][z]
                  + f.kappa[x - dx][y - dy][(z - dz + p.Lz) % p.Lz]);
+
+        // Will also need backward difference of U later:
+        // Construct backwards derivative of U[i].
+        for (i = 0; i < 3; i++) {
+          delta[i][x][y][z] = (f.U[i][x][y][z]
+                               - f.U[i][x - dx][y - dy][(z - dz + p.Lz) % p.Lz])
+                              / p.dx;
+        }
       }
     }
   }
 
   halo_field(f.F[dir], p);
+  halo_field(delta[0], p);
+  halo_field(delta[1], p);
+  halo_field(delta[2], p);
 
   for (x = 1; x <= p.slicex; x++) {
     xcell1 = x - (dy + dz);
@@ -566,39 +563,43 @@ void transport_Z_WM_dir(hydro_fields f, hydro_params p, int dir)
         // Now we need to construct node face centered version of f.F in
         // direction dir (not including
         // U[i] yet).
-        F_node[x][y][z] = 0.125
-                          * ((f.F[dir][x][y][z]
-                              + f.F[dir][x - dx][y - dy][(z - dz + p.Lz) % p.Lz])
-                             + (f.F[dir][xcell1][ycell1][(zcell1 + p.Lz) % p.Lz]
-                                + f.F[dir][xcell1 - dx][ycell1 - dy]
-                                     [(zcell1 - dz + p.Lz) % p.Lz])
-                             + (f.F[dir][xcell2][ycell2][(zcell2 + p.Lz) % p.Lz]
-                                + f.F[dir][xcell2 - dx][ycell2 - dy]
-                                     [(zcell2 - dz + p.Lz) % p.Lz])
-                             + (f.F[dir][xcell3][ycell3][(zcell3 + p.Lz) % p.Lz]
-                                + f.F[dir][xcell3 - dx][ycell3 - dy]
-                                     [(zcell3 - dz + p.Lz) % p.Lz]));
+        F_node = 0.125
+                 * ((f.F[dir][x][y][z]
+                     + f.F[dir][x - dx][y - dy][(z - dz + p.Lz) % p.Lz])
+                    + (f.F[dir][xcell1][ycell1][(zcell1 + p.Lz) % p.Lz]
+                       + f.F[dir][xcell1 - dx][ycell1 - dy]
+                            [(zcell1 - dz + p.Lz) % p.Lz])
+                    + (f.F[dir][xcell2][ycell2][(zcell2 + p.Lz) % p.Lz]
+                       + f.F[dir][xcell2 - dx][ycell2 - dy]
+                            [(zcell2 - dz + p.Lz) % p.Lz])
+                    + (f.F[dir][xcell3][ycell3][(zcell3 + p.Lz) % p.Lz]
+                       + f.F[dir][xcell3 - dx][ycell3 - dy]
+                            [(zcell3 - dz + p.Lz) % p.Lz]));
 
         // Also need to find V on node
         // centered face instead of zone centered.
         // Pick one of the methods below, W&M advocate for method 2.
         // Method 1: average over three velocities
         /*
-          Vface[x][y][z]
-          = 0.125
-          * ((f.V[dir][x][y][z]
-          + f.V[dir][x - dx][y - dy][(z - dz + p.Lz) % p.Lz])
-          + (f.V[dir][xcell1][ycell1][(zcell1 + p.Lz) % p.Lz]
-          + f.V[dir][xcell1 - dx][ycell1 - dy][(zcell1 - dz +
-          p.Lz) % p.Lz])
-          + (f.V[dir][xcell2][ycell2][(zcell2 + p.Lz) % p.Lz]
-          + f.V[dir][xcell2 - dx][ycell2 - dy][(zcell2 - dz +
-          p.Lz) % p.Lz])
-          + (f.V[dir][xcell3][ycell3][(zcell3 + p.Lz) % p.Lz]
-          + f.V[dir][xcell3 - dx][ycell3 - dy]
-          [(zcell3 - dz + p.Lz) % p.Lz]));
+              Vface = 0.125
+                               * ((f.V[dir][x][y][z]
+                                   + f.V[dir][x - dx][y - dy][(z - dz + p.Lz) %
+           p.Lz])
+                                  + (f.V[dir][xcell1][ycell1][(zcell1 + p.Lz) %
+           p.Lz]
+                                     + f.V[dir][xcell1 - dx][ycell1 - dy]
+                                          [(zcell1 - dz + p.Lz) % p.Lz])
+                                  + (f.V[dir][xcell2][ycell2][(zcell2 + p.Lz) %
+           p.Lz]
+                                     + f.V[dir][xcell2 - dx][ycell2 - dy]
+                                          [(zcell2 - dz + p.Lz) % p.Lz])
+                                  + (f.V[dir][xcell3][ycell3][(zcell3 + p.Lz) %
+           p.Lz]
+                                     + f.V[dir][xcell3 - dx][ycell3 - dy]
+                                          [(zcell3 - dz + p.Lz) % p.Lz]));
         */
         // Method 2: Construct from 4 velocities.
+
         Usq = (f.U[0][x][y][z] * f.U[0][x][y][z]
                + f.U[1][x][y][z] * f.U[1][x][y][z]
                + f.U[2][x][y][z] * f.U[2][x][y][z]);
@@ -608,58 +609,39 @@ void transport_Z_WM_dir(hydro_fields f, hydro_params p, int dir)
                           * f.U[1][x - dx][y - dy][(z - dz + p.Lz) % p.Lz]
                     + f.U[2][x - dx][y - dy][(z - dz + p.Lz) % p.Lz]
                           * f.U[2][x - dx][y - dy][(z - dz + p.Lz) % p.Lz]);
-        Vface[x][y][z] = 0.5
-                         * (f.U[dir][x][y][z] / sqrt(1 - Usq)
-                            + f.U[dir][x - dx][y - dy][(z - dz + p.Lz) % p.Lz]
-                                  / sqrt(1 - Usqminus));
+        Vface = 0.5
+                * (f.U[dir][x][y][z] / sqrt(1 - Usq)
+                   + f.U[dir][x - dx][y - dy][(z - dz + p.Lz) % p.Lz]
+                         / sqrt(1 - Usqminus));
 
-        // Will also need backward difference of U later:
-        // Construct backwards derivative of U[i].
-        for (i = 0; i < 3; i++) {
-          delta[i][x][y][z] = (f.U[i][x][y][z]
-                               - f.U[i][x - dx][y - dy][(z - dz + p.Lz) % p.Lz])
-                              / p.dx;
-        }
-      }
-    }
-  }
+        // Construct full flux for Z from F_node and interpolated U[i].
+        // F_node_Z[i] will be(Eq 2.130) in W&M shifted one site in the negative
+        // direction dir and multiplied by dx^2/dt.
 
-  // No need to halo Vface or F_node as only accessed at [x][y][z]
-  halo_field(delta[0], p);
-  halo_field(delta[1], p);
-  halo_field(delta[2], p);
-
-  // Construct full flux for Z from F_node and interpolated U[i].
-  // F_node_Z[i] will be(Eq 2.130) in W&M shifted one site in the negative
-  // direction dir and multiplied by dx^2/dt.
-
-  for (x = 1; x <= p.slicex; x++) {
-    for (y = 1; y <= p.slicey; y++) {
-      for (z = 0; z < p.Lz; z++) {
         for (i = 0; i < 3; i++) {
 
-          if (Vface[x][y][z] >= 0.0) {
+          if (Vface >= 0.0) {
             r = delta[i][x - dx][y - dy][(z - dz + p.Lz) % p.Lz]
                 / (delta[i][x][y][z] + epsilon);
             phi = flux_limiter(r);
             F_node_Z[i][x][y][z]
-                = F_node[x][y][z]
+                = F_node
                   * (f.U[i][x - dx][y - dy][(z - dz + p.Lz) % p.Lz]
-                     + 0.5 * (p.dx - Vface[x][y][z] * p.dt) * phi
-                           * delta[i][x][y][z]);
+                     + 0.5 * (p.dx - Vface * p.dt) * phi * delta[i][x][y][z]);
           } else {
             r = delta[i][x + dx][y + dy][(z + dz) % p.Lz]
                 / (delta[i][x][y][z] + epsilon);
             phi = flux_limiter(r);
-            F_node_Z[i][x][y][z] = F_node[x][y][z]
-                                   * (f.U[i][x][y][z]
-                                      - 0.5 * (p.dx + Vface[x][y][z] * p.dt)
-                                            * phi * delta[i][x][y][z]);
+            F_node_Z[i][x][y][z]
+                = F_node
+                  * (f.U[i][x][y][z]
+                     - 0.5 * (p.dx + Vface * p.dt) * phi * delta[i][x][y][z]);
           }
         }
       }
     }
   }
+
   halo_field(F_node_Z[0], p);
   halo_field(F_node_Z[1], p);
   halo_field(F_node_Z[2], p);
@@ -667,24 +649,21 @@ void transport_Z_WM_dir(hydro_fields f, hydro_params p, int dir)
     for (y = 1; y <= p.slicey; y++) {
       for (z = 0; z < p.Lz; z++) {
         for (i = 0; i < 3; i++) {
-          f.Z[i][x][y][z] = (f.Z[i][x][y][z]
-                             - p.dt
-                                   * (F_node_Z[i][x + dx][y + dy][(z + dz) % p.Lz]
-                                      - F_node_Z[i][x][y][z])
-                                   / p.dx);
+          f.Z[i][x][y][z]
+              = (f.Z[i][x][y][z]
+                 - p.dt
+                       * (F_node_Z[i][x + dx][y + dy][(z + dz) % p.Lz]
+                          - F_node_Z[i][x][y][z])
+                       / p.dx);
         }
       }
     }
   }
 
-  // Technically don't need this as f.Z only used outside of [x][y][z] in
-  // transport_Z_dir and donor_Z_dir.
   halo_field(f.Z[0], p);
-  halo_field(f.Z[0], p);
-  halo_field(f.Z[0], p);
-  
-  free_field(p, F_node);
-  free_field(p, Vface);
+  halo_field(f.Z[1], p);
+  halo_field(f.Z[2], p);
+
   free_vector(p, F_node_Z);
   free_vector(p, delta);
 
