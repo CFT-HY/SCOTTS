@@ -144,6 +144,13 @@ void donor_Z_dir(hydro_fields f, hydro_params p, int dir)
 
   float Vface;
 
+  // Halo Z at the start instead of end as the following is the only time Z is
+  // accessed away from site [x][y][z] in whole code. If this changes then
+  // remove this and halo at end.
+  halo_field(f.Z[0], p);
+  halo_field(f.Z[1], p);
+  halo_field(f.Z[2], p);
+
   for (x = 1; x <= p.slicex; x++) {
     xcell1 = x - (dy + dz);
     xcell2 = x;
@@ -201,9 +208,11 @@ void donor_Z_dir(hydro_fields f, hydro_params p, int dir)
       }
     }
   }
-  halo_field(f.Z[0], p);
-  halo_field(f.Z[1], p);
-  halo_field(f.Z[2], p);
+  // Technically unnecessary as f.Z only accessed away from [x][y][z] in
+  // donor_Z_dir and transport_Z_dir.
+  // halo_field(f.Z[0], p);
+  // halo_field(f.Z[1], p);
+  // halo_field(f.Z[2], p);
 
 #endif
 }
@@ -376,6 +385,13 @@ void transport_Z_dir(hydro_fields f, hydro_params p, int dir)
   float Vface;
   float**** delta = make_vector(p);
 
+  // Halo Z at the start instead of end as the following is the only time Z is
+  // accessed away from site [x][y][z] in whole code. If this changes then
+  // remove this and halo at end.
+  halo_field(f.Z[0], p);
+  halo_field(f.Z[1], p);
+  halo_field(f.Z[2], p);
+
   // Construct backwards derivative.
   for (x = 1; x <= p.slicex; x++) {
     for (y = 1; y <= p.slicey; y++) {
@@ -419,28 +435,28 @@ void transport_Z_dir(hydro_fields f, hydro_params p, int dir)
                    + (f.V[dir][xcell3][ycell3][(zcell3 + p.Lz) % p.Lz]
                       + f.V[dir][xcell3 - dx][ycell3 - dy]
                            [(zcell3 - dz + p.Lz) % p.Lz]));
-
-        if (Vface >= 0.0) {
-          r = delta[i][x - dx][y - dy][(z - dz + p.Lz) % p.Lz]
-              / (delta[i][x][y][z] + epsilon);
-          phi = flux_limiter(r);
-          f.F[i][x][y][z]
-              = (Vface
-                 * (f.Z[i][x - dx][y - dy][(z - dz + p.Lz) % p.Lz]
-                    + 0.5 * (p.dx - Vface * p.dt) * phi * delta[i][x][y][z]));
-        } else {
-          r = delta[i][x + dx][y + dy][(z + dz) % p.Lz]
-              / (delta[i][x][y][z] + epsilon);
-          phi = flux_limiter(r);
-          f.F[i][x][y][z]
-              = (Vface
-                 * (f.Z[i][x][y][z]
-                    - 0.5 * (p.dx + Vface * p.dt) * phi * delta[i][x][y][z]));
+        for (i = 0; i < 3; i++) {
+          if (Vface >= 0.0) {
+            r = delta[i][x - dx][y - dy][(z - dz + p.Lz) % p.Lz]
+                / (delta[i][x][y][z] + epsilon);
+            phi = flux_limiter(r);
+            f.F[i][x][y][z]
+                = (Vface
+                   * (f.Z[i][x - dx][y - dy][(z - dz + p.Lz) % p.Lz]
+                      + 0.5 * (p.dx - Vface * p.dt) * phi * delta[i][x][y][z]));
+          } else {
+            r = delta[i][x + dx][y + dy][(z + dz) % p.Lz]
+                / (delta[i][x][y][z] + epsilon);
+            phi = flux_limiter(r);
+            f.F[i][x][y][z]
+                = (Vface
+                   * (f.Z[i][x][y][z]
+                      - 0.5 * (p.dx + Vface * p.dt) * phi * delta[i][x][y][z]));
+          }
         }
       }
     }
   }
-
   halo_field(f.F[0], p);
   halo_field(f.F[1], p);
   halo_field(f.F[2], p);
@@ -459,9 +475,11 @@ void transport_Z_dir(hydro_fields f, hydro_params p, int dir)
       }
     }
   }
-  halo_field(f.Z[0], p);
-  halo_field(f.Z[1], p);
-  halo_field(f.Z[2], p);
+  // Technically unnecessary as f.Z only accessed away from [x][y][z] in
+  // donor_Z_dir and transport_Z_dir.
+  // halo_field(f.Z[0], p);
+  // halo_field(f.Z[1], p);
+  // halo_field(f.Z[2], p);
 
   free_vector(p, delta);
 
@@ -660,9 +678,11 @@ void transport_Z_WM_dir(hydro_fields f, hydro_params p, int dir)
     }
   }
 
-  halo_field(f.Z[0], p);
-  halo_field(f.Z[1], p);
-  halo_field(f.Z[2], p);
+  // Technically unnecessary as f.Z only accessed away from [x][y][z] in
+  // donor_Z_dir and transport_Z_dir.
+  // halo_field(f.Z[0], p);
+  // halo_field(f.Z[1], p);
+  // halo_field(f.Z[2], p);
 
   free_vector(p, F_node_Z);
   free_vector(p, delta);
