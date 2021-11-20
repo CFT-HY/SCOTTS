@@ -559,40 +559,43 @@ void get_parameters(char *infile, hydro_params *p)
     }
     else if(!strcasecmp(key,"initpsfile")) {
 
-        if(access(value, R_OK) != 0) {
-          printf0(*p ,"Unable to read initial power spectrum file \"%s\", giving up!\n",
+      if(access(value, R_OK) != 0) {
+          printf0(*p ,"Unable to read initial power spectrum file \"%s\". will"
+		  "give up if initial is initps.\n",
                   value);
-          die(123);
+          // Don't want to die as if not actually doing initps run
+          // want to supply file.
 	}
-      
-      if(strlen(value) > 500)
-	printf0(*p,
-		"Warning: initpsfile name \"%s\" may be too long!\n",
-		value);
+      else{
+	if(strlen(value) > 500)
+	  printf0(*p,
+		  "Warning: initpsfile name \"%s\" may be too long!\n",
+		  value);
 
-      strncpy(p->initpsfile, value, 500);
+	strncpy(p->initpsfile, value, 500);
      
-      if(!strcasecmp(option,"rot")) {
+	if(!strcasecmp(option,"rot")) {
 	  printf0(*p,
 		  "Treating initpsfile as ROT power\n");
 	  p->initpsfile_type = INITPSFILE_ROT;
-      } else if(!strcasecmp(option,"div")) {
-	printf0(*p,
-		"Treating initpsfile as DIV power\n");
-	p->initpsfile_type = INITPSFILE_DIV;
-      } else if(!strcasecmp(option,"all")) {
-	printf0(*p,
-		"Treating initpsfile as ALL power\n");
-	p->initpsfile_type = INITPSFILE_ALL;
-      } else {
-	printf0(*p,
-		"Unrecognised option to initpsfile;"
-		"treating initpsfile as DIV power\n");
-	p->initpsfile_type = INITPSFILE_DIV;
-      }
+	} else if(!strcasecmp(option,"div")) {
+	  printf0(*p,
+		  "Treating initpsfile as DIV power\n");
+	  p->initpsfile_type = INITPSFILE_DIV;
+	} else if(!strcasecmp(option,"all")) {
+	  printf0(*p,
+		  "Treating initpsfile as ALL power\n");
+	  p->initpsfile_type = INITPSFILE_ALL;
+	} else {
+	  printf0(*p,
+		  "Unrecognised option to initpsfile;"
+		  "treating initpsfile as DIV power\n");
+	  p->initpsfile_type = INITPSFILE_DIV;
+	}
       
-
-      set_initpsfile = 1;
+      
+	set_initpsfile = 1;
+      }
     }
     else if(!strcasecmp(key,"initpsbins")) {
       p->initpsbins = strtol(value,NULL,10);
