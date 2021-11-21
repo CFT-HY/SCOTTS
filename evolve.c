@@ -483,9 +483,9 @@ void evolve_hydro_pressureacceleration(hydro_fields f, hydro_params p) {
     }
   }
 
-  halo_field(f.Z[0], p);
-  halo_field(f.Z[1], p);
-  halo_field(f.Z[2], p); 
+  //halo_field(f.Z[0], p);
+  //halo_field(f.Z[1], p);
+  //halo_field(f.Z[2], p); 
 
 #endif // SCALAR
   
