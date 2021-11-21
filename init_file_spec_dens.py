@@ -30,17 +30,18 @@ import numpy as np
 import scipy.integrate as integrate
 import scipy.optimize as opt
 
-# Constants of the fluid
-RMS_VELOCITY = 0.1
-INTEGRAL_SCALE = 4.0
-IR_SLOPE, UV_SLOPE = 5, -2 / 3
-SKEW = 2
-K_MAX = np.pi / 4
-
 # Constants of the mock numerical simulation
 LATTICE_SIZE = 64
 LATTICE_SPACING = 0.5
 CUTOFF = 2 * np.pi
+
+# Constants of the fluid
+RMS_VELOCITY = 0.3
+INTEGRAL_SCALE = 8.0
+IR_SLOPE, UV_SLOPE = 5, -2 / 3
+SKEW = 2
+K_MAX = np.pi / (4*LATTICE_SPACING)
+
 
 
 def raw_power_spectrum(wave_number, k_peak):
@@ -128,8 +129,9 @@ if __name__ == "__main__":
         data[i, 0] = wave_number
         data[i, 1] = (2 * np.pi*np.pi/(wave_number*wave_number*wave_number)
                       * normalized_power_spectrum(wave_number, normalization, k_peak))
-    filename = "specdens_p-{:1.1f}_q-{:1.1f}_vrms-{:1.1e}_xi-{:1.1f}-s-{:1.1f}-kmax-{:1.2e}.txt".format(
-        IR_SLOPE, UV_SLOPE, RMS_VELOCITY, INTEGRAL_SCALE, SKEW, K_MAX
+    filename = "specdens_p-{:1.1f}_q-{:1.1f}_vrms-{:1.1e}_xi-{:1.1f}-s-{:1.1f}-kmax-{:1.2e}-dx-{:}-L-{:}.txt".format(
+        IR_SLOPE, UV_SLOPE, RMS_VELOCITY, INTEGRAL_SCALE, SKEW, K_MAX,
+    LATTICE_SPACING, LATTICE_SIZE
     )
 
     np.savetxt(filename, data, fmt=["%.8f", "%.8e"])
