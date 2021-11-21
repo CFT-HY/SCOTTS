@@ -686,11 +686,13 @@ void eq_of_state(hydro_fields f, hydro_params p);
 
 void advect_E(hydro_fields f, hydro_params p, int adv_order);
 void advect_Z(hydro_fields f, hydro_params p, int adv_order);
+void advect(hydro_fields f, hydro_params p);
 void donor_E_dir(hydro_fields f, hydro_params p, int dir);
 void donor_Z_dir(hydro_fields f, hydro_params p, int dir);
-void van_leer_E(hydro_fields f, hydro_params p, int dir);
-void van_leer_Z(hydro_fields f, hydro_params p, int dir);
-void advect(hydro_fields f, hydro_params p);
+void transport_E(hydro_fields f, hydro_params p, int dir);
+void transport_Z(hydro_fields f, hydro_params p, int dir);
+void transport_Z_WM(hydro_fields f, hydro_params p, int dir);
+static inline float flux_limiter(float r);
 
 
 // initial.c

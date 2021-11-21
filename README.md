@@ -173,12 +173,15 @@ Requirements :
 - `-DFFT` flag in the Makefile, compile with support for FFTs
 - `-DBAG` flag in the Makefile, compiles with the bag model equation of state.
 - `initial initps` in the initialization file to enable initps
-- `initpsfile initial.txt div` to specify the type of initial conditions. `initial.txt` is the location of the input power spectrum. `div`(resp. `rot`, `all`) stands for longitudinal (resp. vortical, non-projected) initial conditions
+- `initpsfile initial.txt div` to specify the type of initial
+  conditions. `initial.txt` is the location of the input power
+  spectral density. `div`(resp. `rot`, `all`) stands for longitudinal (resp. vortical,
+  non-projected) initial conditions. 
 - `initpsbins 200` the number of points in the power spectrum
 
 ### Mock input spectrum
 
-`init_file.py` is a Python3 file to mock input power spectrum.
+`init_file_spec_dens.py` is a Python3 file to mock input power spectrum.
 It produces power spectra according to the formula :
 
 \f[\frac{{\rm d} \langle v^2 \rangle}{{\rm d} \ln k} =
@@ -204,7 +207,8 @@ with parameters
 - `CUTOFF`: float
     Hard cutoff, just in case
 
-It relies on the libraries `numpy` and `scipy`.
+It relies on the libraries `numpy` and `scipy`. Technically it outputs the
+spectral density, for a spectrum given above.
 
 ## Compilation
 
@@ -237,7 +241,11 @@ damping couplings.
 * `-DBAG` : Use bag model for equation of state/potential instead of
 EIKR formalism.
 
-* `-DVANLEER` Use Van Leer advection instead of donor cell.
+* One of `-DVANLEER`, `-DMINMOD`, `-DSUPERBEE`, `-DMODCENT`, `-DOSPRE`,
+  `-DVANALBADA`: Use second order flux reconstruction with the corresponding
+  flux limiter for the advection. If none of the above is defined, just use donor cell.
+* `-DWMMOMADVECT`: perform advection of momentum according to procedure outlined
+  in Wilson and Mathews. Not valid with donor cell. 
 
 * `-DTRACEFREE` Remove trace of shear stress term sourcing gravitational waves.
   Useful as it can cause udot to grow large and leak into the gravitational
