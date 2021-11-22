@@ -443,10 +443,14 @@ int main(int argc, char* argv[])
         }
 
 	// Do field step.
-	evolve_field(f, p);
+	// If initial is INIT_PS, field is set in broken phase everywhere
+	// and won't evolve if compiled with BAG potential.
+	if(p.initial != INIT_PS)
+	  evolve_field(f, p);
 	eq_of_state(f, p);
 	// Do the hydro bits
-	evolve_hydro_fieldfluid(f, p);
+	if(p.initial != INIT_PS)
+	  evolve_hydro_fieldfluid(f, p);
 	evolve_hydro_pressureacceleration(f, p);
 	evolve_hydro_velocities(f, p);
 	evolve_hydro_pressurework(f, p);
@@ -459,7 +463,8 @@ int main(int argc, char* argv[])
 	//dump_max_min(f, p);
 	adv_order +=1;
 	// Solve for T.
-	find_Ta(f, p);
+	if(p.initial != INIT_PS)
+	  find_Ta(f, p);
 
     
 	//printf0(p,"Evolved hydro \n");
