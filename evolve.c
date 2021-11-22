@@ -377,11 +377,12 @@ void evolve_hydro_fieldfluid(hydro_fields f, hydro_params p) {
     }
   }
 
-
-  halo_field(f.Z[0], p);
-  halo_field(f.Z[1], p);
-  halo_field(f.Z[2], p);
-  //  halo_field(f.E, p);  
+  // Technically unnecessary as Z only accessed out of place in transport_Z_dir
+  // and donor_Z_dir.
+  //halo_field(f.Z[0], p);
+  //halo_field(f.Z[1], p);
+  //halo_field(f.Z[2], p);
+  halo_field(f.E, p);  
   
   // Clean up memory. Surely we don't need all these temporary arrays?
 
@@ -490,6 +491,8 @@ void evolve_hydro_pressureacceleration(hydro_fields f, hydro_params p) {
     }
   }
 
+  // Technically unnecessary as Z only accessed out of place in transport_Z_dir
+  // and donor_Z_dir.
   //halo_field(f.Z[0], p);
   //halo_field(f.Z[1], p);
   //halo_field(f.Z[2], p); 
