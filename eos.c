@@ -123,9 +123,11 @@ void find_Ta(hydro_fields f, hydro_params p) {
     }
   }
 
+#ifdef DIMENSIONLESS
   // Not needed... except for phi^2/T damping
   halo_field(f.T, p);
-
+#endif
+  
   TfixError = reduce_max_int(TfixError, p);
   sliceError = reduce_max_int(sliceError, p);
   
