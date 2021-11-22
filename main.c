@@ -442,17 +442,7 @@ int main(int argc, char* argv[])
 	  */
         }
 
-	//printf0(p,"step = %d \n", step);
-	// Do field step
-
-	//printf0(p,"Evolved field \n");
-	//dump_max_min(f, p);
-
-	// Calculate EOS
-
-	//printf0(p,"Calculated eos \n");
-	//dump_max_min(f, p);
-
+	// Do field step.
 	evolve_field(f, p);
 	eq_of_state(f, p);
 	// Do the hydro bits
@@ -461,14 +451,14 @@ int main(int argc, char* argv[])
 	evolve_hydro_velocities(f, p);
 	evolve_hydro_pressurework(f, p);
 	// Advection of state variables
-	//advect(f, p); // uncomment to advect half step and then reverse order.
+	//uncomment to advect half step and then reverse order.
+	// In that case don't perform advect_E and advect_Z. 
+	//advect_halfsteps(f, p); 
 	advect_E(f, p, adv_order);
-	// Advection of momentum
 	advect_Z(f, p, adv_order);
-	//printf0(p,"Advected Z \n");
 	//dump_max_min(f, p);
 	adv_order +=1;
-	// Solve for T
+	// Solve for T.
 	find_Ta(f, p);
 
     
