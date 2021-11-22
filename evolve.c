@@ -136,22 +136,14 @@ void evolve_field(hydro_fields f, hydro_params p) {
 
 
 
-/** Evolve the hydro forward one step except for transport.
- *
- * This follows chapters 2 and 3 in Wilson and Mathews, though in a different
- * order.
- * Update is performed in the following order within the function:
+/** Partially evolve the hydro forward one step following chapters 2 and 3 in
+ * Wilson and Mathews. In this function we:
  * -# Update \f$ E\f$ and \f$ Z \f$ with Field-fluid interaction terms 
- *    (potential and dissapitve term)
- * -# Update \f$ Z \f$ with pressure acceleration
- * -# Update covariant 4 velocity spatial terms \f$ U_i \f$.
- * -# Update contravariant 3 velocity \f$ V^i \f$.
- * -# Update Lorentz factor \f$ W \f$.
- * -# Update \f$ E \f$ with PdV work terms.
+ *    (potential and dissipative term)
  *
  * Grid velocity is 0, lapse vector 0 and flat space.
  *
- * Basically straight from fortran. Original comment:
+ * Basically straight from fortran. Original comment on full update:
  *
  *   --  Does hydro except transport.  E  and  Z evolved.  v  and W
  *       obtained.  Uses artificial viscosity  Q,  adjusted with  Cav.
@@ -406,7 +398,22 @@ void evolve_hydro_fieldfluid(hydro_fields f, hydro_params p) {
 
 
 
-
+/** Partially evolve the hydro forward one step following chapters 2 and 3 in
+ * Wilson and Mathews. In this function we:
+ * -# Update \f$ Z \f$ with pressure acceleration
+ *
+ * Grid velocity is 0, lapse vector 0 and flat space.
+ *
+ * Basically straight from fortran. Original comment on full update:
+ *
+ *   --  Does hydro except transport.  E  and  Z evolved.  v  and W
+ *       obtained.  Uses artificial viscosity  Q,  adjusted with  Cav.
+ *
+ *   --  The order chosen is not unique, but is what I used in
+ *       dissertation.  Should experiment with different orders,
+ *       especially with position of field-fluid interaction,
+ *       now placed first (otherwise order is from CW).
+ */
 void evolve_hydro_pressureacceleration(hydro_fields f, hydro_params p) {
 
 #ifndef SCALAR
@@ -491,7 +498,24 @@ void evolve_hydro_pressureacceleration(hydro_fields f, hydro_params p) {
   
 }
 
-
+/** Partially evolve the hydro forward one step following chapters 2 and 3 in
+ * Wilson and Mathews. In this function we:
+ * -# Update covariant 4 velocity spatial terms \f$ U_i \f$.
+ * -# Update contravariant 3 velocity \f$ V^i \f$.
+ * -# Update Lorentz factor \f$ W \f$.
+ *
+ * Grid velocity is 0, lapse vector 0 and flat space.
+ *
+ * Basically straight from fortran. Original comment on full update:
+ *
+ *   --  Does hydro except transport.  E  and  Z evolved.  v  and W
+ *       obtained.  Uses artificial viscosity  Q,  adjusted with  Cav.
+ *
+ *   --  The order chosen is not unique, but is what I used in
+ *       dissertation.  Should experiment with different orders,
+ *       especially with position of field-fluid interaction,
+ *       now placed first (otherwise order is from CW).
+ */
 void evolve_hydro_velocities(hydro_fields f, hydro_params p) {
 
 #ifndef SCALAR
@@ -731,7 +755,22 @@ void evolve_hydro_velocities(hydro_fields f, hydro_params p) {
 #endif // SCALAR
 }
 
-
+/** Partially evolve the hydro forward one step following chapters 2 and 3 in
+ * Wilson and Mathews. In this function we:
+ * -# Update \f$ E \f$ with PdV work terms.
+ *
+ * Grid velocity is 0, lapse vector 0 and flat space.
+ *
+ * Basically straight from fortran. Original comment on full update:
+ *
+ *   --  Does hydro except transport.  E  and  Z evolved.  v  and W
+ *       obtained.  Uses artificial viscosity  Q,  adjusted with  Cav.
+ *
+ *   --  The order chosen is not unique, but is what I used in
+ *       dissertation.  Should experiment with different orders,
+ *       especially with position of field-fluid interaction,
+ *       now placed first (otherwise order is from CW).
+ */
 void evolve_hydro_pressurework(hydro_fields f, hydro_params p) {
 
 #ifndef SCALAR

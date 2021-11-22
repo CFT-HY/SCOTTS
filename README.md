@@ -153,13 +153,13 @@ appears to have good energy conservation.
 -# Scalar field is evolved [evolve_field()]
 -# Temperature, pressure and \f$\kappa\f$ calculated [eq_of_state()]
 -# Update \f$E\f$ and \f$Z \f$ with field-fluid interaction terms
-     [evolve_hydro()]
--# Update \f$ Z \f$ with pressure acceleration [evolve_hydro()]
--# Update covariant 4-velocity spatial terms \f$ U_i \f$ [evolve_hydro()]
--# Update contravariant 3-velocity  \f$ V^i \f$ [evolve_hydro()]
--# Update \f$ E \f$ with PdV work terms [evolve_hydro()]
+     [evolve_hydro_fieldfluid()]
+-# Update \f$ Z \f$ with pressure acceleration [evolve_hydro_pressureacceleration()]
+-# Update covariant 4-velocity spatial terms \f$ U_i \f$ [evolve_hydro_velocities()]
+-# Update contravariant 3-velocity  \f$ V^i \f$ [evolve_hydro_velocities()]
+-# Update \f$ E \f$ with PdV work terms [evolve_hydro_pressurework()]
+-# Advection of \f$E\f$ and \f$ Z \f$ [advect_E() & advect_Z() or advect_halfsteps()]
 -# Evolve metric perturbations \f$ u_{ij} \f$ [evolve_uij()]
--# Advection of \f$E\f$ and \f$ Z \f$ [advect_E() & advect_Z()]
 -# Find temperature again [find_Ta()]
 
 ## Initial conditions with a given power spectrum INITPS

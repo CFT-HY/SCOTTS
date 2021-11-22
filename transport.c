@@ -744,10 +744,14 @@ void advect_Z(hydro_fields f, hydro_params p, int adv_order)
 }
 
 
-void advect(hydro_fields f, hydro_params p) {
+/** Perform advection for half timestep for both fields, then reverse order
+ *    of advection direction and advect second halfstep.
+ */
+void advect_halfsteps(hydro_fields f, hydro_params p) {
   p.dt = p.dt/2.0;
   advect_E(f, p, 0);
   advect_Z(f, p, 0);
+  // Shouldn't we update velocities here? From checking W&M I'm not sure?
   advect_E(f, p, 1);
   advect_Z(f, p, 1);
   p.dt = p.dt*2.0;
