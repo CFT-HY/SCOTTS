@@ -236,6 +236,9 @@ void alloc_fields(hydro_fields *f, hydro_params p) {
   // 4-velocity
   f->U = make_vector(p);
 
+  // Artificial viscosity vector.
+  f->Q = make_vector(p);
+
   // F is a temporary variable used in advection
   f->F = make_vector(p);
 #endif // SCALAR
@@ -293,6 +296,11 @@ void zero_fields(hydro_fields f, hydro_params p) {
     f.U[0][0][0][x] = 0.0000;
     f.U[1][0][0][x] = 0.0000;
     f.U[2][0][0][x] = 0.0000;
+
+    f.Q[0][0][0][x] = 0.0000;
+    f.Q[1][0][0][x] = 0.0000;
+    f.Q[2][0][0][x] = 0.0000;
+
 
     f.F[0][0][0][x] = 0.0000;
     f.F[1][0][0][x] = 0.0000;

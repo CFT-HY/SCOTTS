@@ -157,7 +157,9 @@ appears to have good energy conservation.
 -# Update \f$ Z \f$ with pressure acceleration [evolve_hydro_pressureacceleration()]
 -# Update covariant 4-velocity spatial terms \f$ U_i \f$ [evolve_hydro_velocities()]
 -# Update contravariant 3-velocity  \f$ V^i \f$ [evolve_hydro_velocities()]
--# Update \f$ E \f$ with PdV work terms [evolve_hydro_pressurework()]
+-# Calculate artificial viscosity vector, update some of Z and E artificial
+	viscosity terms. [evolve_hydro_artviscosity()]  
+-# Update \f$ E \f$ with PdV work terms (and final artificial viscosity term. [evolve_hydro_pressurework()]
 -# Advection of \f$E\f$ and \f$ Z \f$ [advect_E() & advect_Z() or advect_halfsteps()]
 -# Evolve metric perturbations \f$ u_{ij} \f$ [evolve_uij()]
 -# Find temperature again [find_Ta()]

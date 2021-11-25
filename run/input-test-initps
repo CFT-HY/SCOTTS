@@ -13,11 +13,15 @@ steps  200
 dx     1.0
 dt     0.2
  
-# Viscosity terms. Cav is the artificial viscosity
-# and is not currently used. C is the 'eta' term that
+# Viscosity terms.
+# kq is the quadratic viscosity coefficient in Anninos and Fragile (2002)
+# kl is the linear viscosity coefficient term in the same paper.
+# Non zero kl currently only allowed for BAG compilation.
+kq 0
+kl 0
+
+#C is the 'eta' term that
 # takes energy out of the field and into the fluid.
-# C = 0.63 gives vW = 0.44 with the code path.
-Cav    0.0
 C      0.63
 
 # Example potential parameters (int BAG case, dimensionful eta).
@@ -63,8 +67,7 @@ fftinterval 100
 uetcstart 500
 
 
-# Initial conditions; choices are "shocktube", "bubble" and "initps"; only
-# "bubble" should be currently used.
+# Initial conditions; choices are "shocktube", "bubble" and "initps"
 initial initps
 
 # Initps input files and options, unused if initial is not initps.

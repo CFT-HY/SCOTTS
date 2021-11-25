@@ -36,7 +36,8 @@ void get_parameters(char *infile, hydro_params *p)
 
   int set_steps = 0;
 
-  int set_Cav = 0;
+  int set_kl = 0;
+  int set_kq = 0;
   int set_C = 0;
 
   int set_alpha = 0;
@@ -170,9 +171,20 @@ void get_parameters(char *infile, hydro_params *p)
       p->steps = strtol(value,NULL,10);
       set_steps = 1;
     }
-    else if(!strcasecmp(key,"Cav")) {
-      p->Cav = strtof(value,NULL);
-      set_Cav = 1;
+    else if(!strcasecmp(key,"kl")) {
+      p->kl = strtof(value,NULL);
+#ifndef BAG
+      if(p->kl>0){
+	printf0(*p, "Speed of sound currently only implemented in BAG, kl must be"
+		" set to zero. Dieing. \n");
+	die(201);
+      }
+#endif
+      set_kl = 1;
+    }
+    else if(!strcasecmp(key,"kq")) {
+      p->kq = strtof(value,NULL);
+      set_kq = 1;
     }
     else if(!strcasecmp(key,"C")) {
       p->C = strtof(value,NULL);
@@ -561,7 +573,7 @@ void get_parameters(char *infile, hydro_params *p)
 
       if(access(value, R_OK) != 0) {
           printf0(*p ,"Unable to read initial power spectrum file \"%s\". will"
-		  "give up if initial is initps.\n",
+		  " give up if initial is initps.\n",
                   value);
           // Don't want to die as if not actually doing initps run
           // want to supply file.
@@ -647,8 +659,11 @@ void get_parameters(char *infile, hydro_params *p)
   } else if(!set_steps) {
     printf0(*p, "Did not set parameter \'steps\'\n");
     die(100);
-  } else if(!set_Cav) {
-    printf0(*p, "Did not set parameter \'Cav\'\n");
+  } else if(!set_kl) {
+    printf0(*p, "Did not set parameter \'kl\'\n");
+    die(100);
+  } else if(!set_kq) {
+    printf0(*p, "Did not set parameter \'kq\'\n");
     die(100);
   } else if(!set_C) {
     printf0(*p, "Did not set parameter \'C\'\n");
@@ -748,7 +763,7 @@ void get_parameters(char *infile, hydro_params *p)
     printf0(*p,"-- Read parameters from %s:\n"
 	    "-- dx %g, dt %g, steps %d\n"
 	    "-- Lx %d, Ly %d, Lz %d\n"
-	    "-- Cav %g, C %g,\n"
+	    "-- C %g, kq %g, kl %g\n"
 	    "-- alpha %g, gamma %g, lambda %g\n"
 	    "-- gstar %g\n"
 	    "-- T0 %g, Tconst %g\n"
@@ -764,7 +779,7 @@ void get_parameters(char *infile, hydro_params *p)
 	    infile,
 	    p->dx, p->dt, p->steps,
 	    p->Lx, p->Ly, p->Lz,
-	    p->Cav, p->C,
+	    p->C, p->kq, p->kl,
 	    p->alpha, p->gamma, p->lambda,
 	    p->gstar,
 	    p->T0, p->Tconst,

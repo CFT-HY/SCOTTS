@@ -604,6 +604,31 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step, int xcoord)
 
   free_vector(p, temp_vec);
 
+  //// Write all curl of artificial viscosity (Q) components slice:
+
+  if (p.kq > 0 || p.kl > 0){
+    // Qx slice
+    make_slice(f, p, xcoord, slice, f.Q[0]);
+    if(!p.rank) {
+      DBPutQuadvar1(dbfile, "Qx", "quadmesh", slice, meshsize, 2,
+		    NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+    }
+
+    // Qy slice
+    make_slice(f, p, xcoord, slice, f.Q[1]);
+    if(!p.rank) {
+      DBPutQuadvar1(dbfile, "Qy", "quadmesh", slice, meshsize, 2,
+		    NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+    }
+
+    // Qz slice
+    make_slice(f, p, xcoord, slice, f.Q[2]);
+    if(!p.rank) {
+      DBPutQuadvar1(dbfile, "Qz", "quadmesh", slice, meshsize, 2,
+		    NULL, 0, DB_FLOAT, DB_NODECENT, dboptlist);
+    }
+  }
+
 
 
 
