@@ -120,12 +120,19 @@ typedef struct {
    */
   int steps;
 
-  /** Artificial viscosity parameter.
+  /** Linear artificial viscosity constant.
    *
-   * NB: artificial viscosity not implemented yet!
+   * NB: Term proportional to this in artificial viscosity computation
+   * requires computation of speed of sound which is only implemented for BAG!
+   * Not allowed to be non zero in high_T because of this.
    */
-  float Cav;
+  float kl;
 
+  /** Quadratic artificial viscosity constant.
+   */
+  float kq;
+
+  
   /** C aka \f$ \eta \f$, the field viscosity
    */
   float C;
@@ -515,6 +522,10 @@ typedef struct {
    */
   float ****U;
 
+  /** `Q` is the artificial viscosity vector (see Anninos and Fragile 2002).
+   */
+  float ****Q;
+
   /** `F` is a temporary variable used in advection.
    */
   float ****F;
@@ -649,10 +660,8 @@ void evolve_hydro_fieldfluid(hydro_fields f, hydro_params p);
 void evolve_hydro_pressureacceleration(hydro_fields f, hydro_params p);
 void evolve_hydro_velocities(hydro_fields f, hydro_params p);
 void evolve_hydro_pressurework(hydro_fields f, hydro_params p);
+void evolve_hydro_artviscosity(hydro_fields f, hydro_params p);
 void evolve_uij(hydro_fields f, hydro_params p);
-
-// Not implemented yet
-void artificial_viscosity(hydro_fields f, int **nb, hydro_params p);
 
 // potential.c
 float Vf(hydro_params p, float T, float this_phi);

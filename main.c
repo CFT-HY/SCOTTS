@@ -453,6 +453,8 @@ int main(int argc, char* argv[])
 	  evolve_hydro_fieldfluid(f, p);
 	evolve_hydro_pressureacceleration(f, p);
 	evolve_hydro_velocities(f, p);
+	if ((p.kq > 0) || (p.kl > 0))
+	  evolve_hydro_artviscosity(f, p);
 	evolve_hydro_pressurework(f, p);
 	// Advection of state variables
 	//uncomment to advect half step and then reverse order.

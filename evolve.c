@@ -782,6 +782,9 @@ void evolve_hydro_pressurework(hydro_fields f, hydro_params p) {
 
   float qx, qy, qz, gradv;
   float divv;
+  float Qsq;
+  float Qsum;
+  float epsilon = 1e-20;
   
 
   // Section 3.4.6
@@ -799,6 +802,22 @@ void evolve_hydro_pressurework(hydro_fields f, hydro_params p) {
       }
     }
   }
+
+  // Artificial viscosity update to E which is proportional to dW/dt.
+  if ((p.kq > 0) || (p.kl > 0)){
+    for(x = 1; x <= p.slicex; x++) {
+      for(y = 1; y <= p.slicey; y++) {
+	for(z = 0; z < p.Lz; z++) {
+	  Qsq = (f.Q[0][x][y][z]*f.Q[0][x][y][z] + f.Q[1][x][y][z]*f.Q[1][x][y][z] +
+		 f.Q[2][x][y][z]*f.Q[2][x][y][z]);
+	  Qsum = (f.Q[0][x][y][z] + f.Q[1][x][y][z] + f.Q[2][x][y][z]+ epsilon);
+	  f.E[x][y][z] = f.E[x][y][z] - (f.W[x][y][z] - f.Wold[x][y][z])*Qsq/Qsum;
+	}
+      }
+    }
+  }
+
+	
 
 
   // Section 3.4.4 -- Update E with another pressure work term
@@ -846,16 +865,163 @@ void evolve_hydro_pressurework(hydro_fields f, hydro_params p) {
     }      
   }
 
-
+  
 
   halo_field(f.E, p);
   
 #endif // SCALAR
 }
 
+/** Partially evolve the hydro forward one step. In this function we update the
+ * artificial viscosity "scalar". We follow the method described in Anninos and
+ * Fragile 2002 for the artificial viscosity. We update the energy and momentum
+ * using the artificial viscosity terms, apart from the term for E which
+ * includes a dW/dt piece. This is done in evolve_hydropressurework.
+ *
+ * Set \Delta l = p.dx from Anninos and Fragile.
+ *
+ * Grid velocity is 0, lapse vector 0 and flat space.
+ */
+void evolve_hydro_artviscosity(hydro_fields f, hydro_params p)
+{
 
+#ifndef SCALAR
+  int x, y, z;
+  int dir, dx, dy, dz;
+  float*** dV = make_field(p);
+  float phi;
+  // Speed of sound.
+  // This is only a constant in BAG, needs to be implemented as a
+  // function for general eos.
+  float c_s = 1 / sqrt(3);
 
+  float Qnbplus;
+  float Qnbminus;
 
+  for (dir = 0; dir < 3; dir++) {
+    dx = 0;
+    dy = 0;
+    dz = 0;
+    if (dir == 0) {
+      dx = 1;
+    }
+    if (dir == 1) {
+      dy = 1;
+    }
+    if (dir == 2) {
+      dz = 1;
+    }
+
+    for (x = 1; x <= p.slicex; x++) {
+      for (y = 1; y <= p.slicey; y++) {
+        for (z = 0; z < p.Lz; z++) {
+          dV[x][y][z]
+              = (f.V[dir][x + dx][y + dy][(z + dz) % p.Lz] - f.V[dir][x][y][z]);
+        }
+      }
+    }
+
+    halo_field(dV, p);
+
+    for (x = 1; x <= p.slicex; x++) {
+      for (y = 1; y <= p.slicey; y++) {
+        for (z = 0; z < p.Lz; z++) {
+          if (dV[x][y][z] > 0) {
+            f.Q[dir][x][y][z] = 0;
+          } else {
+            if ((dV[x + dx][y + dy][(z + dz) % p.Lz] * dV[x][y][z] < 0)
+                || (dV[x - dx][y - dy][(z - dz + p.Lz) % p.Lz] * dV[x][y][z] < 0)
+                || (f.V[dir][x + dx][y + dy][(z + dz) % p.Lz] * f.V[dir][x][y][z]
+                    < 0)) {
+              phi = 0;
+            } else {
+              phi = 0.5;
+            }
+            // Possibly phi in else statement should equal 0.5 or 1.0? Or should
+            // we use something like minmod?
+
+            // In cosmos++ they have W||Q|| term as
+            // well as E*kappa piece.
+            f.Q[dir][x][y][z]
+                = (f.E[x][y][z] * f.kappa[x][y][z] * dV[x][y][z] * (1 - phi)
+                   * (p.kq * dV[x][y][z] * (1 - phi) - p.kl * c_s));
+          }
+        }
+      }
+    }
+  }
+  halo_field(f.Q[0], p);
+  halo_field(f.Q[1], p);
+  halo_field(f.Q[2], p);
+
+  // Now update E and Z with viscosity terms that don't involve dW/dt.
+  for (x = 1; x <= p.slicex; x++) {
+    for (y = 1; y <= p.slicey; y++) {
+      for (z = 0; z < p.Lz; z++) {
+
+        // First E.
+        // x derivative
+        f.E[x][y][z] = f.E[x][y][z]
+                       - f.Q[0][x][y][z]
+                             * (f.V[0][x + 1][y][z] * f.Wfacex[x + 1][y][z]
+                                - f.V[0][x][y][z] * f.Wfacex[x][y][z])
+                             * p.dt / p.dx;
+        // y derivative
+        f.E[x][y][z] = f.E[x][y][z]
+                       - f.Q[1][x][y][z]
+                             * (f.V[1][x][y + 1][z] * f.Wfacey[x][y + 1][z]
+                                - f.V[1][x][y][z] * f.Wfacey[x][y][z])
+                             * p.dt / p.dx;
+        // z derivative
+        f.E[x][y][z] = f.E[x][y][z]
+                       - f.Q[2][x][y][z]
+                             * (f.V[2][x][y][(z + 1) % p.Lz]
+                                    * f.Wfacez[x][y][(z + 1) % p.Lz]
+                                - f.V[2][x][y][z] * f.Wfacez[x][y][z])
+                             * p.dt / p.dx;
+
+        // Now Z.
+        // Zx (dQx/dx term)
+        Qnbplus = (f.Q[0][x][y][z] + f.Q[0][x][y - 1][z]
+                   + f.Q[0][x][y][(z - 1 + p.Lz) % p.Lz]
+                   + f.Q[0][x][y - 1][(z - 1 + p.Lz) % p.Lz]);
+        Qnbminus = (f.Q[0][x - 1][y][z] + f.Q[0][x - 1][y - 1][z]
+                    + f.Q[0][x - 1][y][(z - 1 + p.Lz) % p.Lz]
+                    + f.Q[0][x - 1][y - 1][(z - 1 + p.Lz) % p.Lz]);
+
+        f.Z[0][x][y][z]
+            = f.Z[0][x][y][z] - 0.25 * (Qnbplus - Qnbminus) * p.dt / p.dx;
+
+        // Zy (dQy/dy term)
+        Qnbplus = (f.Q[1][x][y][z] + f.Q[1][x - 1][y][z]
+                   + f.Q[1][x][y][(z - 1 + p.Lz) % p.Lz]
+                   + f.Q[1][x - 1][y][(z - 1 + p.Lz) % p.Lz]);
+        Qnbminus = (f.Q[1][x][y - 1][z] + f.Q[1][x - 1][y - 1][z]
+                    + f.Q[1][x][y - 1][(z - 1 + p.Lz) % p.Lz]
+                    + f.Q[1][x - 1][y - 1][(z - 1 + p.Lz) % p.Lz]);
+
+        f.Z[1][x][y][z]
+            = f.Z[1][x][y][z] - 0.25 * (Qnbplus - Qnbminus) * p.dt / p.dx;
+
+        // Zz (dQz/dz term)
+        Qnbplus = (f.Q[2][x][y][z] + f.Q[2][x - 1][y][z] + f.Q[2][x][y - 1][z]
+                   + f.Q[2][x - 1][y - 1][z]);
+        Qnbminus = (f.Q[2][x][y][(z - 1 + p.Lz) % p.Lz]
+                    + f.Q[2][x - 1][y][(z - 1 + p.Lz) % p.Lz]
+                    + f.Q[2][x][y - 1][(z - 1 + p.Lz) % p.Lz]
+                    + f.Q[2][x - 1][y - 1][(z - 1 + p.Lz) % p.Lz]);
+
+        f.Z[2][x][y][z]
+            = f.Z[2][x][y][z] - 0.25 * (Qnbplus - Qnbminus) * p.dt / p.dx;
+      }
+    }
+  }
+  halo_field(f.E, p);
+
+  free_field(p, dV);
+
+#endif // SCALAR
+}
 
 /** Evolve the metric perturbations and conjugate momenta using
  * the field+fluid system as a source.
