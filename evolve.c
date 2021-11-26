@@ -935,10 +935,9 @@ void evolve_hydro_artviscosity(hydro_fields f, hydro_params p)
                     < 0)) {
               phi = 0;
             } else {
-              phi = 0.5;
+              phi = p.klimit;
             }
-            // Possibly phi in else statement should equal 0.5 or 1.0? Or should
-            // we use something like minmod?
+            // Should we use something more like minmod rather than this hard limiter?
 
             // In cosmos++ they have W||Q|| term as
             // well as E*kappa piece.
@@ -1082,4 +1081,3 @@ void evolve_uij(hydro_fields f, hydro_params p) {
 
   free_tensor(p, Tij);
 }
-

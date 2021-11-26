@@ -19,6 +19,14 @@ dt     0.2
 # Non zero kl currently only allowed for BAG compilation.
 kq 0
 kl 0
+# klimit is coefficient between 0 and 1 used to limit artificial viscosity
+# in regions where partial_i V_i is monotonic.
+# If set to 0, artificial viscosity active wherever \partial_i V_i < 0. If set
+# to 1, it is only active where the V_i or \partial_i V_i changes
+# sign across a zone.
+# Values between 0 and 1 vary between these behaviours.
+klimit 0
+
 
 #C is the 'eta' term that
 # takes energy out of the field and into the fluid.

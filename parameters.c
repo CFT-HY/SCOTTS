@@ -38,6 +38,8 @@ void get_parameters(char *infile, hydro_params *p)
 
   int set_kl = 0;
   int set_kq = 0;
+  int set_klimit = 0;
+  
   int set_C = 0;
 
   int set_alpha = 0;
@@ -185,6 +187,10 @@ void get_parameters(char *infile, hydro_params *p)
     else if(!strcasecmp(key,"kq")) {
       p->kq = strtof(value,NULL);
       set_kq = 1;
+    }
+    else if(!strcasecmp(key,"klimit")) {
+      p->klimit = strtof(value,NULL);
+      set_klimit = 1;
     }
     else if(!strcasecmp(key,"C")) {
       p->C = strtof(value,NULL);
@@ -665,6 +671,9 @@ void get_parameters(char *infile, hydro_params *p)
   } else if(!set_kq) {
     printf0(*p, "Did not set parameter \'kq\'\n");
     die(100);
+  } else if(!set_klimit) {
+    printf0(*p, "Did not set parameter \'klimit\'\n");
+    die(100);
   } else if(!set_C) {
     printf0(*p, "Did not set parameter \'C\'\n");
     die(100);
@@ -763,7 +772,7 @@ void get_parameters(char *infile, hydro_params *p)
     printf0(*p,"-- Read parameters from %s:\n"
 	    "-- dx %g, dt %g, steps %d\n"
 	    "-- Lx %d, Ly %d, Lz %d\n"
-	    "-- C %g, kq %g, kl %g\n"
+	    "-- C %g, kq %g, kl %g, klimit %g\n"
 	    "-- alpha %g, gamma %g, lambda %g\n"
 	    "-- gstar %g\n"
 	    "-- T0 %g, Tconst %g\n"
@@ -779,7 +788,7 @@ void get_parameters(char *infile, hydro_params *p)
 	    infile,
 	    p->dx, p->dt, p->steps,
 	    p->Lx, p->Ly, p->Lz,
-	    p->C, p->kq, p->kl,
+	    p->C, p->kq, p->kl, p->klimit,
 	    p->alpha, p->gamma, p->lambda,
 	    p->gstar,
 	    p->T0, p->Tconst,
