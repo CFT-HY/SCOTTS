@@ -132,6 +132,13 @@ typedef struct {
    */
   float kq;
 
+  /** Coefficient in front of limiter in artificial viscosity calculation.
+   * If set to 0, Q_i active wherever \partial_i V_i < 0. If set to 1, only
+   * active where the velocity or \partial_i V_i changes sign across a zone.
+   * Values between 0 and 1 switches between these behaviours.
+   */
+  float klimit;
+
   
   /** C aka \f$ \eta \f$, the field viscosity
    */
