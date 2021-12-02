@@ -442,6 +442,9 @@ int main(int argc, char* argv[])
 	  */
         }
 
+	// Store lorentz factor for dW/dt terms
+	evolve_hydro_storeWold(f, p);
+	
 	// Do field step.
 	// If initial is INIT_PS, field is set in broken phase everywhere
 	// and won't evolve if compiled with BAG potential.
@@ -462,8 +465,11 @@ int main(int argc, char* argv[])
 	//advect_halfsteps(f, p); 
 	advect_E(f, p, adv_order);
 	advect_Z(f, p, adv_order);
-	//dump_max_min(f, p);
 	adv_order +=1;
+
+	// Evolve dW/dt terms.
+	evolve_hydro_boostfactor(f, p);
+	//dump_max_min(f, p);
 	// Solve for T.
 	if(p.initial != INIT_PS)
 	  find_Ta(f, p);

@@ -503,6 +503,27 @@ void evolve_hydro_pressureacceleration(hydro_fields f, hydro_params p) {
 
 /** Partially evolve the hydro forward one step following chapters 2 and 3 in
  * Wilson and Mathews. In this function we:
+ * -# Store the current value of the Lorentz factor \f$ W \f$ into f.Wold.
+ *
+ * Grid velocity is 0, lapse vector 0 and flat space.
+ */
+void evolve_hydro_storeWold(hydro_fields f, hydro_params p) {
+#ifndef SCALAR
+
+  int x, y, z;
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+	f.Wold[x][y][z] = f.W[x][y][z];
+      }
+    }
+  }
+  // Not needed as we don't ever access away from [x][y][z]
+  //halo_field(f.Wold[x][y][z], p);
+#endif
+}
+/** Partially evolve the hydro forward one step following chapters 2 and 3 in
+ * Wilson and Mathews. In this function we:
  * -# Update covariant 4 velocity spatial terms \f$ U_i \f$.
  * -# Update contravariant 3 velocity \f$ V^i \f$.
  * -# Update Lorentz factor \f$ W \f$.
@@ -736,7 +757,6 @@ void evolve_hydro_velocities(hydro_fields f, hydro_params p) {
 	//    if(x < 3 || x > p.N-3)
 	//      fprintf(stderr,"utildex %d = %lf\n", x, utildex);
      
-	f.Wold[x][y][z] = f.W[x][y][z];
 	f.W[x][y][z] = sqrt(1.0 
 			    + utildex*utildex 
 			    + utildey*utildey 
@@ -745,8 +765,6 @@ void evolve_hydro_velocities(hydro_fields f, hydro_params p) {
     }
   }
 
-
-  halo_field(f.Wold, p);
   halo_field(f.W, p);
 
   halo_field(f.Wfacex, p);
@@ -760,7 +778,8 @@ void evolve_hydro_velocities(hydro_fields f, hydro_params p) {
 
 /** Partially evolve the hydro forward one step following chapters 2 and 3 in
  * Wilson and Mathews. In this function we:
- * -# Update \f$ E \f$ with PdV work terms.
+ * -# Update \f$ E \f$ with PdV work terms, but not terms proportional to dW/dt,
+ * which are done in evolve_hydro_boostfactor.
  *
  * Grid velocity is 0, lapse vector 0 and flat space.
  *
@@ -782,13 +801,80 @@ void evolve_hydro_pressurework(hydro_fields f, hydro_params p) {
 
   float qx, qy, qz, gradv;
   float divv;
+  
+
+
+       
+  // Section 3.4.4 -- Update E with a pressure work term
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+
+	qx = (f.V[0][x+1][y][z] - f.V[0][x][y][z])/p.dx;
+	qy = (f.V[1][x][y+1][z] - f.V[1][x][y][z])/p.dx;
+	qz = (f.V[2][x][y][((z+1)%p.Lz)] - f.V[2][x][y][z])/p.dx;
+	
+	divv = qx + qy + qz;
+			
+	f.E[x][y][z] = f.E[x][y][z]
+	  *exp(-1.0*(f.kappa[x][y][z] - 1.0)*divv*p.dt);
+
+      }
+    }
+  }
+
+
+
+  //  halo_field(f.E, p);
+
+
+
+  // Last bit of 3.4.6 -- another pressure work term
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+
+	qx = (f.V[0][x][y][z] + f.V[0][x+1][y][z])
+	  *(f.Wfacex[x+1][y][z] - f.Wfacex[x][y][z])*p.dt/(2.0*p.dx);
+	
+	qy = (f.V[1][x][y][z] + f.V[1][x][y+1][z])
+	  *(f.Wfacey[x][y+1][z] - f.Wfacey[x][y][z])*p.dt/(2.0*p.dx);
+	
+	qz = (f.V[2][x][y][z] + f.V[2][x][y][((z+1)%p.Lz)])
+	  *(f.Wfacez[x][y][((z+1)%p.Lz)] - f.Wfacez[x][y][z])*p.dt/(2.0*p.dx);
+	
+	gradv = (qx+qy+qz)/f.W[x][y][z];
+	
+	f.E[x][y][z] = f.E[x][y][z]*exp(-1.0*(f.kappa[x][y][z]-1.0)*gradv);
+      }
+    }      
+  }
+
+  
+
+  halo_field(f.E, p);
+  
+#endif // SCALAR
+}
+
+/** Partially evolve the hydro forward one step. In this function we:
+ * -# Update \f$ E \f$ with terms proportional to dW/dt. 
+ *
+ * Should be called at the end of a step after updating f.W and storing f.Wold
+ * at the start of the step.
+ */
+void evolve_hydro_boostfactor(hydro_fields f, hydro_params p){
+
+#ifndef SCALAR
+
+  int x, y, z;
   float Qsq;
   float Qsum;
   float epsilon = 1e-20;
-  
 
+  
   // Section 3.4.6
-  // Update Lorentz factor f.W, then update E with first pressure work term.
+  // Update E with first pressure work term proportional to dW/dt.
   for(x = 1; x <= p.slicex; x++) {
     for(y = 1; y <= p.slicey; y++) {
       for(z = 0; z < p.Lz; z++) {
@@ -817,66 +903,16 @@ void evolve_hydro_pressurework(hydro_fields f, hydro_params p) {
     }
   }
 
-	
-
-
-  // Section 3.4.4 -- Update E with another pressure work term
-  for(x = 1; x <= p.slicex; x++) {
-    for(y = 1; y <= p.slicey; y++) {
-      for(z = 0; z < p.Lz; z++) {
-
-	qx = (f.V[0][x+1][y][z] - f.V[0][x][y][z])/p.dx;
-	qy = (f.V[1][x][y+1][z] - f.V[1][x][y][z])/p.dx;
-	qz = (f.V[2][x][y][((z+1)%p.Lz)] - f.V[2][x][y][z])/p.dx;
-	
-	divv = qx + qy + qz;
-			
-	f.E[x][y][z] = f.E[x][y][z]
-	  *exp(-1.0*(f.kappa[x][y][z] - 1.0)*divv*p.dt);
-
-      }
-    }
-  }
-
-
-
-  //  halo_field(f.E, p);
-
-
-
-  // Last bit of 3.4.6 -- last pressure work term
-  for(x = 1; x <= p.slicex; x++) {
-    for(y = 1; y <= p.slicey; y++) {
-      for(z = 0; z < p.Lz; z++) {
-
-	qx = (f.V[0][x][y][z] + f.V[0][x+1][y][z])
-	  *(f.Wfacex[x+1][y][z] - f.Wfacex[x][y][z])*p.dt/(2.0*p.dx);
-	
-	qy = (f.V[1][x][y][z] + f.V[1][x][y+1][z])
-	  *(f.Wfacey[x][y+1][z] - f.Wfacey[x][y][z])*p.dt/(2.0*p.dx);
-	
-	qz = (f.V[2][x][y][z] + f.V[2][x][y][((z+1)%p.Lz)])
-	  *(f.Wfacez[x][y][((z+1)%p.Lz)] - f.Wfacez[x][y][z])*p.dt/(2.0*p.dx);
-	
-	gradv = (qx+qy+qz)/f.W[x][y][z];
-	
-	f.E[x][y][z] = f.E[x][y][z]*exp(-1.0*(f.kappa[x][y][z]-1.0)*gradv);
-      }
-    }      
-  }
-
-  
-
   halo_field(f.E, p);
-  
-#endif // SCALAR
+#endif // !SCALAR
+
 }
 
 /** Partially evolve the hydro forward one step. In this function we update the
  * artificial viscosity "scalar". We follow the method described in Anninos and
  * Fragile 2002 for the artificial viscosity. We update the energy and momentum
  * using the artificial viscosity terms, apart from the term for E which
- * includes a dW/dt piece. This is done in evolve_hydropressurework.
+ * includes a dW/dt piece. This is done in evolve_hydro_boostfactor.
  *
  * Set \Delta l = p.dx from Anninos and Fragile.
  *

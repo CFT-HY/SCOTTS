@@ -150,6 +150,7 @@ with \f$\tilde{\eta}\f$ a constant set by `C` in the input parameter file.
 This is non unique and can be modified. This was settled on as it
 appears to have good energy conservation.
 
+-# Store lorentz factor at start of step [evolve_hydro_storeWold()]
 -# Scalar field is evolved [evolve_field()]
 -# Temperature, pressure and \f$\kappa\f$ calculated [eq_of_state()]
 -# Update \f$E\f$ and \f$Z \f$ with field-fluid interaction terms
@@ -158,9 +159,10 @@ appears to have good energy conservation.
 -# Update covariant 4-velocity spatial terms \f$ U_i \f$ [evolve_hydro_velocities()]
 -# Update contravariant 3-velocity  \f$ V^i \f$ [evolve_hydro_velocities()]
 -# Calculate artificial viscosity vector, update some of Z and E artificial
-	viscosity terms. [evolve_hydro_artviscosity()]  
--# Update \f$ E \f$ with PdV work terms (and final artificial viscosity term. [evolve_hydro_pressurework()]
+	viscosity terms. [evolve_hydro_artviscosity()]
+-# Update \f$ E \f$ with PdV work terms. (Not including dW/dt terms). [evolve_hydro_pressurework()]
 -# Advection of \f$E\f$ and \f$ Z \f$ [advect_E() & advect_Z() or advect_halfsteps()]
+-# Update \f$ E \f$ with dW/dt terms. [evolve_hydro_boostfactor()]
 -# Evolve metric perturbations \f$ u_{ij} \f$ [evolve_uij()]
 -# Find temperature again [find_Ta()]
 

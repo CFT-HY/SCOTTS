@@ -665,9 +665,11 @@ void evolve_backstep(hydro_fields f, hydro_params p);
 void evolve_field(hydro_fields f, hydro_params p);
 void evolve_hydro_fieldfluid(hydro_fields f, hydro_params p);
 void evolve_hydro_pressureacceleration(hydro_fields f, hydro_params p);
+void evolve_hydro_storeWold(hydro_fields f, hydro_params p);
 void evolve_hydro_velocities(hydro_fields f, hydro_params p);
 void evolve_hydro_pressurework(hydro_fields f, hydro_params p);
 void evolve_hydro_artviscosity(hydro_fields f, hydro_params p);
+void evolve_hydro_boostfactor(hydro_fields f, hydro_params p);
 void evolve_uij(hydro_fields f, hydro_params p);
 
 // potential.c
