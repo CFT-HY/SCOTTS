@@ -448,17 +448,33 @@ int main(int argc, char* argv[])
 	// Do field step.
 	// If initial is INIT_PS, field is set in broken phase everywhere
 	// and won't evolve if compiled with BAG potential.
-	if(p.initial != INIT_PS)
+	if(p.initial != INIT_PS){
+	  eq_of_state(f, p);
+	  evolve_hydro_velocities(f, p);
 	  evolve_field(f, p);
-	eq_of_state(f, p);
+	}
 	// Do the hydro bits
-	if(p.initial != INIT_PS)
+	if(p.initial != INIT_PS){
+	  eq_of_state(f, p);
+	  evolve_hydro_velocities(f, p);
 	  evolve_hydro_fieldfluid(f, p);
-	evolve_hydro_pressureacceleration(f, p);
-	evolve_hydro_velocities(f, p);
-	if ((p.kq > 0) || (p.kl > 0))
+	}
+	if ((p.kq > 0) || (p.kl > 0)){
+	  eq_of_state(f, p);
+	  evolve_hydro_velocities(f, p);
+	  eq_of_state(f, p);
 	  evolve_hydro_artviscosity(f, p);
+	}
+	eq_of_state(f, p);
+	evolve_hydro_velocities(f, p);
+	eq_of_state(f, p);
 	evolve_hydro_pressurework(f, p);
+
+	eq_of_state(f, p);
+	evolve_hydro_pressureacceleration(f, p);
+
+	eq_of_state(f, p);
+	evolve_hydro_velocities(f, p);	
 	// Advection of state variables
 	//uncomment to advect half step and then reverse order.
 	// In that case don't perform advect_E and advect_Z. 
@@ -468,20 +484,20 @@ int main(int argc, char* argv[])
 	adv_order +=1;
 
 	// Evolve dW/dt terms.
+	eq_of_state(f, p);
+	evolve_hydro_velocities(f, p);	
 	evolve_hydro_boostfactor(f, p);
+	
 	//dump_max_min(f, p);
-	// Solve for T.
-	if(p.initial != INIT_PS)
-	  find_Ta(f, p);
-
     
 	//printf0(p,"Evolved hydro \n");
 	//dump_max_min(f, p);
 
 	// Evolve metric perturbations
-	if (step >= p.metricstart) 
+	if (step >= p.metricstart){
+	  // Not sure if this needs its own eos and velocities call...
 	  evolve_uij(f, p);
-
+	}
 
 	t_sim += p.dt;
 
