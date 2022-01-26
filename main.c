@@ -442,6 +442,7 @@ int main(int argc, char* argv[])
 	  */
         }
 
+#ifndef CONSTSOURCE
 	// Do field step.
 	// If initial is INIT_PS, field is set in broken phase everywhere
 	// and won't evolve if compiled with BAG potential.
@@ -467,7 +468,7 @@ int main(int argc, char* argv[])
 	// Solve for T.
 	if(p.initial != INIT_PS)
 	  find_Ta(f, p);
-
+#endif
     
 	//printf0(p,"Evolved hydro \n");
 	//dump_max_min(f, p);
