@@ -304,6 +304,22 @@ void transport_E_dir(hydro_fields f, hydro_params p, int dir)
         if (f.V[dir][x][y][z] > 0) {
           r = delta[x - dx][y - dy][(z - dz + p.Lz) % p.Lz]
               / (delta[x][y][z] + epsilon);
+#ifdef NAN
+          if (isnan(r)){
+            printf(stderr,"Error, rank %d found that r is nan at local site "
+            "%d %d %d.\n",
+            p.rank,x,y,z);
+            die(999);
+          }
+#endif
+#ifdef INFINITY
+          if (isinf(r)){
+            printf(stderr,"Error, rank %d found that r is infinite at local site "
+            "%d %d %d.\n",
+            p.rank,x,y,z);
+            die(998);
+          }
+#endif
           phi = flux_limiter(r);
           f.F[dir][x][y][z] = (f.V[dir][x][y][z]
                                * (f.E[x - dx][y - dy][(z - dz + p.Lz) % p.Lz]
@@ -312,6 +328,22 @@ void transport_E_dir(hydro_fields f, hydro_params p, int dir)
         } else {
           r = delta[x + dx][y + dy][(z + dz) % p.Lz]
               / (delta[x][y][z] + epsilon);
+#ifdef NAN
+          if (isnan(r)){
+            printf(stderr,"Error, rank %d found that r is nan at local site "
+            "%d %d %d.\n",
+            p.rank,x,y,z);
+            die(999);
+          }
+#endif
+#ifdef INFINITY
+          if (isinf(r)){
+            printf(stderr,"Error, rank %d found that r is infinite at local site "
+            "%d %d %d.\n",
+            p.rank,x,y,z);
+            die(998);
+          }
+#endif
           phi = flux_limiter(r);
           f.F[dir][x][y][z] = (f.V[dir][x][y][z]
                                * (f.E[x][y][z]
@@ -439,6 +471,24 @@ void transport_Z_dir(hydro_fields f, hydro_params p, int dir)
           if (Vface >= 0.0) {
             r = delta[i][x - dx][y - dy][(z - dz + p.Lz) % p.Lz]
                 / (delta[i][x][y][z] + epsilon);
+#ifdef NAN
+            if (isnan(r)) {
+              printf(stderr,
+                     "Error, rank %d found that r is nan at local site "
+                     "%d %d %d.\n",
+                     p.rank, x, y, z);
+              die(999);
+            }
+#endif
+#ifdef INFINITY
+            if (isinf(r)) {
+              printf(stderr,
+                     "Error, rank %d found that r is infinite at local site "
+                     "%d %d %d.\n",
+                     p.rank, x, y, z);
+              die(998);
+            }
+#endif
             phi = flux_limiter(r);
             f.F[i][x][y][z]
                 = (Vface
@@ -447,6 +497,24 @@ void transport_Z_dir(hydro_fields f, hydro_params p, int dir)
           } else {
             r = delta[i][x + dx][y + dy][(z + dz) % p.Lz]
                 / (delta[i][x][y][z] + epsilon);
+#ifdef NAN
+            if (isnan(r)) {
+              printf(stderr,
+                     "Error, rank %d found that r is nan at local site "
+                     "%d %d %d.\n",
+                     p.rank, x, y, z);
+              die(999);
+            }
+#endif
+#ifdef INFINITY
+            if (isinf(r)) {
+              printf(stderr,
+                     "Error, rank %d found that r is infinite at local site "
+                     "%d %d %d.\n",
+                     p.rank, x, y, z);
+              die(998);
+            }
+#endif
             phi = flux_limiter(r);
             f.F[i][x][y][z]
                 = (Vface

@@ -26,6 +26,13 @@ int main(int argc, char* argv[])
 
 #endif // MPI
 
+#ifdef NAN
+    printf0(p, "NaN enabled for debugging\n");
+#endif
+#ifdef INFINITY
+    printf0(p, "Infinity enabled for debugging\n");
+#endif
+
     // Note that this is when main.c was rebuilt, not the whole thing!
     printf0(p, "Built: %s %s\n", __DATE__, __TIME__);
 
