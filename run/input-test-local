@@ -4,9 +4,9 @@
 # Note that if the simulation is checkpointed and restarts the cumulative
 # number of timesteps is counted, so 'steps' would (for example) need to
 # be increased if you wanted to run for longer.
-Lx      40
-Ly	40
-Lz      40
+Lx      512
+Ly	512
+Lz      512
 steps  1000
 
 # How big the simulation is: lattice spacing and timestep

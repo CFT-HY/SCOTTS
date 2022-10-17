@@ -24,6 +24,10 @@ float ***make_field(hydro_params p) {
   float *true_field = malloc((p.slicex+2)*(p.slicey+2)
 			      *(p.Lz)*sizeof(float));
 
+  if(true_field == NULL) {
+    fprintf(stderr, "Did not allocate memory!!!!\n");
+  }
+  
 
   float ***field = (float ***)malloc((p.slicex+2)*sizeof(float **));
   int x, y;
@@ -54,6 +58,11 @@ float ****make_vector(hydro_params p) {
   float *true_field = malloc(3*(p.slicex+2)*(p.slicey+2)
 			      *(p.Lz)*sizeof(float));
 
+  if(true_field == NULL) {
+    fprintf(stderr, "Did not allocate memory!!!!\n");
+  }
+
+  
   int x, y, i;
 
   float ****vector = (float ****) malloc(3*sizeof(float***));
@@ -91,6 +100,11 @@ float ****make_tensor(hydro_params p) {
    
   float *true_field = malloc(TENSOR_CPTS*(p.slicex+2)*(p.slicey+2)
 			      *(p.Lz)*sizeof(float));
+
+
+  if(true_field == NULL) {
+    fprintf(stderr, "Did not allocate memory!!!!\n");
+  }
 
   int x, y, i;
 
