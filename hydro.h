@@ -108,13 +108,13 @@ typedef struct {
 
   /** Number of lattice points in `x` direction.
    */
-  int Lx;
+  long long Lx;
   /** Number of lattice points in `y` direction.
    */
-  int Ly;
+  long long Ly;
   /** Number of lattice points in `z` direction.
    */
-  int Lz;
+  long long Lz;
 
   /* Number of timesteps in the simulation.
    */
