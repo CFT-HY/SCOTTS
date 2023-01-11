@@ -108,13 +108,13 @@ typedef struct {
 
   /** Number of lattice points in `x` direction.
    */
-  long long Lx;
+  unsigned long Lx;
   /** Number of lattice points in `y` direction.
    */
-  long long Ly;
+  unsigned long Ly;
   /** Number of lattice points in `z` direction.
    */
-  long long Lz;
+  unsigned long Lz;
 
   /* Number of timesteps in the simulation.
    */
@@ -374,7 +374,7 @@ typedef struct {
   /** Should we perform ffts/uetcs of shear stress?
    */
   int fft_shst;
-    
+ 
   /** Surface tension \f$ \sigma \f$ for the bubble.
    *
    *  \f[
