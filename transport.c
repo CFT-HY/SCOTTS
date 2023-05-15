@@ -36,12 +36,20 @@
 #ifdef MONOCENT
 #define FL6 1
 #endif
+#ifdef LAXWENDROFF
+#define FL7 1
+#endif
+#ifdef DONOR
+#define FL8 1
+#endif
 
-#if (FL1 + FL2 + FL3 + FL4 + FL5 + FL6 == 1)
+#if (FL1 + FL2 + FL3 + FL4 + FL5 + FL6 + FL7 + FL8 == 1)
 #define TRANSPORT
-#elif (FL1 + FL2 + FL3 + FL4 + FL5 + FL6 > 1)
+#elif (FL1 + FL2 + FL3 + FL4 + FL5 + FL6 + FL7 + FL8 > 1)
 #error "Only one flux limiter compilation option allowed."
 #endif
+
+
 
 /** Donor cell advection for `f.E` in direction `dir`.
  *
@@ -217,6 +225,32 @@ void donor_Z_dir(hydro_fields f, hydro_params p, int dir)
 #endif
 }
 
+
+/** Safe division routine to avoid precision issues
+ *
+ */
+static inline float safe_division(float nom, float denom){
+  float epsilon = 1e-20;
+  float epsilonInv = 1e20;
+  if (fabs(nom) < epsilon){
+
+    nom = 0.0f;
+    denom = 1.0f;
+
+  } else if ((nom > epsilon) && (fabs(denom) < epsilon)){
+
+    nom = epsilonInv; 
+    denom = 1.0f;
+
+  } else if ((nom < -epsilon) && (fabs(denom)<epsilon)){
+
+    nom = -epsilonInv;
+    denom = 1.0f;
+
+  }
+  return nom/denom;
+}
+
 /** Flux limiter, multiple options that can be specified using compiler flags.
  * An attempt to go beyond the Van Leer limiter from Anninos and Fragile.
  *
@@ -224,21 +258,21 @@ void donor_Z_dir(hydro_fields f, hydro_params p, int dir)
 static inline float flux_limiter(float r)
 {
 #if defined VANLEER
-  if (r > 0) {
-    return 2 * r / (1 + r);
-  } else {
-    return 0;
-  }
+  return (r >= 0.0f) ? ( r + fabs(r) ) / ( 1.0f + fabs(r) ) : 0.0f;
 #elif defined SUPERBEE
-  return fmaxf(fmaxf(0, fminf(2 * r, 1)), fminf(r, 2));
+  return fmaxf(fmaxf(0.0f, fminf(2.0f * r, 1.0f)), fminf(r, 2.0f));
 #elif defined MINMOD
-  return fmaxf(0, fminf(1, r));
+  return fmaxf(0.0f, fminf(1.0f, r));
 #elif defined OSPRE
-  return 1.5 * (r * (r + 1)) / (r * (r + 1) + 1);
+  return 1.5f * (r * (r + 1.0f)) / (r * (r + 1.0f) + 1.0f);
 #elif defined VANALBADA
-  return r * (r + 1) / (r * r + 1);
+  return r * (r + 1.0f) / (r * r + 1.0f);
 #elif defined MONOCENT
-  return fmaxf(0, fminf(0.5 * (r + 1), fminf(2 * r, 2)));
+  return fmaxf(0.0f, fminf(0.5f * (r + 1.0f), fminf(2.0f * r, 2.0f)));
+#elif defined DONOR
+  return 0.0f;
+#elif defined LAXWENDROFF
+  return 1.0f;
 #else
   fprintf(stderr, "In flux limiter but no flux scheme defined.\n"
                   "Should never reach here, dying\n");
@@ -259,12 +293,11 @@ void transport_E_dir(hydro_fields f, hydro_params p, int dir)
 {
 #ifndef SCALAR
   int x, y, z;
-  float r;
+  float r, nom, denom;
   float phi;
   float*** delta = make_field(p);
   // Guarding against division by zero when constructing the flux limiter
   // argument r. Either because Delta is exactly zero or denormalised.
-  float epsilon = 1e-20;
   //  halo_field(f.V[dir],p);
   //  halo_field(f.E,p);
   int dx = 0;
@@ -302,16 +335,18 @@ void transport_E_dir(hydro_fields f, hydro_params p, int dir)
     for (y = 1; y <= p.slicey; y++) {
       for (z = 0; z < p.Lz; z++) {
         if (f.V[dir][x][y][z] > 0) {
-          r = delta[x - dx][y - dy][(z - dz + p.Lz) % p.Lz]
-              / (delta[x][y][z] + epsilon);
+          nom = delta[x - dx][y - dy][(z - dz + p.Lz) % p.Lz];
+          denom = delta[x][y][z];
+          r = safe_division(nom,denom);
           phi = flux_limiter(r);
           f.F[dir][x][y][z] = (f.V[dir][x][y][z]
                                * (f.E[x - dx][y - dy][(z - dz + p.Lz) % p.Lz]
                                   + 0.5 * (p.dx - f.V[dir][x][y][z] * p.dt) * phi
                                         * delta[x][y][z]));
         } else {
-          r = delta[x + dx][y + dy][(z + dz) % p.Lz]
-              / (delta[x][y][z] + epsilon);
+          nom = delta[x + dx][y + dy][(z + dz) % p.Lz];
+          denom = delta[x][y][z];
+          r = safe_division(nom,denom);
           phi = flux_limiter(r);
           f.F[dir][x][y][z] = (f.V[dir][x][y][z]
                                * (f.E[x][y][z]
@@ -327,6 +362,8 @@ void transport_E_dir(hydro_fields f, hydro_params p, int dir)
   for (x = 1; x <= p.slicex; x++) {
     for (y = 1; y <= p.slicey; y++) {
       for (z = 0; z < p.Lz; z++) {
+
+	//3-12
         f.E[x][y][z]
             = f.E[x][y][z]
               + p.dt
@@ -363,11 +400,12 @@ void transport_Z_dir(hydro_fields f, hydro_params p, int dir)
   int ycell1, ycell2, ycell3;
   int zcell1, zcell2, zcell3;
 
-  float r;
+  float r, nom, denom;
   float phi;
   // Guarding against division by zero when constructing the flux limiter
   // argument r. Either because Delta is exactly zero or denormalised.
   float epsilon = 1e-20;
+  float epsilonInv = 1e20;
   int dx = 0;
   int dy = 0;
   int dz = 0;
@@ -437,17 +475,21 @@ void transport_Z_dir(hydro_fields f, hydro_params p, int dir)
                            [(zcell3 - dz + p.Lz) % p.Lz]));
         for (i = 0; i < 3; i++) {
           if (Vface >= 0.0) {
-            r = delta[i][x - dx][y - dy][(z - dz + p.Lz) % p.Lz]
-                / (delta[i][x][y][z] + epsilon);
+            nom = delta[i][x - dx][y - dy][(z - dz + p.Lz) % p.Lz];
+            denom = delta[i][x][y][z];
+            r = safe_division(nom, denom);
             phi = flux_limiter(r);
+
             f.F[i][x][y][z]
                 = (Vface
                    * (f.Z[i][x - dx][y - dy][(z - dz + p.Lz) % p.Lz]
                       + 0.5 * (p.dx - Vface * p.dt) * phi * delta[i][x][y][z]));
           } else {
-            r = delta[i][x + dx][y + dy][(z + dz) % p.Lz]
-                / (delta[i][x][y][z] + epsilon);
+            nom = delta[i][x + dx][y + dy][(z + dz) % p.Lz];
+            denom = delta[i][x][y][z];
+            r = safe_division(nom, denom);
             phi = flux_limiter(r);
+
             f.F[i][x][y][z]
                 = (Vface
                    * (f.Z[i][x][y][z]
@@ -506,6 +548,7 @@ void transport_Z_WM_dir(hydro_fields f, hydro_params p, int dir)
   // Guarding against division by zero when constructing the flux limiter
   // argument r. Either because Delta is exactly zero or denormalised.
   float epsilon = 1e-20;
+  float epsilonInv = 1e20;
 
   int x, y, z, i;
   int dx = 0;
