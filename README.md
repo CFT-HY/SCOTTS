@@ -241,7 +241,7 @@ damping couplings.
 * `-DBAG` : Use bag model for equation of state/potential instead of
 EIKR formalism.
 
-* One of `-DVANLEER`, `-DMINMOD`, `-DSUPERBEE`, `-DMODCENT`, `-DOSPRE`,
+* One of `-DVANLEER`, `-DMINMOD`, `-DSUPERBEE`, `-DMONOCENT`, `-DOSPRE`,
   `-DVANALBADA`: Use second order flux reconstruction with the corresponding
   flux limiter for the advection. If none of the above is defined, just use donor cell.
 * `-DWMMOMADVECT`: perform advection of momentum according to procedure outlined

@@ -760,6 +760,7 @@ float minof3(float a, float b, float c);
 int minof3_int(int a, int b, int c);
 float maxof3(float a, float b, float c);
 float minof2(float a, float b);
+float clamp_min(float d, float min);
 
 
 #ifdef FFT
