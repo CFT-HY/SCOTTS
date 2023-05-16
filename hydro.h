@@ -705,6 +705,7 @@ int try_nucleate(hydro_fields f, hydro_params p);
 int bubbles_at_step(hydro_fields f, hydro_params p, float t, int step);
 void init_profile(hydro_fields *f, hydro_params *p);
 void fluid_sphere(hydro_fields f, hydro_params p);
+void shock_tube(hydro_fields f, hydro_params p);
 
 
 // output.c

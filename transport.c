@@ -230,8 +230,9 @@ void donor_Z_dir(hydro_fields f, hydro_params p, int dir)
  *
  */
 static inline float safe_division(float nom, float denom){
-  float epsilon = 1e-20;
+  float epsilon = 1e-7;
   float epsilonInv = 1e20;
+#ifndef OLDDIV
   if (fabs(nom) < epsilon){
 
     nom = 0.0f;
@@ -249,6 +250,9 @@ static inline float safe_division(float nom, float denom){
 
   }
   return nom/denom;
+#else
+  return nom / (denom + epsilon);
+#endif
 }
 
 /** Flux limiter, multiple options that can be specified using compiler flags.
@@ -258,15 +262,15 @@ static inline float safe_division(float nom, float denom){
 static inline float flux_limiter(float r)
 {
 #if defined VANLEER
-  return (r >= 0.0f) ? ( r + fabs(r) ) / ( 1.0f + fabs(r) ) : 0.0f;
+  return (r > 0.0f) ? safe_division( r + fabs(r)  , 1.0f + fabs(r) ) : 0.0f;
 #elif defined SUPERBEE
   return fmaxf(fmaxf(0.0f, fminf(2.0f * r, 1.0f)), fminf(r, 2.0f));
 #elif defined MINMOD
   return fmaxf(0.0f, fminf(1.0f, r));
 #elif defined OSPRE
-  return 1.5f * (r * (r + 1.0f)) / (r * (r + 1.0f) + 1.0f);
+  return (r > 0.0f) ? (1.5f * (r * (r + 1.0f)) )/( (r * (r + 1.0f) + 1.0f) ): 0.0f;
 #elif defined VANALBADA
-  return r * (r + 1.0f) / (r * r + 1.0f);
+  return (r > 0.0f) ?( r + powf(r,2.0f) )/( 1.0f + powf(r,2.0f)): 0.0f;
 #elif defined MONOCENT
   return fmaxf(0.0f, fminf(0.5f * (r + 1.0f), fminf(2.0f * r, 2.0f)));
 #elif defined DONOR

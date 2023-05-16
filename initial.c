@@ -452,3 +452,42 @@ void fluid_sphere(hydro_fields f, hydro_params p){
 #endif 
 }
 
+/** Initialises a shock tube of fluid with two shocks propagating inwards. 
+ *
+ * Keeps field in symmetric phase everywhere. E and p are set accordingly.
+ */
+void shock_tube(hydro_fields f, hydro_params p){
+#ifdef SCALAR
+  printf0(p, "Error - shock tube incompatible with SCALAR compiler flag, "
+	  "exiting...");
+  die(100);
+#else
+  int x, y, z;
+  
+  
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+
+
+	// Symmetric
+	f.phi[x][y][z] = 0;
+
+	// f = condition ? lhs : rhs
+	// Aninnos Fragile shock tube
+	// but doubled (two high pressure/density regions
+	// on the outside of the domain) due to periodic boundary
+	// Low Boost factor
+	// E = condition ? 10 : 1 	
+	// p = condition ? 13 : 10^-6 	
+	f.E[x][y][z] = (z <= p.Lz/5.0f || z >= 4.0f*p.Lz/5.0f) ? 10.0 : 1.0;
+	f.p[x][y][z] = (z <= p.Lz/5.0f || z >= 4.0f*p.Lz/5.0f ) ? 13.0 : powf(10.0f, 6.0f);
+	
+      }
+    }
+  }
+  halo_field(f.E,p);
+  halo_field(f.p,p);
+#endif 
+}
+

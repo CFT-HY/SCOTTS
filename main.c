@@ -251,9 +251,11 @@ int main(int argc, char* argv[])
                 initial_blank(f, p);
             }
         } else if (p.initial == INIT_SHOCK_TUBE) {
-            fprintf(stderr,
-                    "Sorry, shocktube is not implemented! Exiting... \n");
-            die(100);
+            initial_blank(f, p);
+            // fprintf(stderr,
+            //         "Sorry, shocktube is not implemented! Exiting... \n");
+            // die(100);
+            shock_tube(f, p);
         } else if (p.initial == INIT_FLUID_SPHERE) {
             initial_blank(f, p);
             // Create a sphere of fluid at origin of the simulation box.
