@@ -374,6 +374,8 @@ void transport_E_dir(hydro_fields f, hydro_params p, int dir)
             printf(stderr,"Error, rank %d found that r is nan at local site "
             "%d %d %d.\n",
             p.rank,x,y,z);
+            write_silo_slice_step(f, p, -1, p.shiftx + x -1);
+            MPI_Barrier(MPI_COMM_WORLD);
             die(999);
           }
 #endif
@@ -382,6 +384,8 @@ void transport_E_dir(hydro_fields f, hydro_params p, int dir)
             printf(stderr,"Error, rank %d found that r is infinite at local site "
             "%d %d %d.\n",
             p.rank,x,y,z);
+            write_silo_slice_step(f, p, -1, p.shiftx + x -1);
+            MPI_Barrier(MPI_COMM_WORLD);
             die(998);
           }
 #endif
@@ -399,6 +403,8 @@ void transport_E_dir(hydro_fields f, hydro_params p, int dir)
             printf(stderr,"Error, rank %d found that r is nan at local site "
             "%d %d %d.\n",
             p.rank,x,y,z);
+            write_silo_slice_step(f, p, -1, p.shiftx + x -1);
+            MPI_Barrier(MPI_COMM_WORLD);
             die(999);
           }
 #endif
@@ -407,6 +413,8 @@ void transport_E_dir(hydro_fields f, hydro_params p, int dir)
             printf(stderr,"Error, rank %d found that r is infinite at local site "
             "%d %d %d.\n",
             p.rank,x,y,z);
+            write_silo_slice_step(f, p, -1, p.shiftx + x -1);
+            MPI_Barrier(MPI_COMM_WORLD);
             die(998);
           }
 #endif
@@ -546,6 +554,8 @@ void transport_Z_dir(hydro_fields f, hydro_params p, int dir)
             printf(stderr,"Error, rank %d found that r is nan at local site "
             "%d %d %d.\n",
             p.rank,x,y,z);
+            write_silo_slice_step(f, p, -1, p.shiftx + x -1);
+            MPI_Barrier(MPI_COMM_WORLD);
             die(999);
           }
 #endif
@@ -554,6 +564,8 @@ void transport_Z_dir(hydro_fields f, hydro_params p, int dir)
             printf(stderr,"Error, rank %d found that r is infinite at local site "
             "%d %d %d.\n",
             p.rank,x,y,z);
+            write_silo_slice_step(f, p, -1, p.shiftx + x -1);
+            MPI_Barrier(MPI_COMM_WORLD);
             die(998);
           }
 #endif
@@ -572,6 +584,8 @@ void transport_Z_dir(hydro_fields f, hydro_params p, int dir)
             printf(stderr,"Error, rank %d found that r is nan at local site "
             "%d %d %d.\n",
             p.rank,x,y,z);
+            write_silo_slice_step(f, p, -1, p.shiftx + x -1);
+            MPI_Barrier(MPI_COMM_WORLD);
             die(999);
           }
 #endif
@@ -580,6 +594,8 @@ void transport_Z_dir(hydro_fields f, hydro_params p, int dir)
             printf(stderr,"Error, rank %d found that r is infinite at local site "
             "%d %d %d.\n",
             p.rank,x,y,z);
+            write_silo_slice_step(f, p, -1, p.shiftx + x -1);
+            MPI_Barrier(MPI_COMM_WORLD);
             die(998);
           }
 #endif
