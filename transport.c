@@ -42,10 +42,13 @@
 #ifdef DONOR
 #define FL8 1
 #endif
+#ifdef SGVL
+#define FL9 1
+#endif
 
-#if (FL1 + FL2 + FL3 + FL4 + FL5 + FL6 + FL7 + FL8 == 1)
+#if (FL1 + FL2 + FL3 + FL4 + FL5 + FL6 + FL7 + FL8 + FL9== 1)
 #define TRANSPORT
-#elif (FL1 + FL2 + FL3 + FL4 + FL5 + FL6 + FL7 + FL8 > 1)
+#elif (FL1 + FL2 + FL3 + FL4 + FL5 + FL6 + FL7 + FL8 + FL9 > 1)
 #error "Only one flux limiter compilation option allowed."
 #endif
 
@@ -255,6 +258,24 @@ static inline float safe_division(float nom, float denom){
 #endif
 }
 
+/** Find the minimum of three numbers, used in SGVL limiter
+ */
+static inline float min3(float a, float b, float c){
+  float minVar = 0.0f;
+	if(a<b){
+		if(a<c)
+      minVar = a;
+	}
+	else if(b<c){
+      minVar = b;
+  }
+  else{
+      minVar = c;
+  }
+  return minVar;
+
+}
+
 /** Flux limiter, multiple options that can be specified using compiler flags.
  * An attempt to go beyond the Van Leer limiter from Anninos and Fragile.
  *
@@ -277,6 +298,12 @@ static inline float flux_limiter(float r)
   return 0.0f;
 #elif defined LAXWENDROFF
   return 1.0f;
+#elif defined SGVL
+  // Symmetric Generalized Van Leer
+  float M = 1.5;
+  float temp = fmaxf( M*r/(r+M-1.0f) , (M*r/((M-1.0f)*r+1.0f ) ) );
+  float temp2 = fminf(2.0f, M);
+  return fmaxf(0.0f, min3( temp2 , temp2*r, temp));
 #else
   fprintf(stderr, "In flux limiter but no flux scheme defined.\n"
                   "Should never reach here, dying\n");
@@ -342,6 +369,22 @@ void transport_E_dir(hydro_fields f, hydro_params p, int dir)
           nom = delta[x - dx][y - dy][(z - dz + p.Lz) % p.Lz];
           denom = delta[x][y][z];
           r = safe_division(nom,denom);
+#ifdef NAN
+          if (isnan(r)){
+            printf(stderr,"Error, rank %d found that r is nan at local site "
+            "%d %d %d.\n",
+            p.rank,x,y,z);
+            die(999);
+          }
+#endif
+#ifdef INFINITY
+          if (isinf(r)){
+            printf(stderr,"Error, rank %d found that r is infinite at local site "
+            "%d %d %d.\n",
+            p.rank,x,y,z);
+            die(998);
+          }
+#endif
           phi = flux_limiter(r);
           f.F[dir][x][y][z] = (f.V[dir][x][y][z]
                                * (f.E[x - dx][y - dy][(z - dz + p.Lz) % p.Lz]
@@ -351,6 +394,22 @@ void transport_E_dir(hydro_fields f, hydro_params p, int dir)
           nom = delta[x + dx][y + dy][(z + dz) % p.Lz];
           denom = delta[x][y][z];
           r = safe_division(nom,denom);
+#ifdef NAN
+          if (isnan(r)){
+            printf(stderr,"Error, rank %d found that r is nan at local site "
+            "%d %d %d.\n",
+            p.rank,x,y,z);
+            die(999);
+          }
+#endif
+#ifdef INFINITY
+          if (isinf(r)){
+            printf(stderr,"Error, rank %d found that r is infinite at local site "
+            "%d %d %d.\n",
+            p.rank,x,y,z);
+            die(998);
+          }
+#endif
           phi = flux_limiter(r);
           f.F[dir][x][y][z] = (f.V[dir][x][y][z]
                                * (f.E[x][y][z]
@@ -482,6 +541,22 @@ void transport_Z_dir(hydro_fields f, hydro_params p, int dir)
             nom = delta[i][x - dx][y - dy][(z - dz + p.Lz) % p.Lz];
             denom = delta[i][x][y][z];
             r = safe_division(nom, denom);
+#ifdef NAN
+          if (isnan(r)){
+            printf(stderr,"Error, rank %d found that r is nan at local site "
+            "%d %d %d.\n",
+            p.rank,x,y,z);
+            die(999);
+          }
+#endif
+#ifdef INFINITY
+          if (isinf(r)){
+            printf(stderr,"Error, rank %d found that r is infinite at local site "
+            "%d %d %d.\n",
+            p.rank,x,y,z);
+            die(998);
+          }
+#endif
             phi = flux_limiter(r);
 
             f.F[i][x][y][z]
@@ -492,6 +567,22 @@ void transport_Z_dir(hydro_fields f, hydro_params p, int dir)
             nom = delta[i][x + dx][y + dy][(z + dz) % p.Lz];
             denom = delta[i][x][y][z];
             r = safe_division(nom, denom);
+#ifdef NAN
+          if (isnan(r)){
+            printf(stderr,"Error, rank %d found that r is nan at local site "
+            "%d %d %d.\n",
+            p.rank,x,y,z);
+            die(999);
+          }
+#endif
+#ifdef INFINITY
+          if (isinf(r)){
+            printf(stderr,"Error, rank %d found that r is infinite at local site "
+            "%d %d %d.\n",
+            p.rank,x,y,z);
+            die(998);
+          }
+#endif
             phi = flux_limiter(r);
 
             f.F[i][x][y][z]
