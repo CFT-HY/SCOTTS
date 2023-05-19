@@ -241,10 +241,13 @@ damping couplings.
 EIKR formalism.
 
 * One of `-DVANLEER`, `-DMINMOD`, `-DSUPERBEE`, `-DMONOCENT`, `-DOSPRE`,
-  `-DVANALBADA` `-DLAXWENDROFF` `-DDONOR` `-DSGVL`: Use second order flux reconstruction with the corresponding
+  `-DVANALBADA`, `-DLAXWENDROFF`, `-DDONOR`, `-DSGVL`, `-DSGVA`: Use second order flux reconstruction with the corresponding
+
   flux limiter for the advection. If none of the above is defined, just use donor cell.
 * `-DWMMOMADVECT`: perform advection of momentum according to procedure outlined
   in Wilson and Mathews. Not valid with donor cell. 
+
+* Added the -DOLD_DIVISION flag to use numerator / (denominator+epsilon) division for computing the ratio of gradients `r`.
 
 * In case second order flux reconstruction is used, `-DNAN` and `-DINFINITY` can specified to check for
   the ratio of gradients `r` being either nan or inf, respectfully.
