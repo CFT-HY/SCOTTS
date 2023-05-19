@@ -45,10 +45,13 @@
 #ifdef SGVL
 #define FL9 1
 #endif
+#ifdef SGVA
+#define FL10 1
+#endif
 
-#if (FL1 + FL2 + FL3 + FL4 + FL5 + FL6 + FL7 + FL8 + FL9== 1)
+#if (FL1 + FL2 + FL3 + FL4 + FL5 + FL6 + FL7 + FL8 + FL9 + FL10 == 1)
 #define TRANSPORT
-#elif (FL1 + FL2 + FL3 + FL4 + FL5 + FL6 + FL7 + FL8 + FL9 > 1)
+#elif (FL1 + FL2 + FL3 + FL4 + FL5 + FL6 + FL7 + FL8 + FL9 + FL10 > 1)
 #error "Only one flux limiter compilation option allowed."
 #endif
 
@@ -258,7 +261,7 @@ static inline float safe_division(float nom, float denom){
 #endif
 }
 
-/** Find the minimum of three numbers, used in SGVL limiter
+/** Find the minimum of three numbers, used in SGVL/SGVA limiter
  */
 static inline float min3(float a, float b, float c){
   float minVar = 0.0f;
@@ -304,6 +307,12 @@ static inline float flux_limiter(float r)
   float temp = fmaxf( M*r/(r+M-1.0f) , (M*r/((M-1.0f)*r+1.0f ) ) );
   float temp2 = fminf(2.0f, M);
   return fmaxf(0.0f, min3( temp2 , temp2*r, temp));
+#elif defined SGVA
+  // Symmetric Generalized Van Albada
+  float beta = 1.5;
+  float temp = r * (r + beta) / (powf(r,2.0f) + beta);
+  float temp2 = r * (beta * r + 1.0f) / (beta * powf(r, 2.0f) + 1.0f);
+  return fmaxf(0.0f, min3(2.0f, 2.0f * r, fmaxf(temp, temp2) ));
 #else
   fprintf(stderr, "In flux limiter but no flux scheme defined.\n"
                   "Should never reach here, dying\n");
@@ -655,7 +664,7 @@ void transport_Z_WM_dir(hydro_fields f, hydro_params p, int dir)
 #ifndef SCALAR
 
   float phi;
-  float r;
+  float r, nom, denom;
   // Guarding against division by zero when constructing the flux limiter
   // argument r. Either because Delta is exactly zero or denormalised.
   float epsilon = 1e-20;
@@ -793,16 +802,18 @@ void transport_Z_WM_dir(hydro_fields f, hydro_params p, int dir)
         for (i = 0; i < 3; i++) {
 
           if (Vface >= 0.0) {
-            r = delta[i][x - dx][y - dy][(z - dz + p.Lz) % p.Lz]
-                / (delta[i][x][y][z] + epsilon);
+            nom = delta[i][x - dx][y - dy][(z - dz + p.Lz) % p.Lz];
+            denom = delta[i][x][y][z];
+            r = safe_division(nom, denom);
             phi = flux_limiter(r);
             F_node_Z[i][x][y][z]
                 = F_node
                   * (f.U[i][x - dx][y - dy][(z - dz + p.Lz) % p.Lz]
                      + 0.5 * (p.dx - Vface * p.dt) * phi * delta[i][x][y][z]);
           } else {
-            r = delta[i][x + dx][y + dy][(z + dz) % p.Lz]
-                / (delta[i][x][y][z] + epsilon);
+            nom = delta[i][x + dx][y + dy][(z + dz) % p.Lz];
+            denom = delta[i][x][y][z];
+            r = safe_division(nom, denom);
             phi = flux_limiter(r);
             F_node_Z[i][x][y][z]
                 = F_node
