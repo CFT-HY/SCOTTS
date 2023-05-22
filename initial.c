@@ -473,15 +473,11 @@ void shock_tube(hydro_fields f, hydro_params p){
 	// Symmetric
 	f.phi[x][y][z] = 0;
 
-	// f = condition ? lhs : rhs
-	// Aninnos Fragile shock tube
-	// but doubled (two high pressure/density regions
-	// on the outside of the domain) due to periodic boundary
-	// Low Boost factor
-	// E = condition ? 10 : 1 	
-	// p = condition ? 13 : 10^-6 	
-	f.E[x][y][z] = (z <= p.Lz/5.0f || z >= 4.0f*p.Lz/5.0f) ? 10.0 : 1.0;
-	f.p[x][y][z] = (z <= p.Lz/5.0f || z >= 4.0f*p.Lz/5.0f ) ? 13.0 : powf(10.0f, 6.0f);
+	f.T[x][y][z] = (z <= p.Lz/5.0f || z >= 4.0f*p.Lz/5.0f) ? p.T_central : p.Tconst;
+	f.E[x][y][z] = (3.0*p.gdeg*f.T[x][y][z]*f.T[x][y][z]
+			*f.T[x][y][z]*f.T[x][y][z]
+			+ Vf(p, f.T[x][y][z], f.phi[x][y][z])
+			- f.T[x][y][z]*VTf(p, f.T[x][y][z], f.phi[x][y][z]));
 	
       }
     }

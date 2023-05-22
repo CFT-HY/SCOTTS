@@ -237,7 +237,7 @@ void donor_Z_dir(hydro_fields f, hydro_params p, int dir)
  */
 static inline float safe_division(float nom, float denom){
   float epsilon = 1e-7;
-  float epsilonInv = 1e20;
+  float epsilonInv = 1e7;
 #ifndef OLDDIV
   if (fabs(nom) < epsilon){
 
@@ -249,13 +249,13 @@ static inline float safe_division(float nom, float denom){
     nom = epsilonInv; 
     denom = 1.0f;
 
-  } else if ((nom < -epsilon) && (fabs(denom)<epsilon)){
+  } else if ((nom < -epsilon) && (fabs(denom) < epsilon)){
 
     nom = -epsilonInv;
     denom = 1.0f;
 
   }
-  return nom/denom;
+  return nom / denom;
 #else
   return nom / (denom + epsilon);
 #endif
