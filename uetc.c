@@ -198,7 +198,7 @@ void uetc_tensor(hydro_params p, fftwf_complex **tensor_then,
       for(i=0;i<nbins;i++) {
 
 	fprintf(fp, "%lf %g %g %d %d %d\n",
-		thisk, bins_re[i], bins_im[i], counts[i], step_then, step_now);
+		thisk/p.dx, (thisk/dk)*bins_re[i], (thisk/dk)*bins_im[i], counts[i], step_then, step_now);
 
 	thisk = thisk + dk;
       }
@@ -413,7 +413,7 @@ void uetc_vector(hydro_params p, fftwf_complex **vector_then,
       for(i=0;i<nbins;i++) {
 
 	fprintf(fp1, "%lf %g %g %d %d %d\n",
-		thisk/(p.a*p.dx), (thisk/dk)*bins_rot_re[i], (thisk/dk)*bins_rot_im[i], counts[i], step_then, step_now);
+		thisk/(p.dx), (thisk/dk)*bins_rot_re[i], (thisk/dk)*bins_rot_im[i], counts[i], step_then, step_now);
 
 	thisk = thisk + dk;
       }
@@ -435,7 +435,7 @@ void uetc_vector(hydro_params p, fftwf_complex **vector_then,
       for(i=0;i<nbins;i++) {
 
 	fprintf(fp2, "%lf %g %g %d %d %d\n",
-		thisk/(p.a*p.dx), (thisk/dk)*bins_div_re[i], (thisk/dk)*bins_div_im[i], counts[i], step_then, step_now);
+		thisk/(p.dx), (thisk/dk)*bins_div_re[i], (thisk/dk)*bins_div_im[i], counts[i], step_then, step_now);
 
 	thisk = thisk + dk;
       }

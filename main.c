@@ -67,8 +67,6 @@ int main(int argc, char* argv[])
     // How big is the system
     p.N = ((long long) p.Lx) * ((long long) p.Ly) * ((long long) p.Lz);
 
-    // Scale factor (fixed to 1 for now, no expansion)
-    p.a = 1.0;
 
     // Calculate potential terms, no longer used (potential directly supplied)
     /*

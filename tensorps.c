@@ -31,7 +31,6 @@ float tensorps(hydro_params p, fftwf_complex **outcpts, int step, char *label) {
   int x, y, z;
   int i;
 
-  // *p.a*p.a*p.a*p.dx*p.dx*p.dx
 
   if(label != NULL){
       if(*label){
@@ -208,7 +207,7 @@ float tensorps(hydro_params p, fftwf_complex **outcpts, int step, char *label) {
     for(i=0;i<nbins;i++) {
       
       fprintf(fp, "%lf %g %d\n",
-	      thisk/(p.dx*p.a), (thisk/dk)*bins[i], counts[i]);
+	      thisk/(p.dx), (thisk/dk)*bins[i], counts[i]);
 
       thisk = thisk + dk;
     }
