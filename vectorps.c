@@ -103,7 +103,7 @@ void histogram(hydro_params p, float *slice, char *filename,
 
 
       fprintf(fp, "%lf %g %d\n",
-	      thisk/(p.a*p.dx), (thisk/dk)*bins[i], counts[i]);
+	      thisk/(p.dx), (thisk/dk)*bins[i], counts[i]);
 
       thisk = thisk + dk;
     }

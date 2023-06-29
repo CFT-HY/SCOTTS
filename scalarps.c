@@ -161,7 +161,7 @@ void scalarps(hydro_params p, fftwf_complex *field, int step, char *label) {
       char fftdest[200];
       
       fprintf(fp, "%lf %g %d\n",
-	      thisk/(p.a*p.dx), bins[i], counts[i]);
+	      thisk/(p.dx), bins[i], counts[i]);
 
       thisk = thisk + dk;
       

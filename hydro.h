@@ -194,9 +194,6 @@ typedef struct {
    */
   int initial;
 
-  /** Scale factor.
-   */
-  float a;
 
   /** Effective degrees of freedom.
    */

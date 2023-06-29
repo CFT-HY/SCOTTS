@@ -671,7 +671,7 @@ float output_ps_uetcs(hydro_fields f, hydro_params p, fft_fields fft_f, int step
 
 	vectorps(p, outcpts_vec, step, "vel");
 
-	if(p.uetcstart >= 0 && step > p.uetcstart) {
+	if(p.uetcstart >= 0 && step >= p.uetcstart) {
 	  uetc_vector(p, fft_f.initial_V, outcpts_vec, p.uetcstart, step, "vel");
 	}
       }
@@ -729,7 +729,7 @@ float output_ps_uetcs(hydro_fields f, hydro_params p, fft_fields fft_f, int step
 
 	// Shear stress UETC
 
-	if(p.uetcstart >= 0 && step > p.uetcstart) {
+	if(p.uetcstart >= 0 && step >= p.uetcstart) {
 	  uetc_tensor(p, fft_f.initial_Tij, outcpts_tens, p.uetcstart, step, "shst");
 	}
       }
