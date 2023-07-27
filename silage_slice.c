@@ -367,6 +367,12 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step, int xcoord)
   float **mesh = NULL;
   DBoptlist *dboptlist = NULL;
 
+  clock_t start, end;
+
+  MPI_Barrier(MPI_COMM_WORLD);
+
+  start = clock();
+  
   //// set up silage ////
 
   if(!p.rank) {
@@ -664,6 +670,9 @@ void write_silo_slice_step(hydro_fields f, hydro_params p, int step, int xcoord)
   }
 
 
+  end = clock();
+
+  printf0(p, "slice writing took %lf\n", ((float) (end - start)) / CLOCKS_PER_SEC);
 
 }
 
