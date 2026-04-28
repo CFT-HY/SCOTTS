@@ -46,6 +46,33 @@ float ***make_field(hydro_params p) {
 
 
 
+int ***make_int_field(hydro_params p) {
+   
+  int *true_field = malloc((p.slicex+2)*(p.slicey+2)
+			      *(p.Lz)*sizeof(int));
+
+  if(true_field == NULL) {
+    fprintf(stderr, "Did not allocate memory!!!!\n");
+  }
+  
+
+  int ***field = (int ***)malloc((p.slicex+2)*sizeof(int **));
+  int x, y;
+
+  for(x=0;x<(p.slicex+2);x++) {
+    field[x] = (int **)malloc((p.slicey+2)*sizeof(int *));
+    for(y=0;y<(p.slicey+2);y++) {
+      field[x][y] = &true_field[x*(p.slicey+2)*(p.Lz) + y*(p.Lz)];
+    }
+  }
+
+  field[0][0] = true_field;
+
+  return field;
+}
+
+
+
 /** Allocate memory for a vector field.
  *
  * As for make_field() but for a field with three components.
@@ -150,6 +177,18 @@ void free_field(hydro_params p, float ***field) {
   free(field);
 }
 
+void free_int_field(hydro_params p, int ***field) {
+
+  int x;
+  
+  free(field[0][0]);
+
+  for(x=0;x<(p.slicex+2);x++) {
+      free(field[x]);
+  }
+  
+  free(field);
+}
 
 
  /** Free memory allocated by make_vector().
@@ -260,7 +299,8 @@ void alloc_fields(hydro_fields *f, hydro_params p) {
 
   f->Wold = make_field(p);
     
-  
+  f->sweep = make_int_field(p);
+
 
   // GRAVITY
 
@@ -313,6 +353,8 @@ void zero_fields(hydro_fields f, hydro_params p) {
     f.F[2][0][0][x] = 0.0000;
 #endif // SCALAR
 
+  f.sweep[0][0][x] = 0;
+
 
     for(i=0; i<TENSOR_CPTS; i++) {
       f.uij[i][0][0][x] = 0.0;
@@ -348,6 +390,8 @@ void free_fields(hydro_fields *f, hydro_params p) {
   free_field(p, f->Wfacey);
   free_field(p, f->Wfacez);
   free_field(p, f->Wold);
+
+  free_field(p, f->sweep);
 
   free_tensor(p, f->uij);
   free_tensor(p, f->udotij);

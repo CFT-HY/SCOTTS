@@ -345,6 +345,8 @@ int main(int argc, char* argv[])
         }
         */
 
+        update_sweep_array(f, p, step);
+
         // For reproducibility, reseed with timestep
         // so bubbles nucleate in same places (locations given by random())
         srandom(p.seed + step);
@@ -495,6 +497,8 @@ int main(int argc, char* argv[])
 
     // Write globals one last time.
     write_globals(f, p, gwen, bcount, t_sim, step);
+
+    dump_sweep_field(f, p);
 
 #ifdef PAPI
 

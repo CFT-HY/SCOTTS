@@ -468,6 +468,45 @@ long long get_N_broken(hydro_fields f, hydro_params p){
 
 }
 
+
+void update_sweep_array(hydro_fields f, hydro_params p, int step){
+  int x, y, z;
+  float phi_broken;
+#ifdef BAG
+  phi_broken = p.phi_0/2.;
+#else
+#ifdef SCALAR
+  phi_broken =  (p.alpha*p.Tconst
+		 + sqrt((p.alpha*p.Tconst)*(p.alpha*p.Tconst)
+			- 4.0*p.lambda*p.gamma
+			*(p.Tconst*p.Tconst - p.T0*p.T0))
+		 )/(2.0*p.lambda);
+
+#endif // SCALAR
+#endif // BAG
+  
+  for(x = 1; x <= p.slicex; x++) {
+    for(y = 1; y <= p.slicey; y++) {
+      for(z = 0; z < p.Lz; z++) {
+#if !defined(SCALAR) && !defined(BAG)
+	phi_broken =  (p.alpha*f.T[x][y][z]
+		       + sqrt((p.alpha*p.Tconst)*(p.alpha*f.T[x][y][z])
+			      - 4.0*p.lambda*p.gamma
+			      *(f.T[x][y][z]*f.T[x][y][z] - p.T0*p.T0))
+		       )/(2.0*p.lambda);
+#endif // !SCALAR && !BAG
+	if(f.phi[x][y][z] > phi_broken/2.){
+	  if(f.sweep[x][y][z] == 0) {
+      f.sweep[x][y][z] = step;
+    }
+	}
+      }
+    }
+  }
+
+}
+
+
 /** Find number of links between broken and symmetric phase.  Allows
  * for calculation of surface area of bubbles, and therefore wall
  * speed.

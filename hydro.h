@@ -534,6 +534,8 @@ typedef struct {
   float ***Wfacez;
   float ***Wold;
   
+  int ***sweep;
+
 } hydro_fields;
 
 #ifdef FFT
@@ -601,11 +603,13 @@ typedef struct{
 
 // alloc.c
 float ***make_field(hydro_params p);
+int ***make_int_field(hydro_params p);
 float ****make_vector(hydro_params p);
 float ****make_tensor(hydro_params p);
 
 
 void free_field(hydro_params p, float ***field);
+void free_int_field(hydro_params p, int ***field);
 void free_vector(hydro_params p, float ****vector);
 void free_tensor(hydro_params p, float ****tensor);
 
@@ -715,6 +719,7 @@ void calculate_Vsq_sum(hydro_fields f, hydro_params p, float *Vsq_sum);
 void calculate_curlJ_sum(hydro_fields f, hydro_params p, float *curlJ_sum);
 void calculate_divJ_sum(hydro_fields f, hydro_params p, float *divJ_sum);
 long long get_N_broken(hydro_fields f, hydro_params p);
+void update_sweep_array(hydro_fields f, hydro_params p, int step);
 long long get_broken_links(hydro_fields f, hydro_params p);
 void dump(float *field, hydro_params p);
 void histo_field(float ***field, hydro_params p, int step);
@@ -823,3 +828,8 @@ void UtoZ(hydro_fields f, hydro_params p);
 float get_normal(float mean, float dev);
 void init_energy(hydro_params p, hydro_fields f, int* map, float *k_bins, float *pow_bins);
 #endif // FFT && !SCALAR
+
+// lattice.c
+void write_float_field(hydro_fields f, hydro_params p, FILE *fp, float *field, int size);
+void write_int_field(hydro_fields f, hydro_params p, FILE *fp, int *field, int size);
+void dump_sweep_field(hydro_fields f, hydro_params p);
