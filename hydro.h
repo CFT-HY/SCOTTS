@@ -108,13 +108,13 @@ typedef struct {
 
   /** Number of lattice points in `x` direction.
    */
-  int Lx;
+  unsigned long Lx;
   /** Number of lattice points in `y` direction.
    */
-  int Ly;
+  unsigned long Ly;
   /** Number of lattice points in `z` direction.
    */
-  int Lz;
+  unsigned long Lz;
 
   /* Number of timesteps in the simulation.
    */
@@ -180,13 +180,20 @@ typedef struct {
    */
   int uetcstart;
 
+  /** Do we turn on uetcs when broken phase fraction reaches a certain value?
+   * 1 if we do, 0 if we don't.
+   */
+  int uetcscalar;
+
+  /** If uetcscalar is 1, this is the broken phase fraction at which we turn on
+   * uetcs. Only check every fft interval.
+   */
+  float uetcbrokenthresh;
+
   /** Initial conditions type (see #defines above)
    */
   int initial;
 
-  /** Scale factor.
-   */
-  float a;
 
   /** Effective degrees of freedom.
    */
@@ -198,7 +205,7 @@ typedef struct {
 
   /** Number of physical sites in volume.
    */
-  int N;
+  long long N;
 
   /** Sites in local area (including halo).
    */
@@ -265,6 +272,14 @@ typedef struct {
    */
   int nucleation;
 
+  /** Number of attempts to nucleate a bubble. Set to 1 for independent
+   *  attempts. 
+   *  
+   *  If nucleating close to the number of bubbles that fit in the
+   *  box, do not set too large or nucleation will take a very long time. 
+   */
+  int maxattempts;
+  
   /** Steps on which to perform nucleation.
    *
    * NB: The same step can appear more than once to indicate to try to
@@ -297,6 +312,10 @@ typedef struct {
    */
   int gwsource;
 
+  /** Step at which we start evolving metric perturbations.
+   */
+  int metricstart;
+  
 #ifdef USE_MPI
 
   /** Rank of neighbour in negative `x` direction.
@@ -352,7 +371,7 @@ typedef struct {
   /** Should we perform ffts/uetcs of shear stress?
    */
   int fft_shst;
-    
+ 
   /** Surface tension \f$ \sigma \f$ for the bubble.
    *
    *  \f[
@@ -509,6 +528,12 @@ typedef struct {
    */
   float ****udotij;
 
+
+  float ***Wfacex;
+  float ***Wfacey;
+  float ***Wfacez;
+  float ***Wold;
+  
 } hydro_fields;
 
 #ifdef FFT
@@ -596,6 +621,7 @@ int get_y(int n, hydro_params p);
 int get_z(int n, hydro_params p);
 void halo_field(float ***field, hydro_params p);
 float reduce_sum(float result, hydro_params p);
+void reduce_sum_array(float *result, hydro_params p, int size);
 int reduce_sum_int(int result, hydro_params p);
 float reduce_max(float result, hydro_params p);
 int reduce_max_int(int result, hydro_params p);
@@ -616,7 +642,10 @@ int load_checkpoint(hydro_fields f, hydro_params p);
 // evolve.c
 void evolve_backstep(hydro_fields f, hydro_params p);
 void evolve_field(hydro_fields f, hydro_params p);
-void evolve_hydro(hydro_fields f, hydro_params p);
+void evolve_hydro_fieldfluid(hydro_fields f, hydro_params p);
+void evolve_hydro_pressureacceleration(hydro_fields f, hydro_params p);
+void evolve_hydro_velocities(hydro_fields f, hydro_params p);
+void evolve_hydro_pressurework(hydro_fields f, hydro_params p);
 void evolve_uij(hydro_fields f, hydro_params p);
 
 // Not implemented yet
@@ -632,6 +661,9 @@ void Vdpot(hydro_params p, float ***T, float ***phi, float ***Vprecalc);
 
 
 // energy.c
+void calculate_energies(hydro_fields f, hydro_params p, float *energies);
+void calculate_T_sum(hydro_fields f, hydro_params p, float *T_sum);
+void calculate_pressure_sum(hydro_fields f, hydro_params p, float *press_sum);
 float field_energy(hydro_fields f, hydro_params p);
 float gradient_energy_field(hydro_fields f, hydro_params p);
 float kinetic_energy_field(hydro_fields f, hydro_params p);
@@ -640,10 +672,7 @@ float kinetic_energy_fluid(hydro_fields f, hydro_params p);
 float rest_energy(hydro_fields f, hydro_params p);
 void energy_density(hydro_fields f, hydro_params p, float ***en);
 void stress_energy(hydro_fields f, hydro_params p, float ****Tij);
-float avg_pressure(hydro_fields f, hydro_params p);
 float tzerozero(hydro_fields f, hydro_params p);
-float get_curlJ_tot(hydro_fields f, hydro_params p);
-float get_divJ_tot(hydro_fields f, hydro_params p);
 
 // eos.c
 
@@ -654,11 +683,13 @@ void eq_of_state(hydro_fields f, hydro_params p);
 
 void advect_E(hydro_fields f, hydro_params p, int adv_order);
 void advect_Z(hydro_fields f, hydro_params p, int adv_order);
+void advect_halfsteps(hydro_fields f, hydro_params p);
 void donor_E_dir(hydro_fields f, hydro_params p, int dir);
 void donor_Z_dir(hydro_fields f, hydro_params p, int dir);
-void van_leer_E(hydro_fields f, hydro_params p, int dir);
-void van_leer_Z(hydro_fields f, hydro_params p, int dir);
-
+void transport_E(hydro_fields f, hydro_params p, int dir);
+void transport_Z(hydro_fields f, hydro_params p, int dir);
+void transport_Z_WM(hydro_fields f, hydro_params p, int dir);
+static inline float flux_limiter(float r);
 
 
 // initial.c
@@ -671,6 +702,7 @@ int try_nucleate(hydro_fields f, hydro_params p);
 int bubbles_at_step(hydro_fields f, hydro_params p, float t, int step);
 void init_profile(hydro_fields *f, hydro_params *p);
 void fluid_sphere(hydro_fields f, hydro_params p);
+void shock_tube(hydro_fields f, hydro_params p);
 
 
 // output.c
@@ -679,7 +711,9 @@ void write_globals(hydro_fields f, hydro_params p, float gwen,
 		    int bcount, float t_sim, int step);
 float get_gamma_max(hydro_fields f, hydro_params p);
 float get_s_max(hydro_fields f, hydro_params p);
-float get_veltot(hydro_fields f, hydro_params p);
+void calculate_Vsq_sum(hydro_fields f, hydro_params p, float *Vsq_sum);
+void calculate_curlJ_sum(hydro_fields f, hydro_params p, float *curlJ_sum);
+void calculate_divJ_sum(hydro_fields f, hydro_params p, float *divJ_sum);
 long long get_N_broken(hydro_fields f, hydro_params p);
 long long get_broken_links(hydro_fields f, hydro_params p);
 void dump(float *field, hydro_params p);
@@ -724,6 +758,7 @@ float minof3(float a, float b, float c);
 int minof3_int(int a, int b, int c);
 float maxof3(float a, float b, float c);
 float minof2(float a, float b);
+float clamp_min(float d, float min);
 
 
 #ifdef FFT
@@ -783,7 +818,7 @@ void scalarps(hydro_params p, fftwf_complex *field, int step, char *label);
 #if defined(FFT) && defined(BAG) && ! defined(SCALAR)
 // initps.c
 void init_ps(hydro_fields f, hydro_params p, float ****field);
-void spectrum_interp(float ksq, hydro_params p, fftwf_complex *res, float *k_bins, float *pow_bins, int n_bins);
+void draw_mode(double ksq, hydro_params p, fftwf_complex *res, float *k_bins, float *pow_bins, int n_bins);
 void UtoZ(hydro_fields f, hydro_params p);
 float get_normal(float mean, float dev);
 void init_energy(hydro_params p, hydro_fields f, int* map, float *k_bins, float *pow_bins);

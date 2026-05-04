@@ -196,7 +196,7 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
   fprintf(stderr, "Writing vectors\n");
 
   float **vec_temp = (float **)malloc(3*sizeof(float *));
-  /* */
+  */
 #ifndef SCALAR
   /*
   char *ux_name = "Ux";
@@ -259,7 +259,7 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
 
   DBPutQuadvar(dbfile, "Z", "quadmesh", 3, z_names, vec_temp, meshsize, 3,
 	       NULL, 0, DB_FLOAT, DB_NODECENT, NULL);
-  /* */
+  */
 #endif //!SCALAR
   /*
   char *dphix_name = "dphix";
@@ -306,7 +306,7 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
   
   // Only needed if we are recording the vector quantities.
   free(vec_temp);
-  /* */
+  */
   for(i=0;i<3;i++) {
     
     free(mesh[i]);
@@ -462,7 +462,7 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
     }
 
     DBPutMultivar(dbfile, "Z", p.size, names, types, NULL);
-    /* */
+    */
     
 #endif
 
@@ -473,7 +473,7 @@ void write_silo_step(hydro_fields f, hydro_params p, int step)
     }
 
     DBPutMultivar(dbfile, "dphi", p.size, names, types, NULL);
-    /* */
+    */
     for(i=0;i<p.size;i++) {
       free(names[i]);
     }

@@ -26,12 +26,11 @@ float tensorps(hydro_params p, fftwf_complex **outcpts, int step, char *label) {
 
   MPI_Status status;
 
-  float kmode, modsq;
-
+  long ksitesq;
+  
   int x, y, z;
   int i;
 
-  // *p.a*p.a*p.a*p.dx*p.dx*p.dx
 
   if(label != NULL){
       if(*label){
@@ -157,13 +156,9 @@ float tensorps(hydro_params p, fftwf_complex **outcpts, int step, char *label) {
 	  true_z = z;
 
 	// For binning we use momentum space index
-	kmode = sqrt(
-		     ((float)(true_x*true_x))/((float)(p.Lx*p.Lx))
-		     + ((float)(true_y*true_y))/((float)(p.Ly*p.Ly))
-		     + ((float)(true_z*true_z))/((float)(p.Lz*p.Lz))
-		     )*2.0*M_PI;
-
-	whichbin = (int)floor(kmode/dk);
+	ksitesq = true_x*true_x + true_y*true_y + true_z*true_z;
+	
+	whichbin = (int)sqrt(ksitesq);
 	bins[whichbin] += slice[x*p.Ly*p.Lz + y*p.Lz + z];
 	counts[whichbin]++;
 
@@ -212,7 +207,7 @@ float tensorps(hydro_params p, fftwf_complex **outcpts, int step, char *label) {
     for(i=0;i<nbins;i++) {
       
       fprintf(fp, "%lf %g %d\n",
-	      thisk/(p.dx*p.a), ((float)(i+1))*bins[i], counts[i]);
+	      thisk/(p.dx), (thisk/dk)*bins[i], counts[i]);
 
       thisk = thisk + dk;
     }

@@ -26,8 +26,9 @@ void scalarps(hydro_params p, fftwf_complex *field, int step, char *label) {
 
   MPI_Status status;
 
-  float kmode, modsq;
+  float modsq;
 
+  long ksitesq;
   int x, y, z;
   int i;
 
@@ -104,18 +105,17 @@ void scalarps(hydro_params p, fftwf_complex *field, int step, char *label) {
 
 
 	// For binning we use momentum space index
-        kmode = sqrt(
-                     ((float)(true_x*true_x))/((float)(p.Lx*p.Lx))
-                     + ((float)(true_y*true_y))/((float)(p.Ly*p.Ly))
-                     + ((float)(true_z*true_z))/((float)(p.Lz*p.Lz))
-                     )*2.0*M_PI;
+	ksitesq = true_x*true_x + true_y*true_y + true_z*true_z;
+	
 
+	
 	modsq = field[x*p.Ly*p.Lz + y*p.Lz + z][0]
 	  *field[x*p.Ly*p.Lz + y*p.Lz + z][0]
 	  + field[x*p.Ly*p.Lz + y*p.Lz + z][1]
 	  *field[x*p.Ly*p.Lz + y*p.Lz + z][1];
 
-        whichbin = (int)floor(kmode/dk);
+
+	whichbin = (int)sqrt(ksitesq);
 	bins[whichbin] += modsq;
 	counts[whichbin]++;
 
@@ -161,7 +161,7 @@ void scalarps(hydro_params p, fftwf_complex *field, int step, char *label) {
       char fftdest[200];
       
       fprintf(fp, "%lf %g %d\n",
-	      thisk/(p.a*p.dx), bins[i], counts[i]);
+	      thisk/(p.dx), bins[i], counts[i]);
 
       thisk = thisk + dk;
       

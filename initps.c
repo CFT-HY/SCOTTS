@@ -1,11 +1,11 @@
 /** @file initps.c
  *
- * Random Gaussian initial conditions with specified power spectrum.
+ * Random Gaussian initial conditions with specified spectral density spectrum.
  * Allows to specifiy either longitudinal waves (div), vortical (rot) or
  *
  * The main entry point is the function init_ps() which initialize a vector field
  * (preferably the 4-velocity U) with Gaussian random fluctuations with mean zero
- * and variance set by the input power spectrum. It also initializes the energy
+ * and variance set by the input spectral density spectrum. It also initializes the energy
  * density accordingly.
  *
  */
@@ -17,7 +17,7 @@
  * Finds the polynomial with the lowest order that interpolates between a set of points
  * \f[ \text{quadratic}(x) = \sum_j y_j \left[\prod_{i \neq j}
  * \frac{(x - x_i)}{x_j - x_i} \right] \f]
- * Previously used in spectrum_interp()
+ * Previously used in draw_mode()
  */
 float quadratic(float x1, float x2, float x3,float y1, float y2, float y3, float x) {
 
@@ -409,8 +409,8 @@ void init_energy(hydro_params p, hydro_fields f, int* map, float *k_bins, float 
 				   FFTW_FORWARD, FFTW_ESTIMATE);
     }
     
-    float kx,ky,kz,ksq;
-    float kxlat,kylat,kzlat,kmodelat;
+    double kx,ky,kz,ksq;
+    double kxlat,kylat,kzlat,kmodelat;
     int true_x, true_y, true_z;
     fftwf_complex kiVki, vec_i;
     int nx = p.Lx/p.slicex;
@@ -440,9 +440,9 @@ void init_energy(hydro_params p, hydro_fields f, int* map, float *k_bins, float 
 	  }
 
 	  // Use k site momenta for binning
-	  kx = 2.0*M_PI*(float)(true_x)/((float)(p.Lx)*p.dx);
-	  ky = 2.0*M_PI*(float)(true_y)/((float)(p.Ly)*p.dx);
-	  kz = 2.0*M_PI*(float)(true_z)/((float)(p.Lz)*p.dx);
+	  kx = 2.0*M_PI*(double)(true_x)/((double)(p.Lx)*p.dx);
+	  ky = 2.0*M_PI*(double)(true_y)/((double)(p.Ly)*p.dx);
+	  kz = 2.0*M_PI*(double)(true_z)/((double)(p.Lz)*p.dx);
 					 
 
 	  ksq = (kx*kx + ky*ky + kz*kz);
@@ -450,9 +450,9 @@ void init_energy(hydro_params p, hydro_fields f, int* map, float *k_bins, float 
 
 	  // Use lattice derivative representation for spatial derivatives in
 	  // momentum space.
-	  kxlat = 2.0*sin(((float)(true_x))*M_PI/(((float)p.Lx)))/p.dx;
-	  kylat = 2.0*sin(((float)(true_y))*M_PI/(((float)p.Ly)))/p.dx;
-	  kzlat = 2.0*sin(((float)(true_z))*M_PI/(((float)p.Lz)))/p.dx;
+	  kxlat = 2.0*sin(((double)(true_x))*M_PI/(((double)p.Lx)))/p.dx;
+	  kylat = 2.0*sin(((double)(true_y))*M_PI/(((double)p.Ly)))/p.dx;
+	  kzlat = 2.0*sin(((double)(true_z))*M_PI/(((double)p.Lz)))/p.dx;
 
 	  kmodelat = sqrt(kxlat*kxlat + kylat*kylat + kzlat*kzlat);
 
@@ -460,13 +460,13 @@ void init_energy(hydro_params p, hydro_fields f, int* map, float *k_bins, float 
 	   * Draws a gaussian random number with variance given by the
 	   * interpolated spectrum
 	   */
-	  spectrum_interp(ksq, p,&(vec_i),k_bins, pow_bins, p.initpsbins);
+	  draw_mode(ksq, p,&(vec_i),k_bins, pow_bins, p.initpsbins);
 	  kiVki[0] = kxlat * vec_i[0];
 	  kiVki[1] = kxlat * vec_i[1];
-	  spectrum_interp(ksq, p,&(vec_i),k_bins, pow_bins, p.initpsbins);
+	  draw_mode(ksq, p,&(vec_i),k_bins, pow_bins, p.initpsbins);
 	  kiVki[0] += kylat * vec_i[0];
 	  kiVki[1] += kylat * vec_i[1];
-	  spectrum_interp(ksq, p,&(vec_i),k_bins, pow_bins, p.initpsbins);
+	  draw_mode(ksq, p,&(vec_i),k_bins, pow_bins, p.initpsbins);
 	  kiVki[0] += kzlat * vec_i[0];
 	  kiVki[1] += kzlat * vec_i[1];
 
@@ -685,7 +685,7 @@ void init_energy(hydro_params p, hydro_fields f, int* map, float *k_bins, float 
 void project_down(hydro_params p, fftwf_complex **in, int shift_x, int x_thickness, int times) {
 
   int x, y, z;
-  float kxlat, kylat, kzlat;
+  double kxlat, kylat, kzlat;
   float in_proj_re[3];
   float in_proj_im[3];
   float res_re, res_im;
@@ -747,9 +747,9 @@ void project_down(hydro_params p, fftwf_complex **in, int shift_x, int x_thickne
 	  }
 
 	  // Use lattice derivative momentum for projecting.
-	  kxlat = 2.0*sin(((float)(true_x))*M_PI/(((float)p.Lx)))/p.dx;
-	  kylat = 2.0*sin(((float)(true_y))*M_PI/(((float)p.Ly)))/p.dx;
-	  kzlat = 2.0*sin(((float)(true_z))*M_PI/(((float)p.Lz)))/p.dx;
+	  kxlat = 2.0*sin(((double)(true_x))*M_PI/(((double)p.Lx)))/p.dx;
+	  kylat = 2.0*sin(((double)(true_y))*M_PI/(((double)p.Ly)))/p.dx;
+	  kzlat = 2.0*sin(((double)(true_z))*M_PI/(((double)p.Lz)))/p.dx;
 
 	  in_proj_re[0] = 0.0;
 	  in_proj_re[1] = 0.0;
@@ -858,24 +858,15 @@ float get_normal(float mean, float dev) {
 }
 
 
-/** Draws random Gaussian complex numbers according to the input power spectrum
- * Does a linear interpolation to compute the initial power spectrum.
+/** Draws a complex Fourier mode using random Gaussian complex numbers with
+ * variance set by the input power spectral density
  *
- * A key assumption is that the k-modes are _evenly distributed_ throughout
- * each bin, which isn't true! And increasing the order of the interpolation
- * will not really deal with this systematic error (I have tried quadratic).
+ * Used to do a linear interpolation on spectral density to populate Fourier
+ * modes, but this behaviour has been disabled to better match the output
+ * spectra onto the input power spectra.
  *
- * If this causes undue concern, there are two options as to how to fix it:
- * 1. When saving power spectrums, store the mean $k$ in each bin
- *    as well as the central $k$ for each bin, and use the mean $k$ (at least)
- *    when using power spectra as inputs.
- * 2. Recompute the mean $k$ here when building out the power spectrum again.
- *    That would make it harder to change lattice volumes between runs, as
- *    the relevant mode counts per bin for making the interpolation
- *    of the spectral density are for the original simulation
- *    that generated the input PS.
  */
-void spectrum_interp(float ksq, hydro_params p, fftwf_complex *res, float *k_bins, float *pow_bins, int n_bins) {
+void draw_mode(double ksq, hydro_params p, fftwf_complex *res, float *k_bins, float *pow_bins, int n_bins) {
 
   float phase;
 
@@ -893,16 +884,32 @@ void spectrum_interp(float ksq, hydro_params p, fftwf_complex *res, float *k_bin
 
   // bin coordinates are midpoints
   float dk = k_bins[1] - k_bins[0];
+  float epsilon = 1e-5;
 
-  float kmode = sqrt(fabs(ksq));
-  int whichbin = (int)floor(kmode/dk);
+  double kmode = sqrt(fabs(ksq));
+  int whichbin = (int)floor(kmode/dk + epsilon);
 
   // Interpolates the value of pow_bins at kmode at first order
   if(whichbin > 0 && whichbin < (n_bins-1)) {
-    amp_this = sqrt(pow_bins[whichbin]);
-    amp_next = sqrt(pow_bins[whichbin+1]);
-    grad = (amp_next - amp_this)/dk;
-    amp = amp_this + (kmode - ((float)(whichbin))*dk)*grad;
+    /* if(kmode > whichbin+0.5){ */
+    /*   // Past bin midpoint interpolate towards next bin */
+    /*   amp_this = sqrt(pow_bins[whichbin]); */
+    /*   amp_next = sqrt(pow_bins[whichbin+1]); */
+    /*   grad = (amp_next - amp_this)/dk; */
+    /*   amp = amp_this + (kmode - ((float)(whichbin)+0.5)*dk)*grad; */
+    /* } */
+    /* if(kmode < whichbin+0.5){ */
+    /*   // Before bin midpoint interpolate towards previous bin */
+    /*   amp_this = sqrt(pow_bins[whichbin]); */
+    /*   amp_last = sqrt(pow_bins[whichbin-1]); */
+    /*   grad = (amp_this - amp_last)/dk; */
+    /*   amp = amp_this + (kmode - ((float)(whichbin)+0.5)*dk)*grad; */
+    /* } */
+
+    
+    // Turn off interpolation to better match the output power
+    // spectra to the input power spectra.
+    amp = sqrt(pow_bins[whichbin]);
   }
 
   // Draws a random gaussian number with variance amp
@@ -918,7 +925,7 @@ void spectrum_interp(float ksq, hydro_params p, fftwf_complex *res, float *k_bin
 
 
 /** Initialize the simulation with a gaussian velocity field following
- * a specified power spectrum
+ * a specified spectral density spectrum
  *
  * The code is organized as follows :
  * 1. Set the scalar field in the broken phase / true vacuum
@@ -945,6 +952,9 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
   ptrdiff_t n0 = p.Lx;
   ptrdiff_t n1 = p.Ly;
   ptrdiff_t n2 = p.Lz;
+
+  float sim_volume = p.N*p.dx*p.dx*p.dx;
+
 
 
   MPI_Status status;
@@ -1074,15 +1084,14 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
   int ry;
 
 
-  float ksq;
-  float kx, ky, kz;
+  double ksq;
+  double kx, ky, kz;
   int true_x, true_y, true_z;
   // Different values for the wave-vector
   float *k_bins = (float *)malloc(p.initpsbins*sizeof(float));
   // PMean power per cell
   float *pow_bins = (float *)malloc(p.initpsbins*sizeof(float));
-  // Volume of the shell [k, k+dk]
-  int in_bin;
+ 
 
   int items_read;
   float fudge;
@@ -1100,54 +1109,40 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
       die(100);
     }
 
-    // Reads the line, and stores the three columns
-    items_read = fscanf(fp, "%f%g%d", &k_bins[i], &pow_bins[i], &in_bin);
+    // Reads the line, and stores the two columns columns
+    items_read = fscanf(fp, "%f%g", &k_bins[i], &pow_bins[i]);
 
     // If the number of columns is wrong, raises an error
-    if(items_read != 3) {
+    if(items_read != 2) {
       printf0(p,
-	      "Initpsfile %s: row %d: did not read a full line (3 items), "
+	      "Initpsfile %s: row %d: did not read a full line (2 items), "
 	      "just %d\n",
 	      p.initpsfile, i, items_read);
       die(100);
     }
 
 
-    // If the volume if 0, then the power is 0
-    if(in_bin == 0) {
-      pow_bins[i] = 0.0;
-    }
-    // Else, divides by the volume to obtain the mean power per cell
-    // Factor (i+1) is to convert from d ln k to dk
-    else {
-      pow_bins[i] /= ((float)(((long int)in_bin)*((long int)(i+1))));
-    }
-
     if(isnan(pow_bins[i])) {
       printf0(p, "Bin %d is a NaN\n", i);
       die(-99);
     }
+
+    // Multiply by volume for normalisation
+    // (Fourier modes are x(k)= sqrt(P_{x}(k) / V).
+    pow_bins[i] /= sim_volume;
+
+
   }
   fclose(fp);
 
-  // Corrects for the volume of the shell if dk is different between
-  // the input file and the grid
-  fudge = (2.0*M_PI/((float)p.Lx))/((k_bins[1]-k_bins[0])*p.dx);
-  if(fabs(fudge - 1.0) > 1e-6) {
-    printf0(p, "Applying fudge factor %g^3 to power spectrum: "
-	    "seems like dk or volume or dx is different\n",
-	    fudge);
-
-    for(i = 0; i < p.initpsbins; i++) {
-      pow_bins[i] *= fudge*fudge*fudge;
-    }
-  }
 
   /*
    * 5. Fills in random gaussian velocity fields in Fourier space
    *
    * Spans the slice contained on this core
    */
+
+  
   for(x=x_start;x<x_start+x_thickness;x++) {
     for(y=0;y<p.Ly;y++) {
       for(z=0;z<p.Lz;z++) {
@@ -1176,19 +1171,29 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
 
 
 	// Use lattice site momenta for binning
-	kx = 2.0*M_PI*(float)(true_x)/((float)(p.Lx)*p.dx);
-	ky = 2.0*M_PI*(float)(true_y)/((float)(p.Ly)*p.dx);
-	kz = 2.0*M_PI*(float)(true_z)/((float)(p.Lz)*p.dx);
+	kx = 2.0*M_PI*(double)(true_x)/((double)(p.Lx)*p.dx);
+	ky = 2.0*M_PI*(double)(true_y)/((double)(p.Ly)*p.dx);
+	kz = 2.0*M_PI*(double)(true_z)/((double)(p.Lz)*p.dx);
 					 
 
 	ksq = (kx*kx + ky*ky + kz*kz);
 
+	// Set zero mode to zero.
+	if (ksq == 0){
+	  in[0][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0] = 0;
+	  in[0][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] = 0;
+	  in[1][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0] = 0;
+	  in[1][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] = 0;
+	  in[2][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][0] = 0;
+	  in[2][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z][1] = 0;
+	}
+	
 	for(i=0; i<3; i++) {
 	  /*
 	   * Draws a gaussian random number with variance given by the
 	   * interpolated spectrum
 	   */
-	  spectrum_interp(ksq, p,
+	  draw_mode(ksq, p,
 			  &(in[i][(x-x_start)*p.Ly*p.Lz + y*p.Lz + z]),
 			  k_bins, pow_bins, p.initpsbins);
 	}

@@ -68,3 +68,8 @@ float minof2(float a, float b) {
     return a;
   return b;
 }
+
+
+float clamp_min(float d, float min){
+        return d < min ? min : d;
+}

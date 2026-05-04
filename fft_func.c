@@ -117,7 +117,7 @@ void fft_init(hydro_params p, fft_fields *fft_f){
 					FFTW_FORWARD, FFTW_ESTIMATE);
   }
   // Initialise UETC reference fields
-  if (p.uetcstart>=0){
+  if (p.uetcstart>=0 || p.uetcscalar == 1){
     // Tensor fields
     if(p.fft_shst){
       fft_f->initial_Tij = (fftwf_complex **)malloc(6*sizeof(fftwf_complex *));
@@ -160,7 +160,7 @@ void fft_finalise(hydro_params p, fft_fields *fft_f){
   fftwf_free(fft_f->in);
   fftwf_free(fft_f->out);
 
-  if (p.uetcstart>=0){
+  if (p.uetcstart >= 0 || p.uetcscalar == 1){
 
     if (p.fft_shst){
       for(i=0;i<TENSOR_CPTS;i++)
@@ -671,7 +671,7 @@ float output_ps_uetcs(hydro_fields f, hydro_params p, fft_fields fft_f, int step
 
 	vectorps(p, outcpts_vec, step, "vel");
 
-	if(p.uetcstart >= 0 && step > p.uetcstart) {
+	if(p.uetcstart >= 0 && step >= p.uetcstart) {
 	  uetc_vector(p, fft_f.initial_V, outcpts_vec, p.uetcstart, step, "vel");
 	}
       }
@@ -707,10 +707,12 @@ float output_ps_uetcs(hydro_fields f, hydro_params p, fft_fields fft_f, int step
       }
 
       if (p.fft_gw){
-	// Gravitational wave power spectrum (returns GW energy)
-	fft_tensor(p, fft_f, f.udotij, outcpts_tens, 1/sqrt(32*M_PI));
+	if (step>=p.metricstart){
+	  // Gravitational wave power spectrum (returns GW energy)
+	  fft_tensor(p, fft_f, f.udotij, outcpts_tens, 1/sqrt(32*M_PI));
 
-	gwen = tensorps(p, outcpts_tens, step, "gw");
+	  gwen = tensorps(p, outcpts_tens, step, "gw");
+	}
       }
       if (p.fft_shst){
 	// Shear stress power spectrum.
@@ -727,7 +729,7 @@ float output_ps_uetcs(hydro_fields f, hydro_params p, fft_fields fft_f, int step
 
 	// Shear stress UETC
 
-	if(p.uetcstart >= 0 && step > p.uetcstart) {
+	if(p.uetcstart >= 0 && step >= p.uetcstart) {
 	  uetc_tensor(p, fft_f.initial_Tij, outcpts_tens, p.uetcstart, step, "shst");
 	}
       }

@@ -22,7 +22,7 @@ void histogram(hydro_params p, float *slice, char *filename,
 
   int i, x, y, z;
 
-  float kmode;
+  long ksitesq;
 
   int nbins = minof3_int(p.Lx, p.Ly, p.Lz);
   float mink = 0.0;
@@ -68,14 +68,11 @@ void histogram(hydro_params p, float *slice, char *filename,
 	else
           true_z = z;
 
-	// For binning we use the momentum space index
-	kmode = sqrt(
-		     ((float)(true_x*true_x))/((float)(p.Lx*p.Lx))
-		     + ((float)(true_y*true_y))/((float)(p.Ly*p.Ly))
-		     + ((float)(true_z*true_z))/((float)(p.Lz*p.Lz))
-		     )*2.0*M_PI;
 
-	whichbin = (int)floor(kmode/dk);
+	// For binning we use momentum space index
+	ksitesq = true_x*true_x + true_y*true_y + true_z*true_z;
+	
+	whichbin = (int)sqrt(ksitesq);
 	bins[whichbin] += slice[x*p.Ly*p.Lz + y*p.Lz + z];
 	counts[whichbin]++;
 	
@@ -106,7 +103,7 @@ void histogram(hydro_params p, float *slice, char *filename,
 
 
       fprintf(fp, "%lf %g %d\n",
-	      thisk/(p.a*p.dx), ((float)(i+1))*bins[i], counts[i]);
+	      thisk/(p.dx), (thisk/dk)*bins[i], counts[i]);
 
       thisk = thisk + dk;
     }
