@@ -45,13 +45,7 @@ void debug_write_power(hydro_params p, fftwf_complex **in, ptrdiff_t x_start, pt
   float *product_tot = (float *)malloc(x_thickness*p.Ly*p.Lz*sizeof(float));
 
   float res_r, res_i, resid_r, resid_i, tot_r, tot_i;
-
-  MPI_Barrier(MPI_COMM_WORLD);
-  fprintf(stderr,"rank: %d starting debug PS... (thickness %d, start %d)\n",
-	  p.rank, x_thickness, x_start);
-
-  MPI_Barrier(MPI_COMM_WORLD);
-
+  
   for(x=0; x<x_thickness; x++) {
     for(y=0; y<p.Ly; y++) {
       for(z=0; z<p.Lz; z++) {
@@ -1473,13 +1467,11 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
   init_energy(p, f, map, k_bins, pow_bins);
   printf0(p,"Energy density initialized\n");
   
-  fprintf(stderr,"%i Reached 1\n", p.rank);
   /*
    * 10. Translate the 4-velocity into momentum Z
    *
    */
   eq_of_state(f, p);
-  fprintf(stderr,"%i Reached 2\n", p.rank);
 
   UtoZ(f, p);
 
@@ -1491,14 +1483,10 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
   free(trim);
   free(thicknesses);
   free(starts);
-  fprintf(stderr,"%i Reached 3\n", p.rank);
 
-  fprintf(stderr,"%i color\n", color);
   if (color == 0){
-    fprintf(stderr,"%i plan %f\n", p.rank, plan);
     fftwf_destroy_plan(plan);
   }
-  fprintf(stderr,"%i Reached 4\n", p.rank);
 
   fftwf_free(in[0]);
   fftwf_free(swap_in[0]);
@@ -1513,11 +1501,8 @@ void init_ps(hydro_fields f, hydro_params p, float ****field) {
   free(in);
   free(out);
   free(swap_in);
-  fprintf(stderr,"%i Reached 5\n", p.rank);
 
   MPI_Comm_free(&fftw_comm);
-  fprintf(stderr,"%i Reached 6\n", p.rank);
-
 
 }
 

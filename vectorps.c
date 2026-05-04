@@ -19,12 +19,6 @@
  */
 void histogram(hydro_params p, float *slice, char *filename,
 	       int slab, int x_start) {
-  // The rest proceeds as in gw.c
-
-
-  MPI_Barrier(MPI_COMM_WORLD);
-  if(!p.rank)
-    fprintf(stderr,"Enter histogram\n");
 
   int i, x, y, z;
 
@@ -49,9 +43,6 @@ void histogram(hydro_params p, float *slice, char *filename,
   int true_x, true_y, true_z;
 
   MPI_Barrier(MPI_COMM_WORLD);
-  if(!p.rank)
-    fprintf(stderr,"Start binning process (bins %d)\n", nbins);
-
 
   for(x=0;x<slab;x++) {
     for(y=0;y<p.Ly;y++) {
@@ -92,11 +83,6 @@ void histogram(hydro_params p, float *slice, char *filename,
     }
   }
 
-  MPI_Barrier(MPI_COMM_WORLD);
-  if(!p.rank)
-    fprintf(stderr,"Got through binning process (bins %d)\n", nbins);
-
-
   float red_value;
   int red_count;
 
@@ -109,19 +95,12 @@ void histogram(hydro_params p, float *slice, char *filename,
 
   }
 
-  MPI_Barrier(MPI_COMM_WORLD);
-  if(!p.rank)
-    fprintf(stderr,"Got through bin reduction\n");
-
-
-
   float thisk = dk/2.0;
 
   // spokesman does the final analysis
   if(!p.rank) {
 
-
-  FILE *fp = fopen(filename,"w");
+    FILE *fp = fopen(filename,"w");
 
     for(i=0;i<nbins;i++) {
 

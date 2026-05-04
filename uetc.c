@@ -24,18 +24,20 @@ void init_uetc(hydro_fields f, hydro_params p, fft_fields fft_f) {
 
   int i, x, y, z;
 
+  if(p.fft_shst){
   // Initialise UETC for energy momentum tensor.
   float ****Tij = make_tensor(p);
   stress_energy(f, p, Tij);
 
-
   fft_tensor(p, fft_f, Tij, fft_f.initial_Tij, 1.0);
-
-
+  
+  
   free_tensor(p, Tij);
+  }
 
-  fft_vector(p, fft_f, f.V, fft_f.initial_V);
-
+  if(p.fft_vel){
+    fft_vector(p, fft_f, f.V, fft_f.initial_V);
+  }
 }
 
 
@@ -376,8 +378,6 @@ void uetc_vector(hydro_params p, fftwf_complex **vector_then,
     }
 
     MPI_Barrier(MPI_COMM_WORLD);
-    if(!p.rank)
-      fprintf(stderr,"Got through binning process (bins %d)\n", nbins);
 
     float red_value;
     int red_count;
@@ -400,10 +400,6 @@ void uetc_vector(hydro_params p, fftwf_complex **vector_then,
       red_count = reduce_sum_int(counts[i], p);
       counts[i] = red_count;
     }
-
-    MPI_Barrier(MPI_COMM_WORLD);
-    if(!p.rank)
-      fprintf(stderr,"Got through bin reduction\n");
 
 
     float thisk = dk/2.0;
