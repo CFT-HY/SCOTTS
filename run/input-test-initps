@@ -50,7 +50,16 @@ siloslicecoord 0
 # Power spectra measurements. How often to write FFT's (i.e. field, fluid
 # velocity, and GW power spectra) - set to -1 to disable.
 fftinterval 100
-# .. and when to start writing UETC's
+
+# When to start uetcs (and therefore reference time).
+# Set to -1 to disable uetcs.
+# Can set to an integer corersponding to the timestep to start uetcs.
+# -e.g "uetcstart 500" starts uetcs on timestep 500.
+# Alternatively set to "scalar" followed by a float, in which case the code
+# checks every fft output for whether the broken phase fraction exceeds
+# the provided threshold and if it does it starts the uetcs.
+# -e.g "uetcstart scalar 0.7" will start uetcs on the first fft output for which
+# 70% of the volume is in the broken phase.
 uetcstart 500
 
 
@@ -99,6 +108,12 @@ phimin -1
 #   The program utils/nucproc.py produces output in this format.
 nucleation off
 
+# Number of attempts to nucleate a bubble. Set to 1 for independent
+# attempts. 
+# If nucleating close to the number of bubbles that fit in the
+# box, do not set too large or nucleation will take a very long time. 
+maxattempts 1
+
 # The checkpoint directory is always checked for a valid checkpoint
 # (assuming it exists; if it does not then the code will run anyway)
 # If checkpointinterval is 0 or -1 then no attempt will be made
@@ -107,10 +122,25 @@ nucleation off
 checkpointdir cp/
 checkpointinterval -1
 
+# Which ffts/uetcs do we want to do?
+# fftoptions can be set to three different values:
+# all - enable all ffts
+# none - disable all ffts
+# list - provide a comma seperated list of ffts to perform
+#        from the following options:
+#        scalars,vel,J,X,gw,shst.
+fftoptions all
+
+
 # What the gravitational wave power spectrum is sourced by
 # choices are 'fluid', 'field' or 'both'. The default (if the choice
 # is unrecognisable) is 'both'.
 gwsource fluid
+
+# What step should we turn on the evolution of the metric perturbations?
+# This should be set to zero unless you have a reason to want to only study
+# gws produced after a certain time.
+metricstart 0
 
 # The random seed. This must be set. The seed is 'salted' with the
 # timestep every update so that results are reproducible across

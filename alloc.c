@@ -24,6 +24,10 @@ float ***make_field(hydro_params p) {
   float *true_field = malloc((p.slicex+2)*(p.slicey+2)
 			      *(p.Lz)*sizeof(float));
 
+  if(true_field == NULL) {
+    fprintf(stderr, "Did not allocate memory!!!!\n");
+  }
+  
 
   float ***field = (float ***)malloc((p.slicex+2)*sizeof(float **));
   int x, y;
@@ -54,6 +58,11 @@ float ****make_vector(hydro_params p) {
   float *true_field = malloc(3*(p.slicex+2)*(p.slicey+2)
 			      *(p.Lz)*sizeof(float));
 
+  if(true_field == NULL) {
+    fprintf(stderr, "Did not allocate memory!!!!\n");
+  }
+
+  
   int x, y, i;
 
   float ****vector = (float ****) malloc(3*sizeof(float***));
@@ -91,6 +100,11 @@ float ****make_tensor(hydro_params p) {
    
   float *true_field = malloc(TENSOR_CPTS*(p.slicex+2)*(p.slicey+2)
 			      *(p.Lz)*sizeof(float));
+
+
+  if(true_field == NULL) {
+    fprintf(stderr, "Did not allocate memory!!!!\n");
+  }
 
   int x, y, i;
 
@@ -240,6 +254,13 @@ void alloc_fields(hydro_fields *f, hydro_params p) {
   f->F = make_vector(p);
 #endif // SCALAR
 
+  f->Wfacex = make_field(p);
+  f->Wfacey = make_field(p);
+  f->Wfacez = make_field(p);
+
+  f->Wold = make_field(p);
+    
+  
 
   // GRAVITY
 
@@ -322,6 +343,11 @@ void free_fields(hydro_fields *f, hydro_params p) {
   free_vector(p, f->U);
   free_vector(p, f->F);
 #endif // SCALAR
+
+  free_field(p, f->Wfacex);
+  free_field(p, f->Wfacey);
+  free_field(p, f->Wfacez);
+  free_field(p, f->Wold);
 
   free_tensor(p, f->uij);
   free_tensor(p, f->udotij);

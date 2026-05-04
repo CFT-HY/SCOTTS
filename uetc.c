@@ -34,10 +34,11 @@ void init_uetc(hydro_fields f, hydro_params p, fft_fields fft_f) {
   
   free_tensor(p, Tij);
   }
-
+#ifndef SCALAR
   if(p.fft_vel){
     fft_vector(p, fft_f, f.V, fft_f.initial_V);
   }
+#endif
 }
 
 
@@ -50,8 +51,8 @@ void uetc_tensor(hydro_params p, fftwf_complex **tensor_then,
 
   MPI_Status status;
 
-  float kmode, modsq;
-
+  long ksitesq;
+  
   int x, y, z;
   int i;
 
@@ -148,17 +149,10 @@ void uetc_tensor(hydro_params p, fftwf_complex **tensor_then,
 	  else
 	    true_z = z;
 
-
 	  // For binning we use momentum space index
-
-	  kmode = sqrt(
-		       ((float)(true_x*true_x))/((float)(p.Lx*p.Lx))
-		       + ((float)(true_y*true_y))/((float)(p.Ly*p.Ly))
-		       + ((float)(true_z*true_z))/((float)(p.Lz*p.Lz))
-		       )*2.0*M_PI;
-
-	  
-	  whichbin = (int)floor(kmode/dk);
+	  ksitesq = true_x*true_x + true_y*true_y + true_z*true_z;
+	
+	  whichbin = (int)sqrt(ksitesq);
 	  bins_re[whichbin] += slice_re[x*p.Ly*p.Lz + y*p.Lz + z];
 	  bins_im[whichbin] += slice_im[x*p.Ly*p.Lz + y*p.Lz + z];
 	  counts[whichbin]++;
@@ -204,7 +198,7 @@ void uetc_tensor(hydro_params p, fftwf_complex **tensor_then,
       for(i=0;i<nbins;i++) {
 
 	fprintf(fp, "%lf %g %g %d %d %d\n",
-		thisk, bins_re[i], bins_im[i], counts[i], step_then, step_now);
+		thisk/p.dx, (thisk/dk)*bins_re[i], (thisk/dk)*bins_im[i], counts[i], step_then, step_now);
 
 	thisk = thisk + dk;
       }
@@ -250,7 +244,7 @@ void uetc_vector(hydro_params p, fftwf_complex **vector_then,
 
   MPI_Status status;
 
-  float kmode, modsq;
+  long ksitesq;
 
   int x, y, z;
   int i;
@@ -312,7 +306,7 @@ void uetc_vector(hydro_params p, fftwf_complex **vector_then,
     float maxk = 2.0*M_PI;
 
     float dk = (maxk-mink)/((float)nbins);
-
+    
     float *bins_rot_re = (float *)malloc(nbins*sizeof(float));
     float *bins_rot_im = (float *)malloc(nbins*sizeof(float));
     float *bins_div_re = (float *)malloc(nbins*sizeof(float));
@@ -356,16 +350,11 @@ void uetc_vector(hydro_params p, fftwf_complex **vector_then,
 	  else
 	    true_z = z;
 
+	  // For binning we use momentum space index
+	  ksitesq = true_x*true_x + true_y*true_y + true_z*true_z;
+	
+	  whichbin = (int)sqrt(ksitesq);
 
-	  // Use lattice site index to construct k for binning.
-	  kmode = sqrt(
-		       ((float)(true_x*true_x))/((float)(p.Lx*p.Lx))
-		       + ((float)(true_y*true_y))/((float)(p.Ly*p.Ly))
-		       + ((float)(true_z*true_z))/((float)(p.Lz*p.Lz))
-		       )*2.0*M_PI;
-
-      
-	  whichbin = (int)floor(kmode/dk);
 	  bins_rot_re[whichbin] += slice_rot_re[x*p.Ly*p.Lz + y*p.Lz + z];
 	  bins_rot_im[whichbin] += slice_rot_im[x*p.Ly*p.Lz + y*p.Lz + z];
 	  bins_div_re[whichbin] += slice_div_re[x*p.Ly*p.Lz + y*p.Lz + z];
@@ -424,7 +413,7 @@ void uetc_vector(hydro_params p, fftwf_complex **vector_then,
       for(i=0;i<nbins;i++) {
 
 	fprintf(fp1, "%lf %g %g %d %d %d\n",
-		thisk/(p.a*p.dx), (float)(i+1)*bins_rot_re[i], (float)(i+1)*bins_rot_im[i], counts[i], step_then, step_now);
+		thisk/(p.dx), (thisk/dk)*bins_rot_re[i], (thisk/dk)*bins_rot_im[i], counts[i], step_then, step_now);
 
 	thisk = thisk + dk;
       }
@@ -446,7 +435,7 @@ void uetc_vector(hydro_params p, fftwf_complex **vector_then,
       for(i=0;i<nbins;i++) {
 
 	fprintf(fp2, "%lf %g %g %d %d %d\n",
-		thisk/(p.a*p.dx), (float)(i+1)*bins_div_re[i], (float)(i+1)*bins_div_im[i], counts[i], step_then, step_now);
+		thisk/(p.dx), (thisk/dk)*bins_div_re[i], (thisk/dk)*bins_div_im[i], counts[i], step_then, step_now);
 
 	thisk = thisk + dk;
       }

@@ -60,6 +60,7 @@ void get_parameters(char *infile, hydro_params *p)
   int set_initial = 0;
 
   int set_gwsource = 0;
+  int set_metricstart = 0;
   
   int set_silodir = 0;
   int set_checkpointdir = 0;
@@ -68,7 +69,8 @@ void get_parameters(char *infile, hydro_params *p)
   int set_initpsbins = 0;
 
   int set_nucleation = 0;
-
+  int set_maxattempts = 0;
+  
   int set_bubbles = 0;
 
   int set_R_critical = 0;
@@ -225,7 +227,16 @@ void get_parameters(char *infile, hydro_params *p)
       set_siloslicecoord = 1;
     }
     else if(!strcasecmp(key,"uetcstart")) {
-      p->uetcstart = strtol(value,NULL,10);
+      if(!strcasecmp(value,"scalar")){
+	p->uetcstart = -1;
+	p->uetcscalar = 1;
+	p->uetcbrokenthresh = strtof(option,NULL);
+      }
+      else{
+	p->uetcscalar = 0;
+	p->uetcbrokenthresh = -1;
+	p->uetcstart = strtol(value,NULL,10);
+      }
       set_uetcstart = 1;
     }
     else if(!strcasecmp(key,"bubbles")) {
@@ -334,6 +345,10 @@ void get_parameters(char *infile, hydro_params *p)
 	p->gwsource = GW_BOTH;
       }
       set_gwsource = 1;
+    }
+    else if(!strcasecmp(key,"metricstart")) {
+      p->metricstart = strtol(value,NULL,10);
+      set_metricstart = 1;
     }
     else if(!strcasecmp(key,"nucleation")) {
       if(!strcasecmp(value, "off")) {
@@ -516,6 +531,10 @@ void get_parameters(char *infile, hydro_params *p)
       }
       set_nucleation = 1;
     }
+    else if(!strcasecmp(key,"maxattempts")) {
+      p->maxattempts = strtol(value,NULL,10);
+      set_maxattempts = 1;
+    }
     else if(!strcasecmp(key,"silodir")) {
      
       if(strlen(value) > 500)
@@ -539,56 +558,71 @@ void get_parameters(char *infile, hydro_params *p)
       set_checkpointdir = 1;
     }
     else if(!strcasecmp(key,"initpsfile")) {
-     
-      if(strlen(value) > 500)
-	printf0(*p,
-		"Warning: initpsfile name \"%s\" may be too long!\n",
-		value);
 
-      strncpy(p->initpsfile, value, 500);
+      if(access(value, R_OK) != 0) {
+          printf0(*p ,"Unable to read initial power spectrum file \"%s\". will"
+		  "give up if initial is initps.\n",
+                  value);
+          // Don't want to die as if not actually doing initps run
+          // want to supply file.
+	}
+      else{
+	if(strlen(value) > 500)
+	  printf0(*p,
+		  "Warning: initpsfile name \"%s\" may be too long!\n",
+		  value);
+
+	strncpy(p->initpsfile, value, 500);
      
-      if(!strcasecmp(option,"rot")) {
+	if(!strcasecmp(option,"rot")) {
 	  printf0(*p,
 		  "Treating initpsfile as ROT power\n");
 	  p->initpsfile_type = INITPSFILE_ROT;
-      } else if(!strcasecmp(option,"div")) {
-	printf0(*p,
-		"Treating initpsfile as DIV power\n");
-	p->initpsfile_type = INITPSFILE_DIV;
-      } else if(!strcasecmp(option,"all")) {
-	printf0(*p,
-		"Treating initpsfile as ALL power\n");
-	p->initpsfile_type = INITPSFILE_ALL;
-      } else {
-	printf0(*p,
-		"Unrecognised option to initpsfile;"
-		"treating initpsfile as DIV power\n");
-	p->initpsfile_type = INITPSFILE_DIV;
-      }
+	} else if(!strcasecmp(option,"div")) {
+	  printf0(*p,
+		  "Treating initpsfile as DIV power\n");
+	  p->initpsfile_type = INITPSFILE_DIV;
+	} else if(!strcasecmp(option,"all")) {
+	  printf0(*p,
+		  "Treating initpsfile as ALL power\n");
+	  p->initpsfile_type = INITPSFILE_ALL;
+	} else {
+	  printf0(*p,
+		  "Unrecognised option to initpsfile;"
+		  "treating initpsfile as DIV power\n");
+	  p->initpsfile_type = INITPSFILE_DIV;
+	}
       
-
-      set_initpsfile = 1;
+      
+	set_initpsfile = 1;
+      }
     }
     else if(!strcasecmp(key,"initpsbins")) {
       p->initpsbins = strtol(value,NULL,10);
       set_initpsbins = 1;
     }
     else if(!strcasecmp(key,"seed")) {
-      if(!strcasecmp(value,"time")) {
-        p->seed = time(NULL);
-      } else if(!strcasecmp(value,"device")) {
-        FILE *ran = fopen("/dev/random","r");
-        if(fread(&(p->seed),sizeof(int),1,ran) != 1) {
-          fprintf(stderr,"Unable to read from /dev/random, using seed 0!\n");
-          p->seed = 0;
-        }
-        fclose(ran);
-      } else {
-        p->seed = strtol(value,NULL,10);
+      if(!p->rank){
+	if(!strcasecmp(value,"time")) {
+	  p->seed = time(NULL);
+	} else if(!strcasecmp(value,"device")) {
+	  FILE *ran = fopen("/dev/random","r");
+	  if(fread(&(p->seed),sizeof(int),1,ran) != 1) {
+	    fprintf(stderr,"Unable to read from /dev/random, using seed 0!\n");
+	    p->seed = 0;
+	  }
+	  fclose(ran);
+	} else {
+	  p->seed = strtol(value,NULL,10);
+	}
+
+	p->seed = abs(p->seed);
+	p->seed = reduce_sum_int(p->seed,*p);
       }
-
-      p->seed = abs(p->seed);
-
+      else{
+	p->seed = 0;
+	p->seed = reduce_sum_int(p->seed,*p);
+      }
       set_seed = 1;
     }
 
@@ -682,8 +716,14 @@ void get_parameters(char *infile, hydro_params *p)
   }else if(!set_gwsource) {
     printf0(*p, "Did not set parameter \'gwsource\'\n");
     die(100);
+  }else if(!set_metricstart) {
+    printf0(*p, "Did not set parameter \'metricstart\'\n");
+    die(100);
   } else if(!set_nucleation) {
     printf0(*p, "Did not set parameter \'nucleation\'\n");
+    die(100);
+  } else if(!set_maxattempts) {
+    printf0(*p, "Did not set parameter \'maxattempts\'\n");
     die(100);
   } else if(!set_silodir) {
     printf0(*p, "Did not set parameter \'silodir\'\n");
@@ -715,10 +755,12 @@ void get_parameters(char *infile, hydro_params *p)
 	    "-- interval %d, fftinterval %d\n"
 	    "-- silointerval %d, silosliceinterval %d,checkpointinterval %d\n"
 	    "-- uetcstart %d\n"
-	    "-- bubbles %d, scale %g\n"
+	    "-- uetcscalar %d, uetcbrokenthresh %g\n"
+	    "-- maxattempts %d, bubbles %d, scale %g\n"
 	    "-- silodir \"%s\"\n"
 	    "-- checkpointdir \"%s\"\n"
-	    "-- seed %d\n",
+	    "-- seed %d\n"
+	    "-- metricstart %d\n",
 	    infile,
 	    p->dx, p->dt, p->steps,
 	    p->Lx, p->Ly, p->Lz,
@@ -729,10 +771,12 @@ void get_parameters(char *infile, hydro_params *p)
 	    p->interval, p->fftinterval,
 	    p->silointerval, p->silosliceinterval, p->checkpointinterval,
 	    p->uetcstart,
-	    p->bubbles, p->scale,
+	    p->uetcscalar, p->uetcbrokenthresh,
+	    p->maxattempts, p->bubbles, p->scale,
 	    p->silodir,
 	    p->checkpointdir,
-	    p->seed);
+	    p->seed,
+	    p->metricstart);
     
     if(p->initial == INIT_SHOCK_TUBE) {
       printf0(*p, "-- shock tube\n");

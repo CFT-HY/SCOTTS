@@ -153,13 +153,13 @@ appears to have good energy conservation.
 -# Scalar field is evolved [evolve_field()]
 -# Temperature, pressure and \f$\kappa\f$ calculated [eq_of_state()]
 -# Update \f$E\f$ and \f$Z \f$ with field-fluid interaction terms
-     [evolve_hydro()]
--# Update \f$ Z \f$ with pressure acceleration [evolve_hydro()]
--# Update covariant 4-velocity spatial terms \f$ U_i \f$ [evolve_hydro()]
--# Update contravariant 3-velocity  \f$ V^i \f$ [evolve_hydro()]
--# Update \f$ E \f$ with PdV work terms [evolve_hydro()]
+     [evolve_hydro_fieldfluid()]
+-# Update \f$ Z \f$ with pressure acceleration [evolve_hydro_pressureacceleration()]
+-# Update covariant 4-velocity spatial terms \f$ U_i \f$ [evolve_hydro_velocities()]
+-# Update contravariant 3-velocity  \f$ V^i \f$ [evolve_hydro_velocities()]
+-# Update \f$ E \f$ with PdV work terms [evolve_hydro_pressurework()]
+-# Advection of \f$E\f$ and \f$ Z \f$ [advect_E() & advect_Z() or advect_halfsteps()]
 -# Evolve metric perturbations \f$ u_{ij} \f$ [evolve_uij()]
--# Advection of \f$E\f$ and \f$ Z \f$ [advect_E() & advect_Z()]
 -# Find temperature again [find_Ta()]
 
 ## Initial conditions with a given power spectrum INITPS
@@ -173,12 +173,15 @@ Requirements :
 - `-DFFT` flag in the Makefile, compile with support for FFTs
 - `-DBAG` flag in the Makefile, compiles with the bag model equation of state.
 - `initial initps` in the initialization file to enable initps
-- `initpsfile initial.txt div` to specify the type of initial conditions. `initial.txt` is the location of the input power spectrum. `div`(resp. `rot`, `all`) stands for longitudinal (resp. vortical, non-projected) initial conditions
+- `initpsfile initial.txt div` to specify the type of initial
+  conditions. `initial.txt` is the location of the input power
+  spectral density. `div`(resp. `rot`, `all`) stands for longitudinal (resp. vortical,
+  non-projected) initial conditions. 
 - `initpsbins 200` the number of points in the power spectrum
 
 ### Mock input spectrum
 
-`init_file.py` is a Python3 file to mock input power spectrum.
+`init_file_spec_dens.py` is a Python3 file to mock input power spectrum.
 It produces power spectra according to the formula :
 
 \f[\frac{{\rm d} \langle v^2 \rangle}{{\rm d} \ln k} =
@@ -187,6 +190,8 @@ C \frac{k^p}{(k_{peak}^s + k^s)^{(q-p)/s}} \exp\left(-\frac{k}{k_{max}}\right)\f
 with parameters
 - `RMS_VELOCITY`: float
     Root mean square velocity of the fluid
+- `INTEGRAL_SCALE`: float
+   Integral scale of the fluid, in physical units
 - `IR_SLOPE`: float
     Slope of the power spectrum in the infrared, $p$ in the formula
 - `UV_SLOPE`: float
@@ -202,7 +207,8 @@ with parameters
 - `CUTOFF`: float
     Hard cutoff, just in case
 
-It relies on the libraries `numpy` and `scipy`.
+It relies on the libraries `numpy` and `scipy`. Technically it outputs the
+spectral density, for a spectrum given above.
 
 ## Compilation
 
@@ -224,7 +230,6 @@ FFTW.
 * `-DFFT`: compile with FFT support for power spectra (and initial
   conditions).
 
-
 * `-DUSE_MPI`: compile with MPI support (necessary for parallelisation).
 
 * `-DSCALAR`: compile without the fluid.
@@ -235,4 +240,18 @@ damping couplings.
 * `-DBAG` : Use bag model for equation of state/potential instead of
 EIKR formalism.
 
-* `-DVANLEER` Use Van Leer advection instead of donor cell.
+* One of `-DVANLEER`, `-DMINMOD`, `-DSUPERBEE`, `-DMONOCENT`, `-DOSPRE`,
+  `-DVANALBADA`, `-DLAXWENDROFF`, `-DDONOR`, `-DSGVL`, `-DSGVA`: Use second order flux reconstruction with the corresponding
+
+  flux limiter for the advection. If none of the above is defined, just use donor cell.
+* `-DWMMOMADVECT`: perform advection of momentum according to procedure outlined
+  in Wilson and Mathews. Not valid with donor cell. 
+
+* Added the -DOLD_DIVISION flag to use numerator / (denominator+epsilon) division for computing the ratio of gradients `r`.
+
+* In case second order flux reconstruction is used, `-DNAN` and `-DINFINITY` can specified to check for
+  the ratio of gradients `r` being either nan or inf, respectfully.
+
+* `-DTRACEFREE` Remove trace of shear stress term sourcing gravitational waves.
+  Useful as it can cause udot to grow large and leak into the gravitational
+  waves spectrum in the UV.
