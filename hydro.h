@@ -14,7 +14,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <stdarg.h>
-
+#include <sys/stat.h>
 
 
 // Apple doesn't seem to believe in malloc.h
@@ -334,6 +334,25 @@ typedef struct {
 
 #endif // USE_MPI
 
+  /** Should we perform scalar ffts?
+   */
+  int fft_scalars;
+  /** Should we perform ffts/uetcs of velocity?
+   */
+  int fft_vel;
+  /** Should we perform ffts of temperature current J?
+   */
+  int fft_J;
+  /** Should we perform ffts of GW source term X?
+   */
+  int fft_X;
+  /** Should we perform ffts of metric perturbations?
+   */
+  int fft_gw;
+  /** Should we perform ffts/uetcs of shear stress?
+   */
+  int fft_shst;
+    
   /** Surface tension \f$ \sigma \f$ for the bubble.
    *
    *  \f[
