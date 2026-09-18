@@ -397,7 +397,7 @@ void fluid_sphere(hydro_fields f, hydro_params p){
   int wrap_x, wrap_y, wrap_z;
   int delta_x, delta_y, delta_z;
   
-  float x0 = 0;
+  int x0 = 0;
   int y0 = 0;
   int z0 = 0;
   
